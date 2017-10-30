@@ -1,0 +1,24 @@
+{
+  "alias": "fcb2f565-71b7-4ea3-b298-091b23657fc4",
+  "team": {
+    "name": "self.hca-user"
+  },
+  "title": "Q3_DEMO-donor_MGH30",
+  "description": "",
+  "attributes": [{
+    "name": "is_living",
+    "value": "yes",
+    "terms": []
+  }, {
+    "name": "ncbi_taxon",
+    "value": 9606,
+    "terms": []
+  }, {
+    "name": "release",
+    "value": "2017-10-17T23:30:04.489Z",
+    "terms": []
+  }],
+  "sampleRelationships": [],
+  "taxonId": 9606,
+  "taxon": "Homo sapiens"
+}

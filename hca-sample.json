@@ -1,0 +1,58 @@
+{
+  "submissionDate" : "2017-10-17T23:30:04.489Z",
+  "updateDate" : "2017-10-17T23:30:57.071Z",
+  "uuid" : {
+    "uuid" : "fcb2f565-71b7-4ea3-b298-091b23657fc4"
+  },
+  "events" : [ {
+    "submissionDate" : {
+      "date" : "2017-10-17T23:30:45.029+0000"
+    },
+    "originalState" : "Draft",
+    "endState" : "Validating"
+  }, {
+    "submissionDate" : {
+      "date" : "2017-10-17T23:30:57.071+0000"
+    },
+    "originalState" : "Validating",
+    "endState" : "Valid"
+  } ],
+  "content" : {
+    "is_living" : "yes",
+    "ncbi_taxon" : 9606,
+    "id" : "Q3_DEMO-donor_MGH30",
+    "species" : {
+      "text" : "Homo sapiens",
+      "ontology" : 9606
+    }
+  },
+  "accession" : null,
+  "validationState" : "Valid",
+  "_links" : {
+    "self" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9"
+    },
+    "sample" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9",
+      "title" : "A single sample"
+    },
+    "processing" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9/processingEvent"
+    },
+    "derivedFromSamples" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9/derivedFromSamples"
+    },
+    "projects" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9/projects",
+      "title" : "Access or create projects. Creation can only be done inside a submission envelope"
+    },
+    "protocols" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9/protocols",
+      "title" : "Access or create protocols"
+    },
+    "submissionEnvelope" : {
+      "href" : "http://api.ingest.staging.data.humancellatlas.org/samples/59e6927c33164b00055415a9/submissionEnvelope",
+      "title" : "A single submission envelope"
+    }
+  }
+}
