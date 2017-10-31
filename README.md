@@ -1,3 +1,5 @@
+[![Ingest Archiver Build Status](https://travis-ci.org/HumanCellAtlas/ingest-archiver.svg?branch=master)](https://travis-ci.org/HumanCellAtlas/ingest-archiver)
+
 # Ingest Archiver
 Take a valid HCA metadata and submits to archives returning accession id.
 
