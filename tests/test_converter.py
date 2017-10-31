@@ -3,7 +3,7 @@ import json
 
 from archiver.converter import Converter
 
-JSON_DIR = 'json/'
+JSON_DIR = 'tests/json/'
 ENCODING = 'utf-8'
 
 
