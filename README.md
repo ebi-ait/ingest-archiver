@@ -10,4 +10,5 @@ Take a valid HCA metadata and submits to archives returning accession id.
 - Provide requirements.txt (or similar) for dependencies
 - Move tests and test data into a suitable location to any Python standards
 - Add travis build and test execution
-
+- Provide a serverless framework configuration to deploy converter as Lambda that  accepts HCA JSON via HTTP POST and return USI JSON
+- Deploy to AWS
