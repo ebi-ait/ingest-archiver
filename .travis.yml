@@ -17,3 +17,5 @@ after_success:
 env:
   global:
     - CC_TEST_REPORTER_ID=8d9c71c325829991c0906c33b0fff1a85d12399c5a0baadfef96dbaeb7f38348
+notifications:
+    slack: humancellatlas:efniDWHvhyZeSZCqOeWTqo5K
