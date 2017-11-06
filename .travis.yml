@@ -1,24 +1,24 @@
 language: python
 cache: pip
 python:
-- 3.6
+  - 3.6
 install:
-- pip install -r requirements.txt
+  - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
 before_script:
-- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
-  > ./cc-test-reporter
-- chmod +x ./cc-test-reporter
-- ./cc-test-reporter before-build
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script:
-- python -m unittest discover -s tests -t tests
+  - coverage run -m unittest discover -s tests -t tests --verbose
 after_script:
-- ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash)
 env:
   global:
-  - CC_TEST_REPORTER_ID=8d9c71c325829991c0906c33b0fff1a85d12399c5a0baadfef96dbaeb7f38348
-  # AAP_INGEST_PASSWORD
-  - secure: CCL79oyAR4HSwzsvS2pLB87u3JpLRvHQtqN8CDfgt8/WXqID/kAQXS05YJHqDJ1ExbOl4SeFs6eTHIm67f84ThwWiI+1norjchzqTTrLvH1fo407SWdJet4axzn+sG8/DNti09IPj47qsnlpDPJzlXjOhLjNQqRtH07rmEfL6xw2kN6fD2KTSDcEENZDoAGBbVI2IXXgLglR7O36ro0xZG5ckjA0QYbl+EAjlpOLaXtgZtCag/5sFR4kcZHU08T4R3jrIVqF95g545L3v50gfRFGah12QSTDNWybu2JdfeiRqQhmWO8IlMPlP4nGohq/vxRkOF7WZk+fBzeYrwu0ezWk1Hu3w8Ta1JzCH1jro7nAttAOweNQ/KZCnBHRLseVTwjAZMlGQr1Be59BChD+X5vU/kFAomUObMiwBQJfLNsARAGKk1hRLxQdfyxuUu1+eagT7hkQ0/sWEkA5iKnXpy+FNYTBKhuvYolqVhqCssDM7Vp7p6/HJ+vzJ+lpPibBpwTZ9Z+qDixD0kjR1MpyW4ZhSqX0V+x6lPyNYexi0yVEwtWiJW8kUIfwh5EDx6/D2CpO/f6kCh77kTDFDw3eg5piKASeAzAh2yPDgOS8UWWNyEd9XyWwOrWynePTgAN8cOCYxVc2SOOPzN4Xh7rknOsBhEapHtkzWBJi2c0mzGI=
+    - CC_TEST_REPORTER_ID=8d9c71c325829991c0906c33b0fff1a85d12399c5a0baadfef96dbaeb7f38348
+    # AAP_INGEST_PASSWORD
+    - secure: CCL79oyAR4HSwzsvS2pLB87u3JpLRvHQtqN8CDfgt8/WXqID/kAQXS05YJHqDJ1ExbOl4SeFs6eTHIm67f84ThwWiI+1norjchzqTTrLvH1fo407SWdJet4axzn+sG8/DNti09IPj47qsnlpDPJzlXjOhLjNQqRtH07rmEfL6xw2kN6fD2KTSDcEENZDoAGBbVI2IXXgLglR7O36ro0xZG5ckjA0QYbl+EAjlpOLaXtgZtCag/5sFR4kcZHU08T4R3jrIVqF95g545L3v50gfRFGah12QSTDNWybu2JdfeiRqQhmWO8IlMPlP4nGohq/vxRkOF7WZk+fBzeYrwu0ezWk1Hu3w8Ta1JzCH1jro7nAttAOweNQ/KZCnBHRLseVTwjAZMlGQr1Be59BChD+X5vU/kFAomUObMiwBQJfLNsARAGKk1hRLxQdfyxuUu1+eagT7hkQ0/sWEkA5iKnXpy+FNYTBKhuvYolqVhqCssDM7Vp7p6/HJ+vzJ+lpPibBpwTZ9Z+qDixD0kjR1MpyW4ZhSqX0V+x6lPyNYexi0yVEwtWiJW8kUIfwh5EDx6/D2CpO/f6kCh77kTDFDw3eg5piKASeAzAh2yPDgOS8UWWNyEd9XyWwOrWynePTgAN8cOCYxVc2SOOPzN4Xh7rknOsBhEapHtkzWBJi2c0mzGI=
 notifications:
   slack: humancellatlas:efniDWHvhyZeSZCqOeWTqo5K
