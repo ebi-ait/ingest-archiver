@@ -1,0 +1,129 @@
+[
+  {
+    "submissionDate": "2017-09-28T10:52:59.419Z",
+    "updateDate": "2017-09-28T10:53:40.242Z",
+    "uuid": {
+      "uuid": "e77af7df-f94b-412d-923e-e5000c672873"
+    },
+    "events": [
+      {
+        "submissionDate": {
+          "date": "2017-09-28T10:53:40.220+0000"
+        },
+        "originalState": "Draft",
+        "endState": "Validating"
+      },
+      {
+        "submissionDate": {
+          "date": "2017-09-28T10:53:40.241+0000"
+        },
+        "originalState": "Validating",
+        "endState": "Valid"
+      }
+    ],
+    "content": {
+      "is_living": "yes",
+      "ncbi_taxon": 9606,
+      "life_stage": "adult",
+      "id": "d1",
+      "species": {
+        "text": "Homo sapiens",
+        "ontology": 9606
+      }
+    },
+    "accession": null,
+    "validationState": "Valid",
+    "_links": {
+      "self": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67"
+      },
+      "sample": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67",
+        "title": "A single sample"
+      },
+      "processing": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67/processingEvent"
+      },
+      "derivedFromSamples": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67/derivedFromSamples"
+      },
+      "projects": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67/projects",
+        "title": "Access or create projects. Creation can only be done inside a submission envelope"
+      },
+      "protocols": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67/protocols",
+        "title": "Access or create protocols"
+      },
+      "submissionEnvelope": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee67/submissionEnvelope",
+        "title": "A single submission envelope"
+      }
+    }
+  },
+  {
+    "submissionDate": "2017-09-28T10:52:59.555Z",
+    "updateDate": "2017-09-28T10:53:40.295Z",
+    "uuid": {
+      "uuid": "2e6395e4-ab23-485d-8e6b-48712ffbc163"
+    },
+    "events": [
+      {
+        "submissionDate": {
+          "date": "2017-09-28T10:53:40.268+0000"
+        },
+        "originalState": "Draft",
+        "endState": "Validating"
+      },
+      {
+        "submissionDate": {
+          "date": "2017-09-28T10:53:40.294+0000"
+        },
+        "originalState": "Validating",
+        "endState": "Valid"
+      }
+    ],
+    "content": {
+      "name": "PBMCs",
+      "organ": {
+        "text": "blood",
+        "ontology": "UBERON_0000178"
+      },
+      "title": "peripheral blood mononuclear cells (PBMCs)",
+      "body_part": {
+        "text": "peripheral blood mononuclear cells (PBMCs)"
+      },
+      "donor_id": "d1",
+      "id": "s1"
+    },
+    "accession": null,
+    "validationState": "Valid",
+    "_links": {
+      "self": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68"
+      },
+      "sample": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68",
+        "title": "A single sample"
+      },
+      "processing": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68/processingEvent"
+      },
+      "derivedFromSamples": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68/derivedFromSamples"
+      },
+      "projects": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68/projects",
+        "title": "Access or create projects. Creation can only be done inside a submission envelope"
+      },
+      "protocols": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68/protocols",
+        "title": "Access or create protocols"
+      },
+      "submissionEnvelope": {
+        "href": "http://localhost:8080/samples/59ccd48b12730bffb464ee68/submissionEnvelope",
+        "title": "A single submission envelope"
+      }
+    }
+  }
+]

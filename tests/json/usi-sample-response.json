@@ -1,0 +1,112 @@
+{
+  "alias": "e77af7df-f94b-412d-923e-e5000c672873",
+  "team": {
+    "name": "self.hca-user",
+    "_links": {
+      "submissions": {
+        "href": "https://submission-dev.ebi.ac.uk/api/submissions/search/by-team?teamName=self.hca-user"
+      },
+      "submissions:create": {
+        "href": "https://submission-dev.ebi.ac.uk/api/teams/self.hca-user/submissions"
+      },
+      "items": {
+        "href": "https://submission-dev.ebi.ac.uk/api/teams/self.hca-user/items"
+      }
+    }
+  },
+  "title": "d1",
+  "attributes": [{
+    "name": "is_living",
+    "value": "yes",
+    "terms": []
+  }, {
+    "name": "ncbi_taxon",
+    "value": "9606",
+    "terms": []
+  }, {
+    "name": "life_stage",
+    "value": "adult",
+    "terms": []
+  }, {
+    "name": "release",
+    "value": "2017-09-28T10:52:59.419Z",
+    "terms": []
+  }],
+  "sampleRelationships": [],
+  "taxonId": 9606,
+  "taxon": "Homo sapiens",
+  "createdDate": "2017-11-02T12:05:06.666+0000",
+  "lastModifiedDate": "2017-11-02T12:05:06.666+0000",
+  "createdBy": "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+  "lastModifiedBy": "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+  "_embedded": {
+    "processingStatus": {
+      "alias": "e77af7df-f94b-412d-923e-e5000c672873",
+      "submittableType": "Sample",
+      "lastModifiedDate": "2017-11-02T12:05:06.560+0000",
+      "lastModifiedBy": "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+      "status": "Draft",
+      "_links": {
+        "self": {
+          "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/7ef146eb-626b-4afa-894c-739cee8cadd5{?projection}",
+          "templated": true
+        }
+      }
+    },
+    "validationResult": {
+      "validationStatus": "Pending",
+      "_links": {
+        "self": {
+          "href": "https://submission-dev.ebi.ac.uk/api/validationResults/7f2d4406-ef37-4feb-9287-1ec2404754cf{?projection}",
+          "templated": true
+        }
+      }
+    },
+    "submission": {
+      "submitter": "hca-ingest-dev@ebi.ac.uk",
+      "submissionStatus": "Draft",
+      "lastModifiedDate": "2017-11-02T12:05:06.375+0000",
+      "lastModifiedBy": "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+      "team": "self.hca-user",
+      "_links": {
+        "self": {
+          "href": "https://submission-dev.ebi.ac.uk/api/submissions/0dedb8c1-6788-4ac3-bf94-20b54c508175{?projection}",
+          "templated": true
+        },
+        "submissionStatus": {
+          "href": "https://submission-dev.ebi.ac.uk/api/submissions/0dedb8c1-6788-4ac3-bf94-20b54c508175/submissionStatus"
+        }
+      }
+    }
+  },
+  "_links": {
+    "self": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a"
+    },
+    "sample": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a{?projection}",
+      "templated": true
+    },
+    "history": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/search/history?teamName=self.hca-user&alias=e77af7df-f94b-412d-923e-e5000c672873"
+    },
+    "current-version": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/search/current-version?teamName=self.hca-user&alias=e77af7df-f94b-412d-923e-e5000c672873"
+    },
+    "self:update": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a"
+    },
+    "self:delete": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a"
+    },
+    "processingStatus": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a/processingStatus"
+    },
+    "submission": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a/submission"
+    },
+    "validationResult": {
+      "href": "https://submission-dev.ebi.ac.uk/api/samples/02aab687-09f9-4b4b-904d-d80526e96f6a/validationResult"
+    }
+  }
+}

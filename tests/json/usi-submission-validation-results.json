@@ -1,0 +1,27 @@
+{
+  "_embedded": {
+    "validationResults": [{
+      "validationStatus": "Complete",
+      "_links": {
+        "self": {
+          "href": "https://submission-dev.ebi.ac.uk/api/validationResults/f4f876ae-af6e-4948-ba8a-2af802c43ff4"
+        },
+        "validationResult": {
+          "href": "https://submission-dev.ebi.ac.uk/api/validationResults/f4f876ae-af6e-4948-ba8a-2af802c43ff4{?projection}",
+          "templated": true
+        }
+      }
+    }]
+  },
+  "_links": {
+    "self": {
+      "href": "https://submission-dev.ebi.ac.uk/api/validationResults/search/by-submission?submissionId=66e20fa5-20f1-42f1-b199-edfe7064f740"
+    }
+  },
+  "page": {
+    "size": 20,
+    "totalElements": 1,
+    "totalPages": 1,
+    "number": 0
+  }
+}

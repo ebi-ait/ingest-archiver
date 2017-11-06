@@ -1,0 +1,60 @@
+{
+  "submitter": {
+    "email": "hca-ingest-dev@ebi.ac.uk"
+  },
+  "team": {
+    "name": "self.hca-user",
+    "_links": {
+      "submissions": {
+        "href": "https://submission-dev.ebi.ac.uk/api/submissions/search/by-team?teamName=self.hca-user"
+      },
+      "submissions:create": {
+        "href": "https://submission-dev.ebi.ac.uk/api/teams/self.hca-user/submissions"
+      },
+      "items": {
+        "href": "https://submission-dev.ebi.ac.uk/api/teams/self.hca-user/items"
+      }
+    }
+  },
+  "createdDate": "2017-11-01T13:21:58.471+0000",
+  "lastModifiedDate": "2017-11-01T13:21:58.471+0000",
+  "createdBy": "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+  "lastModifiedBy": "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+  "_links": {
+    "submission": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6{?projection}",
+      "templated": true
+    },
+    "self": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6{?projection}",
+      "templated": true
+    },
+    "submissionStatus": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissionStatuses/c714224b-8dee-4c55-8849-422fe1d39ace"
+    },
+    "team": {
+      "href": "https://submission-dev.ebi.ac.uk/api/teams/self.hca-user"
+    },
+    "contents": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6/contents"
+    },
+    "validationResults": {
+      "href": "https://submission-dev.ebi.ac.uk/api/validationResults/search/by-submission?submissionId=dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6"
+    },
+    "self:update": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6"
+    },
+    "self:delete": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6"
+    },
+    "processingStatusSummary": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6/processingStatusSummaryCounts"
+    },
+    "typeProcessingStatusSummary": {
+      "href": "https://submission-dev.ebi.ac.uk/api/submissions/dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6/processingStatusSummaryTypeCounts"
+    },
+    "processingStatuses": {
+      "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/search/findBySubmissionId?submissionId=dd7eae02-a1ec-44af-8b65-ec1e1eb0b8c6"
+    }
+  }
+}

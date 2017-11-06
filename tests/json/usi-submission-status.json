@@ -1,0 +1,21 @@
+{
+  "status" : "Draft",
+  "createdDate" : "2017-11-02T12:05:06.348+0000",
+  "lastModifiedDate" : "2017-11-02T12:05:06.348+0000",
+  "createdBy" : "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+  "lastModifiedBy" : "usr-39b856b1-8bbe-4983-a98c-d420c75df968",
+  "_links" : {
+    "self" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissionStatuses/74f213d3-fd22-476e-b213-0c7dfe2eee73"
+    },
+    "submissionStatus" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissionStatuses/74f213d3-fd22-476e-b213-0c7dfe2eee73"
+    },
+    "statusDescription" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/statusDescriptions/submissionStatuses/Draft"
+    },
+    "availableStatuses" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/0dedb8c1-6788-4ac3-bf94-20b54c508175/availableSubmissionStatuses"
+    }
+  }
+}

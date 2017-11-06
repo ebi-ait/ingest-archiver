@@ -1,0 +1,70 @@
+{
+  "_links" : {
+    "analyses" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/analyses/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "assayData" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/assayData/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "assays" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/assays/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "egaDacPolicies" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/egaDacPolicies/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "egaDacs" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/egaDacs/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "egaDatasets" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/egaDatasets/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "projects" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/projects/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "protocols" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/protocols/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "sampleGroups" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/sampleGroups/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "samples" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/samples/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "studies" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/studies/search/by-submission?submissionId=a8797226-ebd3-45ff-94bf-ed03292b532e"
+    },
+    "analyses:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/analyses"
+    },
+    "assayData:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/assayData"
+    },
+    "assays:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/assays"
+    },
+    "egaDacPolicies:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/egaDacPolicies"
+    },
+    "egaDacs:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/egaDacs"
+    },
+    "egaDatasets:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/egaDatasets"
+    },
+    "projects:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/projects"
+    },
+    "protocols:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/protocols"
+    },
+    "sampleGroups:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/sampleGroups"
+    },
+    "samples:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/samples"
+    },
+    "studies:create" : {
+      "href" : "https://submission-dev.ebi.ac.uk/api/submissions/a8797226-ebd3-45ff-94bf-ed03292b532e/contents/studies"
+    }
+  }
+}

@@ -13,12 +13,9 @@
     "name": "ncbi_taxon",
     "value": 9606,
     "terms": []
-  }, {
-    "name": "release",
-    "value": "2017-10-17T23:30:04.489Z",
-    "terms": []
   }],
+  "releaseDate": "2017-10-17",
   "sampleRelationships": [],
   "taxonId": 9606,
-  "taxon": "Homo sapiens"
+  "taxon": "Homo sapiens",
 }
