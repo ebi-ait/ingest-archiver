@@ -1,144 +1,70 @@
-import json
-import requests
 import logging
-import os
+import polling as polling
 
+from archiver.usiapi import USIAPI
 from archiver.converter import Converter, ConversionError
 
-# TODO reorganize into separate components
 # TODO create config file for env vars
 # TODO figure out how to refresh token when it's expired
 
+VALIDATION_POLLING_TIMEOUT = 10
+VALIDATION_POLLING_STEP = 2
 
-def get_aap_token(username, password):
-    token = None
-
-    get_token_url = 'https://explore.api.aap.tsi.ebi.ac.uk/auth'
-    response = requests.get(get_token_url, auth=(username, password))
-
-    if response.ok:
-        token = response.text
-
-    return token
+SUBMISSION_POLLING_STEP = 3
+SUBMISSION_POLLING_TIMEOUT = 30
 
 
 class IngestArchiver:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-
-        aap_user = 'hcaingestd'
-        aap_password = ''
-
-        if 'AAP_INGEST_PASSWORD' in os.environ:
-            aap_password = os.environ['AAP_INGEST_PASSWORD']
-
-        self.token = get_aap_token(aap_user, aap_password)
-
-        self.headers = {
-            'Content-type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + self.token
-        }
-
+        self.usi_api = USIAPI()
         self.converter = Converter()
 
-    # === external api
-
-    def get_token(self, username, password):
-        return get_aap_token(username, password)
-
-    # === usi api methods
-
-    def create_submission(self):
-        team = 'self.hca-user'
-        create_submissions_url = 'https://submission-dev.ebi.ac.uk/api/teams/' + team + '/submissions'
-
-        submission = None
-
-        response = requests.post(create_submissions_url, data=json.dumps({}), headers=self.headers)
-
-        if response.ok:
-            submission = json.loads(response.text)
-
-        return submission
-
-    def delete_submission(self, delete_url):
-        is_deleted = self.__delete(delete_url)
-
-        return is_deleted
-
-    def get_contents(self, get_contents_url):
-        return self.__get_json(get_contents_url)
-
-    def get_submission_status(self, get_submission_status_url):
-        return self.__get_json(get_submission_status_url)
-
-    def create_sample(self, create_sample_url, sample):
-        return self.__post(create_sample_url, sample)
-
-    def create_samples(self, create_sample_url, samples):
-        for sample in samples:
-            converted_sample = self.converter.convert_sample(sample)
-            self.create_sample(create_sample_url, converted_sample)
-
-    def get_available_statuses(self, get_available_statuses_url):
-        response = self.__get_json(get_available_statuses_url)
-
-        if response and "_embedded" in response:
-            return response["_embedded"]["statusDescriptions"]
-
-        return []
-
-    def get_validation_results(self, get_validation_results_url):
-        response = self.__get_json(get_validation_results_url)
-
-        if response and "_embedded" in response:
-            return response["_embedded"]["validationResults"]
-
-        return []
-
-    def get_validation_result_details(self, get_validation_result_url):
-        return self.__get_json(get_validation_result_url)
-
-    def update_submission_status(self, usi_submission, new_status):
-        submission_status_url = usi_submission['_links']['submissionStatus']['href']
-        status_json = {"status": new_status}
-
-        updated_submission = self.__patch(submission_status_url, status_json)
-
-        return updated_submission
-
-    def get_processing_summary(self, usi_submission):
-        get_summary_url = usi_submission['_links']['processingStatusSummary']['href']
-
-        return self.__get_json(get_summary_url)
-
-    def get_processing_results(self, usi_submission):
-        get_results_url = usi_submission['_links']['processingStatuses']['href']
-        response = self.__get_json(get_results_url)
-
-        if response and "_embedded" in response:
-            return response["_embedded"]["processingStatuses"]
-
-        return []
-
-    # ==== archive process methods
-
     def archive(self, hca_data):
-        pass
+        summary = self.add_submission_contents(hca_data)
+        submission = summary['usi_submission']
+        print(submission)
+        is_validated = polling.poll(
+            lambda: self.is_validated(submission),
+            step=VALIDATION_POLLING_STEP,
+            timeout=VALIDATION_POLLING_TIMEOUT
+        )
+
+        is_submittable = self.is_submittable(submission)
+
+        if is_validated and is_submittable:
+            self.usi_api.update_submission_status(submission, 'Submitted')
+        else:
+            validation_summary = self.get_all_validation_result_details(submission)
+            self.logger.error('validation summary:')
+            print(validation_summary)
+            summary['validation_summary'] = validation_summary
+
+        polling.poll(
+            lambda: self.is_processing_complete(submission),
+            step=SUBMISSION_POLLING_STEP,
+            timeout=SUBMISSION_POLLING_TIMEOUT
+        )
+
+        accessions = self.get_accessions(submission)
+        summary['accessions'] = accessions
+
+        print(summary)
+        return summary
 
     def add_submission_contents(self, hca_submission):
-        usi_submission = self.create_submission()
+        usi_submission = self.usi_api.create_submission()
 
         get_contents_url = usi_submission['_links']['contents']['href']
-        contents = self.get_contents(get_contents_url)
+        contents = self.usi_api.get_contents(get_contents_url)
         create_sample_url = contents['_links']['samples:create']['href']
 
         # TODO must know which contents are needed for this archiver
         samples = hca_submission['samples']
 
-        converted_samples = []  # TODO should this be atomic? currently there are bad data so ignoring those for now
+        converted_samples = []  # TODO should this be atomic?
         created_samples = []
+
         for sample in samples:
             converted_sample = None
             try:
@@ -148,42 +74,43 @@ class IngestArchiver:
                 pass
 
             if converted_sample:
-                created_usi_sample = self.create_sample(create_sample_url, converted_sample)
+                created_usi_sample = self.usi_api.create_sample(create_sample_url, converted_sample)
                 created_samples.append(created_usi_sample)
 
-        return {"usi_submission": usi_submission, "created_samples": created_samples}
+        return {"usi_submission": usi_submission, "created_samples": created_samples, "hca_submission": hca_submission}
 
     # TODO add test
     def get_all_validation_result_details(self, usi_submission):
         get_validation_results_url = usi_submission['_links']['validationResults']['href']
-        validation_results = self.get_validation_results(get_validation_results_url)
+        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
 
         summary = []
         for validation_result in validation_results:
             if validation_result['validationStatus'] == "Complete":
-                details_url = validation_result['embedded']['_links']['validationResult']
-                validation_result_details = self.get_validation_result_details(details_url)
+                details_url = validation_result['_links']['validationResult']['href']
+                # TODO the '{?projection}' in the url is being decoded which causes the url to return 404
+                # find a way to not decode the the url upon request
+                validation_result_details = self.usi_api.get_validation_result_details(details_url)
                 summary.append(validation_result_details)
 
         return summary
 
     def is_submittable(self, usi_submission):
         get_status_url = usi_submission['_links']['submissionStatus']['href']
-        submission_status = self.get_submission_status(get_status_url)
+        submission_status = self.usi_api.get_submission_status(get_status_url)
 
         get_available_statuses_url = submission_status['_links']['availableStatuses']['href']
-        available_statuses = self.get_available_statuses(get_available_statuses_url)
+        available_statuses = self.usi_api.get_available_statuses(get_available_statuses_url)
 
-        if available_statuses:
-            for status in available_statuses:
-                if status['statusName'] == 'Submitted':
-                    return True
+        for status in available_statuses:
+            if status['statusName'] == 'Submitted':
+                return True
 
         return False
 
     def is_validated(self, usi_submission):
         get_validation_results_url = usi_submission['_links']['validationResults']['href']
-        validation_results = self.get_validation_results(get_validation_results_url)
+        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
 
         for validation_result in validation_results:
             if validation_result['validationStatus'] != "Complete":
@@ -196,70 +123,29 @@ class IngestArchiver:
 
     def complete_submission(self, usi_submission):
         if self.is_validated_and_submittable(usi_submission):
-            return self.update_submission_status(usi_submission, 'Submitted')
+            return self.usi_api.update_submission_status(usi_submission, 'Submitted')
 
         return None
 
     def is_processing_complete(self, usi_submission):
-        results = self.get_processing_results(usi_submission)
-
+        results = self.usi_api.get_processing_results(usi_submission)
         for result in results:
-            if result['status'] != "Complete":
+            if result['status'] != "Completed":
                 return False
 
         return True
 
-    # TODO add test
     def get_accessions(self, usi_submission):
-        results = self.get_processing_results(usi_submission)
+        results = self.usi_api.get_processing_results(usi_submission)
 
         accessions = {}
         for result in results:
-            if result['status'] == 'Complete':
+            if result['status'] == 'Completed':
                 accessions[result['alias']] = result['accession']
 
         return accessions
 
-    # ===
+    def delete_submission(self, usi_submission):
+        delete_url = usi_submission['_links']['self:delete']['href']
+        return self.usi_api.delete_submission(delete_url)
 
-    def __get_json(self, url):
-        response = requests.get(url, headers=self.headers)
-
-        entity = None
-
-        if response.ok:
-            entity = json.loads(response.text)
-        else:
-            self.logger.error('Response:' + response.text)
-
-        return entity
-
-    def __post(self, url, data_json):
-        response = requests.post(url, data=json.dumps(data_json), headers=self.headers)
-
-        if response.ok:
-            return json.loads(response.text)
-        else:
-            self.logger.error('Response:' + response.text)
-
-        return None
-
-    def __patch(self, url, data_json):
-        response = requests.patch(url, data=json.dumps(data_json), headers=self.headers)
-
-        if response.ok:
-            return json.loads(response.text)
-        else:
-            self.logger.error('Response:' + response.text)
-
-        return None
-
-    def __delete(self, delete_url):
-        response = requests.delete(delete_url, headers=self.headers)
-
-        if response.ok:
-            return True
-        else:
-            self.logger.error('Response:' + response.text)
-
-        return False

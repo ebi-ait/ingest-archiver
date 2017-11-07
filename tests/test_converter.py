@@ -1,6 +1,9 @@
 import unittest
 import json
 
+
+from random import randint
+
 from archiver.converter import Converter
 
 JSON_DIR = 'tests/json/'
@@ -16,6 +19,11 @@ class TestConverter(unittest.TestCase):
 
         with open(JSON_DIR + 'usi-sample.json', encoding=ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
+
+        test_alias = 'hca' + str(randint(0, 1000))
+
+        hca_data['uuid']['uuid'] = test_alias
+        expected_json['alias'] = test_alias
 
         actual_json = converter.convert_sample(hca_data)
 
