@@ -17,27 +17,27 @@ class ArchiveSubmissionProcessor:
         self.archiver = IngestArchiver()  # TODO dependency injection
         self.ingest_api = IngestAPI()
 
-    def run(self, hca_submission_uuid, message):
+    def run(self, hca_submission_uuid):
         samples = self.ingest_api.get_samples_by_submission(hca_submission_uuid)
         hca_submission = {'samples': samples}
 
         summary = self.archiver.archive(hca_submission)  # TODO send message to archiver listener
 
-        accessions = self.get_accessions(summary)
+        if summary['is_completed']:
+            accessions = self.get_accessions(summary)
 
-        for accession in accessions:
-            # the accessioning service must know some metadata schema to know how to update the schema
-            content_patch = {
-                "sample_accessions": {
-                    "biosd_sample": accession['accession']
+            for accession in accessions:
+                # the accessioning service must know some metadata schema to know how to update the schema
+                content_patch = {
+                    "sample_accessions": {
+                        "biosd_sample": accession['accession']
+                    }
                 }
-            }
 
-            self.ingest_api.update_content(accession['entity_url'], content_patch)
-
-        self.notify_exporter(message)
+                self.ingest_api.update_content(accession['entity_url'], content_patch)
 
     def get_accessions(self, archive_summary):
+        self.logger.info(str(archive_summary))
         usi_submission = archive_summary['usi_submission']
         hca_samples_by_alias = archive_summary['hca_samples_by_alias']
 
@@ -58,20 +58,6 @@ class ArchiveSubmissionProcessor:
 
         return accessions
 
-    def notify_exporter(self, message):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(config.RABBITMQ_URL))
-        channel = connection.channel()
-        channel.queue_declare(queue=config.RABBITMQ_SUBMITTED_QUEUE)
-        success = channel.basic_publish(exchange=config.RABBITMQ_SUBMITTED_EXCHANGE,
-                                        routing_key=config.RABBITMQ_SUBMITTED_QUEUE,
-                                        body=message)
-        if not success:
-            self.logger.error('Error in notifying the exporter')
-
-        connection.close()
-
-        return success
-
 
 class ArchiverListener:
     def __init__(self):
@@ -87,18 +73,20 @@ class ArchiverListener:
 
         connection = pika.BlockingConnection(pika.URLParameters(self.rabbit))  # TODO How to be async?
         channel = connection.channel()
+        self.channel = channel
 
         channel.queue_declare(queue=self.queue)
 
         def callback(ch, method, properties, body):
             self.logger.info(" [x] Received %r" % body)
 
-            message = json.loads(body)
+            message = json.loads(str(body, config.ENCODING))
             hca_submission_uuid = message['documentUuid']
 
             try:
                 processor = ArchiveSubmissionProcessor()
-                processor.run(hca_submission_uuid, body)
+                processor.run(hca_submission_uuid)
+                self.notify_exporter(json.dumps(message))
             except Exception as e:
                 self.logger.error(str(e))
 
@@ -107,6 +95,16 @@ class ArchiverListener:
                               no_ack=True)
         self.logger.info(' [*] Waiting for messages from submission envelope')
         channel.start_consuming()
+
+    def notify_exporter(self, message):
+        success = self.channel.basic_publish(exchange=config.RABBITMQ_SUBMITTED_EXCHANGE,
+                                        routing_key=config.RABBITMQ_SUBMITTED_QUEUE,
+                                        body=message)
+        if not success:
+            self.logger.error('Error in notifying the exporter')
+        else:
+            self.logger.info('notified exporter')
+        return success
 
 
 if __name__ == '__main__':

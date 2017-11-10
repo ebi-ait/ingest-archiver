@@ -1,6 +1,7 @@
 import json
 import requests
 import logging
+import config
 
 # TODO this file may be removed if the event will contain all the hca submission details
 # if not, this must be integrated with the current ingest api module that other ingest services uses
@@ -13,7 +14,7 @@ class IngestAPI:
             'Content-type': 'application/json',
             'Accept': 'application/json',
         }
-        self.url = 'http://localhost:8080'  # TODO put this in config per env
+        self.url = config.INGEST_API_URL
 
     def get_submission(self, uuid):
         get_submission_url = self.url + '/submissionEnvelopes/search/findByUuid?uuid=' + uuid
