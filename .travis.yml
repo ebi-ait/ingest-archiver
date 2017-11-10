@@ -1,24 +1,25 @@
 language: python
 cache: pip
 python:
-  - 3.6
+- 3.6
 install:
-  - pip install -r requirements.txt
-  - pip install -r requirements-dev.txt
+- pip install -r requirements.txt
+- pip install -r requirements-dev.txt
 before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+  > ./cc-test-reporter
+- chmod +x ./cc-test-reporter
+- ./cc-test-reporter before-build
 script:
-  - coverage run -m unittest discover -s tests -t tests --verbose
+- coverage run -m unittest discover -s tests -t tests --verbose
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+- ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+- bash <(curl -s https://codecov.io/bash)
 env:
   global:
-    - CC_TEST_REPORTER_ID=8d9c71c325829991c0906c33b0fff1a85d12399c5a0baadfef96dbaeb7f38348
-    # AAP_INGEST_PASSWORD
-    - secure: CCL79oyAR4HSwzsvS2pLB87u3JpLRvHQtqN8CDfgt8/WXqID/kAQXS05YJHqDJ1ExbOl4SeFs6eTHIm67f84ThwWiI+1norjchzqTTrLvH1fo407SWdJet4axzn+sG8/DNti09IPj47qsnlpDPJzlXjOhLjNQqRtH07rmEfL6xw2kN6fD2KTSDcEENZDoAGBbVI2IXXgLglR7O36ro0xZG5ckjA0QYbl+EAjlpOLaXtgZtCag/5sFR4kcZHU08T4R3jrIVqF95g545L3v50gfRFGah12QSTDNWybu2JdfeiRqQhmWO8IlMPlP4nGohq/vxRkOF7WZk+fBzeYrwu0ezWk1Hu3w8Ta1JzCH1jro7nAttAOweNQ/KZCnBHRLseVTwjAZMlGQr1Be59BChD+X5vU/kFAomUObMiwBQJfLNsARAGKk1hRLxQdfyxuUu1+eagT7hkQ0/sWEkA5iKnXpy+FNYTBKhuvYolqVhqCssDM7Vp7p6/HJ+vzJ+lpPibBpwTZ9Z+qDixD0kjR1MpyW4ZhSqX0V+x6lPyNYexi0yVEwtWiJW8kUIfwh5EDx6/D2CpO/f6kCh77kTDFDw3eg5piKASeAzAh2yPDgOS8UWWNyEd9XyWwOrWynePTgAN8cOCYxVc2SOOPzN4Xh7rknOsBhEapHtkzWBJi2c0mzGI=
+  - CC_TEST_REPORTER_ID=8d9c71c325829991c0906c33b0fff1a85d12399c5a0baadfef96dbaeb7f38348
+  # AAP_API_PASSWORD
+  - secure: WoS2LYyQbrqp709ybalnmmhHFwj5yfnGp6RN6E3bKux1ggRCpvawkKrDjMA/qJMUQwJJ9cPnfY6ADFUA859B+sjrUW4x20ZEnphbix76DF3bX0p+4aHCBjP6KRU8VxkPGEz53jms+5qBogd9jOR2K6ih+fzqGAdK3tdGOtqUiOI3kPl4xlJSIsUFofIaIqpXwgDLhCQK5EFMbHFXhobzR8XoSAs2y1kcPUQyvVUdANo+w0qah0aSU/71TSyEPGHE1pT67LONR9Ts+QJpmj0YqYx7vXgDYOo/n/iYDhh2FC+L6OVqH0fQN2d4pCIWm1/H2b6zvAJRCPn+1Bn3rCf/koOaUC5TsafpQJZmE6S6YA4Ab0S1nV55noZWBuWo3tnESoKBIPMedqhQmx2Lx+g0liGjycwGgyb+m2WnEMo4SqYq44unJMy4fqlhUZD6vzA0s3Ju3F69LJvzYyCXZpfiuH1WVqoUp3+F5R3TpFs9bVzQCXYMLfO1SvFLhJk9Qlxn8fFQ9Idrv2WC6IyMdtE4zQxkyKY43gCW9tSw+MtitxjQEkqwI4w2qWQTEuXmleyGFDW0767rtSAPXQA0s7fyc50L2DQYoSx8VJfSavvdpNmPfw6FmdultopkBcqdKBH64t/wUVZeJylMw0h/k/D8ErmUTA6nfRmJtE/qb9IHlMI=
 notifications:
   slack: humancellatlas:efniDWHvhyZeSZCqOeWTqo5K
