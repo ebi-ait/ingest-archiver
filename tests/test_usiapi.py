@@ -2,7 +2,7 @@ import unittest
 import os
 import json
 import time
-
+import config
 
 from random import randint
 
@@ -12,15 +12,12 @@ from archiver.converter import Converter
 # TODO use mocks for requests
 # TODO add test cases
 
-JSON_DIR = 'tests/json/'
-ENCODING = 'utf-8'
-
 
 class TestUSIAPI(unittest.TestCase):
     def setUp(self):
         self.usi_api = USIAPI()
 
-        with open(JSON_DIR + 'hca-samples.json', encoding=ENCODING) as data_file:
+        with open(config.JSON_DIR + 'hca-samples.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
 
         self.hca_submission = {'samples': hca_samples}
@@ -32,8 +29,8 @@ class TestUSIAPI(unittest.TestCase):
         aap_user = 'hcaingestd'
         aap_password = ''
 
-        if 'AAP_INGEST_PASSWORD' in os.environ:
-            aap_password = os.environ['AAP_INGEST_PASSWORD']
+        if 'AAP_API_PASSWORD' in os.environ:
+            aap_password = os.environ['AAP_API_PASSWORD']
 
         token = self.usi_api.get_token(aap_user, aap_password)
 

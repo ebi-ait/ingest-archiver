@@ -1,20 +1,14 @@
 import json
 import requests
 import logging
-import os
-
-AAP_URL = 'https://explore.api.aap.tsi.ebi.ac.uk/auth'
-AAP_USER = 'hcaingestd'
-AAP_PASSWORD = os.environ['AAP_INGEST_PASSWORD'] if 'AAP_INGEST_PASSWORD' in os.environ else ''
-AAP_DOMAIN = 'self.hca-user'
-
-USI_URL = 'https://submission-dev.ebi.ac.uk'
+import config
 
 
+# TODO figure out how to refresh token when it's expired
 def get_aap_token(username, password):
     token = ''
 
-    get_token_url = AAP_URL
+    get_token_url = config.AAP_API_URL
     response = requests.get(get_token_url, auth=(username, password))
 
     if response.ok:
@@ -27,7 +21,7 @@ class USIAPI:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.token = get_aap_token(AAP_USER, AAP_PASSWORD)
+        self.token = get_aap_token(config.AAP_API_USER, config.AAP_API_PASSWORD)
 
         self.headers = {
             'Content-type': 'application/json',
@@ -39,7 +33,7 @@ class USIAPI:
         return get_aap_token(user, password)
 
     def create_submission(self):
-        create_submissions_url = USI_URL + '/api/teams/' + AAP_DOMAIN + '/submissions'
+        create_submissions_url = config.USI_API_URL + '/api/teams/' + config.AAP_API_DOMAIN + '/submissions'
         return self._post(url=create_submissions_url, data_json={})
 
     def delete_submission(self, delete_url):
@@ -89,7 +83,7 @@ class USIAPI:
 
         return self._get_embedded_list(response, 'processingStatuses')
 
-        # ===
+    # ===
 
     def _get(self, url):
         # url = unquote(url)

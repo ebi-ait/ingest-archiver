@@ -2,6 +2,7 @@ import unittest
 import json
 import time
 import polling as polling
+import config
 
 from random import randint
 
@@ -11,16 +12,13 @@ from archiver.converter import Converter
 # TODO use mocks for requests
 # TODO add test cases
 
-JSON_DIR = 'tests/json/'
-ENCODING = 'utf-8'
-
 
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
         self.archiver = IngestArchiver()
         self.converter = Converter()
 
-        with open(JSON_DIR + 'hca-samples.json', encoding=ENCODING) as data_file:
+        with open(config.JSON_DIR + 'hca-samples.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
 
         for sample in hca_samples:
@@ -69,8 +67,7 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.assertTrue(is_validated_and_submittable)
 
-    # @unittest.skip('submitted submissions cannot be deleted, skipping this')
+    @unittest.skip('submitted submissions cannot be deleted, skipping this')
     def test_archive(self):
         summary = self.archiver.archive(self.hca_submission)
-        accessions = summary['accessions']
-        self.assertTrue(accessions)
+        self.assertTrue(summary["is_completed"])

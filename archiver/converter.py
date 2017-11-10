@@ -22,7 +22,7 @@ class Converter:
             converted_data = self._build_output(extracted_data)
         except KeyError:
             raise ConversionError("Conversion Error",
-                                  "An error occured in converting the metadata. Data maybe malformed.")
+                                  "An error occurred in converting the metadata. Data maybe malformed.")
 
         return converted_data
 
@@ -55,7 +55,6 @@ class Converter:
         # TODO refer to the metadata schema, currently based on v3
         usi_data = {
             "alias": extracted_data["alias"],
-            # "alias": 'hca' + str(randint(0, 1000)),
             "team": {
                 "name": 'self.hca-user'
             },
