@@ -22,6 +22,9 @@ class ArchiveSubmissionProcessor:
         hca_submission = {'samples': samples}
 
         summary = self.archiver.archive(hca_submission)  # TODO send message to archiver listener
+        self.logger.info('---------------------')
+        self.logger.info('summary:' + str(summary))
+        self.logger.info('---------------------')
 
         if summary['is_completed']:
             accessions = self.get_accessions(summary)
@@ -33,11 +36,10 @@ class ArchiveSubmissionProcessor:
                         "biosd_sample": accession['accession']
                     }
                 }
-
                 self.ingest_api.update_content(accession['entity_url'], content_patch)
 
     def get_accessions(self, archive_summary):
-        self.logger.info(str(archive_summary))
+
         usi_submission = archive_summary['usi_submission']
         hca_samples_by_alias = archive_summary['hca_samples_by_alias']
 
@@ -83,12 +85,13 @@ class ArchiverListener:
             message = json.loads(str(body, config.ENCODING))
             hca_submission_uuid = message['documentUuid']
 
-            try:
-                processor = ArchiveSubmissionProcessor()
-                processor.run(hca_submission_uuid)
-                self.notify_exporter(json.dumps(message))
-            except Exception as e:
-                self.logger.error(str(e))
+            if hca_submission_uuid:
+                try:
+                    processor = ArchiveSubmissionProcessor()
+                    processor.run(hca_submission_uuid)
+                    self.notify_exporter(json.dumps(message))
+                except Exception as e:
+                    self.logger.error(str(e))
 
         channel.basic_consume(callback,
                               queue=self.queue,

@@ -52,9 +52,9 @@ class IngestAPI:
     # TODO test this
     def update_content(self, entity_url, content_json):
         response = requests.get(entity_url)
-        content = self.handle_response(response)
-        update = content.update(content_json)
-        response = requests.put(entity_url, json.dumps(update))
+        content = self.handle_response(response)['content']
+        content.update(content_json)
+        response = requests.put(entity_url, json.dumps(content))
         return self.handle_response(response)
 
     def handle_response(self, response):
