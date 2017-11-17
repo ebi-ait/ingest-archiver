@@ -1,10 +1,10 @@
+import logging
 from flatten_json import flatten
 
 HCA_USI_KEY_MAP = {
     "uuid_uuid": "alias",
-    "content_id": "title",
-    "content_species_ontology": "taxonId",
-    "content_species_text": "taxon",
+    "content_name": "title",
+    "content_ncbi_taxon_id": "taxonId",
     "submissionDate": "releaseDate"
 }
 
@@ -16,14 +16,18 @@ class ConversionError(Exception):
 
 
 class Converter:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     def convert_sample(self, hca_data):
         try:
             extracted_data = self._extract_sample_fields(hca_data)
             converted_data = self._build_output(extracted_data)
-        except KeyError:
+        except KeyError as e:
+            error_message = "Error:" + str(e)
+            self.logger.error(error_message)
             raise ConversionError("Conversion Error",
                                   "An error occurred in converting the metadata. Data maybe malformed.")
-
         return converted_data
 
     def _extract_sample_fields(self, hca_data):
@@ -34,6 +38,8 @@ class Converter:
         for key, new_key in HCA_USI_KEY_MAP.items():
             if key in flattened_hca_data:
                 extracted_data[new_key] = flattened_hca_data[key]
+            else:
+                self.logger.error(key + ' is not found in the metadata.')
 
         return extracted_data
 
@@ -52,7 +58,6 @@ class Converter:
         return attributes
 
     def _build_output(self, extracted_data):
-        # TODO refer to the metadata schema, currently based on v3
         usi_data = {
             "alias": extracted_data["alias"],
             "team": {
@@ -63,7 +68,6 @@ class Converter:
             "attributes": extracted_data["attributes"],
             "releaseDate": extracted_data["releaseDate"].split('T')[0],  # extract date from 2017-09-28T10:52:59.419Z
             "sampleRelationships": [],
-            "taxonId": extracted_data["taxonId"],
-            "taxon": extracted_data["taxon"]  # TODO in v4 there is a field ncbi_taxon_id
+            "taxonId": extracted_data["taxonId"]
         }
         return usi_data

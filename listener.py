@@ -9,7 +9,6 @@ from archiver.archiver import IngestArchiver
 from archiver.ingestapi import IngestAPI
 
 
-# TODO these should happen in the accessioning service, move this
 class ArchiveSubmissionProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ class ArchiveSubmissionProcessor:
         self.logger.info('summary:' + str(summary))
         self.logger.info('---------------------')
 
+        # TODO these should happen in the accessioning service, move this
         if summary['is_completed']:
             accessions = self.get_accessions(summary)
 

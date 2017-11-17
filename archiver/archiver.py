@@ -53,7 +53,7 @@ class IngestArchiver:
         create_sample_url = contents['_links']['samples:create']['href']
 
         # TODO must know which contents are needed for this archive
-        # TODO skip contents which has accessioning input from user, confirm this
+        # TODO skip contents which has accessioning input from user
         samples = hca_submission['samples']
 
         converted_samples = []  # TODO should this be atomic?
@@ -68,7 +68,9 @@ class IngestArchiver:
                 alias = converted_sample['alias']
                 # build map upon conversion so there'll be no need to do loop twice
                 hca_samples_by_alias[alias] = sample
-            except ConversionError:
+            except ConversionError as e:
+                error_message = "Error:" + str(e)
+                self.logger.error(error_message)
                 pass
 
             if converted_sample:
@@ -85,7 +87,6 @@ class IngestArchiver:
         # TODO Refactor this, there's a lot of things being done here, create an output object
         # TODO do we need to store some of these info somewhere?
 
-    # TODO add test
     def get_all_validation_result_details(self, usi_submission):
         get_validation_results_url = usi_submission['_links']['validationResults']['href']
         validation_results = self.usi_api.get_validation_results(get_validation_results_url)
@@ -94,7 +95,7 @@ class IngestArchiver:
         for validation_result in validation_results:
             if validation_result['validationStatus'] == "Complete":
                 details_url = validation_result['_links']['validationResult']['href']
-                # TODO fix how what to put as projection param, check usi documentation
+                # TODO fix how what to put as projection param, check usi documentation, removing any params for now
                 details_url = details_url.split('{')[0]
                 validation_result_details = self.usi_api.get_validation_result_details(details_url)
                 summary.append(validation_result_details)
@@ -147,3 +148,4 @@ class IngestArchiver:
 
     def get_processing_results(self, usi_submission):
         return self.usi_api.get_processing_results(usi_submission)
+

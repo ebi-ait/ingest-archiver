@@ -25,3 +25,4 @@ class TestConverter(unittest.TestCase):
         actual_json = converter.convert_sample(hca_data)
 
         self.assertEqual(actual_json, expected_json)
+

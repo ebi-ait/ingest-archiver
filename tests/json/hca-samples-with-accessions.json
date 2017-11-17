@@ -34,7 +34,11 @@
       "supplementary_files": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
       "ncbi_taxon_id": 9606,
       "derived_from": "AZ",
-      "sample_id": "AZ_A2"
+      "sample_id": "AZ_A2",
+      "sample_accessions": {
+        "insdc_sample": "ERS1348474",
+        "biosd_sample": "SAMEA4437025"
+      }
     },
     "accession": null,
     "validationState": "Valid",
@@ -101,7 +105,11 @@
       "supplementary_files": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
       "ncbi_taxon_id": 9606,
       "derived_from": "AZ",
-      "sample_id": "AZ_A3"
+      "sample_id": "AZ_A3",
+      "sample_accessions": {
+        "insdc_sample": "ERS1348475",
+        "biosd_sample": "SAMEA4437026"
+      }
     },
     "accession": null,
     "validationState": "Valid",

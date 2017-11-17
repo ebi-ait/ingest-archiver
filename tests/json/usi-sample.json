@@ -1,21 +1,40 @@
 {
-  "alias": "fcb2f565-71b7-4ea3-b298-091b23657fc4",
+  "alias": "hca951",
   "team": {
     "name": "self.hca-user"
   },
-  "title": "Q3_DEMO-donor_MGH30",
+  "title": "pancreas islet normal",
   "description": "",
   "attributes": [{
-    "name": "is_living",
-    "value": "yes",
+    "name": "core_type",
+    "value": "sample",
     "terms": []
   }, {
-    "name": "ncbi_taxon",
-    "value": 9606,
+    "name": "specimen_from_organism_body_part",
+    "value": "islet of Langerhans",
+    "terms": []
+  }, {
+    "name": "specimen_from_organism_organ",
+    "value": "pancreas",
+    "terms": []
+  }, {
+    "name": "genus_species",
+    "value": "Homo sapiens",
+    "terms": []
+  }, {
+    "name": "supplementary_files",
+    "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
+    "terms": []
+  }, {
+    "name": "derived_from",
+    "value": "AZ",
+    "terms": []
+  }, {
+    "name": "sample_id",
+    "value": "AZ_A2",
     "terms": []
   }],
-  "releaseDate": "2017-10-17",
+  "releaseDate": "2017-11-17",
   "sampleRelationships": [],
-  "taxonId": 9606,
-  "taxon": "Homo sapiens"
+  "taxonId": 9606
 }
