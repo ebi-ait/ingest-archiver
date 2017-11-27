@@ -1,26 +1,11 @@
 [
   {
-    "submissionDate": "2017-11-17T14:48:30.430Z",
-    "updateDate": "2017-11-17T14:49:31.013Z",
+    "submissionDate": "2017-11-20T13:12:12.872Z",
+    "updateDate": "2017-11-20T13:12:41.360Z",
     "uuid": {
-      "uuid": "68cda120-9440-469a-952c-cfbb2fd3e1b4"
+      "uuid": "3c14d55c-d441-4d3d-ae68-03029b98c31b"
     },
-    "events": [
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:20.981+0000"
-        },
-        "originalState": "Draft",
-        "endState": "Validating"
-      },
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:31.012+0000"
-        },
-        "originalState": "Validating",
-        "endState": "Valid"
-      }
-    ],
+    "events": [],
     "content": {
       "core": {
         "type": "sample"
@@ -41,57 +26,42 @@
       }
     },
     "accession": null,
-    "validationState": "Valid",
+    "validationState": "Draft",
     "_links": {
       "self": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc"
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5"
       },
       "sample": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5",
         "title": "A single sample"
       },
-      "processing": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/processingEvent"
+      "validating": {
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5/validatingEvent"
       },
       "derivedFromSamples": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/derivedFromSamples"
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5/derivedFromSamples"
       },
       "projects": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/projects",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5/projects",
         "title": "Access or create projects. Creation can only be done inside a submission envelope"
       },
       "protocols": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/protocols",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5/protocols",
         "title": "Access or create protocols"
       },
       "submissionEnvelope": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/submissionEnvelope",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e5/submissionEnvelope",
         "title": "A single submission envelope"
       }
     }
   },
   {
-    "submissionDate": "2017-11-17T14:48:30.479Z",
-    "updateDate": "2017-11-17T14:49:32.049Z",
+    "submissionDate": "2017-11-20T13:12:12.909Z",
+    "updateDate": "2017-11-20T13:12:46.442Z",
     "uuid": {
-      "uuid": "2ef430b0-e3d3-490a-9e01-603ac42edd30"
+      "uuid": "cb61eafe-ea4f-4afd-9cb9-870486f63a9c"
     },
-    "events": [
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:22.024+0000"
-        },
-        "originalState": "Draft",
-        "endState": "Validating"
-      },
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:32.049+0000"
-        },
-        "originalState": "Validating",
-        "endState": "Valid"
-      }
-    ],
+    "events": [],
     "content": {
       "core": {
         "type": "sample"
@@ -112,31 +82,31 @@
       }
     },
     "accession": null,
-    "validationState": "Valid",
+    "validationState": "Draft",
     "_links": {
       "self": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd"
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6"
       },
       "sample": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6",
         "title": "A single sample"
       },
-      "processing": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/processingEvent"
+      "validating": {
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6/validatingEvent"
       },
       "derivedFromSamples": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/derivedFromSamples"
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6/derivedFromSamples"
       },
       "projects": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/projects",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6/projects",
         "title": "Access or create projects. Creation can only be done inside a submission envelope"
       },
       "protocols": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/protocols",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6/protocols",
         "title": "Access or create protocols"
       },
       "submissionEnvelope": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/submissionEnvelope",
+        "href": "http://localhost:8080/samples/5a12d4ac894f4b02079695e6/submissionEnvelope",
         "title": "A single submission envelope"
       }
     }

@@ -12,7 +12,7 @@ class IngestAPI:
         self.logger = logging.getLogger(__name__)
         self.headers = {
             'Content-type': 'application/json',
-            'Accept': 'application/json',
+            # 'Accept': 'application/json',
         }
         self.url = config.INGEST_API_URL
 
@@ -49,12 +49,12 @@ class IngestAPI:
 
         return samples
 
-    # TODO test this
     def update_content(self, entity_url, content_json):
         response = requests.get(entity_url)
         content = self.handle_response(response)['content']
         content.update(content_json)
         response = requests.put(entity_url, json.dumps(content))
+
         return self.handle_response(response)
 
     def handle_response(self, response):
@@ -63,3 +63,40 @@ class IngestAPI:
         else:
             self.logger.error('Response:' + response.text)
             return None
+
+    def create_submission(self):
+        links = self.get_ingest_links()
+        create_submission_url = links['submissionEnvelopes']['href'].rsplit("{")[0]
+        response = requests.post(create_submission_url, headers=self.headers, data='{}')
+
+        return self.handle_response(response)
+
+    def get_ingest_links(self):
+        response = requests.get(self.url, headers=self.headers)
+        ingest = self.handle_response(response)
+
+        if ingest:
+            return ingest["_links"]
+
+        return None
+
+    def link_samples_to_submission(self, link_url, samples):
+        sample_reference = {"uuids": samples}
+        response = requests.put(link_url, headers=self.headers, data=json.dumps(sample_reference))
+
+        return self.handle_response(response)
+
+    def get_submit_url(self, submission):
+        submission_url = submission['_links']['self']['href']
+        response = requests.get(submission_url, headers=self.headers)
+        submission = self.handle_response(response)
+
+        if submission and 'submit' in submission['_links']:
+            return submission['_links']["submit"]["href"].rsplit("{")[0]
+
+        return None
+
+    def submit(self, submit_url):
+        response = requests.put(submit_url, headers=self.headers)
+
+        return self.handle_response(response)

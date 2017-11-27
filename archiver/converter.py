@@ -39,7 +39,7 @@ class Converter:
             if key in flattened_hca_data:
                 extracted_data[new_key] = flattened_hca_data[key]
             else:
-                self.logger.error(key + ' is not found in the metadata.')
+                self.logger.warning(key + ' is not found in the metadata.')
 
         return extracted_data
 
@@ -63,11 +63,15 @@ class Converter:
             "team": {
                 "name": 'self.hca-user'
             },
-            'title': extracted_data["title"],
             "description": "",
             "attributes": extracted_data["attributes"],
             "releaseDate": extracted_data["releaseDate"].split('T')[0],  # extract date from 2017-09-28T10:52:59.419Z
             "sampleRelationships": [],
             "taxonId": extracted_data["taxonId"]
         }
+
+        # non required fields
+        if "title" in extracted_data:
+            usi_data["title"] = extracted_data["title"]
+
         return usi_data

@@ -86,7 +86,6 @@ class USIAPI:
     # ===
 
     def _get(self, url):
-        # url = unquote(url)
         response = requests.get(url, headers=self.headers)
         return self._get_json(response)
 

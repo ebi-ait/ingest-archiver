@@ -1,10 +1,7 @@
 import unittest
 import os
 import json
-import time
 import config
-
-from random import randint
 
 from archiver.usiapi import USIAPI
 from archiver.converter import Converter

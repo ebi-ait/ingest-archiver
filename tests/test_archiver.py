@@ -1,13 +1,12 @@
-import unittest
 import json
 import time
-import polling as polling
-import config
-
+import unittest
 from random import randint
 
+import config
 from archiver.archiver import IngestArchiver
 from archiver.converter import Converter
+from archiver.ingestapi import IngestAPI
 
 # TODO use mocks for requests
 # TODO add test cases
@@ -17,6 +16,7 @@ class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
         self.archiver = IngestArchiver()
         self.converter = Converter()
+        self.ingest_api = IngestAPI()
 
         with open(config.JSON_DIR + 'hca-samples.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
@@ -71,3 +71,15 @@ class TestIngestArchiver(unittest.TestCase):
     def test_archive(self):
         summary = self.archiver.archive(self.hca_submission)
         self.assertTrue(summary["is_completed"])
+
+    def test_archive_skip_metadata_with_accessions(self):
+        with open(config.JSON_DIR + 'hca-samples-with-accessions.json', encoding=config.ENCODING) as data_file:
+            samples = json.loads(data_file.read())
+        hca_submission = {'samples': samples}
+        summary = self.archiver.archive(hca_submission)
+
+        print('SUMMARY:\n' + str(summary))
+
+        self.assertTrue(summary["is_completed"])
+        self.assertFalse(summary["converted_samples"])
+        self.assertFalse(summary["created_samples"])

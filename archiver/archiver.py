@@ -20,28 +20,45 @@ class IngestArchiver:
     def archive(self, hca_data):
         summary = self.add_submission_contents(hca_data)
         submission = summary['usi_submission']
+        summary["is_completed"] = False
+        errors = []
+        result = []
 
-        is_validated = polling.poll(
-            lambda: self.is_validated(submission),
-            step=VALIDATION_POLLING_STEP,
-            timeout=VALIDATION_POLLING_TIMEOUT
-        )
+        try:
+            is_validated = polling.poll(
+                lambda: self.is_validated(submission),
+                step=VALIDATION_POLLING_STEP,
+                timeout=VALIDATION_POLLING_TIMEOUT
+            )
+        except polling.TimeoutException as te:
+            error_message = "USI validation takes too long to complete."
+            self.logger.error(error_message)
+            errors.append(error_message)
 
         is_submittable = self.is_submittable(submission)
 
         if is_validated and is_submittable:
             self.usi_api.update_submission_status(submission, 'Submitted')
-        else:
+        else:  # invalid
             validation_summary = self.get_all_validation_result_details(submission)
             summary['validation_summary'] = validation_summary
+            return summary
 
-        is_completed = polling.poll(
-            lambda: self.is_processing_complete(submission),
-            step=SUBMISSION_POLLING_STEP,
-            timeout=SUBMISSION_POLLING_TIMEOUT
-        )  # TODO handle timeout error
+        try:
+            summary["is_completed"] = polling.poll(
+                lambda: self.is_processing_complete(submission),
+                step=SUBMISSION_POLLING_STEP,
+                timeout=SUBMISSION_POLLING_TIMEOUT
+            )
+            result = self.get_processing_results(submission)
 
-        summary["is_completed"] = is_completed
+        except polling.TimeoutException:
+            error_message = "USI submission takes too long complete."
+            self.logger.error(error_message)
+            errors.append(error_message)
+
+        summary['errors'] = errors
+        summary["processing_results"] = result
 
         return summary
 
@@ -53,7 +70,6 @@ class IngestArchiver:
         create_sample_url = contents['_links']['samples:create']['href']
 
         # TODO must know which contents are needed for this archive
-        # TODO skip contents which has accessioning input from user
         samples = hca_submission['samples']
 
         converted_samples = []  # TODO should this be atomic?
@@ -61,7 +77,11 @@ class IngestArchiver:
         hca_samples_by_alias = {}
 
         for sample in samples:
+            if IngestArchiver.is_metadata_accessioned(sample):
+                continue
+
             converted_sample = None
+
             try:
                 converted_sample = self.converter.convert_sample(sample)
                 converted_samples.append(converted_sample)
@@ -149,3 +169,22 @@ class IngestArchiver:
     def get_processing_results(self, usi_submission):
         return self.usi_api.get_processing_results(usi_submission)
 
+    @staticmethod
+    def is_metadata_accessioned(sample):
+        return ("sample_accessions" in sample["content"]) and ("biosd_sample" in sample["content"]["sample_accessions"])
+
+
+class ArchiverSummary:
+    def __init__(self):
+        self.usi_submission = {}
+        self.hca_submission = {}
+        self.hca_submission_by_alias = {}
+        self.errors = []
+        self.processing_result = []
+        self.validation_result = []
+        self.is_completed = False
+        self.created = []
+        self.converted = []
+
+    def to_str(self):
+        return str(vars(self))
