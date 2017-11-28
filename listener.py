@@ -7,7 +7,6 @@ import json
 import polling
 
 import config
-import threading
 
 from archiver.archiver import IngestArchiver
 from archiver.ingestapi import IngestAPI
@@ -63,12 +62,12 @@ class ArchiveSubmissionProcessor:
                     "biosd_sample": accession['accession']
                 }
             }
-            updated_sample = self.ingest_api.update_content(accession['entity_url'], content_patch)
+            sample_url = accession['entity_url']
+            updated_sample = self.ingest_api.update_content(sample_url, content_patch)
 
             if updated_sample:
                 updated_samples_uuids.append(updated_sample['uuid']['uuid'])
-                self.ingest_api.link_samples_to_submission(submission_samples_url,
-                                                           [updated_sample['uuid']['uuid']])
+                self.ingest_api.link_samples_to_submission(submission_samples_url, sample_url)
 
         try:
             submit_url = polling.poll(
@@ -94,7 +93,7 @@ class ArchiverListener:
         self.queue = config.RABBITMQ_ARCHIVAL_QUEUE
         self.logger.debug("rabbit queue is " + self.queue)
 
-        connection = pika.BlockingConnection(pika.URLParameters(self.rabbit))  # TODO How to be async?
+        connection = pika.BlockingConnection(pika.URLParameters(self.rabbit))
         channel = connection.channel()
         self.channel = channel
 
@@ -110,8 +109,7 @@ class ArchiverListener:
             if hca_submission_uuid:
                 try:
                     processor = ArchiveSubmissionProcessor()
-                    thread = threading.Thread(target=processor.run, args=hca_submission_uuid)
-                    thread.start()
+                    processor.run(hca_submission_uuid)
                 except Exception as e:
                     self.logger.error(str(e))
 

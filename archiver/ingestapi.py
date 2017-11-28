@@ -80,9 +80,10 @@ class IngestAPI:
 
         return None
 
-    def link_samples_to_submission(self, link_url, samples):
-        sample_reference = {"uuids": samples}
-        response = requests.put(link_url, headers=self.headers, data=json.dumps(sample_reference))
+    def link_samples_to_submission(self, link_url, sample_url):
+        sample_id = sample_url.split('/')[-1]
+        link_url = link_url + '/' + sample_id
+        response = requests.put(link_url, headers=self.headers)
 
         return self.handle_response(response)
 

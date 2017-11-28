@@ -21,9 +21,9 @@ class IngestArchiver:
         summary = self.add_submission_contents(hca_data)
         submission = summary['usi_submission']
         summary["is_completed"] = False
-        errors = []
-        result = []
+        summary['errors'] = []
 
+        is_validated = False
         try:
             is_validated = polling.poll(
                 lambda: self.is_validated(submission),
@@ -33,16 +33,18 @@ class IngestArchiver:
         except polling.TimeoutException as te:
             error_message = "USI validation takes too long to complete."
             self.logger.error(error_message)
-            errors.append(error_message)
+            summary['errors'].append(error_message)
 
         is_submittable = self.is_submittable(submission)
 
-        if is_validated and is_submittable:
-            self.usi_api.update_submission_status(submission, 'Submitted')
-        else:  # invalid
+        if not is_validated or not is_submittable:
             validation_summary = self.get_all_validation_result_details(submission)
             summary['validation_summary'] = validation_summary
+            summary['errors'].append('Failed in USI validation.')
+
             return summary
+
+        self.usi_api.update_submission_status(submission, 'Submitted')
 
         try:
             summary["is_completed"] = polling.poll(
@@ -50,15 +52,12 @@ class IngestArchiver:
                 step=SUBMISSION_POLLING_STEP,
                 timeout=SUBMISSION_POLLING_TIMEOUT
             )
-            result = self.get_processing_results(submission)
+            summary["processing_results"] = self.get_processing_results(submission)
 
         except polling.TimeoutException:
             error_message = "USI submission takes too long complete."
             self.logger.error(error_message)
-            errors.append(error_message)
-
-        summary['errors'] = errors
-        summary["processing_results"] = result
+            summary['errors'].append(error_message)
 
         return summary
 
