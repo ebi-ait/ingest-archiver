@@ -44,7 +44,7 @@ class Converter:
         return extracted_data
 
     def _extract_attributes(self, flattened_hca_data):
-        attributes = []
+        attributes = {}
         prefix = "content_"
         for key, value in flattened_hca_data.items():
             if key.startswith(prefix) and key not in HCA_USI_KEY_MAP:
@@ -53,8 +53,7 @@ class Converter:
                     "value": value,
                     "terms": []
                 }
-                attributes.append(attr)
-
+                attributes[attr['name']] = [dict(value=value)]
         return attributes
 
     def _build_output(self, extracted_data):
