@@ -23,14 +23,15 @@ class ArchiveSubmissionProcessor:
         hca_submission = {'samples': samples}
 
         summary = self.archiver.archive(hca_submission)
-        self.logger.info(str(summary))
 
-        if summary['is_completed']:
+        self.logger.debug(str(summary))
+
+        if summary['is_completed'] and summary['processing_results']:
             accessions = self.get_accessions(summary)
             self.do_update_accessions_submission(accessions)
+            self.logger.info("Done updating the accessions")
 
     def get_accessions(self, archive_summary):
-        usi_submission = archive_summary['usi_submission']
         hca_samples_by_alias = archive_summary['hca_samples_by_alias']
         results = archive_summary['processing_results']
 
@@ -44,16 +45,16 @@ class ArchiveSubmissionProcessor:
                     'accession': result['accession']
                 }
                 accessions.append(accession)
-
         return accessions
 
     def do_update_accessions_submission(self, accessions):
+        if not accessions:
+            return
+
         new_submission = self.ingest_api.create_submission()
-        self.info("Creating new submisssion: " + str(new_submission))
+        self.logger.info("Creating new submission: " + str(new_submission))
 
         submission_samples_url = new_submission["_links"]["samples"]["href"].rsplit("{")[0]
-
-        updated_samples_uuids = []
 
         for accession in accessions:
             # the accessioning service must know some metadata schema to know how to update the schema
@@ -66,7 +67,6 @@ class ArchiveSubmissionProcessor:
             updated_sample = self.ingest_api.update_content(sample_url, content_patch)
 
             if updated_sample:
-                updated_samples_uuids.append(updated_sample['uuid']['uuid'])
                 self.ingest_api.link_samples_to_submission(submission_samples_url, sample_url)
 
         try:
@@ -77,7 +77,7 @@ class ArchiveSubmissionProcessor:
             )
             self.ingest_api.submit(submit_url)
         except polling.TimeoutException:
-            self.logger.error("Failed to do an update submission. The submisssion takes too long to get "
+            self.logger.error("Failed to do an update submission. The submission takes too long to get "
                               "validated and couldn't be submitted.")
 
 

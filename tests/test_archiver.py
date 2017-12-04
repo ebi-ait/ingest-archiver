@@ -67,18 +67,18 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.assertTrue(is_validated_and_submittable)
 
-    @unittest.skip('submitted submissions cannot be deleted, skipping this')
+    # @unittest.skip('submitted submissions cannot be deleted, skipping this')
     def test_archive(self):
         summary = self.archiver.archive(self.hca_submission)
+
         self.assertTrue(summary["is_completed"])
+        self.assertTrue(summary["processing_results"])
 
     def test_archive_skip_metadata_with_accessions(self):
         with open(config.JSON_DIR + 'hca-samples-with-accessions.json', encoding=config.ENCODING) as data_file:
             samples = json.loads(data_file.read())
         hca_submission = {'samples': samples}
         summary = self.archiver.archive(hca_submission)
-
-        print('SUMMARY:\n' + str(summary))
 
         self.assertTrue(summary["is_completed"])
         self.assertFalse(summary["converted_samples"])

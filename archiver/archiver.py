@@ -22,6 +22,14 @@ class IngestArchiver:
         submission = summary['usi_submission']
         summary["is_completed"] = False
         summary['errors'] = []
+        summary['info'] = []
+        summary["processing_results"] = []
+
+        if not summary['converted_samples']:
+            summary["is_completed"] = True
+            summary['info'] = ['Nothing to archive.']
+            self.logger.info(summary['info'])
+            return summary
 
         is_validated = False
         try:
