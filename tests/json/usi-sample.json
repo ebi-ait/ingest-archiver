@@ -1,40 +1,34 @@
 {
-  "alias": "hca951",
+  "alias": "hca339",
   "team": {
     "name": "self.hca-user"
   },
-  "title": "pancreas islet normal",
   "description": "",
-  "attributes": [{
-    "name": "core_type",
-    "value": "sample",
-    "terms": []
-  }, {
-    "name": "specimen_from_organism_body_part",
-    "value": "islet of Langerhans",
-    "terms": []
-  }, {
-    "name": "specimen_from_organism_organ",
-    "value": "pancreas",
-    "terms": []
-  }, {
-    "name": "genus_species",
-    "value": "Homo sapiens",
-    "terms": []
-  }, {
-    "name": "supplementary_files",
-    "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
-    "terms": []
-  }, {
-    "name": "derived_from",
-    "value": "AZ",
-    "terms": []
-  }, {
-    "name": "sample_id",
-    "value": "AZ_A2",
-    "terms": []
-  }],
+  "attributes": {
+    "core_type": [{
+      "value": "sample"
+    }],
+    "specimen_from_organism_body_part": [{
+      "value": "islet of Langerhans"
+    }],
+    "specimen_from_organism_organ": [{
+      "value": "pancreas"
+    }],
+    "genus_species": [{
+      "value": "Homo sapiens"
+    }],
+    "supplementary_files": [{
+      "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip"
+    }],
+    "derived_from": [{
+      "value": "AZ"
+    }],
+    "sample_id": [{
+      "value": "AZ_A2"
+    }]
+  },
   "releaseDate": "2017-11-17",
   "sampleRelationships": [],
-  "taxonId": 9606
+  "taxonId": 9606,
+  "title": "pancreas islet normal"
 }
