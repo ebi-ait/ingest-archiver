@@ -11,7 +11,9 @@ class TestIngestAPI(unittest.TestCase):
     def test_create_submission_success(self):
         token = self.ingest_api.get_auth_token()
         submission = self.ingest_api.create_submission(token)
-        print(submission)
+        submission_url = submission["_links"]["self"]["href"]
+        self.ingest_api.delete_submission(submission_url)
+
         self.assertTrue(submission)
 
     def test_create_submission_fail(self):

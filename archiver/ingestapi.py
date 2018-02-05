@@ -93,6 +93,10 @@ class IngestAPI:
 
         return self.handle_response(response)
 
+    def delete_submission(self, submission_url):
+        response = requests.delete(submission_url, headers=self.headers)
+        response.raise_for_status()
+
     def get_ingest_links(self):
         response = requests.get(self.url, headers=self.headers)
         ingest = self.handle_response(response)
