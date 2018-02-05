@@ -6,13 +6,21 @@ import config
 # TODO this file may be removed if the event will contain all the hca submission details
 # if not, this must be integrated with the current ingest api module that other ingest services uses
 
+AUTH0_PARAMS = {
+    "client_id": "Zdsog4nDAnhQ99yiKwMQWAPc2qUDlR99",
+    "client_secret": "t-OAE-GQk_nZZtWn-QQezJxDsLXmU7VSzlAh9cKW5vb87i90qlXGTvVNAjfT9weF",
+    "audience": "http://localhost:8080",
+    "grant_type": "client_credentials"
+}
+
+AUTH0_URL = 'https://danielvaughan.eu.auth0.com/oauth/token'
+
 
 class IngestAPI:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.headers = {
             'Content-type': 'application/json',
-            # 'Accept': 'application/json',
         }
         self.url = config.INGEST_API_URL
 
@@ -64,10 +72,24 @@ class IngestAPI:
             self.logger.error('Response:' + response.text)
             return None
 
-    def create_submission(self):
+    def create_submission(self, auth_token):
+        if not auth_token:
+            auth_token = self.get_token()
+
+        token_type = auth_token['token_type']
+        access_token = auth_token['access_token']
+
+        auth_header = f"{token_type} {access_token}"
+
+        headers = {
+            'Content-type': 'application/json',
+            'Authorization': auth_header
+        }
+
         links = self.get_ingest_links()
         create_submission_url = links['submissionEnvelopes']['href'].rsplit("{")[0]
-        response = requests.post(create_submission_url, headers=self.headers, data='{}')
+
+        response = requests.post(create_submission_url, headers=headers, data='{}')
 
         return self.handle_response(response)
 
@@ -101,3 +123,13 @@ class IngestAPI:
         response = requests.put(submit_url, headers=self.headers)
 
         return self.handle_response(response)
+
+    def get_auth_token(self):
+        response = requests.post(AUTH0_URL,
+                                 data=json.dumps(AUTH0_PARAMS),
+                                 headers={'Content-type': 'application/json'})
+        response.raise_for_status()
+        data = response.json()
+
+        return data
+

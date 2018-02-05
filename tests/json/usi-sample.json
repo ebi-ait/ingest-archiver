@@ -5,13 +5,13 @@
   },
   "description": "",
   "attributes": {
-    "core_type": [{
+    "core__type": [{
       "value": "sample"
     }],
-    "specimen_from_organism_body_part": [{
+    "specimen_from_organism__body_part": [{
       "value": "islet of Langerhans"
     }],
-    "specimen_from_organism_organ": [{
+    "specimen_from_organism__organ": [{
       "value": "pancreas"
     }],
     "genus_species": [{

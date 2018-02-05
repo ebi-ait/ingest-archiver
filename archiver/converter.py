@@ -2,9 +2,9 @@ import logging
 from flatten_json import flatten
 
 HCA_USI_KEY_MAP = {
-    "uuid_uuid": "alias",
-    "content_name": "title",
-    "content_ncbi_taxon_id": "taxonId",
+    "uuid__uuid": "alias",
+    "content__name": "title",
+    "content__ncbi_taxon_id": "taxonId",
     "submissionDate": "releaseDate"
 }
 
@@ -31,7 +31,7 @@ class Converter:
         return converted_data
 
     def _extract_sample_fields(self, hca_data):
-        flattened_hca_data = flatten(hca_data)
+        flattened_hca_data = flatten(hca_data, '__')
 
         extracted_data = {"attributes": self._extract_attributes(flattened_hca_data)}
 
@@ -45,7 +45,7 @@ class Converter:
 
     def _extract_attributes(self, flattened_hca_data):
         attributes = {}
-        prefix = "content_"
+        prefix = "content__"
         for key, value in flattened_hca_data.items():
             if key.startswith(prefix) and key not in HCA_USI_KEY_MAP:
                 attr = {
