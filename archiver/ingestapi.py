@@ -2,6 +2,7 @@ import json
 import requests
 import logging
 import config
+import polling
 
 # TODO this file may be removed if the event will contain all the hca submission details
 # if not, this must be integrated with the current ingest api module that other ingest services uses
@@ -24,7 +25,19 @@ class IngestAPI:
         }
         self.url = config.INGEST_API_URL
 
-    def get_submission(self, uuid):
+    def get_submission_by_id(self, submission_id):
+        get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
+
+        response = requests.get(get_submission_url, headers=self.headers)
+
+        submission = None
+
+        if response.ok:
+            submission = json.loads(response.text)
+
+        return submission
+
+    def get_submission_by_uuid(self, uuid):
         get_submission_url = self.url + '/submissionEnvelopes/search/findByUuid?uuid=' + uuid
 
         response = requests.get(get_submission_url, headers=self.headers)
@@ -47,7 +60,7 @@ class IngestAPI:
         return samples
 
     def get_samples_by_submission(self, submission_uuid):
-        submission = self.get_submission(submission_uuid)
+        submission = self.get_submission_by_uuid(submission_uuid)
 
         samples = []
 
@@ -74,7 +87,7 @@ class IngestAPI:
 
     def create_submission(self, auth_token):
         if not auth_token:
-            auth_token = self.get_token()
+            auth_token = self.get_auth_token()
 
         token_type = auth_token['token_type']
         access_token = auth_token['access_token']
@@ -137,3 +150,28 @@ class IngestAPI:
 
         return data
 
+    def get_link_href(self, hal_response, link_name):
+        link = hal_response['_links'][link_name]
+        return link['href'].rsplit("{")[0] if link else ''
+
+    def create_sample(self, submission, content):
+        samples_url = self.get_link_href(submission, 'samples')
+
+        response = requests.post(samples_url,
+                                 data=json.dumps(content),
+                                 headers=self.headers)
+
+        response.raise_for_status()
+        return response.json()
+
+    def submit_if_valid(self, submission):
+        try:
+            submit_url = polling.poll(
+                lambda: self.get_submit_url(submission),
+                step=5,
+                timeout=60
+            )
+            self.submit(submit_url)
+        except polling.TimeoutException:
+            self.logger.error("Failed to do an update submission. The submission takes too long to get " +
+                              "validated and couldn't be submitted.")

@@ -1,0 +1,17 @@
+{
+  "core": {
+    "type": "sample",
+    "schema_url": "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/4.6.1/json_schema/sample.json",
+    "schema_version": "4.6.1"
+  },
+  "ncbi_taxon_id": 9606,
+  "name": "Q4 DEMO donor MGH30",
+  "sample_id": "Q4_DEMO-donor_MGH30",
+  "donor": {
+    "is_living": true
+  },
+  "genus_species": {
+    "text": "Homo sapiens",
+    "ontology": "NCBITaxon:9606"
+  }
+}
