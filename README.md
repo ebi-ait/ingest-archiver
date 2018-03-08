@@ -13,6 +13,7 @@ Currently, the archiver uses the [USI Submissions API](https://submission-dev.eb
 
 This component listens for submissions on the ingest messaging queue. When a submission is completed in ingest the archiver will receive a message containing the submission uuid and trigger the archiving process.
 
+Only the samples are the metadata being archived in BioSamples (thru USI) at the moment.
 
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
@@ -61,4 +62,4 @@ For the versions available, see the [tags on this repository](https://github.com
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
