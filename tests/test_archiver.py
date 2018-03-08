@@ -70,8 +70,9 @@ class TestIngestArchiver(unittest.TestCase):
     # @unittest.skip('submitted submissions cannot be deleted, skipping this')
     def test_archive(self):
         summary = self.archiver.archive(self.hca_submission)
-
+        print(summary)
         self.assertTrue(summary["is_completed"])
+        self.assertTrue(summary["converted_samples"])
         self.assertTrue(summary["processing_results"])
 
     def test_archive_skip_metadata_with_accessions(self):
