@@ -3,25 +3,62 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8ce423001595db4e6de7/test_coverage)](https://codeclimate.com/github/HumanCellAtlas/ingest-archiver/test_coverage)
 
 # Ingest Archiver
-Take a valid HCA metadata and submits to archives returning accession id.
+The archiver service is one of the ingest components which is responsible for the following:
+- submitting metadata submitted to ingest database to appropriate external accessioning authorities (i.e. EBI archives - BioSamples etc.)
+- converting the metadata from ingest into a structure or format that each external accessioning authorities accepts
+- informing the accessioning service of the accessions acquired from submitting the ingest metadata / updating the metadata (Currently, the archiver updates the metadata directly in ingest core. Ideally, only the accessioning service should how the accessions will be updated. This should be implemented in the future.)
+- updating the archive should the data in ingest has been updated
 
-## Components
-- Converter: Take valid HCA JSON and return valid USI JSON
+Currently, the archiver uses the [USI Submissions API](https://submission-dev.ebi.ac.uk/api/docs/how_to_submit_data_programatically.html#_overview) to communicate with EBI archives. This service is designed to be used as the interface to EBI archive submissions where the accessions will be obtained.
 
-## TODO:
-- Update README.md
-- Provide import instructions for Intellij
-- ~~Provide requirements.txt (or similar) for dependencies~~
-- ~~Move tests and test data into a suitable location to any Python standards~~
-- ~~Add travis build and test execution~~
-- Provide a serverless framework configuration to deploy converter as Lambda that  accepts HCA JSON via HTTP POST and return USI JSON
-- Deploy to AWS
+This component listens for submissions on the ingest messaging queue. When a submission is completed in ingest the archiver will receive a message containing the submission uuid and trigger the archiving process.
 
-## HCA to USI attribute mapping
-- content.id->title
-- uuid.uuid->alias (temporary)
-- content.species.ontology->taxonId
-- content.species.text->taxon
-- submissionDate->attributes[<index>].name["release"]
-- content.*.key->attributes[<index>].name[key]
-- content.*.value->attributes[<index>].name[value]
+
+## Getting Started
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+
+### Prerequisites
+
+#### Python 3
+
+- Install [Python OSX Install](http://docs.python-guide.org/en/latest/starting/install3/osx/#install3-osx)
+- Install [Pipenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtualenvironments-ref)
+
+```
+# Add path for pipenv:
+
+sudo vi /etc/paths.d/python3
+/Users/<user>/Library/Python/3.6/bin
+```
+
+#### Installing python modules
+```
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+### How to run
+
+```
+python listener.py
+
+```
+
+### How to run the tests
+
+```
+python -m unittest discover -s tests -t tests
+
+```
+
+## Deployment
+See https://github.com/HumanCellAtlas/ingest-kube-deployment.
+
+An AAP username and password is also needed to use the USI API and must be set in the config.py or as environment variable.
+
+## Versioning
+
+For the versions available, see the [tags on this repository](https://github.com/HumanCellAtlas/ingest-archiver/tags).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
