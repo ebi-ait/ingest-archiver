@@ -59,7 +59,7 @@ class TestIngestAPI(unittest.TestCase):
         token = self.ingest_api.get_auth_token()
         update_submission = self.ingest_api.create_submission(token)
 
-        new_samples_url = self.ingest_api.get_link_href(update_submission, 'samples')
+        new_samples_url = self.ingest_api.get_link_href(update_submission, 'biomaterials')
         new_sample = self.ingest_api.link_samples_to_submission(new_samples_url, sample_url)
 
         new_sample_url = self.ingest_api.get_link_href(new_sample, 'self')
