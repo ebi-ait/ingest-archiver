@@ -108,10 +108,8 @@ class USIAPI:
         return False
 
     def _get_json(self, response):
-        if response.ok:
-            return json.loads(response.text)
-        else:
-            self.logger.error('Response:' + response.text)
+        response.raise_for_status()
+        return response.json()
 
         return None
 

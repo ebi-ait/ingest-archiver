@@ -23,7 +23,7 @@ class TestUSIAPI(unittest.TestCase):
         pass
 
     def test_get_token_given_valid_credentials_return_token(self):
-        aap_user = 'hcaingestd'
+        aap_user = 'hca-ingest'
         aap_password = ''
 
         if 'AAP_API_PASSWORD' in os.environ:
