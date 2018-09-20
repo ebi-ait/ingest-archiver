@@ -155,7 +155,7 @@ class IngestAPI:
         return link['href'].rsplit("{")[0] if link else ''
 
     def create_sample(self, submission, content):
-        samples_url = self.get_link_href(submission, 'samples')
+        samples_url = self.get_link_href(submission, 'biomaterials')
 
         response = requests.post(samples_url,
                                  data=json.dumps(content),
