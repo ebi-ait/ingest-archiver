@@ -19,12 +19,12 @@ INGEST_API_PORT = '8080'
 INGEST_API_URL = INGEST_API_HOST + ':' + INGEST_API_PORT
 INGEST_API_URL = os.path.expandvars(os.environ.get('INGEST_API', INGEST_API_URL))
 
-AAP_API_URL = os.environ.get('AAP_API_URL', 'https://explore.api.aap.tsi.ebi.ac.uk/auth')
-AAP_API_USER = 'hcaingestd'
+AAP_API_URL = os.environ.get('AAP_API_URL', 'https://explore.api.aai.ebi.ac.uk/auth')
+AAP_API_USER = 'hca-ingest'
 AAP_API_PASSWORD = os.environ['AAP_API_PASSWORD'] if 'AAP_API_PASSWORD' in os.environ else ''
-AAP_API_DOMAIN = 'self.hca-user'
+AAP_API_DOMAIN = 'subs.test-team-21'
 
-USI_API_URL = 'https://submission-dev.ebi.ac.uk'
+USI_API_URL = 'https://submission-test.ebi.ac.uk'
 
 JSON_DIR = 'tests/json/'
 ENCODING = 'utf-8'
