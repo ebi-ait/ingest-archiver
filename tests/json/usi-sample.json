@@ -5,30 +5,30 @@
   },
   "description": "",
   "attributes": {
-    "core__type": [{
-      "value": "sample"
+    "biomaterial_core__biomaterial_id": [{
+        "value": "Q4_DEMO-donor_MGH30"
     }],
-    "specimen_from_organism__body_part": [{
-      "value": "islet of Langerhans"
+    "describedBy": [{
+        "value": "http://schema.integration.data.humancellatlas.org/type/biomaterial/10.1.1/donor_organism"
     }],
-    "specimen_from_organism__organ": [{
-      "value": "pancreas"
+    "genus_species__0__text": [{
+        "value": "Homo sapiens"
     }],
-    "genus_species": [{
-      "value": "Homo sapiens"
+    "is_living": [{
+        "value": "no"
     }],
-    "supplementary_files": [{
-      "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip"
+    "medical_history__smoking_history": [{
+        "value": "yes"
     }],
-    "derived_from": [{
-      "value": "AZ"
+    "schema_type": [{
+        "value": "biomaterial"
     }],
-    "sample_id": [{
-      "value": "AZ_A2"
+    "sex": [{
+        "value": "unknown"
     }]
   },
-  "releaseDate": "2017-11-17",
+  "releaseDate": "2018-09-12",
   "sampleRelationships": [],
   "taxonId": 9606,
-  "title": "pancreas islet normal"
+  "title": "Q4 DEMO donor MGH30"
 }

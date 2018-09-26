@@ -1,40 +1,32 @@
 {
-  "submissionDate": "2017-11-17T14:48:30.430Z",
-  "updateDate": "2017-11-17T14:49:31.013Z",
-  "uuid": {
-    "uuid": "68cda120-9440-469a-952c-cfbb2fd3e1b4"
-  },
-  "events": [
-    {
-      "submissionDate": {
-        "date": "2017-11-17T14:49:20.981+0000"
-      },
-      "originalState": "Draft",
-      "endState": "Validating"
+    "content": {
+        "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/10.1.1/donor_organism",
+        "schema_type": "biomaterial",
+        "biomaterial_core": {
+            "biomaterial_id": "Q4_DEMO-donor_MGH30",
+            "biomaterial_name": "Q4 DEMO donor MGH30",
+            "ncbi_taxon_id": [
+                9606
+            ]
+        },
+        "medical_history": {
+            "smoking_history": "yes"
+        },
+        "genus_species": [{
+            "text": "Homo sapiens"
+        }],
+        "is_living": "no",
+        "sex": "unknown"
     },
-    {
-      "submissionDate": {
-        "date": "2017-11-17T14:49:31.012+0000"
-      },
-      "originalState": "Validating",
-      "endState": "Valid"
-    }
-  ],
-  "content": {
-    "core": {
-      "type": "sample"
+    "submissionDate": "2018-09-12T02:59:58.368Z",
+    "updateDate": "2018-09-12T03:00:01.696Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "d85ac5e2-733c-46ad-937f-db5d704aa177"
     },
-    "name": "pancreas islet normal",
-    "specimen_from_organism": {
-      "body_part": "islet of Langerhans",
-      "organ": "pancreas"
-    },
-    "genus_species": "Homo sapiens",
-    "supplementary_files": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
-    "ncbi_taxon_id": 9606,
-    "derived_from": "AZ",
-    "sample_id": "AZ_A2"
-  },
-  "accession": null,
-  "validationState": "Valid"
+    "events": [],
+    "accession": null,
+    "validationState": "Valid",
+    "validationErrors": []
 }

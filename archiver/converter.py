@@ -3,8 +3,8 @@ from flatten_json import flatten
 
 HCA_USI_KEY_MAP = {
     "uuid__uuid": "alias",
-    "content__name": "title",
-    "content__ncbi_taxon_id": "taxonId",
+    "content__biomaterial_core__biomaterial_name": "title",
+    "content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
     "submissionDate": "releaseDate"
 }
 
@@ -42,6 +42,8 @@ class Converter:
                 self.logger.warning(key + ' is not found in the metadata.')
 
         return extracted_data
+
+
 
     def _extract_attributes(self, flattened_hca_data):
         attributes = {}

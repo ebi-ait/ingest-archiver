@@ -1,136 +1,93 @@
 [
+    {
+      "content": {
+          "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/10.1.1/donor_organism",
+          "schema_type": "biomaterial",
+          "biomaterial_core": {
+              "biomaterial_id": "Q4_DEMO-donor_MGH30",
+              "biomaterial_name": "Q4 DEMO donor MGH30",
+              "ncbi_taxon_id": [
+                  9606
+              ]
+          },
+          "medical_history": {
+              "smoking_history": "yes"
+          },
+          "genus_species": [{
+              "text": "Homo sapiens"
+          }],
+          "is_living": "no",
+          "sex": "unknown"
+      },
+      "submissionDate": "2018-09-12T02:59:58.368Z",
+      "updateDate": "2018-09-12T03:00:01.696Z",
+      "user": "anonymousUser",
+      "lastModifiedUser": "anonymousUser",
+      "uuid": {
+          "uuid": "d85ac5e2-733c-46ad-937f-db5d704aa177"
+      },
+      "events": [],
+      "accession": null,
+      "validationState": "Valid",
+      "validationErrors": []
+  },
   {
-    "submissionDate": "2017-11-17T14:48:30.430Z",
-    "updateDate": "2017-11-17T14:49:31.013Z",
-    "uuid": {
-      "uuid": "68cda120-9440-469a-952c-cfbb2fd3e1b4"
-    },
-    "events": [
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:20.981+0000"
-        },
-        "originalState": "Draft",
-        "endState": "Validating"
-      },
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:31.012+0000"
-        },
-        "originalState": "Validating",
-        "endState": "Valid"
-      }
-    ],
     "content": {
-      "core": {
-        "type": "sample"
-      },
-      "name": "pancreas islet normal",
-      "specimen_from_organism": {
-        "body_part": "islet of Langerhans",
-        "organ": "pancreas"
-      },
-      "genus_species": "Homo sapiens",
-      "supplementary_files": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
-      "ncbi_taxon_id": 9606,
-      "derived_from": "AZ",
-      "sample_id": "AZ_A2"
+        "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/6.3.1/specimen_from_organism",
+        "schema_type": "biomaterial",
+        "biomaterial_core": {
+            "biomaterial_id": "Q4_DEMO-sample_SAMN02797092",
+            "biomaterial_name": "Q4_DEMO-Single cell mRNA-seq_MGH30_A01",
+            "ncbi_taxon_id": [
+                9606
+            ],
+            "supplementary_files": [
+                "Q4_DEMO-protocol"
+            ]
+        },
+        "genus_species": [{
+            "text": "Homo sapiens"
+        }],
+        "organ": {
+            "text": "brain",
+            "ontology": "UBERON:0000955"
+        },
+        "organ_part": {
+            "text": "temporal lobe",
+            "ontology": "UBERON:0001871"
+        },
+        "diseases": [{
+            "text": "glioblastoma"
+        }]
     },
-    "accession": null,
-    "validationState": "Valid",
-    "_links": {
-      "self": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc"
-      },
-      "sample": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc",
-        "title": "A single sample"
-      },
-      "processing": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/processingEvent"
-      },
-      "derivedFromSamples": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/derivedFromSamples"
-      },
-      "projects": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/projects",
-        "title": "Access or create projects. Creation can only be done inside a submission envelope"
-      },
-      "protocols": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/protocols",
-        "title": "Access or create protocols"
-      },
-      "submissionEnvelope": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cc/submissionEnvelope",
-        "title": "A single submission envelope"
-      }
+    "submissionDate": "2018-09-12T02:59:58.390Z",
+    "updateDate": "2018-09-12T03:00:01.783Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "9d20faa8-dcf9-4c59-bb0e-9b71534c76de"
     }
   },
   {
-    "submissionDate": "2017-11-17T14:48:30.479Z",
-    "updateDate": "2017-11-17T14:49:32.049Z",
-    "uuid": {
-      "uuid": "2ef430b0-e3d3-490a-9e01-603ac42edd30"
-    },
-    "events": [
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:22.024+0000"
-        },
-        "originalState": "Draft",
-        "endState": "Validating"
-      },
-      {
-        "submissionDate": {
-          "date": "2017-11-17T14:49:32.049+0000"
-        },
-        "originalState": "Validating",
-        "endState": "Valid"
-      }
-    ],
     "content": {
-      "core": {
-        "type": "sample"
-      },
-      "name": "pancreas islet normal",
-      "specimen_from_organism": {
-        "body_part": "islet of Langerhans",
-        "organ": "pancreas"
-      },
-      "genus_species": "Homo sapiens",
-      "supplementary_files": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-5061/E-MTAB-5061.processed.1.zip",
-      "ncbi_taxon_id": 9606,
-      "derived_from": "AZ",
-      "sample_id": "AZ_A3"
+        "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/8.6.1/cell_suspension",
+        "schema_type": "biomaterial",
+        "biomaterial_core": {
+            "biomaterial_id": "Q4_DEMO-cellsus_SAMN02797092",
+            "ncbi_taxon_id": [
+                9606
+            ]
+        }
     },
+    "submissionDate": "2018-09-12T02:59:58.407Z",
+    "updateDate": "2018-09-12T03:00:01.849Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "6cafa26a-304e-4da7-b9ef-5c872ddf95b6"
+    },
+    "events": [],
     "accession": null,
-    "validationState": "Valid",
-    "_links": {
-      "self": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd"
-      },
-      "sample": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd",
-        "title": "A single sample"
-      },
-      "processing": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/processingEvent"
-      },
-      "derivedFromSamples": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/derivedFromSamples"
-      },
-      "projects": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/projects",
-        "title": "Access or create projects. Creation can only be done inside a submission envelope"
-      },
-      "protocols": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/protocols",
-        "title": "Access or create protocols"
-      },
-      "submissionEnvelope": {
-        "href": "http://192.168.99.100:30588/samples/5a0ef6be6b2f0700051f06cd/submissionEnvelope",
-        "title": "A single submission envelope"
-      }
-    }
+    "validationState": "Valid"
   }
 ]

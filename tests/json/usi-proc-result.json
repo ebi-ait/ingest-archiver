@@ -1,0 +1,49 @@
+{"_embedded": {
+    "processingStatuses": [{
+      "archive": "BioSamples",
+      "alias": "68cda120-9440-469a-952c-cfbb2fd3e1b4",
+      "status": "Completed",
+      "lastModifiedDate": "2017-11-20T13:29:07.731+0000",
+      "lastModifiedBy": "BioSamples",
+      "submittableType": "Sample",
+      "accession": "SAMEA994696",
+      "_links": {
+        "self": {
+          "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/d9f99490-2892-4c89-90d5-f3b990b6fce1"
+        },
+        "processingStatus": {
+          "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/d9f99490-2892-4c89-90d5-f3b990b6fce1{?projection}",
+          "templated": true
+        }
+      }
+    }, {
+      "archive": "BioSamples",
+      "alias": "2ef430b0-e3d3-490a-9e01-603ac42edd30",
+      "status": "Completed",
+      "lastModifiedDate": "2017-11-20T13:29:07.490+0000",
+      "lastModifiedBy": "BioSamples",
+      "submittableType": "Sample",
+      "accession": "SAMEA994689",
+      "_links": {
+        "self": {
+          "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/3add2ae5-4d4c-445b-aa9a-426985651a93"
+        },
+        "processingStatus": {
+          "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/3add2ae5-4d4c-445b-aa9a-426985651a93{?projection}",
+          "templated": true
+        }
+      }
+    }]
+  },
+  "_links": {
+    "self": {
+      "href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/search/findBySubmissionId?submissionId=e50bddc9-ca65-48e4-b068-1fbcf358d337"
+    }
+  },
+  "page": {
+    "size": 20,
+    "totalElements": 20,
+    "totalPages": 1,
+    "number": 0
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "validationStatus": "Complete",
+  "entityUuid": "5426d5c0-101a-4f6e-a3ff-3727ae0dd1b3",
+  "submissionId": "fd26ffcb-f26d-4105-88d8-9f078f5eb89a",
+  "expectedResults": {
+    "Taxonomy": [
+      {
+        "validationAuthor": "Taxonomy",
+        "validationStatus": "Pass",
+        "entityUuid": "5426d5c0-101a-4f6e-a3ff-3727ae0dd1b3"
+      }
+    ],
+    "Biosamples": [
+      {
+        "validationAuthor": "Biosamples",
+        "validationStatus": "Error",
+        "message": "A sample must have a release date.",
+        "entityUuid": "5426d5c0-101a-4f6e-a3ff-3727ae0dd1b3"
+      }
+    ],
+    "Core": [
+      {
+        "validationAuthor": "Core",
+        "validationStatus": "Pass",
+        "entityUuid": "5426d5c0-101a-4f6e-a3ff-3727ae0dd1b3"
+      }
+    ],
+    "Ena": [
+      {
+        "validationAuthor": "Ena",
+        "validationStatus": "Pass",
+        "entityUuid": "5426d5c0-101a-4f6e-a3ff-3727ae0dd1b3"
+      }
+    ]
+  },
+  "_links": {
+    "self": {
+      "href": "https://submission-dev.ebi.ac.uk/api/validationResults/a60f818a-b394-403d-8b1e-d982f4fedcf3"
+    },
+    "validationResult": {
+      "href": "https://submission-dev.ebi.ac.uk/api/validationResults/a60f818a-b394-403d-8b1e-d982f4fedcf3{?projection}",
+      "templated": true
+    }
+  }
+}
