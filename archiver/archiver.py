@@ -2,7 +2,7 @@ import logging
 import polling as polling
 
 from archiver.usiapi import USIAPI
-from archiver.converter import Converter, ConversionError
+from archiver.converter import Converter, ConversionError, SampleConverter
 
 VALIDATION_POLLING_TIMEOUT = 10
 VALIDATION_POLLING_STEP = 2
@@ -15,7 +15,7 @@ class IngestArchiver:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.usi_api = USIAPI()
-        self.converter = Converter()
+        self.converter = SampleConverter()
 
     def archive(self, hca_data):
         summary = self.add_submission_contents(hca_data)
@@ -77,7 +77,7 @@ class IngestArchiver:
         create_sample_url = contents['_links']['samples:create']['href']
 
         # TODO must know which contents are needed for this archive
-        samples = hca_submission['samples']
+        samples = hca_submission['biomaterials']
 
         converted_samples = []  # TODO should this be atomic?
         created_samples = []
@@ -90,7 +90,7 @@ class IngestArchiver:
             converted_sample = None
 
             try:
-                converted_sample = self.converter.convert_sample(sample)
+                converted_sample = self.converter.convert(sample)
                 converted_samples.append(converted_sample)
                 alias = converted_sample['alias']
                 # build map upon conversion so there'll be no need to do loop twice
@@ -178,7 +178,7 @@ class IngestArchiver:
 
     @staticmethod
     def is_metadata_accessioned(sample):
-        return ("sample_accessions" in sample["content"]) and ("biosd_sample" in sample["content"]["sample_accessions"])
+        return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
 
 
 class ArchiverSummary:

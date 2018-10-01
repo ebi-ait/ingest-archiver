@@ -1,0 +1,19 @@
+{
+    "content": {
+        "process_core": {
+            "process_id": "sequence_process_file_1"
+        },
+        "schema_type": "process",
+        "describedBy": "http://schema.dev.data.humancellatlas.org/type/process/6.0.2/process"
+    },
+    "submissionDate": "2018-09-12T21:00:26.953Z",
+    "updateDate": "2018-09-12T21:00:30.337Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "0fe4ff79-149f-4340-ba34-e93ca292ac4a"
+    },
+    "events": [],
+    "accession": null,
+    "validationState": "Valid"
+}

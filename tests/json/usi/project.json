@@ -1,0 +1,17 @@
+{
+  "alias": "hcastudy3390",
+  "title": "HCA Study",
+  "description": "HCA Study Desc",
+  "studyType": "Sequencing",
+  "attributes": {
+    "study_type": [{
+      "value": "Whole Genome Sequencing"
+    }],
+    "study_abstract": [{
+      "value": "study abstract"
+    }]
+  },
+  "projectRef": {
+    "alias": "hca3390-project"
+  }
+}

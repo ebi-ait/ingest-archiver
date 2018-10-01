@@ -1,0 +1,96 @@
+[
+    {
+      "content": {
+          "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/10.1.1/donor_organism",
+          "schema_type": "biomaterial",
+          "biomaterial_core": {
+              "biomaterial_id": "Q4_DEMO-donor_MGH30",
+              "biomaterial_name": "Q4 DEMO donor MGH30",
+              "ncbi_taxon_id": [
+                  9606
+              ],
+             "biosd_biomaterial": "SAMEA5100428"
+          },
+          "medical_history": {
+              "smoking_history": "yes"
+          },
+          "genus_species": [{
+              "text": "Homo sapiens"
+          }],
+          "is_living": "no",
+          "sex": "unknown"
+      },
+      "submissionDate": "2018-09-12T02:59:58.368Z",
+      "updateDate": "2018-09-12T03:00:01.696Z",
+      "user": "anonymousUser",
+      "lastModifiedUser": "anonymousUser",
+      "uuid": {
+          "uuid": "d85ac5e2-733c-46ad-937f-db5d704aa177"
+      },
+      "events": [],
+      "accession": null,
+      "validationState": "Valid",
+      "validationErrors": []
+  },
+  {
+    "content": {
+        "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/6.3.1/specimen_from_organism",
+        "schema_type": "biomaterial",
+        "biomaterial_core": {
+            "biomaterial_id": "Q4_DEMO-sample_SAMN02797092",
+            "biomaterial_name": "Q4_DEMO-Single cell mRNA-seq_MGH30_A01",
+            "ncbi_taxon_id": [
+                9606
+            ],
+            "supplementary_files": [
+                "Q4_DEMO-protocol"
+            ],
+            "biosd_biomaterial": "SAMEA5100429"
+        },
+        "genus_species": [{
+            "text": "Homo sapiens"
+        }],
+        "organ": {
+            "text": "brain",
+            "ontology": "UBERON:0000955"
+        },
+        "organ_part": {
+            "text": "temporal lobe",
+            "ontology": "UBERON:0001871"
+        },
+        "diseases": [{
+            "text": "glioblastoma"
+        }]
+    },
+    "submissionDate": "2018-09-12T02:59:58.390Z",
+    "updateDate": "2018-09-12T03:00:01.783Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "9d20faa8-dcf9-4c59-bb0e-9b71534c76de"
+    }
+  },
+  {
+    "content": {
+        "describedBy": "http://schema.integration.data.humancellatlas.org/type/biomaterial/8.6.1/cell_suspension",
+        "schema_type": "biomaterial",
+        "biomaterial_core": {
+            "biomaterial_id": "Q4_DEMO-cellsus_SAMN02797092",
+            "ncbi_taxon_id": [
+                9606
+            ],
+          "biosd_biomaterial": "SAMEA5100429"
+        }
+    },
+    "submissionDate": "2018-09-12T02:59:58.407Z",
+    "updateDate": "2018-09-12T03:00:01.849Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "6cafa26a-304e-4da7-b9ef-5c872ddf95b6"
+    },
+    "events": [],
+    "accession": null,
+    "validationState": "Valid"
+  }
+]

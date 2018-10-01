@@ -4,7 +4,8 @@ import json
 import config
 
 from archiver.usiapi import USIAPI
-from archiver.converter import Converter
+from archiver.converter import SampleConverter
+
 
 # TODO use mocks for requests
 # TODO add test cases
@@ -14,11 +15,11 @@ class TestUSIAPI(unittest.TestCase):
     def setUp(self):
         self.usi_api = USIAPI()
 
-        with open(config.JSON_DIR + 'hca-samples.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
 
         self.hca_submission = {'samples': hca_samples}
-        self.converter = Converter()
+        self.converter = SampleConverter()
 
         pass
 
@@ -72,7 +73,7 @@ class TestUSIAPI(unittest.TestCase):
         samples = self.hca_submission['samples']
         sample = samples[0]
 
-        converted_sample = self.converter.convert_sample(sample)
+        converted_sample = self.converter.convert(sample)
 
         created_usi_sample = self.usi_api.create_sample(create_sample_url, converted_sample)
 

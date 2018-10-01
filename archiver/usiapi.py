@@ -50,7 +50,7 @@ class USIAPI:
 
     def create_samples(self, create_sample_url, samples):
         for sample in samples:
-            converted_sample = self.converter.convert_sample(sample)
+            converted_sample = self.converter.convert(sample)
             self.create_sample(create_sample_url, converted_sample)
 
     def get_available_statuses(self, get_available_statuses_url):

@@ -1,0 +1,27 @@
+{
+	"content": {
+		"describedBy": "http://schema.dev.data.humancellatlas.org/type/protocol/sequencing/4.3.2/library_preparation_protocol",
+		"schema_type": "protocol",
+		"protocol_core": {
+			"protocol_id": "preparation1"
+		},
+		"input_nucleic_acid_molecule": {
+			"text": "polyA RNA"
+		},
+		"library_construction_approach": {
+			"text": "Smart-seq2",
+			"ontology": "EFO:0008931"
+		},
+		"nucleic_acid_source": "single cell",
+		"end_bias": "5 prime end bias",
+		"primer": "poly-dT",
+		"strand": "unstranded"
+	},
+	"submissionDate": "2018-09-12T21:00:26.886Z",
+	"updateDate": "2018-09-12T21:00:30.204Z",
+	"user": "anonymousUser",
+	"lastModifiedUser": "anonymousUser",
+	"uuid": {
+		"uuid": "e5e709f8-7a14-449b-bae0-03e135e0b21b"
+	}
+}

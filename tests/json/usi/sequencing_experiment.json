@@ -1,0 +1,99 @@
+{
+    "alias": "{alias.placeholder}",
+    "title": "assay name",
+    "description": "assay description",
+    "attributes": {
+        "library_strategy": [{
+            "value": "Other"
+        }],
+        "library_source": [{
+            "value": "TRANSCRIPTOMIC SINGLE CELL"
+        }],
+        "library_selection": [{
+            "value": "Oligo-dT"
+        }],
+        "library_layout": [{
+            "value": "SINGLE"
+        }],
+        "platform_type": [{
+            "value": "ILLUMINA"
+        }],
+        "instrument_model": [{
+            "value": "Illumina HiSeq 2500"
+        }],
+        "design_description": [{
+            "value": ""
+        }],
+        "library_name": [{
+            "value": ""
+        }],
+        "library_preparation_protocol__describedBy": [{
+            "value": "http://schema.dev.data.humancellatlas.org/type/protocol/sequencing/4.3.2/library_preparation_protocol"
+        }],
+        "library_preparation_protocol__end_bias": [{
+            "value": "5 prime end bias"
+        }],
+        "library_preparation_protocol__input_nucleic_acid_molecule__text": [{
+            "value": "polyA RNA"
+        }],
+        "library_preparation_protocol__library_construction_approach__ontology": [{
+            "value": "EFO:0008931"
+        }],
+        "library_preparation_protocol__library_construction_approach__text": [{
+            "value": "Smart-seq2"
+        }],
+        "library_preparation_protocol__nucleic_acid_source": [{
+            "value": "single cell"
+        }],
+        "library_preparation_protocol__primer": [{
+            "value": "poly-dT"
+        }],
+        "library_preparation_protocol__protocol_core__protocol_id": [{
+            "value": "preparation1"
+        }],
+        "library_preparation_protocol__schema_type": [{
+            "value": "protocol"
+        }],
+        "library_preparation_protocol__strand": [{
+            "value": "unstranded"
+        }],
+        "process__describedBy": [{
+            "value": "http://schema.dev.data.humancellatlas.org/type/process/6.0.2/process"
+        }],
+        "process__schema_type": [{
+            "value": "process"
+        }],
+        "process__process_core__process_id": [{
+            "value": "sequence_process_file_1"
+        }],
+        "sequencing_protocol__describedBy": [{
+            "value": "https://schema.humancellatlas.org/type/protocol/sequencing/7.0.0/sequencing_protocol"
+        }],
+        "sequencing_protocol__instrument_manufacturer_model__text": [{
+            "value": "Illumina HiSeq 2500"
+        }],
+        "sequencing_protocol__paired_ends": [{
+            "value": true
+        }],
+        "sequencing_protocol__protocol_core__protocol_id": [{
+            "value": "assay_1"
+        }],
+        "sequencing_protocol__schema_type": [{
+            "value": "protocol"
+        }],
+        "sequencing_protocol__sequencing_approach__ontology": [{
+            "value": "EFO:0008441"
+        }],
+        "sequencing_protocol__sequencing_approach__text": [{
+            "value": "full length single cell RNA sequencing"
+        }]
+    },
+    "studyRef": {
+        "alias": "{studyAlias.placeholder}"
+    },
+    "sampleUses": [{
+        "sampleRef": {
+            "alias": "{sampleAlias.placeholder}"
+        }
+    }]
+}

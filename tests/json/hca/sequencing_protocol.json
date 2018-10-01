@@ -1,0 +1,27 @@
+{
+    "content": {
+        "describedBy": "https://schema.humancellatlas.org/type/protocol/sequencing/7.0.0/sequencing_protocol",
+        "schema_type": "protocol",
+        "protocol_core": {
+            "protocol_id": "assay_1",
+            "protocol_name": "assay name",
+            "protocol_description": "assay description"
+
+        },
+        "instrument_manufacturer_model": {
+            "text": "Illumina HiSeq 2500"
+        },
+        "paired_ends": true,
+        "sequencing_approach": {
+            "text": "full length single cell RNA sequencing",
+            "ontology": "EFO:0008441"
+        }
+    },
+    "submissionDate": "2018-09-26T02:03:05.867Z",
+    "updateDate": "2018-09-26T02:03:09.160Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "3159d750-036b-44ec-aaef-4c751e27f635"
+    }
+}

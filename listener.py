@@ -20,7 +20,7 @@ class ArchiveSubmissionProcessor:
 
     def run(self, hca_submission_uuid):
         samples = self.ingest_api.get_samples_by_submission(hca_submission_uuid)
-        hca_submission = {'samples': samples}
+        hca_submission = {'biomaterials': samples}
 
         summary = self.archiver.archive(hca_submission)
 
@@ -59,8 +59,8 @@ class ArchiveSubmissionProcessor:
         for accession in accessions:
             # the accessioning service must know some metadata schema to know how to update the schema
             content_patch = {
-                "sample_accessions": {
-                    "biosd_sample": accession['accession']
+                "biomaterial_core": {
+                    "biosd_biomaterial": accession['accession']
                 }
             }
             sample_url = accession['entity_url']

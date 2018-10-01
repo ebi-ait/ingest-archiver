@@ -1,8 +1,5 @@
 {
   "alias": "hca339",
-  "team": {
-    "name": "self.hca-user"
-  },
   "description": "",
   "attributes": {
     "biomaterial_core__biomaterial_id": [{

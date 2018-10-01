@@ -1,0 +1,28 @@
+{
+    "content": {
+        "describedBy": "https://schema.humancellatlas.org/type/file/6.1.1/sequence_file",
+        "schema_type": "file",
+        "file_core": {
+            "file_name": "R1.fastq.gz",
+            "file_format": "fastq.gz"
+        },
+        "read_index": "read1",
+        "lane_index": 1
+    },
+    "submissionDate": "2018-09-26T02:03:05.780Z",
+    "updateDate": "2018-09-26T02:03:34.264Z",
+    "user": "anonymousUser",
+    "lastModifiedUser": "anonymousUser",
+    "uuid": {
+        "uuid": "a7a93430-6bb1-44b5-81ea-cf6443073c8d"
+    },
+    "events": [],
+    "accession": null,
+    "validationState": "Valid",
+    "validationErrors": [],
+    "fileName": "R1.fastq.gz",
+    "cloudUrl": "s3://org-humancellatlas-upload-dev/8cd91cfd-0374-454f-ac83-8db6581d2706/R1.fastq.gz",
+    "checksums": null,
+    "validationId": "aaa83206-230a-4ba8-a307-939979d2d2b0",
+    "dataFileUuid": "e2ed8991-b2c2-4bc3-925d-2c2ce2174e36"
+}

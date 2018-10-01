@@ -18,14 +18,16 @@ class TestIngestArchiver(unittest.TestCase):
         self.converter = Converter()
         self.ingest_api = IngestAPI()
 
-        with open(config.JSON_DIR + 'hca-samples.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
 
         for sample in hca_samples:
             # TODO decide what to use for alias, assign random no for now
-            sample['uuid']['uuid'] = 'hca' + str(randint(0, 1000))
+            sample['uuid']['uuid'] = 'hca' + str(randint(0, 1000)) + str(randint(0, 1000))
 
-        self.hca_submission = {'samples': hca_samples}
+        self.hca_submission = {
+            'biomaterials': hca_samples,
+        }
 
         pass
 
@@ -76,9 +78,9 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(summary["processing_results"])
 
     def test_archive_skip_metadata_with_accessions(self):
-        with open(config.JSON_DIR + 'hca-samples-with-accessions.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'hca/biomaterial_with_accessions.json', encoding=config.ENCODING) as data_file:
             samples = json.loads(data_file.read())
-        hca_submission = {'samples': samples}
+        hca_submission = {'biomaterials': samples}
         summary = self.archiver.archive(hca_submission)
 
         self.assertTrue(summary["is_completed"])

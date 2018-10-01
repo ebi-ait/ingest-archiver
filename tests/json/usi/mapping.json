@@ -1,0 +1,39 @@
+{
+    "alias": "{alias.placeholder}",
+    "title": "Assay 1",
+    "description": "Human sequencing experiment",
+    "attributes": {
+        "library_strategy": [{
+            "value": "WGS" // Other
+        }],
+        "library_source": [{ // constant TRANSCRIPTOMIC SINGLE CELL
+            "value": "TRANSCRIPTOMIC SINGLE CELL"
+        }],
+        "library_selection": [{ // library_preparation_protocol.primer
+            "value": "RANDOM"   // poly-dt -> Oligo-dT, random -> RANDOM
+        }],
+        "library_layout": [{ // sequencing_protocol.paired_end
+            "value": "SINGLE"
+        }],
+        "platform_type": [{
+            "value": "ILLUMINA"
+        }],
+        "instrument_model": [{ //sequencing_protocol.instrument_manufacturer_model
+            "value": "Illumina HiSeq 2000"
+        }],
+        "design_description": [{
+            "value": ""
+        }],
+        "library_name": [{ // cell_suspension id
+            "value": "a library name"
+        }]
+    },
+    "studyRef": {
+        "alias": "{studyAlias.placeholder}"
+    },
+    "sampleUses": [{
+        "sampleRef": {
+            "alias": "{sampleAlias.placeholder}"
+        }
+    }]
+}
