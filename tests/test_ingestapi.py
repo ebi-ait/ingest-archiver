@@ -39,7 +39,7 @@ class TestIngestAPI(unittest.TestCase):
     def test_update_content(self):
         sample_content = {}
 
-        with open(config.JSON_DIR + 'sample_content_v4.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'biomaterial.json', encoding=config.ENCODING) as data_file:
             sample_content = json.loads(data_file.read())
 
         token = self.ingest_api.get_auth_token()
