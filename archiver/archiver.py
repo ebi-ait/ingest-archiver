@@ -2,6 +2,7 @@ import logging
 import polling as polling
 
 from archiver.usiapi import USIAPI
+from archiver.ingestapi import IngestAPI
 from archiver.converter import Converter, ConversionError, SampleConverter
 
 VALIDATION_POLLING_TIMEOUT = 10
@@ -16,103 +17,130 @@ class IngestArchiver:
         self.logger = logging.getLogger(__name__)
         self.usi_api = USIAPI()
         self.converter = SampleConverter()
+        self.ingest_api = IngestAPI
 
-    def archive(self, hca_data):
-        summary = self.add_submission_contents(hca_data)
-        submission = summary['usi_submission']
-        summary["is_completed"] = False
-        summary['errors'] = []
-        summary['info'] = []
-        summary["processing_results"] = []
+    def archive(self, entities_dict_by_type):
+        archive_submission = ArchiveSubmission()
 
-        if not summary['converted_samples']:
-            summary["is_completed"] = True
-            summary['info'] = ['Nothing to archive.']
-            self.logger.info(summary['info'])
-            return summary
+        archive_submission.entities_dict_type = entities_dict_by_type
+
+        converted_entities = self._get_converted_entities(entities_dict_by_type)
+
+        if converted_entities:
+            archive_submission.converted_entities = converted_entities
+            archive_submission.usi_submission = self.usi_api.create_submission()
+            self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
+        else:
+            archive_submission.is_completed = True
+            return archive_submission
 
         is_validated = False
         try:
             is_validated = polling.poll(
-                lambda: self.is_validated(submission),
+                lambda: self.is_validated(archive_submission.usi_submission),
                 step=VALIDATION_POLLING_STEP,
                 timeout=VALIDATION_POLLING_TIMEOUT
             )
         except polling.TimeoutException as te:
-            error_message = "USI validation takes too long to complete."
-            self.logger.error(error_message)
-            summary['errors'].append(error_message)
+            archive_submission.errors.append('USI validation takes too long to complete.')
 
-        is_submittable = self.is_submittable(submission)
+        is_submittable = self.is_submittable(archive_submission.usi_submission)
 
         if not is_validated or not is_submittable:
-            validation_summary = self.get_all_validation_result_details(submission)
-            summary['validation_summary'] = validation_summary
-            summary['errors'].append('Failed in USI validation.')
+            validation_summary = self.get_all_validation_result_details(archive_submission.usi_submission)
+            archive_submission.errors.append('Failed in USI validation.')
+            archive_submission.validation_result = validation_summary
+            return archive_submission
 
-            return summary
-
-        self.usi_api.update_submission_status(submission, 'Submitted')
+        self.usi_api.update_submission_status(archive_submission.usi_submission, 'Submitted')
 
         try:
-            summary["is_completed"] = polling.poll(
-                lambda: self.is_processing_complete(submission),
+            archive_submission.is_completed = polling.poll(
+                lambda: self.is_processing_complete(archive_submission.usi_submission),
                 step=SUBMISSION_POLLING_STEP,
                 timeout=SUBMISSION_POLLING_TIMEOUT
             )
-            summary["processing_results"] = self.get_processing_results(submission)
+            archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
 
         except polling.TimeoutException:
-            error_message = "USI submission takes too long complete."
-            self.logger.error(error_message)
-            summary['errors'].append(error_message)
+            archive_submission.errors.append("USI submission takes too long complete.")
 
-        return summary
+        return archive_submission
 
-    def add_submission_contents(self, hca_submission):
-        usi_submission = self.usi_api.create_submission()
+    def _get_converted_entities(self, entities_dict_by_type):
+        converted_entities = []
+        for entity_type, entity_dict in entities_dict_by_type.items():
+            for alias, entity in entity_dict.items():
+                if entity.converted_data:
+                    converted_entities.append(entity)
+        return converted_entities
 
+    def get_archivable_entities(self, bundle_uuid):
+        archive_entities_by_type = {}
+        archive_entities = self._get_samples(bundle_uuid)
+        archive_entities_by_type['samples'] = archive_entities
+
+        return archive_entities_by_type
+
+    def _get_samples(self, bundle_uuid):
+        archive_entities = {}
+        sample_converter = SampleConverter()
+        biomaterials = self.ingest_api.get_biomaterials_in_bundle(bundle_uuid)
+
+        for biomaterial in biomaterials:
+            archive_entity = ArchiveEntity()
+            archive_entity.archive_entity_type = 'sample'
+            archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, biomaterial)
+            archive_entity.input_data = {'biomaterial': biomaterial}
+            if IngestArchiver.is_metadata_accessioned(biomaterial):
+                archive_entity.warnings.append('Already accessioned')
+                archive_entities[archive_entity.id] = archive_entity
+                continue
+            try:
+                archive_entity.converted_data = sample_converter.convert(archive_entity.input_data)
+            except ConversionError as e:
+                archive_entity.warnings.append(
+                    f'An error occured converting the biomaterial ({json.loads(biomaterial)}) to a sample, {str(e)}')
+
+
+
+
+            archive_entities[archive_entity.id] = archive_entity
+
+        return archive_entities
+
+    def _generate_archive_entity_id(self, archive_entity_type, hca_entity):
+        uuid = hca_entity['uuid']['uuid'] # should always be present in an hca entity
+        return f'{archive_entity_type}|{uuid}'
+
+    def add_entities_to_submission(self, usi_submission, converted_entities):
         get_contents_url = usi_submission['_links']['contents']['href']
         contents = self.usi_api.get_contents(get_contents_url)
-        create_sample_url = contents['_links']['samples:create']['href']
 
-        # TODO must know which contents are needed for this archive
-        samples = hca_submission['biomaterials']
+        for entity in converted_entities:
+            create_entity_url = contents['_links'][f'{entity.archive_entity_type}s:create']['href']
+            created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
+            entity.usi_json = created_entity
 
-        converted_samples = []  # TODO should this be atomic?
-        created_samples = []
-        hca_samples_by_alias = {}
+    def convert_entities(self, entities_dict_by_type):
+        converted_entities_dict = {}
 
-        for sample in samples:
-            if IngestArchiver.is_metadata_accessioned(sample):
-                continue
+        samples = entities_dict_by_type['samples']
+        result = self._convert_to_samples(samples)
+        converted_entities_dict['samples'] = result
 
-            converted_sample = None
+        return converted_entities_dict
 
-            try:
-                converted_sample = self.converter.convert(sample)
-                converted_samples.append(converted_sample)
-                alias = converted_sample['alias']
-                # build map upon conversion so there'll be no need to do loop twice
-                hca_samples_by_alias[alias] = sample
-            except ConversionError as e:
-                error_message = "Error:" + str(e)
-                self.logger.error(error_message)
-                pass
+    def _get_converter(self, entity_type):
+        return SampleConverter()
 
-            if converted_sample:
-                created_usi_sample = self.usi_api.create_sample(create_sample_url, converted_sample)
-                created_samples.append(created_usi_sample)
-
+    def _create_entity(self):
         return {
-            "usi_submission": usi_submission,
-            "created_samples": created_samples,
-            "hca_submission": hca_submission ,
-            "hca_samples_by_alias": hca_samples_by_alias,
-            "converted_samples": converted_samples
+            'content': {},
+            'errors': [],
+            'info': [],
+            'warnings': []
         }
-        # TODO Refactor this, there's a lot of things being done here, create an output object
-        # TODO do we need to store some of these info somewhere?
 
     def get_all_validation_result_details(self, usi_submission):
         get_validation_results_url = usi_submission['_links']['validationResults']['href']
@@ -181,7 +209,7 @@ class IngestArchiver:
         return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
 
 
-class ArchiverSummary:
+class ArchiveSubmission:
     def __init__(self):
         self.usi_submission = {}
         self.hca_submission = {}
@@ -190,8 +218,18 @@ class ArchiverSummary:
         self.processing_result = []
         self.validation_result = []
         self.is_completed = False
-        self.created = []
-        self.converted = []
+        self.entities_dict_type = {}
+        self.converted_entities = []
 
     def to_str(self):
         return str(vars(self))
+
+
+class ArchiveEntity:
+    def __init__(self):
+        self.input_data = {}
+        self.converted_data = {}
+        self.errors = []
+        self.warnings = []
+        self.id = None
+        self.archive_entity_type = None

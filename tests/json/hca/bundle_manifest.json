@@ -1,0 +1,66 @@
+{
+	"bundleUuid": "b73fe01f-098a-4e39-bce1-a041eb11e750",
+	"envelopeUuid": "2080f1b8-24fe-4b8b-8e37-417bb23cc321",
+	"dataFiles": [
+		"e90cdd9f-95d7-43c9-8d04-52fcc2449666",
+		"9cd585f7-4942-47b9-82cc-1c8d5d3fb9af"
+	],
+	"fileBiomaterialMap": {
+		"12f34339-f34b-4074-b647-1ddf6260841e": [
+			"12f34339-f34b-4074-b647-1ddf6260841e"
+		],
+		"7e4a9c3b-100f-49fb-a865-9e67c1a47c0b": [
+			"7e4a9c3b-100f-49fb-a865-9e67c1a47c0b"
+		],
+		"07c5d096-927c-4a0c-96ad-f09a3a5cc493": [
+			"07c5d096-927c-4a0c-96ad-f09a3a5cc493"
+		]
+	},
+	"fileProcessMap": {
+		"888d48ee-25d3-465b-88db-66d05fd21a5f": [
+			"888d48ee-25d3-465b-88db-66d05fd21a5f"
+		],
+		"b17fd7b4-0b76-4081-9f68-5a1ce1993614": [
+			"b17fd7b4-0b76-4081-9f68-5a1ce1993614"
+		],
+		"3ebc6192-eaab-4c1a-90a6-ad9ccaa9e038": [
+			"3ebc6192-eaab-4c1a-90a6-ad9ccaa9e038"
+		]
+	},
+	"fileProjectMap": {
+		"dee2feef-ae4e-475b-980e-5206bffff3c5": [
+			"dee2feef-ae4e-475b-980e-5206bffff3c5"
+		]
+	},
+	"fileProtocolMap": {
+		"1db09a27-cf3f-48dd-a408-9268e5562250": [
+			"1db09a27-cf3f-48dd-a408-9268e5562250"
+		],
+		"59725633-1ed0-418a-a5bc-82800579865d": [
+			"59725633-1ed0-418a-a5bc-82800579865d"
+		],
+		"235a4981-22c2-42f8-8142-abf20523d029": [
+			"235a4981-22c2-42f8-8142-abf20523d029"
+		],
+		"761594b0-7da7-46ce-b5d0-64496a84d4cc": [
+			"761594b0-7da7-46ce-b5d0-64496a84d4cc"
+		]
+	},
+	"fileFilesMap": {
+		"f756ac79-9af8-4718-bc29-c527323ca4ff": [
+			"f756ac79-9af8-4718-bc29-c527323ca4ff"
+		],
+		"b2c2866e-8e9f-4a58-b019-6d7f3338775d": [
+			"b2c2866e-8e9f-4a58-b019-6d7f3338775d"
+		]
+	},
+	"_links": {
+		"self": {
+			"href": "http://api.ingest.dev.data.humancellatlas.org/bundleManifests/5bc7592a6fb95200083569c2"
+		},
+		"bundleManifest": {
+			"href": "http://api.ingest.dev.data.humancellatlas.org/bundleManifests/5bc7592a6fb95200083569c2",
+			"title": "A single bundle manifest (describing which submitted contents went into which bundle in the datastore)"
+		}
+	}
+}

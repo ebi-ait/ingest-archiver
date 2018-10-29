@@ -12,14 +12,14 @@ from archiver.archiver import IngestArchiver
 from archiver.ingestapi import IngestAPI
 
 
-class ArchiveSubmissionProcessor:
+class ArchiveBundleProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.archiver = IngestArchiver()
         self.ingest_api = IngestAPI()
 
-    def run(self, hca_submission_uuid):
-        samples = self.ingest_api.get_samples_by_submission(hca_submission_uuid)
+    def run(self, bundle_uuid):
+        samples = self.ingest_api.get_biomaterials_in_bundle(bundle_uuid)
         hca_submission = {'biomaterials': samples}
 
         summary = self.archiver.archive(hca_submission)
@@ -108,7 +108,7 @@ class ArchiverListener:
 
             if hca_submission_uuid:
                 try:
-                    processor = ArchiveSubmissionProcessor()
+                    processor = ArchiveBundleProcessor()
                     processor.run(hca_submission_uuid)
                 except Exception as e:
                     self.logger.error(str(e))

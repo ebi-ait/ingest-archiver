@@ -72,10 +72,13 @@ class TestUSIAPI(unittest.TestCase):
 
         samples = self.hca_submission['samples']
         sample = samples[0]
+        sample = {
+            'biomaterial': sample
+        }
 
         converted_sample = self.converter.convert(sample)
 
-        created_usi_sample = self.usi_api.create_sample(create_sample_url, converted_sample)
+        created_usi_sample = self.usi_api.create_entity(create_sample_url, converted_sample)
 
         # clean up submission in USI
         delete_url = usi_submission['_links']['self:delete']['href']

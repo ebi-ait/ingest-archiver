@@ -45,13 +45,13 @@ class USIAPI:
     def get_submission_status(self, get_submission_status_url):
         return self._get(get_submission_status_url)
 
-    def create_sample(self, create_sample_url, sample):
-        return self._post(create_sample_url, sample)
+    def create_entity(self, create_entity_url, content):
+        return self._post(create_entity_url, content)
 
     def create_samples(self, create_sample_url, samples):
         for sample in samples:
             converted_sample = self.converter.convert(sample)
-            self.create_sample(create_sample_url, converted_sample)
+            self.create_entity(create_sample_url, converted_sample)
 
     def get_available_statuses(self, get_available_statuses_url):
         response = self._get(get_available_statuses_url)
@@ -110,8 +110,6 @@ class USIAPI:
     def _get_json(self, response):
         response.raise_for_status()
         return response.json()
-
-        return None
 
     def _get_embedded_list(self, response, list_name):
         if response and "_embedded" in response:

@@ -76,10 +76,10 @@ class SampleConverter(Converter):
         super(SampleConverter, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
-            "uuid__uuid": "alias",
-            "content__biomaterial_core__biomaterial_name": "title",
-            "content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
-            "submissionDate": "releaseDate"
+            "biomaterial__uuid__uuid": "alias",
+            "biomaterial__content__biomaterial_core__biomaterial_name": "title",
+            "biomaterial__content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
+            "biomaterial__submissionDate": "releaseDate"
         }
 
     def _build_output(self, extracted_data, flattened_hca_data):

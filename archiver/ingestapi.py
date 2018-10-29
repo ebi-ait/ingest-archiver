@@ -33,21 +33,21 @@ class IngestAPI:
         submission = None
 
         if response.ok:
-            submission = json.loads(response.text)
+            submission = response.json()
 
         return submission
 
-    def get_submission_by_uuid(self, uuid):
-        get_submission_url = self.url + '/submissionEnvelopes/search/findByUuid?uuid=' + uuid
+    def get_submission_by_uuid(self, submission_uuid):
+        get_submission_url = self.url + '/submissionEnvelopes/search/findByUuid?uuid=' + submission_uuid
 
         response = requests.get(get_submission_url, headers=self.headers)
+        return self._handle_response(response)
 
-        submission = None
+    def get_biomaterial_by_uuid(self, biomaterial_uuid):
+        get_biomaterial_url = self.url + '/biomaterials/search/findByUuid?uuid=' + biomaterial_uuid
+        response = requests.get(get_biomaterial_url, headers=self.headers)
 
-        if response.ok:
-            submission = json.loads(response.text)
-
-        return submission
+        return self._handle_response(response)
 
     def get_samples(self, get_samples_url):
         response = requests.get(get_samples_url, headers=self.headers)
@@ -55,7 +55,7 @@ class IngestAPI:
         samples = []
 
         if response.ok:
-            samples = json.loads(response.text)["_embedded"]["samples"]
+            samples = response.json()["_embedded"]["samples"]
 
         return samples
 
@@ -70,20 +70,29 @@ class IngestAPI:
 
         return samples
 
+    def get_biomaterials_in_bundle(self, bundle_uuid):
+        bundle_manifest = self.get_bundle_manifest(bundle_uuid)
+
+        if bundle_manifest:
+            for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
+                yield self.get_biomaterial_by_uuid(biomaterial_uuid)
+
+    def get_bundle_manifest(self, bundle_uuid):
+        get_bundle_manifest_url = self.url + '/bundleManifests/search/findByBundleUuid=' + bundle_uuid
+        response = requests.get(get_bundle_manifest_url, headers=self.headers)
+        return self._handle_response(response)
+
     def update_content(self, entity_url, content_json):
         response = requests.get(entity_url)
-        content = self.handle_response(response)['content']
+        content = self._handle_response(response)['content']
         content.update(content_json)
         response = requests.put(entity_url, json.dumps(content))
 
-        return self.handle_response(response)
+        return self._handle_response(response)
 
-    def handle_response(self, response):
-        if response.ok:
-            return json.loads(response.text)
-        else:
-            self.logger.error('Response:' + response.text)
-            return None
+    def _handle_response(self, response):
+        response.raise_for_status()
+        return response.json()
 
     def create_submission(self, auth_token):
         if not auth_token:
@@ -104,7 +113,7 @@ class IngestAPI:
 
         response = requests.post(create_submission_url, headers=headers, data='{}')
 
-        return self.handle_response(response)
+        return self._handle_response(response)
 
     def delete_submission(self, submission_url):
         response = requests.delete(submission_url, headers=self.headers)
@@ -112,7 +121,7 @@ class IngestAPI:
 
     def get_ingest_links(self):
         response = requests.get(self.url, headers=self.headers)
-        ingest = self.handle_response(response)
+        ingest = self._handle_response(response)
 
         if ingest:
             return ingest["_links"]
@@ -124,12 +133,12 @@ class IngestAPI:
         link_url = link_url + '/' + sample_id
         response = requests.put(link_url, headers=self.headers)
 
-        return self.handle_response(response)
+        return self._handle_response(response)
 
     def get_submit_url(self, submission):
         submission_url = submission['_links']['self']['href']
         response = requests.get(submission_url, headers=self.headers)
-        submission = self.handle_response(response)
+        submission = self._handle_response(response)
 
         if submission and 'submit' in submission['_links']:
             return submission['_links']["submit"]["href"].rsplit("{")[0]
@@ -139,7 +148,7 @@ class IngestAPI:
     def submit(self, submit_url):
         response = requests.put(submit_url, headers=self.headers)
 
-        return self.handle_response(response)
+        return self._handle_response(response)
 
     def get_auth_token(self):
         response = requests.post(AUTH0_URL,

@@ -23,7 +23,11 @@ class TestConverter(unittest.TestCase):
         hca_data['uuid']['uuid'] = test_alias
         expected_json['alias'] = test_alias
 
-        actual_json = converter.convert(hca_data)
+        input = {
+            'biomaterial': hca_data
+        }
+
+        actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json )
 
