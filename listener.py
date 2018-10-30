@@ -19,21 +19,20 @@ class ArchiveBundleProcessor:
         self.ingest_api = IngestAPI()
 
     def run(self, bundle_uuid):
-        samples = self.ingest_api.get_biomaterials_in_bundle(bundle_uuid)
-        hca_submission = {'biomaterials': samples}
+        entities_dict_by_type = self.archiver.get_archivable_entities(bundle_uuid)
 
-        summary = self.archiver.archive(hca_submission)
+        archive_submission = self.archiver.archive(entities_dict_by_type)
 
-        self.logger.debug(str(summary))
+        self.logger.debug(archive_submission.to_str())
 
-        if summary['is_completed'] and summary['processing_results']:
-            accessions = self.get_accessions(summary)
+        if archive_submission.is_completed and archive_submission.processing_result:
+            accessions = self.get_accessions(archive_submission)
             self.do_update_accessions_submission(accessions)
             self.logger.info("Done updating the accessions")
 
-    def get_accessions(self, archive_summary):
-        hca_samples_by_alias = archive_summary['hca_samples_by_alias']
-        results = archive_summary['processing_results']
+    def get_accessions(self, archive_submission):
+        hca_samples_by_alias = archive_submission.entities_dict_type['samples']
+        results = archive_submission.processing_result
 
         accessions = []
         for result in results:

@@ -32,11 +32,14 @@ class TestIngestArchiver(unittest.TestCase):
         pass
 
     def test_get_archivable_entities(self):
-        self.archiver.ingest_api.get_biomaterials_in_bundle = MagicMock(return_value=self.hca_submission['biomaterials'])
+        self.archiver.ingest_api.get_biomaterials_in_bundle = MagicMock(
+            return_value=self.hca_submission['biomaterials'])
         summary = self.archiver.get_archivable_entities('dummy_uuid')
         self.assertTrue(summary['samples'])
 
     def test_is_submittable(self):
+        self.archiver.ingest_api.get_biomaterials_in_bundle = MagicMock(
+            return_value=self.hca_submission['biomaterials'])
         entities_dict_by_type = self.archiver.get_archivable_entities('dummy_bundle_uuid')
         converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
 
@@ -52,6 +55,8 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(is_submittable)
 
     def test_is_validated(self):
+        self.archiver.ingest_api.get_biomaterials_in_bundle = MagicMock(
+            return_value=self.hca_submission['biomaterials'])
         entities_dict_by_type = self.archiver.get_archivable_entities('dummy_bundle_uuid')
         converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
 
@@ -85,10 +90,11 @@ class TestIngestArchiver(unittest.TestCase):
 
     # @unittest.skip('submitted submissions cannot be deleted, skipping this')
     def test_archive(self):
-        self.archiver.ingest_api.get_biomaterials_in_bundle = MagicMock(return_value=self.hca_submission['biomaterials'])
+        self.archiver.ingest_api.get_biomaterials_in_bundle = MagicMock(
+            return_value=self.hca_submission['biomaterials'])
         entities_dict_by_type = self.archiver.get_archivable_entities('dummy_bundle')
         summary = self.archiver.archive(entities_dict_by_type)
-        print(summary.to_str())
+        print(str(summary))
         self.assertTrue(summary.is_completed)
         self.assertTrue(summary.processing_result)
 
@@ -100,7 +106,7 @@ class TestIngestArchiver(unittest.TestCase):
             return_value=hca_submission['biomaterials'])
         entities_dict_by_type = self.archiver.get_archivable_entities('dummy_bundle')
         summary = self.archiver.archive(entities_dict_by_type)
-        print(summary.to_str())
+        print(str(summary))
         self.assertTrue(summary.is_completed)
         self.assertFalse(summary.errors)
         self.assertFalse(summary.processing_result)

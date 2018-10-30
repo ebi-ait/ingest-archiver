@@ -18,12 +18,12 @@ AUTH0_URL = 'https://danielvaughan.eu.auth0.com/oauth/token'
 
 
 class IngestAPI:
-    def __init__(self):
+    def __init__(self, url=None):
         self.logger = logging.getLogger(__name__)
         self.headers = {
             'Content-type': 'application/json',
         }
-        self.url = config.INGEST_API_URL
+        self.url = url if url else config.INGEST_API_URL
 
     def get_submission_by_id(self, submission_id):
         get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
@@ -78,7 +78,7 @@ class IngestAPI:
                 yield self.get_biomaterial_by_uuid(biomaterial_uuid)
 
     def get_bundle_manifest(self, bundle_uuid):
-        get_bundle_manifest_url = self.url + '/bundleManifests/search/findByBundleUuid=' + bundle_uuid
+        get_bundle_manifest_url = self.url + '/bundleManifests/search/findByBundleUuid?uuid=' + bundle_uuid
         response = requests.get(get_bundle_manifest_url, headers=self.headers)
         return self._handle_response(response)
 

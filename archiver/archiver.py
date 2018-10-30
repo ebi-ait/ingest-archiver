@@ -1,3 +1,4 @@
+import json
 import logging
 import polling as polling
 
@@ -13,15 +14,14 @@ SUBMISSION_POLLING_TIMEOUT = 30
 
 
 class IngestArchiver:
-    def __init__(self):
+    def __init__(self, ingest_url=None):
         self.logger = logging.getLogger(__name__)
         self.usi_api = USIAPI()
         self.converter = SampleConverter()
-        self.ingest_api = IngestAPI
+        self.ingest_api = IngestAPI(ingest_url)
 
     def archive(self, entities_dict_by_type):
         archive_submission = ArchiveSubmission()
-
         archive_submission.entities_dict_type = entities_dict_by_type
 
         converted_entities = self._get_converted_entities(entities_dict_by_type)
@@ -62,6 +62,15 @@ class IngestArchiver:
             )
             archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
 
+            results = archive_submission.processing_result
+
+            for result in results:
+                if result['status'] == 'Completed':
+                    alias = result['alias']
+                    accession = result['accession']
+                    entity = entities_dict_by_type['samples'][alias]
+                    entity.accession = accession
+
         except polling.TimeoutException:
             archive_submission.errors.append("USI submission takes too long complete.")
 
@@ -98,12 +107,10 @@ class IngestArchiver:
                 continue
             try:
                 archive_entity.converted_data = sample_converter.convert(archive_entity.input_data)
+                archive_entity.converted_data['alias'] = archive_entity.id
             except ConversionError as e:
                 archive_entity.warnings.append(
                     f'An error occured converting the biomaterial ({json.loads(biomaterial)}) to a sample, {str(e)}')
-
-
-
 
             archive_entities[archive_entity.id] = archive_entity
 
@@ -130,17 +137,6 @@ class IngestArchiver:
         converted_entities_dict['samples'] = result
 
         return converted_entities_dict
-
-    def _get_converter(self, entity_type):
-        return SampleConverter()
-
-    def _create_entity(self):
-        return {
-            'content': {},
-            'errors': [],
-            'info': [],
-            'warnings': []
-        }
 
     def get_all_validation_result_details(self, usi_submission):
         get_validation_results_url = usi_submission['_links']['validationResults']['href']
@@ -212,8 +208,6 @@ class IngestArchiver:
 class ArchiveSubmission:
     def __init__(self):
         self.usi_submission = {}
-        self.hca_submission = {}
-        self.hca_submission_by_alias = {}
         self.errors = []
         self.processing_result = []
         self.validation_result = []
@@ -221,8 +215,13 @@ class ArchiveSubmission:
         self.entities_dict_type = {}
         self.converted_entities = []
 
-    def to_str(self):
+    def __str__(self):
         return str(vars(self))
+
+    def print_entities(self):
+        for type, entities_dict in self.entities_dict_type.items():
+            for alias, entity in entities_dict.items():
+                print(str(entity))
 
 
 class ArchiveEntity:
@@ -233,3 +232,7 @@ class ArchiveEntity:
         self.warnings = []
         self.id = None
         self.archive_entity_type = None
+        self.accession = None
+
+    def __str__(self):
+        return str(vars(self))
