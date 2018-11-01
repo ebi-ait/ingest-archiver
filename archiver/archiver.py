@@ -4,7 +4,8 @@ import polling as polling
 
 from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
-from archiver.converter import Converter, ConversionError, SampleConverter
+from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
+    SequencingExperimentConverter, SequencingRunConverter
 
 VALIDATION_POLLING_TIMEOUT = 10
 VALIDATION_POLLING_STEP = 2
@@ -68,7 +69,7 @@ class IngestArchiver:
                 if result['status'] == 'Completed':
                     alias = result['alias']
                     accession = result['accession']
-                    entity = entities_dict_by_type['samples'][alias]
+                    entity = entities_dict_by_type['sample'][alias]
                     entity.accession = accession
 
         except polling.TimeoutException:
@@ -84,40 +85,133 @@ class IngestArchiver:
                     converted_entities.append(entity)
         return converted_entities
 
-    def get_archivable_entities(self, bundle_uuid):
+    def get_archivable_entities(self, assay_bundle):
         archive_entities_by_type = {}
-        archive_entities = self._get_samples(bundle_uuid)
-        archive_entities_by_type['samples'] = archive_entities
+        archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)
+        # archive_entities_by_type['project'] = self._get_project_dict(assay_bundle)
+        # archive_entities_by_type['study'] = self._get_study_dict(assay_bundle)
+        # archive_entities_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
+        # archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
 
         return archive_entities_by_type
 
-    def _get_samples(self, bundle_uuid):
+    def _get_samples_dict(self, assay_bundle):
         archive_entities = {}
         sample_converter = SampleConverter()
-        biomaterials = self.ingest_api.get_biomaterials_in_bundle(bundle_uuid)
+        biomaterials = assay_bundle.get_biomaterials()
 
         for biomaterial in biomaterials:
             archive_entity = ArchiveEntity()
             archive_entity.archive_entity_type = 'sample'
             archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, biomaterial)
             archive_entity.input_data = {'biomaterial': biomaterial}
+
             if IngestArchiver.is_metadata_accessioned(biomaterial):
                 archive_entity.warnings.append('Already accessioned')
                 archive_entities[archive_entity.id] = archive_entity
                 continue
+
             try:
                 archive_entity.converted_data = sample_converter.convert(archive_entity.input_data)
                 archive_entity.converted_data['alias'] = archive_entity.id
             except ConversionError as e:
-                archive_entity.warnings.append(
-                    f'An error occured converting the biomaterial ({json.loads(biomaterial)}) to a sample, {str(e)}')
+                archive_entity.errors.append(
+                    f'An error occured converting the biomaterial ({json.loads(biomaterial)}) to a sample in USI, {str(e)}')
 
             archive_entities[archive_entity.id] = archive_entity
 
         return archive_entities
 
+    def _get_project_dict(self, assay_bundle):
+        archive_entities_dict = {}
+        project = assay_bundle.get_project()
+        project_converter = ProjectConverter()
+
+        archive_entity = ArchiveEntity()
+        archive_entity.archive_entity_type = 'project'
+        archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, project)
+        archive_entity.input_data = {'project': project}
+
+        try:
+            archive_entity.converted_data = project_converter.convert(archive_entity.input_data)
+            archive_entity.converted_data['alias'] = archive_entity.id
+        except ConversionError as e:
+            archive_entity.errors.append(
+                f'An error occured converting the project ({json.loads(project)}) to a project in USI, {str(e)}')
+
+        archive_entities_dict[archive_entity.id] = archive_entity
+
+        return archive_entities_dict
+
+    def _get_study_dict(self, assay_bundle):
+        archive_entities_dict = {}
+        project = assay_bundle.get_project()
+        project_converter = ProjectConverter()
+
+        archive_entity = ArchiveEntity()
+        archive_entity.archive_entity_type = 'study'
+        archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, project)
+        archive_entity.input_data = {'project': project}
+
+        try:
+            archive_entity.converted_data = project_converter.convert(archive_entity.input_data)
+            archive_entity.converted_data['alias'] = archive_entity.id
+        except ConversionError as e:
+            archive_entity.errors.append(
+                f'An error occured converting the project ({json.loads(project)}) to a project in USI, {str(e)}')
+
+        archive_entities_dict[archive_entity.id] = archive_entity
+
+        return archive_entities_dict
+
+    def _get_sequencing_experiment_dict(self, assay_bundle):
+        archive_entities_dict = {}
+
+        assay = assay_bundle.get_assay_process()
+
+        if assay:
+            archive_entity = ArchiveEntity()
+            archive_entity.archive_entity_type = 'sequencingExperiment'
+            archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, assay)
+
+            archive_entity.input_data = {
+                'process': assay,
+                'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
+                'sequencing_protocol': assay_bundle.get_sequencing_protocol()
+            }
+
+            seq_experiment_converter = SequencingExperimentConverter()
+            archive_entity.converted_data = seq_experiment_converter.convert(archive_entity.input_data)
+            archive_entity.converted_data['alias'] = archive_entity.id
+
+            archive_entities_dict[archive_entity.id] = archive_entity
+
+        return archive_entities_dict
+
+    def _get_sequencing_run_dict(self, assay_bundle):
+        archive_entities_dict = {}
+
+        assay = assay_bundle.get_assay_process()
+
+        if assay:
+            archive_entity = ArchiveEntity()
+            archive_entity.archive_entity_type = 'sequencingRun'
+            archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, assay)
+
+            archive_entity.input_data = {
+                'process': assay,
+                'files': assay_bundle.get_files()
+            }
+
+            seq_run_converter = SequencingRunConverter()
+            archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
+
+            archive_entities_dict[archive_entity.id] = archive_entity
+
+        return archive_entities_dict
+
     def _generate_archive_entity_id(self, archive_entity_type, hca_entity):
-        uuid = hca_entity['uuid']['uuid'] # should always be present in an hca entity
+        uuid = hca_entity['uuid']['uuid']  # should always be present in an hca entity
         return f'{archive_entity_type}|{uuid}'
 
     def add_entities_to_submission(self, usi_submission, converted_entities):
@@ -236,3 +330,103 @@ class ArchiveEntity:
 
     def __str__(self):
         return str(vars(self))
+
+
+class AssayBundle:
+    def __init__(self, ingest_api, bundle_uuid):
+        self.ingest_api = ingest_api
+
+        self.bundle_uuid = bundle_uuid
+        self.bundle_manifest = None
+
+        self.project = None
+        self.biomaterials = None
+        self.files = None
+        self.assay_process = None
+        self.library_preparation_protocol = None
+        self.sequencing_protocol = None
+
+    def get_bundle_manifest(self):
+        if not self.bundle_manifest:
+            bundle_uuid = self.bundle_uuid
+            self.bundle_manifest = self.ingest_api.get_bundle_manifest(bundle_uuid)
+
+        return self.bundle_manifest
+
+    def get_project(self):
+        if not self.project:
+            bundle_manifest = self.get_bundle_manifest()
+            project_uuid = list(bundle_manifest['fileProjectMap'].keys())[0]  # TODO one project per bundle
+            self.project = self.ingest_api.get_project_by_uuid(project_uuid)
+
+        return self.project
+
+    def get_biomaterials(self):
+        if not self.biomaterials:
+            self.biomaterials = self._init_biomaterials()
+
+        return self.biomaterials
+
+    def get_assay_process(self):
+        bundle_manifest = self.get_bundle_manifest()
+        file_uuid = list(bundle_manifest['fileFilesMap'].keys())[0]
+
+        file = self.ingest_api.get_file_by_uuid(file_uuid)
+        derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
+
+        if derived_by_processes:
+            self.assay_process = derived_by_processes[0]
+
+            if len(derived_by_processes) > 1:
+                raise Error(f'Bundle {self.bundle_uuid} has many assay processes.')
+
+        return self.assay_process
+
+    def get_library_preparation_protocol(self):
+        if not self.library_preparation_protocol:
+            self._init_protocols()
+        return self.library_preparation_protocol
+
+    def get_sequencing_protocol(self):
+        if not self.sequencing_protocol:
+            self._init_protocols()
+        return self.sequencing_protocol
+
+    def get_files(self):
+        if not self.files:
+            assay = self.get_assay_process()
+            self.files = self.ingest_api.get_related_entity(assay, 'derivedFiles', 'files')
+
+        return self.files
+
+    def _init_protocols(self):
+        assay = self.get_assay_process()
+        protocols = self.ingest_api.get_related_entity(assay, 'protocols', 'protocols')
+        protocol_by_type = {}
+        for protocol in protocols:
+            concrete_entity_type = self.ingest_api.get_concrete_entity_type(protocol)
+            if not protocol_by_type.get(concrete_entity_type):
+                protocol_by_type[concrete_entity_type] = []
+
+            protocol_by_type[concrete_entity_type].append(protocol)
+
+        library_preparation_protocols = protocol_by_type.get('library_preparation_protocol')
+        sequencing_protocols = protocol_by_type.get('sequencing_protocol')
+
+        if len(library_preparation_protocols) != 1:
+            raise Error('There should be 1 library preparation protocol for the assay process.')
+
+        if len(sequencing_protocols) != 1:
+            raise Error('There should be 1 sequencing_protocol for the assay process.')
+
+        self.library_preparation_protocol = library_preparation_protocols[0]
+        self.sequencing_protocol = sequencing_protocols[0]
+
+    def _init_biomaterials(self):
+        bundle_manifest = self.get_bundle_manifest()
+        for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
+            yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+
+
+class Error(Exception):
+    """Base-class for all exceptions raised by this module."""

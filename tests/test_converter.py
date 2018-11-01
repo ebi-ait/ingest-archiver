@@ -61,7 +61,7 @@ class TestConverter(unittest.TestCase):
             'library_preparation_protocol': lib_prep_protocol
         }
 
-        expected_json['alias'] = 'sequencing_experiment|process' + test_alias
+        expected_json['alias'] = 'sequencingExperiment|process' + test_alias
 
         actual_json = converter.convert(hca_data)
 
@@ -92,7 +92,7 @@ class TestConverter(unittest.TestCase):
             'files': [file]
         }
 
-        expected_json['alias'] = 'sequencing_run|process' + test_alias
+        expected_json['alias'] = 'sequencingRun|process' + test_alias
 
         actual_json = converter.convert(hca_data)
 
@@ -112,7 +112,11 @@ class TestConverter(unittest.TestCase):
         hca_data['uuid']['uuid'] = test_alias
         expected_json['alias'] = 'project|' + test_alias
 
-        actual_json = converter.convert(hca_data)
+        input = {
+            'project': hca_data
+        }
+
+        actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)
 
@@ -131,6 +135,10 @@ class TestConverter(unittest.TestCase):
         hca_data['uuid']['uuid'] = test_alias
         expected_json['alias'] = 'study|' + test_alias
 
-        actual_json = converter.convert(hca_data)
+        input = {
+            'project': hca_data
+        }
+
+        actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)

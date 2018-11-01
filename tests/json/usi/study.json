@@ -1,22 +1,22 @@
 
 {
   "attributes": {
-    "describedBy": [{
+    "project__describedBy": [{
         "value": "http://schema.staging.data.humancellatlas.org/type/project/9.0.3/project"
     }],
-    "schema_type": [{
+    "project__schema_type": [{
         "value": "project"
     }],
-    "project_core__project_short_name": [{
+    "project__project_core__project_short_name": [{
         "value": "integration/Smart-seq2/2018-10-22T08:01:13Z"
     }],
-    "contributors__0__contact_name": [{
+    "project__contributors__0__contact_name": [{
         "value": "Q4_DEMO-MintTeam"
     }],
-    "contributors__0__email": [{
+    "project__contributors__0__email": [{
         "value": "dummy@email.com"
     }],
-    "contributors__0__institution": [{
+    "project__contributors__0__institution": [{
         "value": "Fake Institution"
     }],
     "study_type": [{

@@ -27,7 +27,9 @@ if __name__ == '__main__':
     archiver = IngestArchiver(ingest_url=options.ingest_url)
     entities_dict_by_type = archiver.get_archivable_entities(options.bundle_uuid)
     archive_submission = archiver.archive(entities_dict_by_type)
+
     logging.info(json.dumps(archive_submission.processing_result))
+    logging.info(str(archive_submission))
     archive_submission.print_entities()
 
 

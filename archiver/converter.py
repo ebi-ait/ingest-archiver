@@ -97,7 +97,7 @@ class SequencingExperimentConverter(Converter):
     def __init__(self):
         super(SequencingExperimentConverter, self).__init__()
         self.logger = logging.getLogger(__name__)
-        self.alias_prefix = 'sequencing_experiment|'
+        self.alias_prefix = 'sequencingExperiment|'
         self.library_selection_mapping = {
             "poly-dt": "Oligo-dT",
             "random": "RANDOM",
@@ -188,7 +188,7 @@ class SequencingRunConverter(Converter):
             'cram': 'cram',
         }
 
-        self.alias_prefix = 'sequencing_run|'
+        self.alias_prefix = 'sequencingRun|'
 
     def convert(self, hca_data):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
@@ -221,10 +221,10 @@ class ProjectConverter(Converter):
         super(ProjectConverter, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
-            "uuid__uuid": "alias",
-            "content__project_core__project_title": "title",
-            "content__project_core__project_description": "description",
-            "submissionDate": "releaseDate"
+            "project__uuid__uuid": "alias",
+            "project__content__project_core__project_title": "title",
+            "project__content__project_core__project_description": "description",
+            "project__submissionDate": "releaseDate"
         }
         self.alias_prefix = 'project|'
 
@@ -242,9 +242,9 @@ class StudyConverter(Converter):
         super(StudyConverter, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
-            "uuid__uuid": "alias",
-            "content__project_core__project_title": "title",
-            "content__project_core__project_description": "description",
+            "project__uuid__uuid": "alias",
+            "project__content__project_core__project_title": "title",
+            "project__content__project_core__project_description": "description",
 
         }
         self.alias_prefix = 'study|'

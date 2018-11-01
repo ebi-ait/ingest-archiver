@@ -8,7 +8,7 @@ import polling
 
 import config
 
-from archiver.archiver import IngestArchiver
+from archiver.archiver import IngestArchiver, AssayBundle
 from archiver.ingestapi import IngestAPI
 
 
@@ -19,7 +19,9 @@ class ArchiveBundleProcessor:
         self.ingest_api = IngestAPI()
 
     def run(self, bundle_uuid):
-        entities_dict_by_type = self.archiver.get_archivable_entities(bundle_uuid)
+        assay_bundle = AssayBundle(ingest_api=self.ingest_api,
+                                   bundle_uuid=bundle_uuid)
+        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
 
         archive_submission = self.archiver.archive(entities_dict_by_type)
 

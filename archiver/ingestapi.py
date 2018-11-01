@@ -25,6 +25,12 @@ class IngestAPI:
         }
         self.url = url if url else config.INGEST_API_URL
 
+    def get_related_entity(self, entity, relation, related_entity_type):
+        related_entity_url = entity['_links'][relation]['href']
+        response = requests.get(related_entity_url, headers=self.headers)
+        related_entity = self._handle_response(response)
+        return related_entity['_embedded'][related_entity_type]
+
     def get_submission_by_id(self, submission_id):
         get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
 
@@ -37,17 +43,30 @@ class IngestAPI:
 
         return submission
 
-    def get_submission_by_uuid(self, submission_uuid):
-        get_submission_url = self.url + '/submissionEnvelopes/search/findByUuid?uuid=' + submission_uuid
+    def get_concrete_entity_type(self, entity):
+        content = entity.get('content')
+        schema_url = content.get('describedBy')
+        response = requests.get(schema_url, headers=self.headers)
+        schema = self._handle_response(response)
 
-        response = requests.get(get_submission_url, headers=self.headers)
+        return schema.get('title')
+
+    def get_entity_by_uuid(self, entity_type, uuid):
+        entity_url = f'{self.url}{entity_type}/search/findByUuid?uuid={uuid}'
+        response = requests.get(entity_url, headers=self.headers)
         return self._handle_response(response)
+
+    def get_submission_by_uuid(self, submission_uuid):
+        return self.get_entity_by_uuid('submissionEnvelopes', submission_uuid)
 
     def get_biomaterial_by_uuid(self, biomaterial_uuid):
-        get_biomaterial_url = self.url + '/biomaterials/search/findByUuid?uuid=' + biomaterial_uuid
-        response = requests.get(get_biomaterial_url, headers=self.headers)
+        return self.get_entity_by_uuid('biomaterials', biomaterial_uuid)
 
-        return self._handle_response(response)
+    def get_project_by_uuid(self, project_uuid):
+        return self.get_entity_by_uuid('projects', project_uuid)
+
+    def get_file_by_uuid(self, file_uuid):
+        return self.get_entity_by_uuid('files', file_uuid)
 
     def get_samples(self, get_samples_url):
         response = requests.get(get_samples_url, headers=self.headers)
@@ -58,24 +77,6 @@ class IngestAPI:
             samples = response.json()["_embedded"]["samples"]
 
         return samples
-
-    def get_samples_by_submission(self, submission_uuid):
-        submission = self.get_submission_by_uuid(submission_uuid)
-
-        samples = []
-
-        if submission:
-            get_samples_url = submission["_links"]["samples"]["href"]
-            samples = self.get_samples(get_samples_url)
-
-        return samples
-
-    def get_biomaterials_in_bundle(self, bundle_uuid):
-        bundle_manifest = self.get_bundle_manifest(bundle_uuid)
-
-        if bundle_manifest:
-            for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
-                yield self.get_biomaterial_by_uuid(biomaterial_uuid)
 
     def get_bundle_manifest(self, bundle_uuid):
         get_bundle_manifest_url = self.url + '/bundleManifests/search/findByBundleUuid?uuid=' + bundle_uuid
