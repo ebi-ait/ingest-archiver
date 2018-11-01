@@ -87,7 +87,7 @@ class IngestAPI:
         response = requests.get(entity_url)
         content = self._handle_response(response)['content']
         content.update(content_json)
-        response = requests.put(entity_url, json.dumps(content))
+        response = requests.patch(entity_url, json.dumps({'content': content}))
 
         return self._handle_response(response)
 

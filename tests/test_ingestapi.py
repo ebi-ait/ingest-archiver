@@ -1,9 +1,12 @@
+import time
 import unittest
+
+import requests
+
 import config
 import json
 
 from archiver.ingestapi import IngestAPI
-from mock import MagicMock
 
 
 class TestIngestAPI(unittest.TestCase):
@@ -11,15 +14,60 @@ class TestIngestAPI(unittest.TestCase):
         self.ingest_api = IngestAPI()
         pass
 
-    def test_get_biomaterials_in_bundle(self):
-        with open(config.JSON_DIR + 'hca/bundle_manifest.json', encoding=config.ENCODING) as data_file:
-            bundle_manifest = json.loads(data_file.read())
-        with open(config.JSON_DIR + 'hca/biomaterial.json', encoding=config.ENCODING) as data_file:
-            biomaterial = json.loads(data_file.read())
+    def test_create_submission_no_input_token_success(self):
+        token = self.ingest_api.get_auth_token()
+        submission = self.ingest_api.create_submission(token)
 
-        self.ingest_api.get_bundle_manifest = MagicMock(return_value=bundle_manifest)
-        self.ingest_api.get_biomaterial_by_uuid = MagicMock(return_value=biomaterial)
+        if submission:
+            submission_url = submission['_links']['self']['href']
+            self.ingest_api.delete_submission(submission_url)
 
-        biomaterials = list(self.ingest_api.get_biomaterials_in_bundle('dummy_bundle_uuid'))
+        self.assertTrue(submission)
 
-        self.assertEqual(3, len(biomaterials))
+    def test_create_submission_success(self):
+        token = self.ingest_api.get_auth_token()
+        submission = self.ingest_api.create_submission(token)
+
+        if submission:
+            submission_url = submission['_links']['self']['href']
+            self.ingest_api.delete_submission(submission_url)
+
+        self.assertTrue(submission)
+
+    def test_create_submission_fail(self):
+        invalid_token = {'token_type': 'Bearer', 'access_token': 'invalid'};
+        self.assertRaises(requests.exceptions.HTTPError, self.ingest_api.create_submission, invalid_token)
+
+    def test_update_content(self):
+        sample_content = {}
+
+        with open(config.JSON_DIR + 'hca/biomaterial_content.json', encoding=config.ENCODING) as data_file:
+            sample_content = json.loads(data_file.read())
+
+        token = self.ingest_api.get_auth_token()
+        submission = self.ingest_api.create_submission(token)
+        sample = self.ingest_api.create_sample(submission, sample_content)
+
+        self.ingest_api.submit_if_valid(submission)
+
+        # update sample in submitted submission
+        content_patch = {
+            "biomaterial_core": {
+                "biosd_biomaterial": "SAMEA5100429"
+            }
+        }
+
+        time.sleep(3)
+
+        sample_url = self.ingest_api.get_link_href(sample, 'self')
+        token = self.ingest_api.get_auth_token()
+        update_submission = self.ingest_api.create_submission(token)
+
+        new_samples_url = self.ingest_api.get_link_href(update_submission, 'biomaterials')
+        new_sample = self.ingest_api.link_samples_to_submission(new_samples_url, sample_url)
+
+        new_sample_url = self.ingest_api.get_link_href(new_sample, 'self')
+        updated_sample = self.ingest_api.update_content(new_sample_url, content_patch)
+
+        # create sample
+        self.assertEqual(updated_sample['content']['biomaterial_core']['biosd_biomaterial'], content_patch['biomaterial_core']['biosd_biomaterial'])

@@ -35,7 +35,7 @@ class TestIngestArchiver(unittest.TestCase):
         assay_bundle = MagicMock('assay_bundle')
         assay_bundle.get_biomaterials = MagicMock(
             return_value=self.hca_submission['biomaterials'])
-        entities_by_type = self.archiver.get_archivable_entities('dummy_uuid')
+        entities_by_type = self.archiver.get_archivable_entities(assay_bundle)
         self.assertTrue(entities_by_type['sample'])
 
     def test_is_submittable(self):
@@ -75,7 +75,7 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(is_validated)
 
     def test_is_validated_and_submittable(self):
-        assay_bundle = AssayBundle('dummy_uuid')
+        assay_bundle = MagicMock('assay_bundle')
         assay_bundle.get_biomaterials = MagicMock(
             return_value=self.hca_submission['biomaterials'])
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
