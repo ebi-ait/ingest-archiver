@@ -51,11 +51,7 @@ class TestIngestAPI(unittest.TestCase):
         self.ingest_api.submit_if_valid(submission)
 
         # update sample in submitted submission
-        content_patch = {
-            "biomaterial_core": {
-                "biosd_biomaterial": "SAMEA5100429"
-            }
-        }
+        sample_content['biomaterial_core']['biosd_biomaterial'] = 'SAMEA5100429'
 
         time.sleep(3)
 
@@ -67,7 +63,7 @@ class TestIngestAPI(unittest.TestCase):
         new_sample = self.ingest_api.link_samples_to_submission(new_samples_url, sample_url)
 
         new_sample_url = self.ingest_api.get_link_href(new_sample, 'self')
-        updated_sample = self.ingest_api.update_content(new_sample_url, content_patch)
+        updated_sample = self.ingest_api.update_content(new_sample_url, sample_content)
 
         # create sample
-        self.assertEqual(updated_sample['content']['biomaterial_core']['biosd_biomaterial'], content_patch['biomaterial_core']['biosd_biomaterial'])
+        self.assertEqual(updated_sample['content']['biomaterial_core']['biosd_biomaterial'], sample_content['biomaterial_core']['biosd_biomaterial'])
