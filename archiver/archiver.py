@@ -85,6 +85,9 @@ class IngestArchiver:
                     converted_entities.append(entity)
         return converted_entities
 
+    def get_assay_bundle(self, bundle_uuid):
+        return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
+
     def get_archivable_entities(self, assay_bundle):
         archive_entities_by_type = {}
         archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)

@@ -25,7 +25,8 @@ if __name__ == '__main__':
         exit(2)
 
     archiver = IngestArchiver(ingest_url=options.ingest_url)
-    entities_dict_by_type = archiver.get_archivable_entities(options.bundle_uuid)
+    assay_bundle = archiver.get_assay_bundle(options.bundle_uuid)
+    entities_dict_by_type = archiver.get_archivable_entities(assay_bundle)
     archive_submission = archiver.archive(entities_dict_by_type)
 
     logging.info(json.dumps(archive_submission.processing_result))
