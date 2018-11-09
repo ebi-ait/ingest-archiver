@@ -11,6 +11,7 @@ class ConversionError(Exception):
 
 
 """
+HCA to USI JSON Mapping
 https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
 """
 
@@ -97,7 +98,7 @@ class SequencingExperimentConverter(Converter):
     def __init__(self):
         super(SequencingExperimentConverter, self).__init__()
         self.logger = logging.getLogger(__name__)
-        self.alias_prefix = 'sequencingExperiment|'
+        self.alias_prefix = 'sequencingExperiment_'
         self.library_selection_mapping = {
             "poly-dt": "Oligo-dT",
             "random": "RANDOM",
@@ -188,7 +189,7 @@ class SequencingRunConverter(Converter):
             'cram': 'cram',
         }
 
-        self.alias_prefix = 'sequencingRun|'
+        self.alias_prefix = 'sequencingRun_'
 
     def convert(self, hca_data):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
@@ -226,7 +227,7 @@ class ProjectConverter(Converter):
             "project__content__project_core__project_description": "description",
             "project__submissionDate": "releaseDate"
         }
-        self.alias_prefix = 'project|'
+        self.alias_prefix = 'project_'
 
     def _build_output(self, extracted_data, flattened_hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
@@ -247,7 +248,7 @@ class StudyConverter(Converter):
             "project__content__project_core__project_description": "description",
 
         }
-        self.alias_prefix = 'study|'
+        self.alias_prefix = 'study_'
 
     def _build_output(self, extracted_data, flattened_hca_data):
         if not extracted_data.get("attributes"):

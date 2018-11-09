@@ -5,7 +5,7 @@ import polling as polling
 from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
-    SequencingExperimentConverter, SequencingRunConverter
+    SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 
 VALIDATION_POLLING_TIMEOUT = 10
 VALIDATION_POLLING_STEP = 2
@@ -33,6 +33,7 @@ class IngestArchiver:
             self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
         else:
             archive_submission.is_completed = True
+            archive_submission.errors.append('No entities found to submit.')
             return archive_submission
 
         is_validated = False
@@ -62,15 +63,15 @@ class IngestArchiver:
                 timeout=SUBMISSION_POLLING_TIMEOUT
             )
             archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
-
             results = archive_submission.processing_result
 
             for result in results:
                 if result['status'] == 'Completed':
                     alias = result['alias']
                     accession = result['accession']
-                    entity = entities_dict_by_type['sample'][alias]
-                    entity.accession = accession
+                    entity = archive_submission.find_entity(alias)
+                    if entity:
+                        entity.accession = accession
 
         except polling.TimeoutException:
             archive_submission.errors.append("USI submission takes too long complete.")
@@ -80,21 +81,30 @@ class IngestArchiver:
     def _get_converted_entities(self, entities_dict_by_type):
         converted_entities = []
         for entity_type, entity_dict in entities_dict_by_type.items():
+            if not entity_dict:
+                continue
             for alias, entity in entity_dict.items():
-                if entity.converted_data:
+                current_version = self.usi_api.get_current_version(entity.archive_entity_type, entity.id)
+                if current_version:
+                    entity.accession = current_version.get('accession')
+                    entity.errors.append(
+                        f'This alias has already been submitted to USI, accession: {entity.accession}.')
+                elif entity.converted_data:
                     converted_entities.append(entity)
+
         return converted_entities
 
     def get_assay_bundle(self, bundle_uuid):
         return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
 
     def get_archivable_entities(self, assay_bundle):
-        archive_entities_by_type = {}
-        archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)
-        # archive_entities_by_type['project'] = self._get_project_dict(assay_bundle)
-        # archive_entities_by_type['study'] = self._get_study_dict(assay_bundle)
-        # archive_entities_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
-        # archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
+        archive_entities_by_type = {
+            'sample': self._get_samples_dict(assay_bundle),
+            'project': self._get_project_dict(assay_bundle),
+            'study': self._get_study_dict(assay_bundle),
+            # 'sequencing_experiment': self._get_sequencing_experiment_dict(assay_bundle),
+            # 'sequencing_run': self._get_sequencing_run_dict(assay_bundle)
+        }
 
         return archive_entities_by_type
 
@@ -128,6 +138,9 @@ class IngestArchiver:
     def _get_project_dict(self, assay_bundle):
         archive_entities_dict = {}
         project = assay_bundle.get_project()
+        if not project:
+            return None
+
         project_converter = ProjectConverter()
 
         archive_entity = ArchiveEntity()
@@ -149,7 +162,10 @@ class IngestArchiver:
     def _get_study_dict(self, assay_bundle):
         archive_entities_dict = {}
         project = assay_bundle.get_project()
-        project_converter = ProjectConverter()
+        if not project:
+            return None
+
+        study_converter = StudyConverter()
 
         archive_entity = ArchiveEntity()
         archive_entity.archive_entity_type = 'study'
@@ -157,8 +173,12 @@ class IngestArchiver:
         archive_entity.input_data = {'project': project}
 
         try:
-            archive_entity.converted_data = project_converter.convert(archive_entity.input_data)
+            archive_entity.converted_data = study_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
+            archive_entity.converted_data['projectRef'] = {
+                "alias": self._generate_archive_entity_id('project', project)
+            }
+
         except ConversionError as e:
             archive_entity.errors.append(
                 f'An error occured converting the project ({json.loads(project)}) to a project in USI, {str(e)}')
@@ -187,6 +207,16 @@ class IngestArchiver:
             archive_entity.converted_data = seq_experiment_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
 
+            archive_entity.converted_data['studyRef'] = {
+                "alias": self._generate_archive_entity_id('study', assay_bundle.get_project())
+            }
+
+            input_biomaterial = assay_bundle.get_input_biomaterial()
+            archive_entity.converted_data['sampleUses'] = {}
+            archive_entity.converted_data['sampleUses']['sampleRef'] = {
+                "alias": self._generate_archive_entity_id('sample', input_biomaterial)
+            }
+
             archive_entities_dict[archive_entity.id] = archive_entity
 
         return archive_entities_dict
@@ -208,21 +238,25 @@ class IngestArchiver:
 
             seq_run_converter = SequencingRunConverter()
             archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
-
+            archive_entity.converted_data['alias'] = archive_entity.id
+            archive_entity.converted_data['assayRefs'] = {
+                "alias": self._generate_archive_entity_id('sequencingExperiment', assay)
+            },
             archive_entities_dict[archive_entity.id] = archive_entity
 
         return archive_entities_dict
 
     def _generate_archive_entity_id(self, archive_entity_type, hca_entity):
         uuid = hca_entity['uuid']['uuid']  # should always be present in an hca entity
-        return f'{archive_entity_type}|{uuid}'
+        return f'{archive_entity_type}_{uuid}'
 
     def add_entities_to_submission(self, usi_submission, converted_entities):
         get_contents_url = usi_submission['_links']['contents']['href']
         contents = self.usi_api.get_contents(get_contents_url)
 
         for entity in converted_entities:
-            create_entity_url = contents['_links'][f'{entity.archive_entity_type}s:create']['href']
+            entity_link = self.usi_api.get_entity_url(entity.archive_entity_type)
+            create_entity_url = contents['_links'][f'{entity_link}:create']['href']
             created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
             entity.usi_json = created_entity
 
@@ -311,14 +345,35 @@ class ArchiveSubmission:
         self.is_completed = False
         self.entities_dict_type = {}
         self.converted_entities = []
+        self.accessioned = {}
 
     def __str__(self):
         return str(vars(self))
 
-    def print_entities(self):
+    def find_entity(self, alias):
+        for entities_dict in self.entities_dict_type.values():
+            if entities_dict.get(alias):
+                return entities_dict.get(alias)
+        return None
+
+    def generate_report(self):
+        report = {}
+
+        report['completed'] = self.is_completed
+        report['submission_errors'] = self.errors
+        report['validation_result'] = self.validation_result
+        report['entities'] = {}
         for type, entities_dict in self.entities_dict_type.items():
+            if not entities_dict:
+                continue
             for alias, entity in entities_dict.items():
-                print(str(entity))
+                report[alias] = {}
+                report[alias]['errors'] = entity.errors
+                report[alias]['accession'] = entity.accession
+                report[alias]['warnings'] = entity.warnings
+
+        print(json.dumps(report))
+        return report
 
 
 class ArchiveEntity:
@@ -330,6 +385,7 @@ class ArchiveEntity:
         self.id = None
         self.archive_entity_type = None
         self.accession = None
+        self.usi_json = None
 
     def __str__(self):
         return str(vars(self))
@@ -348,6 +404,7 @@ class AssayBundle:
         self.assay_process = None
         self.library_preparation_protocol = None
         self.sequencing_protocol = None
+        self.input_biomaterial = None
 
     def get_bundle_manifest(self):
         if not self.bundle_manifest:
@@ -402,6 +459,12 @@ class AssayBundle:
 
         return self.files
 
+    def get_input_biomaterial(self):
+        if not self.input_biomaterial:
+            self._init_input_biomaterial()
+
+        return self.input_biomaterial
+
     def _init_protocols(self):
         assay = self.get_assay_process()
         protocols = self.ingest_api.get_related_entity(assay, 'protocols', 'protocols')
@@ -429,6 +492,16 @@ class AssayBundle:
         bundle_manifest = self.get_bundle_manifest()
         for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
             yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+
+    def _init_input_biomaterial(self):
+        assay = self.get_assay_process()
+        input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
+
+        if not input_biomaterials:
+            raise Error('No input biomaterial found to the assay process.')
+
+        # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
+        return input_biomaterials[0]
 
 
 class Error(Exception):

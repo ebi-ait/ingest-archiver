@@ -26,11 +26,12 @@ if __name__ == '__main__':
 
     archiver = IngestArchiver(ingest_url=options.ingest_url)
     assay_bundle = archiver.get_assay_bundle(options.bundle_uuid)
-    entities_dict_by_type = archiver.get_archivable_entities(assay_bundle)
-    archive_submission = archiver.archive(entities_dict_by_type)
+    entities_dict = archiver.get_archivable_entities(assay_bundle)
+    archive_submission = archiver.archive(entities_dict)
 
     logging.info(json.dumps(archive_submission.processing_result))
     logging.info(str(archive_submission))
-    archive_submission.print_entities()
+    logging.info('==============================================')
+    archive_submission.generate_report()
 
 

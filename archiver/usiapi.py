@@ -16,24 +16,40 @@ def get_aap_token(username, password):
 
     return token
 
+USI_ENTITY_LINK = {
+    'study': 'enaStudies',
+    'sample': 'samples',
+    'sequencingExperiment': 'sequencingExperiments',
+    'project': 'projects',
+    'sequencingRun': 'sequencingRuns'
+}
+
+USI_ENTITY_CURR_VERSION_LINK = {
+    'study': 'studies',
+    'sample': 'samples',
+    'sequencingExperiment': 'assays',
+    'project': 'projects',
+    'sequencingRun': 'assayData'
+}
 
 class USIAPI:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-
         self.token = get_aap_token(config.AAP_API_USER, config.AAP_API_PASSWORD)
-
         self.headers = {
             'Content-type': 'application/json',
             'Accept': 'application/json',
             'Authorization': 'Bearer ' + self.token
         }
+        self.url = config.USI_API_URL
+        self.logger.info(f'Using {self.url}')
+        self.aap_api_domain = config.AAP_API_DOMAIN
 
     def get_token(self, user, password):
         return get_aap_token(user, password)
 
     def create_submission(self):
-        create_submissions_url = config.USI_API_URL + '/api/teams/' + config.AAP_API_DOMAIN + '/submissions'
+        create_submissions_url = self.url + '/api/teams/' + self.aap_api_domain + '/submissions'
         return self._post(url=create_submissions_url, data_json={})
 
     def delete_submission(self, delete_url):
@@ -41,6 +57,9 @@ class USIAPI:
 
     def get_contents(self, get_contents_url):
         return self._get(get_contents_url)
+
+    def get_entity_url(self, entity_type):
+        return USI_ENTITY_LINK[entity_type]
 
     def get_submission_status(self, get_submission_status_url):
         return self._get(get_submission_status_url)
@@ -82,6 +101,18 @@ class USIAPI:
         response = self._get(get_results_url)
 
         return self._get_embedded_list(response, 'processingStatuses')
+
+    def get_current_version(self, entity_type, alias):
+        entity_link = USI_ENTITY_CURR_VERSION_LINK[entity_type]
+        url = f'{self.url}/api/{entity_link}/search/current-version?teamName={self.aap_api_domain}&alias={alias}'
+        response = requests.get(url, headers=self.headers)
+
+        if response.status_code == requests.codes.not_found:
+            return None
+        elif response.status_code == requests.codes.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
 
     # ===
 

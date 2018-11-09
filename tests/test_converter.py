@@ -49,9 +49,8 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'usi/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
-        test_alias = str(randint(0, 1000))
-
-        process['uuid']['uuid'] = 'process' + test_alias
+        test_alias = 'process' + str(randint(0, 1000))
+        process['uuid']['uuid'] = test_alias
         sequencing_protocol['uuid']['uuid'] = 'seqprotocol' + test_alias
         lib_prep_protocol['uuid']['uuid'] = 'libprepprotol' + test_alias
 
@@ -61,7 +60,7 @@ class TestConverter(unittest.TestCase):
             'library_preparation_protocol': lib_prep_protocol
         }
 
-        expected_json['alias'] = 'sequencingExperiment|process' + test_alias
+        expected_json['alias'] = 'sequencingExperiment_' + test_alias
 
         actual_json = converter.convert(hca_data)
 
@@ -82,9 +81,9 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'usi/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
-        test_alias = str(randint(0, 1000))
+        test_alias = 'process' + str(randint(0, 1000))
 
-        process['uuid']['uuid'] = 'process' + test_alias
+        process['uuid']['uuid'] = test_alias
 
         hca_data = {
             'sequencing_protocol': sequencing_protocol,
@@ -92,7 +91,7 @@ class TestConverter(unittest.TestCase):
             'files': [file]
         }
 
-        expected_json['alias'] = 'sequencingRun|process' + test_alias
+        expected_json['alias'] = 'sequencingRun_' + test_alias
 
         actual_json = converter.convert(hca_data)
 
@@ -110,7 +109,7 @@ class TestConverter(unittest.TestCase):
         test_alias = 'hca' + str(randint(0, 1000))
 
         hca_data['uuid']['uuid'] = test_alias
-        expected_json['alias'] = 'project|' + test_alias
+        expected_json['alias'] = 'project_' + test_alias
 
         input = {
             'project': hca_data
@@ -133,7 +132,7 @@ class TestConverter(unittest.TestCase):
         test_alias = 'hca' + str(randint(0, 1000))
 
         hca_data['uuid']['uuid'] = test_alias
-        expected_json['alias'] = 'study|' + test_alias
+        expected_json['alias'] = 'study_' + test_alias
 
         input = {
             'project': hca_data
