@@ -9,5 +9,5 @@ COPY config.py listener.py cli.py requirements.txt ./
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT python /app/cli.py
+ENTRYPOINT ["python", "cli.py"]
 
