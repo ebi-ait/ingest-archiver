@@ -83,13 +83,27 @@ class SampleConverter(Converter):
             "biomaterial__submissionDate": "releaseDate"
         }
 
+        # TODO local mapping for now, ideally this should be an OLS lookup
+        # TODO what's taxon id for mouse
+        self.taxon_map = {
+            "9606": "Homo sapiens"
+        }
+
     def _build_output(self, extracted_data, flattened_hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["sampleRelationships"] = []
         extracted_data["description"] = ""
+        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
+
+        if not extracted_data["taxon"]:
+            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
+
         # non required fields
         if "title" in extracted_data:
             extracted_data["title"] = extracted_data["title"]
+
+        if not extracted_data.get("attributes"):
+            extracted_data["attributes"] = {}
 
         return extracted_data
 
@@ -99,13 +113,9 @@ class SequencingExperimentConverter(Converter):
         super(SequencingExperimentConverter, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.alias_prefix = 'sequencingExperiment_'
-        self.library_selection_mapping = {
-            "poly-dt": "Oligo-dT",
-            "random": "RANDOM",
-        }
 
         self.library_selection_mapping = {
-            "poly-dT": "Oligo-dT",
+            "poly-dt": "Oligo-dT",
             "random": "RANDOM",
         }
 
@@ -139,18 +149,18 @@ class SequencingExperimentConverter(Converter):
 
         if not extracted_data.get("attributes"):
             extracted_data["attributes"] = {}
-        extracted_data["attributes"]["library_strategy"] = [dict(value="Other")]
+        extracted_data["attributes"]["library_strategy"] = [dict(value="OTHER")]
         extracted_data["attributes"]["library_source"] = [dict(value="TRANSCRIPTOMIC SINGLE CELL")]
 
         primer = flattened_hca_data.get("library_preparation_protocol__content__primer")
         if primer:
-            extracted_data["attributes"]["library_selection"] = [dict(value=self.library_selection_mapping.get(primer, ""))]
+            extracted_data["attributes"]["library_selection"] = [dict(value=self.library_selection_mapping.get(primer, "unspecified"))]
 
-        paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_end")
+        paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_ends")
         if paired_end:
             extracted_data["attributes"]["library_layout"] = [dict(value="PAIRED")]
-            extracted_data["attributes"]["nominal_length"] = [dict(value="")]
-            extracted_data["attributes"]["nominal_sdev"] = [dict(value="")]
+            extracted_data["attributes"]["nominal_length"] = [dict(value="0")]
+            extracted_data["attributes"]["nominal_sdev"] = [dict(value="0")]
         else:
             extracted_data["attributes"]["library_layout"] = [dict(value="SINGLE")]
 
@@ -159,8 +169,13 @@ class SequencingExperimentConverter(Converter):
             extracted_data["attributes"]["instrument_model"] = [dict(value=instr_model)]
             extracted_data["attributes"]["platform_type"] = [dict(value=self.instrument_model.get(instr_model, ""))]
 
-        extracted_data["attributes"]["design_description"] = [dict(value="")]
-        extracted_data["attributes"]["library_name"] = [dict(value=extracted_data.get("cell_suspension__biomaterial_core__biomaterial_id", ""))]
+        extracted_data["attributes"]["design_description"] = [dict(value="unspecified")]
+
+        library_name = flattened_hca_data.get("input_biomaterial__content__biomaterial_core__biomaterial_id", "")
+        if not library_name:
+            raise ConversionError("Sequencing Experiment Conversion Error", "There is no id found for the input biomaterial.")
+
+        extracted_data["attributes"]["library_name"] = [dict(value=library_name)]
 
         self._build_links(extracted_data, {})
 
