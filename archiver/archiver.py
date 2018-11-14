@@ -1,5 +1,7 @@
 import json
 import logging
+
+import pika
 import polling as polling
 
 from archiver.usiapi import USIAPI
@@ -7,19 +9,20 @@ from archiver.ingestapi import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 
-VALIDATION_POLLING_TIMEOUT = 10
+VALIDATION_POLLING_TIMEOUT = 60
 VALIDATION_POLLING_STEP = 2
 
 SUBMISSION_POLLING_STEP = 3
-SUBMISSION_POLLING_TIMEOUT = 30
+SUBMISSION_POLLING_TIMEOUT = 120
 
 
 class IngestArchiver:
-    def __init__(self, ingest_url=None):
+    def __init__(self, ingest_url=None, exclude_types=None):
         self.logger = logging.getLogger(__name__)
         self.usi_api = USIAPI()
         self.converter = SampleConverter()
         self.ingest_api = IngestAPI(ingest_url)
+        self.exclude_types = exclude_types if exclude_types else []
 
     def archive(self, entities_dict_by_type):
         archive_submission = ArchiveSubmission()
@@ -80,17 +83,31 @@ class IngestArchiver:
 
     def _get_converted_entities(self, entities_dict_by_type):
         converted_entities = []
+        self.logger.info("Getting converted entities...")
+
+        summary = {}
         for entity_type, entity_dict in entities_dict_by_type.items():
             if not entity_dict:
                 continue
             for alias, entity in entity_dict.items():
                 current_version = self.usi_api.get_current_version(entity.archive_entity_type, entity.id)
-                if current_version:
+                if current_version and current_version.get('accession'):
                     entity.accession = current_version.get('accession')
                     entity.errors.append(
                         f'This alias has already been submitted to USI, accession: {entity.accession}.')
+                elif current_version and \
+                        current_version.get('_embedded') and \
+                        current_version['_embedded'].get('processingStatus') in ['Submitted', 'Completed']:
+                    entity.errors.append(
+                        f'This alias has already been submitted to USI')
                 elif entity.converted_data:
                     converted_entities.append(entity)
+                    if not summary.get(entity_type):
+                        summary[entity_type] = 0
+                    summary[entity_type] = summary[entity_type] + 1
+
+        print("################### Conversion Summary:")
+        print(json.dumps(summary, indent=4))
 
         return converted_entities
 
@@ -98,20 +115,40 @@ class IngestArchiver:
         return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
 
     def get_archivable_entities(self, assay_bundle):
-        archive_entities_by_type = {
-            'sample': self._get_samples_dict(assay_bundle),
-            'project': self._get_project_dict(assay_bundle),
-            'study': self._get_study_dict(assay_bundle),
-            # 'sequencing_experiment': self._get_sequencing_experiment_dict(assay_bundle),
-            # 'sequencing_run': self._get_sequencing_run_dict(assay_bundle)
-        }
+        archive_entities_by_type = {}
+
+        if not self.exclude_types or (self.exclude_types and 'project' not in self.exclude_types):
+            print("Finding project in the bundle...")
+            archive_entities_by_type['project'] = self._get_project_dict(assay_bundle)
+
+        if not self.exclude_types or (self.exclude_types and 'study' not in self.exclude_types):
+            print("Finding study in the bundle...")
+            archive_entities_by_type['study'] = self._get_study_dict(assay_bundle)
+
+        if not self.exclude_types or (self.exclude_types and 'sample' not in self.exclude_types):
+            print("Finding samples in the bundle...")
+            archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)
+
+        if not self.exclude_types or (self.exclude_types and 'sequencingExperiment' not in self.exclude_types):
+            archive_entities_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
+            print("Finding assay in the bundle...")
+
+        # if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
+        #     print("Finding sequencing run in the bundle...", end="", flush=True)
+        #     archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
 
         return archive_entities_by_type
+
+    def _print_same_line(self, string):
+        print('\r' + string, end='')
+
 
     def _get_samples_dict(self, assay_bundle):
         archive_entities = {}
         sample_converter = SampleConverter()
         biomaterials = assay_bundle.get_biomaterials()
+
+        samples_ctr = 0
 
         for biomaterial in biomaterials:
             archive_entity = ArchiveEntity()
@@ -132,6 +169,9 @@ class IngestArchiver:
                     f'An error occured converting the biomaterial ({json.loads(biomaterial)}) to a sample in USI, {str(e)}')
 
             archive_entities[archive_entity.id] = archive_entity
+            samples_ctr = samples_ctr + 1
+
+            self._print_same_line(str(samples_ctr))
 
         return archive_entities
 
@@ -200,7 +240,8 @@ class IngestArchiver:
             archive_entity.input_data = {
                 'process': assay,
                 'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
-                'sequencing_protocol': assay_bundle.get_sequencing_protocol()
+                'sequencing_protocol': assay_bundle.get_sequencing_protocol(),
+                'input_biomaterial': assay_bundle.get_input_biomaterial()
             }
 
             seq_experiment_converter = SequencingExperimentConverter()
@@ -212,10 +253,13 @@ class IngestArchiver:
             }
 
             input_biomaterial = assay_bundle.get_input_biomaterial()
-            archive_entity.converted_data['sampleUses'] = {}
-            archive_entity.converted_data['sampleUses']['sampleRef'] = {
-                "alias": self._generate_archive_entity_id('sample', input_biomaterial)
+            archive_entity.converted_data['sampleUses'] = []
+            sample_ref = {
+                'sampleRef': {
+                    "alias": self._generate_archive_entity_id('sample', input_biomaterial)
+                }
             }
+            archive_entity.converted_data['sampleUses'].append(sample_ref)
 
             archive_entities_dict[archive_entity.id] = archive_entity
 
@@ -257,8 +301,26 @@ class IngestArchiver:
         for entity in converted_entities:
             entity_link = self.usi_api.get_entity_url(entity.archive_entity_type)
             create_entity_url = contents['_links'][f'{entity_link}:create']['href']
+
             created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
             entity.usi_json = created_entity
+
+            if entity.archive_entity_type == 'sequencingRun':
+                self.notify_file_archiver(entity)
+
+    def notify_file_archiver(self, entity):
+        rabbit_url = ''
+        exchange = ''
+        routing_key = ''
+
+        message = dict()
+
+        connection = pika.BlockingConnection(pika.URLParameters(rabbit_url))
+        channel = connection.channel()
+        channel.basic_publish(exchange=exchange,
+                              routing_key=routing_key,
+                              body=json.dumps(message))
+        connection.close()
 
     def convert_entities(self, entities_dict_by_type):
         converted_entities_dict = {}
@@ -356,13 +418,16 @@ class ArchiveSubmission:
                 return entities_dict.get(alias)
         return None
 
-    def generate_report(self):
+    def generate_report(self, output_to_file=None):
         report = {}
-
         report['completed'] = self.is_completed
         report['submission_errors'] = self.errors
         report['validation_result'] = self.validation_result
         report['entities'] = {}
+
+        if self.usi_submission:
+            report['submission_url'] = self.usi_submission['_links']['self']['href']
+
         for type, entities_dict in self.entities_dict_type.items():
             if not entities_dict:
                 continue
@@ -372,7 +437,15 @@ class ArchiveSubmission:
                 report[alias]['accession'] = entity.accession
                 report[alias]['warnings'] = entity.warnings
 
-        print(json.dumps(report))
+                if entity.usi_json:
+                    report[alias]['entity_url'] = entity.usi_json['_links']['self']['href']
+
+        print(json.dumps(report, indent=4))
+
+        if output_to_file:
+            with open(output_to_file, 'w') as outfile:
+                json.dump(report, outfile, indent=4)
+
         return report
 
 
@@ -461,7 +534,7 @@ class AssayBundle:
 
     def get_input_biomaterial(self):
         if not self.input_biomaterial:
-            self._init_input_biomaterial()
+            self.input_biomaterial = self._retrieve_input_biomaterial()
 
         return self.input_biomaterial
 
@@ -476,8 +549,8 @@ class AssayBundle:
 
             protocol_by_type[concrete_entity_type].append(protocol)
 
-        library_preparation_protocols = protocol_by_type.get('library_preparation_protocol')
-        sequencing_protocols = protocol_by_type.get('sequencing_protocol')
+        library_preparation_protocols = protocol_by_type.get('library_preparation_protocol', [])
+        sequencing_protocols = protocol_by_type.get('sequencing_protocol', [])
 
         if len(library_preparation_protocols) != 1:
             raise Error('There should be 1 library preparation protocol for the assay process.')
@@ -493,7 +566,7 @@ class AssayBundle:
         for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
             yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
 
-    def _init_input_biomaterial(self):
+    def _retrieve_input_biomaterial(self):
         assay = self.get_assay_process()
         input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
 
