@@ -1,0 +1,126 @@
+{
+	"accession": "SAMEA5249717",
+	"alias": "sample_1b775301-9efd-4cd4-8e41-fe5f63dfafb4",
+	"team": {
+		"name": "subs.test-team-21",
+		"description": "HCA Ingest",
+		"profile": {
+			"centre name": "HCA"
+		},
+		"_links": {
+			"submissions": {
+				"href": "https://submission-dev.ebi.ac.uk/api/submissions/search/by-team?teamName=subs.test-team-21"
+			},
+			"submissions:create": {
+				"href": "https://submission-dev.ebi.ac.uk/api/teams/subs.test-team-21/submissions"
+			},
+			"items": {
+				"href": "https://submission-dev.ebi.ac.uk/api/teams/subs.test-team-21/items"
+			}
+		}
+	},
+	"attributes": {
+		"biomaterial__describedBy": [{
+			"value": "https://schema.humancellatlas.org/type/biomaterial/6.1.1/cell_suspension",
+			"terms": []
+		}],
+		"biomaterial__schema_type": [{
+			"value": "biomaterial",
+			"terms": []
+		}],
+		"biomaterial__biomaterial_core__biomaterial_id": [{
+			"value": "Q4_DEMO-cellsus_SAMN02797092",
+			"terms": []
+		}]
+	},
+	"sampleRelationships": [],
+	"taxonId": 9606,
+	"releaseDate": "2018-10-29",
+	"createdDate": "2018-11-09T11:39:48.765+0000",
+	"lastModifiedDate": "2018-11-09T11:39:48.799+0000",
+	"createdBy": "usr-bbd54056-975d-4c41-b9dc-f57d14018a45",
+	"lastModifiedBy": "usr-bbd54056-975d-4c41-b9dc-f57d14018a45",
+	"_embedded": {
+		"processingStatus": {
+			"archive": "BioSamples",
+			"submittableType": "Sample",
+			"accession": "SAMEA5249717",
+			"alias": "sample_1b775301-9efd-4cd4-8e41-fe5f63dfafb4",
+			"lastModifiedDate": "2018-11-09T11:39:58.394+0000",
+			"lastModifiedBy": "BioSamples",
+			"status": "Completed",
+			"_links": {
+				"self": {
+					"href": "https://submission-dev.ebi.ac.uk/api/processingStatuses/8a2c8ace-d7fb-4bde-ac05-bea8fe73e819{?projection}",
+					"templated": true
+				}
+			}
+		},
+		"validationResult": {
+			"overallValidationOutcomeByAuthor": {
+				"Core": "Pass",
+				"Taxonomy": "Pass",
+				"Ena": "Pass",
+				"Biosamples": "Pass",
+				"JsonSchema": "Pass"
+			},
+			"validationStatus": "Complete",
+			"_links": {
+				"self": {
+					"href": "https://submission-dev.ebi.ac.uk/api/validationResults/453e3e7e-96f4-4fab-91dc-730acb45b269{?projection}",
+					"templated": true
+				}
+			}
+		},
+		"submission": {
+			"team": "subs.test-team-21",
+			"createdDate": "2018-11-09T11:39:48.410+0000",
+			"lastModifiedDate": "2018-11-09T11:39:52.299+0000",
+			"lastModifiedBy": "usr-bbd54056-975d-4c41-b9dc-f57d14018a45",
+			"submitter": "hca-ingest-dev@ebi.ac.uk",
+			"createdBy": "usr-bbd54056-975d-4c41-b9dc-f57d14018a45",
+			"submissionStatus": "Completed",
+			"_links": {
+				"self": {
+					"href": "https://submission-dev.ebi.ac.uk/api/submissions/1581b0f3-3d12-4b65-8b55-086a886844f4{?projection}",
+					"templated": true
+				},
+				"submissionStatus": {
+					"href": "https://submission-dev.ebi.ac.uk/api/submissions/1581b0f3-3d12-4b65-8b55-086a886844f4/submissionStatus"
+				},
+				"submissionPlan": {
+					"href": "https://submission-dev.ebi.ac.uk/api/submissions/1581b0f3-3d12-4b65-8b55-086a886844f4/submissionPlan"
+				}
+			}
+		}
+	},
+	"_links": {
+		"self": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3"
+		},
+		"sample": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3"
+		},
+		"history": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/search/history?teamName=subs.test-team-21&alias=sample_1b775301-9efd-4cd4-8e41-fe5f63dfafb4"
+		},
+		"current-version": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/search/current-version?teamName=subs.test-team-21&alias=sample_1b775301-9efd-4cd4-8e41-fe5f63dfafb4"
+		},
+		"processingStatus": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3/processingStatus"
+		},
+		"submission": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3/submission"
+		},
+		"validationResult": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3/validationResult"
+		},
+		"dataType": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3/dataType"
+		},
+		"checklist": {
+			"href": "https://submission-dev.ebi.ac.uk/api/samples/5e9f70d5-17a4-4e81-a200-6e0a0c1d67d3/checklist"
+		}
+	}
+}
