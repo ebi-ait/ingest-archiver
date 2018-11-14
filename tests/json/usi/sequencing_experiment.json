@@ -3,17 +3,29 @@
     "title": "assay name",
     "description": "assay description",
     "attributes": {
+        "input_biomaterial__biomaterial_core__biomaterial_id": [{
+            "value": "Q4_DEMO-cellsus_SAMN02797092"
+        }],
+        "input_biomaterial__biomaterial_core__ncbi_taxon_id__0": [{
+          "value": 9606
+        }],
+        "input_biomaterial__describedBy": [{
+          "value": "http://schema.dev.data.humancellatlas.org/type/biomaterial/8.6.1/cell_suspension"
+        }],
+        "input_biomaterial__schema_type": [{
+          "value": "biomaterial"
+        }],
         "library_strategy": [{
-            "value": "Other"
+            "value": "OTHER"
         }],
         "library_source": [{
             "value": "TRANSCRIPTOMIC SINGLE CELL"
         }],
-        "library_selection": [{
-            "value": "Oligo-dT"
-        }],
         "library_layout": [{
-            "value": "SINGLE"
+            "value": "PAIRED"
+        }],
+        "design_description": [{
+            "value": "unspecified"
         }],
         "platform_type": [{
             "value": "ILLUMINA"
@@ -21,11 +33,8 @@
         "instrument_model": [{
             "value": "Illumina HiSeq 2500"
         }],
-        "design_description": [{
-            "value": ""
-        }],
         "library_name": [{
-            "value": ""
+            "value": "Q4_DEMO-cellsus_SAMN02797092"
         }],
         "library_preparation_protocol__describedBy": [{
             "value": "http://schema.dev.data.humancellatlas.org/type/protocol/sequencing/4.3.2/library_preparation_protocol"
@@ -56,6 +65,15 @@
         }],
         "library_preparation_protocol__strand": [{
             "value": "unstranded"
+        }],
+        "library_selection": [{
+            "value": "unspecified"
+        }],
+        "nominal_length": [{
+            "value": "0"
+        }],
+        "nominal_sdev": [{
+            "value": "0"
         }],
         "process__describedBy": [{
             "value": "http://schema.dev.data.humancellatlas.org/type/process/6.0.2/process"

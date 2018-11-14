@@ -55,6 +55,7 @@ class TestConverter(unittest.TestCase):
         lib_prep_protocol['uuid']['uuid'] = 'libprepprotol' + test_alias
 
         hca_data = {
+            'input_biomaterial': input_biomaterial,
             'process': process,
             'sequencing_protocol': sequencing_protocol,
             'library_preparation_protocol': lib_prep_protocol
