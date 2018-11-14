@@ -13,7 +13,7 @@ from archiver.usiapi import USIAPI
 
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
-        self.archiver = IngestArchiver()
+        self.archiver = IngestArchiver(exclude_types=['project', 'study', 'sequencingExperiment', 'sequencingRun'])
         self.converter = Converter()
         self.ingest_api = IngestAPI()
         self.usi_api = USIAPI()
