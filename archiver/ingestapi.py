@@ -49,7 +49,7 @@ class IngestAPI:
         response = requests.get(schema_url, headers=self.headers)
         schema = self._handle_response(response)
 
-        return schema.get('title')
+        return schema.get('name')
 
     def get_entity_by_uuid(self, entity_type, uuid):
         entity_url = f'{self.url}{entity_type}/search/findByUuid?uuid={uuid}'
