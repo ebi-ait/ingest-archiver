@@ -40,10 +40,10 @@ class IngestArchiver:
         is_validated = False
         try:
             is_validated = polling.poll(
-                lambda: self.is_validated(archive_submission.usi_submission),
+                lambda: self.is_validated(archive_submission.usi_submission) and self.is_submittable(archive_submission.usi_submission),
                 step=config.VALIDATION_POLLING_STEP,
                 timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
-                poll_forever=config.VALIDATION_POLL_FOREVER
+                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
         except polling.TimeoutException as te:
             archive_submission.errors.append('USI validation takes too long to complete.')
@@ -63,7 +63,7 @@ class IngestArchiver:
                 lambda: self.is_processing_complete(archive_submission.usi_submission),
                 step=config.SUBMISSION_POLLING_STEP,
                 timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
-                poll_forever=config.SUBMISSION_POLL_FOREVER
+                poll_forever=True if config.SUBMISSION_POLL_FOREVER else False
             )
             archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
             results = archive_submission.processing_result
