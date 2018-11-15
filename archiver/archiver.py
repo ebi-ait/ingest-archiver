@@ -34,7 +34,7 @@ class IngestArchiver:
             archive_submission.converted_entities = converted_entities
             archive_submission.usi_submission = self.usi_api.create_submission()
             print("####################### USI SUBMISSION")
-            print(self.usi_submission['_links']['self']['href'])
+            print(archive_submission.usi_submission['_links']['self']['href'])
             self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
         else:
             archive_submission.is_completed = True
