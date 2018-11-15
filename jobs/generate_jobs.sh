@@ -4,13 +4,19 @@ BASE_DIR=$(dirname "$0")
 
 DEFAULT_DIR=output
 DEFAULT_INGEST_URL=http://api.ingest.humancellatlas.org
+DEFAULT_IMAGE=humancellatlas/ingest-archiver
 
 output_dir=$DEFAULT_DIR
 ingest_url=$DEFAULT_INGEST_URL
+worker_image=$DEFAULT_IMAGE
 
 for arg in "$@"
 do
 case $arg in
+     -i=*|--image=*)
+     worker_image=${arg#*=}
+     shift
+     ;;
      -o=*|--output=*)
      output_dir=${arg#*=}
      shift
@@ -47,6 +53,8 @@ fi
 for uuid in $(cat $input_file)
 do
     output_file=$output_dir/archive_$uuid.yaml
-    cat $BASE_DIR/job-template.yaml | sed "s/\${BUNDLE_UUID}/$uuid/" |\
+    cat $BASE_DIR/job-template.yaml |\
+        sed "s~\${BUNDLE_UUID}~$uuid~g" |\
+        sed "s~\${WORKER_IMAGE}~$worker_image~g" |\
         sed "s~\${INGEST_URL}~$ingest_url~g" > $output_file
 done

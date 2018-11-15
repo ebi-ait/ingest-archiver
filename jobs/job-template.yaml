@@ -13,6 +13,6 @@ spec:
     spec:
       containers:
       - name: worker
-        image: humancellatlas/ingest-archiver
+        image: ${WORKER_IMAGE}
         command: ["-b", "${BUNDLE_UUID}", "-i", "${INGEST_URL}"]
       restartPolicy: Never
