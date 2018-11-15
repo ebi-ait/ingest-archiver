@@ -129,19 +129,18 @@ class IngestArchiver:
             print("Finding samples in the bundle...")
             archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)
 
-        if not self.exclude_types or (self.exclude_types and 'sequencingExperiment' not in self.exclude_types):
+        if not self.exclude_types or (self.exclude_types and 'sequencing_experiment' not in self.exclude_types):
             archive_entities_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
             print("Finding assay in the bundle...")
 
-        # if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
-        #     print("Finding sequencing run in the bundle...", end="", flush=True)
-        #     archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
+        if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
+            print("Finding sequencing run in the bundle...", end="", flush=True)
+            archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
 
         return archive_entities_by_type
 
     def _print_same_line(self, string):
         print('\r' + string, end='')
-
 
     def _get_samples_dict(self, assay_bundle):
         archive_entities = {}

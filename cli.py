@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-b", "--bundle_uuid", help="Bundle UUID")
     parser.add_option("-i", "--ingest_url", help="Ingest API url")
-    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
+    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencing_experiment,sequencing_run\"")
     parser.add_option("-f", "--bundle_list_file", help="Path to file containing list of bundle uuid's")
     parser.add_option("-o", "--output_dir", help="Output dir name")
 
