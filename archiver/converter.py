@@ -33,8 +33,6 @@ class Converter:
             converted_data = self._build_output(extracted_data, flattened_hca_data)
             extracted_data["alias"] = f'{self.alias_prefix}{extracted_data["alias"]}'
 
-
-
         except KeyError as e:
             error_message = "Error:" + str(e)
             self.logger.error(error_message)
