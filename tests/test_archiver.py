@@ -36,12 +36,6 @@ class TestIngestArchiver(unittest.TestCase):
         with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
             sequencing_protocol = json.loads(data_file.read())
 
-        with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
-            sequencing_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
-            sequencing_protocol = json.loads(data_file.read())
-
         with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:
             sequencing_file = json.loads(data_file.read())
 
