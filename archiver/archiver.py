@@ -311,8 +311,9 @@ class IngestArchiver:
             created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
             entity.usi_json = created_entity
 
-            if entity.archive_entity_type == 'sequencingRun':
-                self.notify_file_archiver(entity)
+            # TODO notify file archiver
+            # if entity.archive_entity_type == 'sequencingRun':
+            #     self.notify_file_archiver(entity)
 
     def notify_file_archiver(self, entity):
         rabbit_url = ''
