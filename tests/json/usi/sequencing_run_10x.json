@@ -60,8 +60,8 @@
     },
     "description": "",
     "files": [{
-        "name": "R1.fastq.gz",
-        "type": "fastq"
+        "name": "dummy_bundle_uuid.bam",
+        "type": "bam"
     }],
     "title": ""
 }

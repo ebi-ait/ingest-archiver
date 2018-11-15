@@ -70,6 +70,9 @@ class TestConverter(unittest.TestCase):
     def test_convert_sequencing_run(self):
         converter = SequencingRunConverter()
 
+        with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
+            lib_prep_protocol = json.loads(data_file.read())
+
         with open(config.JSON_DIR + 'hca/process.json', encoding=config.ENCODING) as data_file:
             process = json.loads(data_file.read())
 
@@ -87,9 +90,46 @@ class TestConverter(unittest.TestCase):
         process['uuid']['uuid'] = test_alias
 
         hca_data = {
+            'library_preparation_protocol': lib_prep_protocol,
             'sequencing_protocol': sequencing_protocol,
             'process': process,
             'files': [file]
+        }
+
+        expected_json['alias'] = 'sequencingRun_' + test_alias
+
+        actual_json = converter.convert(hca_data)
+
+        self.assertEqual(expected_json, actual_json)
+
+    def test_convert_sequencing_run_10x(self):
+        converter = SequencingRunConverter()
+
+        with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
+            lib_prep_protocol = json.loads(data_file.read())
+
+        with open(config.JSON_DIR + 'hca/process.json', encoding=config.ENCODING) as data_file:
+            process = json.loads(data_file.read())
+
+        with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
+            sequencing_protocol = json.loads(data_file.read())
+
+        with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:
+            file = json.loads(data_file.read())
+
+        with open(config.JSON_DIR + 'usi/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
+            expected_json = json.loads(data_file.read())
+
+        test_alias = 'process' + str(randint(0, 1000))
+
+        process['uuid']['uuid'] = test_alias
+
+        hca_data = {
+            'library_preparation_protocol': lib_prep_protocol,
+            'sequencing_protocol': sequencing_protocol,
+            'process': process,
+            'files': [file],
+            'bundle_uuid': 'dummy_bundle_uuid'
         }
 
         expected_json['alias'] = 'sequencingRun_' + test_alias
@@ -142,3 +182,4 @@ class TestConverter(unittest.TestCase):
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)
+

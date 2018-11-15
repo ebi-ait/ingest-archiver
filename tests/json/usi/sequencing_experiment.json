@@ -67,7 +67,7 @@
             "value": "unstranded"
         }],
         "library_selection": [{
-            "value": "unspecified"
+            "value": "Oligo-dT"
         }],
         "nominal_length": [{
             "value": "0"
@@ -85,12 +85,12 @@
             "value": "sequence_process_file_1"
         }],
         "sequencing_protocol__describedBy": [{
-            "value": "https://schema.humancellatlas.org/type/protocol/sequencing/7.0.0/sequencing_protocol"
+            "value": "https://schema.humancellatlas.org/type/protocol/sequencing/9.0.3/sequencing_protocol"
         }],
         "sequencing_protocol__instrument_manufacturer_model__text": [{
             "value": "Illumina HiSeq 2500"
         }],
-        "sequencing_protocol__paired_ends": [{
+        "sequencing_protocol__paired_end": [{
             "value": true
         }],
         "sequencing_protocol__protocol_core__protocol_id": [{

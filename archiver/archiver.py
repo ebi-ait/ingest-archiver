@@ -276,11 +276,14 @@ class IngestArchiver:
             archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, assay)
 
             archive_entity.input_data = {
+                'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
                 'process': assay,
-                'files': assay_bundle.get_files()
+                'files': assay_bundle.get_files(),
+                'bundle_uuid': assay_bundle.bundle_uuid
             }
 
             seq_run_converter = SequencingRunConverter()
+
             archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
             archive_entity.converted_data['assayRefs'] = {
