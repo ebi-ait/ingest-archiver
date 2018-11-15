@@ -33,6 +33,8 @@ class IngestArchiver:
         if converted_entities:
             archive_submission.converted_entities = converted_entities
             archive_submission.usi_submission = self.usi_api.create_submission()
+            print("####################### USI SUBMISSION")
+            print(self.usi_submission['_links']['self']['href'])
             self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
         else:
             archive_submission.is_completed = True
@@ -280,6 +282,10 @@ class IngestArchiver:
                 'files': assay_bundle.get_files(),
                 'bundle_uuid': assay_bundle.bundle_uuid
             }
+
+            print("####################### SEQ RUN")
+            print(json.dumps(archive_entity.input_data, indent=4))
+
 
             seq_run_converter = SequencingRunConverter()
 
