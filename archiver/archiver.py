@@ -4,16 +4,12 @@ import logging
 import pika
 import polling as polling
 
+import config
+
 from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
-
-VALIDATION_POLLING_TIMEOUT = 60
-VALIDATION_POLLING_STEP = 2
-
-SUBMISSION_POLLING_STEP = 3
-SUBMISSION_POLLING_TIMEOUT = 120
 
 
 class IngestArchiver:
@@ -45,8 +41,9 @@ class IngestArchiver:
         try:
             is_validated = polling.poll(
                 lambda: self.is_validated(archive_submission.usi_submission),
-                step=VALIDATION_POLLING_STEP,
-                timeout=VALIDATION_POLLING_TIMEOUT
+                step=config.VALIDATION_POLLING_STEP,
+                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
+                poll_forever=config.VALIDATION_POLL_FOREVER
             )
         except polling.TimeoutException as te:
             archive_submission.errors.append('USI validation takes too long to complete.')
@@ -64,8 +61,9 @@ class IngestArchiver:
         try:
             archive_submission.is_completed = polling.poll(
                 lambda: self.is_processing_complete(archive_submission.usi_submission),
-                step=SUBMISSION_POLLING_STEP,
-                timeout=SUBMISSION_POLLING_TIMEOUT
+                step=config.SUBMISSION_POLLING_STEP,
+                timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
+                poll_forever=config.SUBMISSION_POLL_FOREVER
             )
             archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
             results = archive_submission.processing_result
