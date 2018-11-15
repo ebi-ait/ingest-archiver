@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 
+BASE_DIR=$(dirname "$0")
+
 DEFAULT_DIR=output
+DEFAULT_INGEST_URL=http://api.ingest.humancellatlas.org
 
 output_dir=$DEFAULT_DIR
+ingest_url=$DEFAULT_INGEST_URL
 
 for arg in "$@"
 do
 case $arg in
      -o=*|--output=*)
-     output_dir=${1#*=}
+     output_dir=${arg#*=}
+     shift
+     ;;
+     -u=*|--url=*)
+     ingest_url=${arg#*=}
      shift
      ;;
      *)
@@ -38,5 +46,7 @@ fi
 
 for uuid in $(cat $input_file)
 do
-    cat job-template.yaml | sed "s/\${BUNDLE_UUID}/$uuid/" > $output_dir/archive_$uuid.yaml
+    output_file=$output_dir/archive_$uuid.yaml
+    cat $BASE_DIR/job-template.yaml | sed "s/\${BUNDLE_UUID}/$uuid/" |\
+        sed "s~\${INGEST_URL}~$ingest_url~g" > $output_file
 done

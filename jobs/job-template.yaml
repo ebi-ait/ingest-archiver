@@ -14,5 +14,5 @@ spec:
       containers:
       - name: worker
         image: humancellatlas/ingest-archiver
-        command: ["-b", "${BUNDLE_UUID}", "-i", "<replace_with_ingest_url>"]
+        command: ["-b", "${BUNDLE_UUID}", "-i", "${INGEST_URL}"]
       restartPolicy: Never
