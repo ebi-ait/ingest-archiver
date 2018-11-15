@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: archive-${BUNDLE_UUID}
+  labels:
+    job-group: ingest-archiver
+spec:
+  template:
+    metadata:
+      name: ingest-archiver
+      labels:
+        job-group: ingest-archiver
+    spec:
+      containers:
+      - name: worker
+        image: humancellatlas/ingest-archiver
+        command: ["-b", "${BUNDLE_UUID}", "-i", "test"]
+      restartPolicy: Never
