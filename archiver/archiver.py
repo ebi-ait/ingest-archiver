@@ -32,6 +32,7 @@ class IngestArchiver:
             print("####################### USI SUBMISSION")
             print(archive_submission.usi_submission['_links']['self']['href'])
             self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
+
         else:
             archive_submission.is_completed = True
             archive_submission.errors.append('No entities found to submit.')
@@ -281,17 +282,19 @@ class IngestArchiver:
                 'bundle_uuid': assay_bundle.bundle_uuid
             }
 
-            print("####################### SEQ RUN")
+            print("####################### SEQUENCING RUN")
+            print("####################### INPUT")
             print(json.dumps(archive_entity.input_data, indent=4))
 
-
             seq_run_converter = SequencingRunConverter()
-
             archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
             archive_entity.converted_data['assayRefs'] = {
                 "alias": self._generate_archive_entity_id('sequencingExperiment', assay)
             },
+            print("####################### CONVERSION")
+            print(json.dumps(archive_entity.converted_data, indent=4))
+
             archive_entities_dict[archive_entity.id] = archive_entity
 
         return archive_entities_dict
