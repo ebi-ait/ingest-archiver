@@ -10,6 +10,11 @@ output_dir=$DEFAULT_DIR
 ingest_url=$DEFAULT_INGEST_URL
 worker_image=$DEFAULT_IMAGE
 
+function show_manual {
+    man -P cat $BASE_DIR/man.troff
+}
+
+
 for arg in "$@"
 do
 case $arg in
@@ -30,6 +35,7 @@ case $arg in
          input_file=$arg
      else
          echo "Unknown argument [$arg]."
+         show_manual
          exit 1
      fi
      ;;
@@ -38,6 +44,7 @@ done
 
 if [ -z $input_file ]; then
     echo "No id list file provided."
+    show_manual
     exit 1
 fi
 
@@ -47,6 +54,7 @@ fi
 
 if [ ! -f $input_file ]; then
     echo "Input file does not exist."
+    show_manual
     exit 1
 fi
 
