@@ -117,10 +117,6 @@ class SampleConverter(Converter):
     def _build_output(self, extracted_data, flattened_hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["sampleRelationships"] = []
-        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
-
-        if not extracted_data["taxon"]:
-            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
 
         # non required fields
         if "title" in extracted_data:
@@ -128,6 +124,18 @@ class SampleConverter(Converter):
 
         if not extracted_data.get("attributes"):
             extracted_data["attributes"] = {}
+
+        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
+
+        # TODO only donors contain this info but this is redundant with taxonId, removing this if it exists
+        if extracted_data["attributes"].get("biomaterial__genus_species__0__text"):
+            del extracted_data["attributes"]["biomaterial__genus_species__0__text"]
+
+        if extracted_data["attributes"].get("biomaterial__genus_species__0__ontology"):
+            del extracted_data["attributes"]["biomaterial__genus_species__0__ontology"]
+
+        if not extracted_data["taxon"]:
+            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
 
         return extracted_data
 

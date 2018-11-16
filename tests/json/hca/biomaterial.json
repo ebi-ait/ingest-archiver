@@ -14,7 +14,8 @@
             "smoking_history": "yes"
         },
         "genus_species": [{
-            "text": "Homo sapiens"
+            "text": "Homo sapiens",
+            "ontology": "NCBITaxon:9606"
         }],
         "is_living": "no",
         "sex": "unknown"

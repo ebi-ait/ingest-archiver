@@ -16,6 +16,7 @@ def get_aap_token(username, password):
 
     return token
 
+
 USI_ENTITY_LINK = {
     'study': 'enaStudies',
     'sample': 'samples',
@@ -31,6 +32,7 @@ USI_ENTITY_CURR_VERSION_LINK = {
     'project': 'projects',
     'sequencingRun': 'assayData'
 }
+
 
 class USIAPI:
     def __init__(self):

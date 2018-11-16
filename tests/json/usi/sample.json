@@ -5,9 +5,6 @@
     "biomaterial__biomaterial_core__biomaterial_id": [{
         "value": "Q4_DEMO-donor_MGH30"
     }],
-    "biomaterial__genus_species__0__text": [{
-        "value": "Homo sapiens"
-    }],
     "biomaterial__is_living": [{
         "value": "no"
     }],
