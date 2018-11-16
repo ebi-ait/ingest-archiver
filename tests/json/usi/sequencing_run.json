@@ -3,9 +3,6 @@
         "alias": "{assayAlias.placeholder}"
     },
     "attributes": {
-        "files__0__describedBy": [{
-            "value": "https://schema.humancellatlas.org/type/file/6.1.1/sequence_file"
-        }],
         "files__0__file_core__file_format": [{
             "value": "fastq.gz"
         }],
@@ -18,20 +15,8 @@
         "files__0__read_index": [{
             "value": "read1"
         }],
-        "files__0__schema_type": [{
-            "value": "file"
-        }],
-        "process__describedBy": [{
-            "value": "http://schema.dev.data.humancellatlas.org/type/process/6.0.2/process"
-        }],
         "process__process_core__process_id": [{
             "value": "sequence_process_file_1"
-        }],
-        "process__schema_type": [{
-            "value": "process"
-        }],
-        "sequencing_protocol__describedBy": [{
-            "value": "https://schema.humancellatlas.org/type/protocol/sequencing/9.0.3/sequencing_protocol"
         }],
         "sequencing_protocol__protocol_core__protocol_description": [{
             "value": "assay description"
@@ -47,9 +32,6 @@
         }],
         "sequencing_protocol__protocol_core__protocol_id": [{
             "value": "assay_1"
-        }],
-        "sequencing_protocol__schema_type": [{
-            "value": "protocol"
         }],
         "sequencing_protocol__sequencing_approach__ontology": [{
             "value": "EFO:0008441"

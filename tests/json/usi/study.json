@@ -1,12 +1,6 @@
 
 {
   "attributes": {
-    "project__describedBy": [{
-        "value": "http://schema.staging.data.humancellatlas.org/type/project/9.0.3/project"
-    }],
-    "project__schema_type": [{
-        "value": "project"
-    }],
     "project__project_core__project_short_name": [{
         "value": "integration/Smart-seq2/2018-10-22T08:01:13Z"
     }],

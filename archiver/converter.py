@@ -25,6 +25,7 @@ class Converter:
         }
         self.alias_prefix = ''
         self.exclude_data = []
+        self.exclude_fields_match = ['__schema_type', '__describedBy']
 
     def convert(self, hca_data):
         try:
@@ -48,7 +49,19 @@ class Converter:
                 if key in input_data:
                     del input_data[key]
 
-        return flatten(input_data, '__')
+        flattened = flatten(input_data, '__')
+
+        delete_keys = []
+        if self.exclude_fields_match:
+            for key in flattened.keys():
+                for keyword in self.exclude_fields_match:
+                    if keyword in key:
+                        delete_keys.append(key)
+
+        for key in delete_keys:
+            del flattened[key]
+
+        return flattened
 
     def _extract_fields(self, flattened_hca_data):
         extracted_data = {"attributes": self._extract_attributes(flattened_hca_data)}
@@ -89,6 +102,7 @@ class SampleConverter(Converter):
         self.field_mapping = {
             "biomaterial__uuid__uuid": "alias",
             "biomaterial__content__biomaterial_core__biomaterial_name": "title",
+            "biomaterial__content__biomaterial_core__biomaterial_description": "description",
             "biomaterial__content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
             "biomaterial__submissionDate": "releaseDate"
         }
@@ -103,7 +117,6 @@ class SampleConverter(Converter):
     def _build_output(self, extracted_data, flattened_hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["sampleRelationships"] = []
-        extracted_data["description"] = ""
         extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
 
         if not extracted_data["taxon"]:
@@ -170,6 +183,8 @@ class SequencingExperimentConverter(Converter):
         paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_end")
         if paired_end:
             extracted_data["attributes"]["library_layout"] = [dict(value="PAIRED")]
+
+            # TODO put 0 as default as we don't really capture this in HCA but there's no way to specify 'unspecified'
             extracted_data["attributes"]["nominal_length"] = [dict(value="0")]
             extracted_data["attributes"]["nominal_sdev"] = [dict(value="0")]
         else:
@@ -285,8 +300,7 @@ class StudyConverter(Converter):
         self.field_mapping = {
             "project__uuid__uuid": "alias",
             "project__content__project_core__project_title": "title",
-            "project__content__project_core__project_description": "description",
-
+            "project__content__project_core__project_description": "description"
         }
         self.alias_prefix = 'study_'
 

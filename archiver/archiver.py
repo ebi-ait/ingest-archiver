@@ -248,6 +248,7 @@ class IngestArchiver:
             archive_entity.converted_data = seq_experiment_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
 
+            # TODO check if assignment of links can be done in the converter
             archive_entity.converted_data['studyRef'] = {
                 "alias": self._generate_archive_entity_id('study', assay_bundle.get_project())
             }

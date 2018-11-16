@@ -9,12 +9,6 @@
         "input_biomaterial__biomaterial_core__ncbi_taxon_id__0": [{
           "value": 9606
         }],
-        "input_biomaterial__describedBy": [{
-          "value": "http://schema.dev.data.humancellatlas.org/type/biomaterial/8.6.1/cell_suspension"
-        }],
-        "input_biomaterial__schema_type": [{
-          "value": "biomaterial"
-        }],
         "library_strategy": [{
             "value": "OTHER"
         }],
@@ -35,9 +29,6 @@
         }],
         "library_name": [{
             "value": "Q4_DEMO-cellsus_SAMN02797092"
-        }],
-        "library_preparation_protocol__describedBy": [{
-            "value": "http://schema.dev.data.humancellatlas.org/type/protocol/sequencing/4.3.2/library_preparation_protocol"
         }],
         "library_preparation_protocol__end_bias": [{
             "value": "5 prime end bias"
@@ -60,9 +51,6 @@
         "library_preparation_protocol__protocol_core__protocol_id": [{
             "value": "preparation1"
         }],
-        "library_preparation_protocol__schema_type": [{
-            "value": "protocol"
-        }],
         "library_preparation_protocol__strand": [{
             "value": "unstranded"
         }],
@@ -75,17 +63,8 @@
         "nominal_sdev": [{
             "value": "0"
         }],
-        "process__describedBy": [{
-            "value": "http://schema.dev.data.humancellatlas.org/type/process/6.0.2/process"
-        }],
-        "process__schema_type": [{
-            "value": "process"
-        }],
         "process__process_core__process_id": [{
             "value": "sequence_process_file_1"
-        }],
-        "sequencing_protocol__describedBy": [{
-            "value": "https://schema.humancellatlas.org/type/protocol/sequencing/9.0.3/sequencing_protocol"
         }],
         "sequencing_protocol__instrument_manufacturer_model__text": [{
             "value": "Illumina HiSeq 2500"
@@ -95,9 +74,6 @@
         }],
         "sequencing_protocol__protocol_core__protocol_id": [{
             "value": "assay_1"
-        }],
-        "sequencing_protocol__schema_type": [{
-            "value": "protocol"
         }],
         "sequencing_protocol__sequencing_approach__ontology": [{
             "value": "EFO:0008441"
