@@ -14,11 +14,11 @@ def save_output_to_file(output_dir, report):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    tmp_file = open(directory + "/" + bundle + ".json", "w")
+    tmp_file = open(directory + "/" + bundle_uuid + ".json", "w")
     tmp_file.write(json.dumps(report, indent=4))
     tmp_file.close()
 
-    print(f"Saved to {directory}/{bundle}.json!")
+    print(f"Saved to {directory}/{bundle_uuid}.json!")
 
 
 if __name__ == '__main__':
@@ -34,8 +34,8 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not options.bundle_uuid:
-        logging.error("You must supply a Bundle UUID")
+    if not (options.bundle_uuid or options.bundle_list_file):
+        logging.error("You must supply a bundle UUID or a file with list of bundle uuids")
         exit(2)
 
     if not options.ingest_url:
@@ -53,11 +53,12 @@ if __name__ == '__main__':
             content = f.readlines()
 
         bundle_list = [x.strip() for x in content]
-        bundles.extend(bundle_list)
+        bundles = bundle_list
 
-    for bundle in bundles:
+    for bundle_uuid in bundles:
+        print(f'##################### PROCESSING BUNDLE {bundle_uuid}')
         archiver = IngestArchiver(ingest_url=options.ingest_url, exclude_types=exclude_types)
-        assay_bundle = archiver.get_assay_bundle(options.bundle_uuid)
+        assay_bundle = archiver.get_assay_bundle(bundle_uuid)
         entities_dict = archiver.get_archivable_entities(assay_bundle)
         archive_submission = archiver.archive(entities_dict)
         print('##################### SUMMARY')
