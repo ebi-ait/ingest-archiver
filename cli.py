@@ -1,10 +1,25 @@
 import json
 import logging
+import os
 import sys
 
 from optparse import OptionParser
 
 from archiver.archiver import IngestArchiver
+
+
+def save_output_to_file(output_dir, report):
+    directory = os.path.abspath(output_dir)
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    tmp_file = open(directory + "/" + bundle + ".json", "w")
+    tmp_file.write(json.dumps(report, indent=4))
+    tmp_file.close()
+
+    print(f"Saved to {directory}/{bundle}.json!")
+
 
 if __name__ == '__main__':
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -13,7 +28,9 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-b", "--bundle_uuid", help="Bundle UUID")
     parser.add_option("-i", "--ingest_url", help="Ingest API url")
-    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
+    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencing_experiment,sequencing_run\"")
+    parser.add_option("-f", "--bundle_list_file", help="Path to file containing list of bundle uuid's")
+    parser.add_option("-o", "--output_dir", help="Output dir name")
 
     (options, args) = parser.parse_args()
 
@@ -30,11 +47,21 @@ if __name__ == '__main__':
         exclude_types = [x.strip() for x in options.exclude_types.split(',')]
         logging.warning(f"Excluding {', '.join(exclude_types)}")
 
-    archiver = IngestArchiver(ingest_url=options.ingest_url, exclude_types=exclude_types)
-    assay_bundle = archiver.get_assay_bundle(options.bundle_uuid)
-    entities_dict = archiver.get_archivable_entities(assay_bundle)
-    archive_submission = archiver.archive(entities_dict)
-    print('##################### SUMMARY')
-    archive_submission.generate_report()
+    bundles = [options.bundle_uuid]
+    if options.bundle_list_file:
+        with open(options.bundle_list_file) as f:
+            content = f.readlines()
 
+        bundle_list = [x.strip() for x in content]
+        bundles.extend(bundle_list)
 
+    for bundle in bundles:
+        archiver = IngestArchiver(ingest_url=options.ingest_url, exclude_types=exclude_types)
+        assay_bundle = archiver.get_assay_bundle(options.bundle_uuid)
+        entities_dict = archiver.get_archivable_entities(assay_bundle)
+        archive_submission = archiver.archive(entities_dict)
+        print('##################### SUMMARY')
+        report = archive_submission.generate_report()
+
+        if options.output_dir:
+            save_output_to_file(options.output_dir, report)

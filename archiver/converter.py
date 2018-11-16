@@ -24,6 +24,7 @@ class Converter:
             "submissionDate": "releaseDate"
         }
         self.alias_prefix = ''
+        self.exclude_data = []
 
     def convert(self, hca_data):
         try:
@@ -31,6 +32,7 @@ class Converter:
             extracted_data = self._extract_fields(flattened_hca_data)
             converted_data = self._build_output(extracted_data, flattened_hca_data)
             extracted_data["alias"] = f'{self.alias_prefix}{extracted_data["alias"]}'
+
         except KeyError as e:
             error_message = "Error:" + str(e)
             self.logger.error(error_message)
@@ -39,7 +41,14 @@ class Converter:
         return converted_data
 
     def _flatten(self, hca_data):
-        return flatten(hca_data, '__')
+        input_data = dict(hca_data)
+
+        if self.exclude_data:
+            for key in self.exclude_data:
+                if key in input_data:
+                    del input_data[key]
+
+        return flatten(input_data, '__')
 
     def _extract_fields(self, flattened_hca_data):
         extracted_data = {"attributes": self._extract_attributes(flattened_hca_data)}
@@ -56,6 +65,7 @@ class Converter:
     def _extract_attributes(self, flattened_hca_data):
         attributes = {}
         prefix = "content__"
+
         for key, value in flattened_hca_data.items():
             if re.search(prefix, key) and key not in self.field_mapping:
                 attr = {
@@ -86,7 +96,8 @@ class SampleConverter(Converter):
         # TODO local mapping for now, ideally this should be an OLS lookup
         # TODO what's taxon id for mouse
         self.taxon_map = {
-            "9606": "Homo sapiens"
+            "9606": "Homo sapiens",
+            "10090": "Mus musculus"
         }
 
     def _build_output(self, extracted_data, flattened_hca_data):
@@ -115,7 +126,7 @@ class SequencingExperimentConverter(Converter):
         self.alias_prefix = 'sequencingExperiment_'
 
         self.library_selection_mapping = {
-            "poly-dt": "Oligo-dT",
+            "poly-dT": "Oligo-dT",
             "random": "RANDOM",
         }
 
@@ -156,7 +167,7 @@ class SequencingExperimentConverter(Converter):
         if primer:
             extracted_data["attributes"]["library_selection"] = [dict(value=self.library_selection_mapping.get(primer, "unspecified"))]
 
-        paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_ends")
+        paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_end")
         if paired_end:
             extracted_data["attributes"]["library_layout"] = [dict(value="PAIRED")]
             extracted_data["attributes"]["nominal_length"] = [dict(value="0")]
@@ -198,6 +209,8 @@ class SequencingRunConverter(Converter):
             "process__content__process_core__process_description": "description"
         }
 
+        self.ONTOLOGY_10x = "EFO:0009310"
+
         self.file_format = {
             'fastq.gz': 'fastq',
             'bam': 'bam',
@@ -205,20 +218,32 @@ class SequencingRunConverter(Converter):
         }
 
         self.alias_prefix = 'sequencingRun_'
+        self.exclude_data = ['bundle_uuid', 'library_preparation_protocol']
 
     def convert(self, hca_data):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
 
         files = []
+        lib_prep = hca_data.get("library_preparation_protocol", {})
+        content = lib_prep.get("content", {})
+        library_const_approach_obj = content.get("library_construction_approach", {})
+        library_const_approach = library_const_approach_obj.get('ontology')
 
-        for file in hca_data['files']:
-            flattened_file = self._flatten(file)
-            files.append({
-                'name': flattened_file.get('content__file_core__file_name'),
-                'type': self.file_format[flattened_file.get('content__file_core__file_format')]
-            })
+        if library_const_approach and library_const_approach == self.ONTOLOGY_10x:
+            files = [{
+                'name': f"{hca_data['bundle_uuid']}.bam",
+                'type': 'bam'
+            }]
+        else:
+            for file in hca_data['files']:
+                flattened_file = self._flatten(file)
+                files.append({
+                    'name': flattened_file.get('content__file_core__file_name'),
+                    'type': self.file_format[flattened_file.get('content__file_core__file_format')]
+                })
 
         converted_data['files'] = files
+
         return converted_data
 
     def _build_output(self, extracted_data, flattened_hca_data):

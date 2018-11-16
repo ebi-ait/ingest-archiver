@@ -13,7 +13,7 @@ from archiver.usiapi import USIAPI
 
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
-        self.archiver = IngestArchiver(exclude_types=['project', 'study', 'sequencingExperiment', 'sequencingRun'])
+        self.archiver = IngestArchiver(exclude_types=['project', 'study', 'sequencing_experiment', 'sequencing_run'])
         self.converter = Converter()
         self.ingest_api = IngestAPI()
         self.usi_api = USIAPI()
@@ -34,12 +34,6 @@ class TestIngestArchiver(unittest.TestCase):
             library_preparation_protocol = json.loads(data_file.read())
 
         with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
-            sequencing_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
-            sequencing_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
             sequencing_protocol = json.loads(data_file.read())
 
         with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:

@@ -4,16 +4,12 @@ import logging
 import pika
 import polling as polling
 
+import config
+
 from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
-
-VALIDATION_POLLING_TIMEOUT = 60
-VALIDATION_POLLING_STEP = 2
-
-SUBMISSION_POLLING_STEP = 3
-SUBMISSION_POLLING_TIMEOUT = 120
 
 
 class IngestArchiver:
@@ -33,6 +29,8 @@ class IngestArchiver:
         if converted_entities:
             archive_submission.converted_entities = converted_entities
             archive_submission.usi_submission = self.usi_api.create_submission()
+            print("####################### USI SUBMISSION")
+            print(archive_submission.usi_submission['_links']['self']['href'])
             self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
         else:
             archive_submission.is_completed = True
@@ -42,9 +40,10 @@ class IngestArchiver:
         is_validated = False
         try:
             is_validated = polling.poll(
-                lambda: self.is_validated(archive_submission.usi_submission),
-                step=VALIDATION_POLLING_STEP,
-                timeout=VALIDATION_POLLING_TIMEOUT
+                lambda: self.is_validated(archive_submission.usi_submission) and self.is_submittable(archive_submission.usi_submission),
+                step=config.VALIDATION_POLLING_STEP,
+                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
+                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
         except polling.TimeoutException as te:
             archive_submission.errors.append('USI validation takes too long to complete.')
@@ -62,8 +61,9 @@ class IngestArchiver:
         try:
             archive_submission.is_completed = polling.poll(
                 lambda: self.is_processing_complete(archive_submission.usi_submission),
-                step=SUBMISSION_POLLING_STEP,
-                timeout=SUBMISSION_POLLING_TIMEOUT
+                step=config.SUBMISSION_POLLING_STEP,
+                timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
+                poll_forever=True if config.SUBMISSION_POLL_FOREVER else False
             )
             archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
             results = archive_submission.processing_result
@@ -129,19 +129,18 @@ class IngestArchiver:
             print("Finding samples in the bundle...")
             archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)
 
-        if not self.exclude_types or (self.exclude_types and 'sequencingExperiment' not in self.exclude_types):
+        if not self.exclude_types or (self.exclude_types and 'sequencing_experiment' not in self.exclude_types):
             archive_entities_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
             print("Finding assay in the bundle...")
 
-        # if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
-        #     print("Finding sequencing run in the bundle...", end="", flush=True)
-        #     archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
+        if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
+            print("Finding sequencing run in the bundle...", end="", flush=True)
+            archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
 
         return archive_entities_by_type
 
     def _print_same_line(self, string):
         print('\r' + string, end='')
-
 
     def _get_samples_dict(self, assay_bundle):
         archive_entities = {}
@@ -276,11 +275,18 @@ class IngestArchiver:
             archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, assay)
 
             archive_entity.input_data = {
+                'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
                 'process': assay,
-                'files': assay_bundle.get_files()
+                'files': assay_bundle.get_files(),
+                'bundle_uuid': assay_bundle.bundle_uuid
             }
 
+            print("####################### SEQ RUN")
+            print(json.dumps(archive_entity.input_data, indent=4))
+
+
             seq_run_converter = SequencingRunConverter()
+
             archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
             archive_entity.converted_data['assayRefs'] = {
@@ -305,8 +311,9 @@ class IngestArchiver:
             created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
             entity.usi_json = created_entity
 
-            if entity.archive_entity_type == 'sequencingRun':
-                self.notify_file_archiver(entity)
+            # TODO notify file archiver
+            # if entity.archive_entity_type == 'sequencingRun':
+            #     self.notify_file_archiver(entity)
 
     def notify_file_archiver(self, entity):
         rabbit_url = ''
