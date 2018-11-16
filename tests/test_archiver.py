@@ -13,7 +13,7 @@ from archiver.usiapi import USIAPI
 
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
-        self.archiver = IngestArchiver(exclude_types=['project', 'study', 'sequencing_experiment', 'sequencing_run'])
+        self.archiver = IngestArchiver(exclude_types=['sequencing_run'])
         self.converter = Converter()
         self.ingest_api = IngestAPI()
         self.usi_api = USIAPI()
@@ -23,25 +23,27 @@ class TestIngestArchiver(unittest.TestCase):
 
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             project = json.loads(data_file.read())
+            project['uuid']['uuid'] = self._generate_fake_id(prefix='project_')
 
         with open(config.JSON_DIR + 'hca/process.json', encoding=config.ENCODING) as data_file:
             assay = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/biomaterial.json', encoding=config.ENCODING) as data_file:
-            input_biomaterial = json.loads(data_file.read())
+            assay['uuid']['uuid'] = self._generate_fake_id(prefix='assay_')
 
         with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
             library_preparation_protocol = json.loads(data_file.read())
+            library_preparation_protocol['uuid']['uuid'] = self._generate_fake_id(prefix='library_preparation_protocol_')
 
         with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
             sequencing_protocol = json.loads(data_file.read())
+            sequencing_protocol['uuid']['uuid'] = self._generate_fake_id(prefix='sequencing_protocol_')
 
         with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:
             sequencing_file = json.loads(data_file.read())
+            sequencing_file['uuid']['uuid'] = self._generate_fake_id(prefix='sequencing_file_')
 
         for biomaterial in biomaterials:
             # TODO decide what to use for alias, assign random no for now
-            biomaterial['uuid']['uuid'] = 'hca' + str(randint(0, 1000)) + str(randint(0, 1000))
+            biomaterial['uuid']['uuid'] = self._generate_fake_id(prefix='biomaterial_')
 
         self.bundle = {
             'biomaterials': biomaterials,
@@ -50,17 +52,17 @@ class TestIngestArchiver(unittest.TestCase):
             'assay': assay,
             'library_preparation_protocol': library_preparation_protocol,
             'sequencing_protocol': sequencing_protocol,
-            'input_biomaterial': input_biomaterial
+            'input_biomaterial': biomaterials[0]
         }
 
-        pass
+    def _generate_fake_id(self, prefix):
+        return prefix + str(randint(0, 1000)) + '_' + str(randint(0, 1000))
 
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_by_type = self.archiver.get_archivable_entities(assay_bundle)
         self.assertTrue(entities_by_type['sample'])
 
-    @unittest.skip
     def test_is_submittable(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
@@ -77,7 +79,6 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.assertTrue(is_submittable)
 
-    @unittest.skip
     def test_is_validated(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
@@ -94,7 +95,7 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.assertTrue(is_validated)
 
-    @unittest.skip
+    # @unittest.skip
     def test_is_validated_and_submittable(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
@@ -111,12 +112,10 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.assertTrue(is_validated_and_submittable)
 
-    # @unittest.skip('submitted submissions cannot be deleted, skipping this')
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
         archive_submission = self.archiver.archive(entities_dict_by_type)
-        print(archive_submission.generate_report())
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.processing_result)
 
