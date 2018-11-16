@@ -9,7 +9,7 @@ The archiver service is one of the ingest components which is responsible for th
 - informing the accessioning service of the accessions acquired from submitting the ingest metadata / updating the metadata (Currently, the archiver updates the metadata directly in ingest core. Ideally, only the accessioning service should how the accessions will be updated. This should be implemented in the future.)
 - updating the archive should the data in ingest has been updated
 
-Currently, the archiver uses the [USI Submissions API](https://submission-dev.ebi.ac.uk/api/docs/how_to_submit_data_programatically.html#_overview) to communicate with EBI archives. This service is designed to be used as the interface to EBI archive submissions where the accessions will be obtained.
+Currently, the archiver uses the [USI Submissions API](https://submission-dev.ebi.ac.uk/api/docs/ref_overview.html) to communicate with EBI archives. This service is designed to be used as the interface to EBI archive submissions where the accessions will be obtained.
 
 This component listens for submissions on the ingest messaging queue. When a submission is completed in ingest the archiver will receive a message containing the submission uuid and trigger the archiving process.
 
