@@ -13,6 +13,9 @@ generates one Kubernetes Job manifest for handling archiving for each bundle UUI
 \fBuuid_file\fR.
 .SH OPTIONS
 .TP
+.BR \-h ", " \-\-help
+Show man page.
+.TP
 .BR \-i= ", " \-\-image=\fIworker_image\fR
 Sets the Docker image to use for each generate Kubernetes Job manifest. Defaults to
 \fIhumancellatlas/ingest-archiver\fR.

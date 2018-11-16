@@ -18,6 +18,10 @@ function show_manual {
 for arg in "$@"
 do
 case $arg in
+     -h|--help)
+     man $BASE_DIR/man.troff
+     exit 0
+     ;;
      -i=*|--image=*)
      worker_image=${arg#*=}
      shift
