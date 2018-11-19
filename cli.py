@@ -31,6 +31,7 @@ if __name__ == '__main__':
     parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencing_experiment,sequencing_run\"")
     parser.add_option("-f", "--bundle_list_file", help="Path to file containing list of bundle uuid's")
     parser.add_option("-o", "--output_dir", help="Output dir name")
+    parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
 
     (options, args) = parser.parse_args()
 
@@ -55,9 +56,9 @@ if __name__ == '__main__':
         bundle_list = [x.strip() for x in content]
         bundles = bundle_list
 
+    archiver = IngestArchiver(ingest_url=options.ingest_url, exclude_types=exclude_types, alias_prefix=options.alias_prefix)
     for bundle_uuid in bundles:
         print(f'##################### PROCESSING BUNDLE {bundle_uuid}')
-        archiver = IngestArchiver(ingest_url=options.ingest_url, exclude_types=exclude_types)
         assay_bundle = archiver.get_assay_bundle(bundle_uuid)
         entities_dict = archiver.get_archivable_entities(assay_bundle)
         archive_submission = archiver.archive(entities_dict)

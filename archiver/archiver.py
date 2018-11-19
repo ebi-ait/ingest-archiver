@@ -13,12 +13,13 @@ from archiver.converter import ConversionError, SampleConverter, ProjectConverte
 
 
 class IngestArchiver:
-    def __init__(self, ingest_url=None, exclude_types=None):
+    def __init__(self, ingest_url=None, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
         self.usi_api = USIAPI()
         self.converter = SampleConverter()
         self.ingest_api = IngestAPI(ingest_url)
         self.exclude_types = exclude_types if exclude_types else []
+        self.alias_prefix = f"{alias_prefix}_" if alias_prefix else ""
 
     def archive(self, entities_dict_by_type):
         archive_submission = ArchiveSubmission()
@@ -317,8 +318,8 @@ class IngestArchiver:
         return archive_entities_dict
 
     def _generate_archive_entity_id(self, archive_entity_type, hca_entity):
-        uuid = hca_entity['uuid']['uuid']  # should always be present in an hca entity
-        return f'{archive_entity_type}_{uuid}'
+        uuid = hca_entity["uuid"]["uuid"]  # should always be present in an hca entity
+        return f"{self.alias_prefix}{archive_entity_type}_{uuid}"
 
     def add_entities_to_submission(self, usi_submission, converted_entities):
         get_contents_url = usi_submission['_links']['contents']['href']
