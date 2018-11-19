@@ -98,7 +98,7 @@ class TestIngestArchiver(unittest.TestCase):
     def test_is_validated_and_submittable(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities =  self.archiver._get_converted_entities(entities_dict_by_type)
+        converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
 
         usi_submission = self.usi_api.create_submission()
 
@@ -118,7 +118,10 @@ class TestIngestArchiver(unittest.TestCase):
         archive_submission = self.archiver.archive(entities_dict_by_type)
         print(archive_submission.generate_report())
         self.assertTrue(archive_submission.is_completed)
-        self.assertTrue(archive_submission.processing_result)
+
+        for type, entity_dict in archive_submission.entities_dict_type.items():
+            for id, entity in entity_dict.items():
+                self.assertTrue(entity.accession, f"{entity.id} has no accession.")
 
     def _mock_assay_bundle(self, bundle):
         assay_bundle = MagicMock('assay_bundle')
@@ -145,7 +148,7 @@ class TestIngestArchiver(unittest.TestCase):
         assay_bundle = self._mock_assay_bundle(bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
         archive_submission = self.archiver.archive(entities_dict_by_type)
-        print(archive_submission.generate_report())
+
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.errors)
         self.assertFalse(archive_submission.processing_result)

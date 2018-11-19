@@ -3,13 +3,6 @@ import re
 
 from flatten_json import flatten
 
-
-class ConversionError(Exception):
-    def __init__(self, expression, message):
-        self.expression = expression
-        self.message = message
-
-
 """
 HCA to USI JSON Mapping
 https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
@@ -38,7 +31,8 @@ class Converter:
             error_message = "Error:" + str(e)
             self.logger.error(error_message)
             raise ConversionError("Conversion Error",
-                                  "An error occurred in converting the metadata. Data maybe malformed.")
+                                  "An error occurred in converting the metadata. Data maybe malformed.",
+                                  details={'data': hca_data})
         return converted_data
 
     def _flatten(self, hca_data):
@@ -71,7 +65,6 @@ class Converter:
                 extracted_data[new_key] = flattened_hca_data[key]
             else:
                 extracted_data[new_key] = ""
-                self.logger.warning(key + ' is not found in the metadata.')
 
         return extracted_data
 
@@ -117,6 +110,13 @@ class SampleConverter(Converter):
     def _build_output(self, extracted_data, flattened_hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["sampleRelationships"] = []
+        taxon_id = str(extracted_data.get("taxonId", ''))
+        extracted_data["taxon"] = self.taxon_map.get(taxon_id)
+
+        if not extracted_data["taxon"]:
+            raise ConversionError("Sample Conversion Error",
+                                  f"Sample Converter find the taxon text from taxon id, {taxon_id}",
+                                  details={'taxon_id': taxon_id})
 
         # non required fields
         if "title" in extracted_data:
@@ -156,6 +156,7 @@ class SequencingExperimentConverter(Converter):
             "Illumina Genome Analyzer II": "ILLUMINA",
             "Illumina Genome Analyzer IIx": "ILLUMINA",
             "Illumina HiSeq 2500": "ILLUMINA",
+            # "Illumina Hiseq 2500": "ILLUMINA",
             "Illumina HiSeq 2000": "ILLUMINA",
             "Illumina HiSeq 1500": "ILLUMINA",
             "Illumina HiSeq 1000": "ILLUMINA",
@@ -207,7 +208,8 @@ class SequencingExperimentConverter(Converter):
 
         library_name = flattened_hca_data.get("input_biomaterial__content__biomaterial_core__biomaterial_id", "")
         if not library_name:
-            raise ConversionError("Sequencing Experiment Conversion Error", "There is no id found for the input biomaterial.")
+            raise ConversionError("Sequencing Experiment Conversion Error",
+                                  "There is no id found for the input biomaterial.")
 
         extracted_data["attributes"]["library_name"] = [dict(value=library_name)]
 
@@ -325,3 +327,10 @@ class StudyConverter(Converter):
 
     def _build_links(self, extracted_data, links):
         extracted_data["projectRef"] = {"alias": "{projectAlias.placeholder}"}
+
+
+class ConversionError(Exception):
+    def __init__(self, expression, message, details=None):
+        self.expression = expression
+        self.message = message
+        self.details = details

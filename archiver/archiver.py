@@ -41,7 +41,7 @@ class IngestArchiver:
         is_validated = False
         try:
             is_validated = polling.poll(
-                lambda: self.is_validated(archive_submission.usi_submission) and self.is_submittable(archive_submission.usi_submission),
+                lambda: self.is_ready_to_submit(archive_submission),
                 step=config.VALIDATION_POLLING_STEP,
                 timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
@@ -82,9 +82,24 @@ class IngestArchiver:
 
         return archive_submission
 
+    def is_ready_to_submit(self, archive_submission):
+        is_validated = self.is_validated(archive_submission.usi_submission)
+
+        if is_validated:
+            is_submittable = self.is_submittable(archive_submission.usi_submission)
+            if is_submittable:
+                return True
+            else:
+                errors = self.get_all_validation_errors(archive_submission.usi_submission)
+                archive_submission.validation_result = errors
+                print("####################### VALIDATION ERRORS")
+                print(json.dumps(errors, indent=4))
+
+        return False
+
     def _get_converted_entities(self, entities_dict_by_type):
         converted_entities = []
-        self.logger.info("Getting converted entities...")
+        self.logger.info("Getting entities to be submitted...")
 
         summary = {}
         for entity_type, entity_dict in entities_dict_by_type.items():
@@ -107,7 +122,7 @@ class IngestArchiver:
                         summary[entity_type] = 0
                     summary[entity_type] = summary[entity_type] + 1
 
-        print("################### Conversion Summary:")
+        print("################### Entities to be archived:")
         print(json.dumps(summary, indent=4))
 
         return converted_entities
@@ -141,7 +156,7 @@ class IngestArchiver:
         return archive_entities_by_type
 
     def _print_same_line(self, string):
-        print('\r' + string, end='')
+        print(f'\r{string}', end='')
 
     def _get_samples_dict(self, assay_bundle):
         archive_entities = {}
@@ -172,6 +187,7 @@ class IngestArchiver:
             samples_ctr = samples_ctr + 1
 
             self._print_same_line(str(samples_ctr))
+        print('')
 
         return archive_entities
 
@@ -333,15 +349,6 @@ class IngestArchiver:
                               body=json.dumps(message))
         connection.close()
 
-    def convert_entities(self, entities_dict_by_type):
-        converted_entities_dict = {}
-
-        samples = entities_dict_by_type['samples']
-        result = self._convert_to_samples(samples)
-        converted_entities_dict['samples'] = result
-
-        return converted_entities_dict
-
     def get_all_validation_result_details(self, usi_submission):
         get_validation_results_url = usi_submission['_links']['validationResults']['href']
         validation_results = self.usi_api.get_validation_results(get_validation_results_url)
@@ -356,6 +363,22 @@ class IngestArchiver:
                 summary.append(validation_result_details)
 
         return summary
+
+    def get_all_validation_errors(self, usi_submission):
+        get_validation_results_url = usi_submission['_links']['validationResults']['href']
+        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
+
+        errors = []
+        for validation_result in validation_results:
+            if validation_result['validationStatus'] == "Complete":
+                details_url = validation_result['_links']['validationResult']['href']
+                # TODO fix how what to put as projection param, check usi documentation, removing any params for now
+                details_url = details_url.split('{')[0]
+                validation_result_details = self.usi_api.get_validation_result_details(details_url)
+                if validation_result_details.get('errorMessages'):
+                    errors.append(validation_result_details.get('errorMessages'))
+
+        return errors
 
     def is_submittable(self, usi_submission):
         get_status_url = usi_submission['_links']['submissionStatus']['href']
@@ -522,7 +545,7 @@ class AssayBundle:
             self.assay_process = derived_by_processes[0]
 
             if len(derived_by_processes) > 1:
-                raise Error(f'Bundle {self.bundle_uuid} has many assay processes.')
+                raise ArchiverError(f'Bundle {self.bundle_uuid} has many assay processes.')
 
         return self.assay_process
 
@@ -564,10 +587,10 @@ class AssayBundle:
         sequencing_protocols = protocol_by_type.get('sequencing_protocol', [])
 
         if len(library_preparation_protocols) != 1:
-            raise Error('There should be 1 library preparation protocol for the assay process.')
+            raise ArchiverError('There should be 1 library preparation protocol for the assay process.')
 
         if len(sequencing_protocols) != 1:
-            raise Error('There should be 1 sequencing_protocol for the assay process.')
+            raise ArchiverError('There should be 1 sequencing_protocol for the assay process.')
 
         self.library_preparation_protocol = library_preparation_protocols[0]
         self.sequencing_protocol = sequencing_protocols[0]
@@ -582,11 +605,11 @@ class AssayBundle:
         input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
 
         if not input_biomaterials:
-            raise Error('No input biomaterial found to the assay process.')
+            raise ArchiverError('No input biomaterial found to the assay process.')
 
         # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
         return input_biomaterials[0]
 
 
-class Error(Exception):
+class ArchiverError(Exception):
     """Base-class for all exceptions raised by this module."""
