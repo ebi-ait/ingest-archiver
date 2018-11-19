@@ -4,7 +4,7 @@ BASE_DIR=$(dirname "$0")
 
 DEFAULT_DIR=output
 DEFAULT_INGEST_URL=http://api.ingest.humancellatlas.org
-DEFAULT_IMAGE=humancellatlas/ingest-archiver
+DEFAULT_IMAGE=quay.io/humancellatlas/ingest-archiver
 
 output_dir=$DEFAULT_DIR
 ingest_url=$DEFAULT_INGEST_URL
