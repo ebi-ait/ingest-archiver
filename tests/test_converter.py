@@ -9,31 +9,7 @@ from archiver.converter import Converter, SampleConverter, SequencingExperimentC
 
 
 class TestConverter(unittest.TestCase):
-    def test_convert_sample(self):
-        converter = SampleConverter()
-
-        with open(config.JSON_DIR + 'hca/biomaterial.json', encoding=config.ENCODING) as data_file:
-            hca_data = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'usi/sample.json', encoding=config.ENCODING) as data_file:
-            expected_json = json.loads(data_file.read())
-
-        test_alias = 'hca' + str(randint(0, 1000))
-
-        hca_data['uuid']['uuid'] = test_alias
-        expected_json['alias'] = test_alias
-
-        input = {
-            'biomaterial': hca_data
-        }
-
-        actual_json = converter.convert(input)
-
-        self.assertEqual(expected_json, actual_json )
-
-    def test_convert_sequencing_experiment(self):
-        converter = SequencingExperimentConverter()
-
+    def setUp(self):
         with open(config.JSON_DIR + 'hca/process.json', encoding=config.ENCODING) as data_file:
             process = json.loads(data_file.read())
 
@@ -46,13 +22,57 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
             sequencing_protocol = json.loads(data_file.read())
 
-        with open(config.JSON_DIR + 'usi/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'hca/biomaterial.json', encoding=config.ENCODING) as data_file:
+            biomaterial = json.loads(data_file.read())
+
+        with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:
+            file = json.loads(data_file.read())
+
+        self.hca_data = {
+            'process': process,
+            'library_preparation_protocol': lib_prep_protocol,
+            'input_biomaterial': input_biomaterial,
+            'sequencing_protocol': sequencing_protocol,
+            'biomaterial': biomaterial,
+            'sequencing_file': file
+        }
+
+        self.maxDiff = None
+
+    def test_convert_sample(self):
+        biomaterial = self.hca_data.get('biomaterial')
+
+        with open(config.JSON_DIR + 'usi/sample.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
-        test_alias = 'process' + str(randint(0, 1000))
+        test_alias = 'hca' + str(randint(0, 1000))
+
+        biomaterial['uuid']['uuid'] = test_alias
+        expected_json['alias'] = test_alias
+
+        input = {
+            'biomaterial': biomaterial
+        }
+
+        converter = SampleConverter()
+        actual_json = converter.convert(input)
+
+        self.assertEqual(expected_json, actual_json )
+
+    def test_convert_sequencing_experiment(self):
+        process = dict(self.hca_data.get('process'))
+        lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
+        input_biomaterial = dict(self.hca_data.get('input_biomaterial'))
+        sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
+
+        test_alias = 'alias'
         process['uuid']['uuid'] = test_alias
         sequencing_protocol['uuid']['uuid'] = 'seqprotocol' + test_alias
         lib_prep_protocol['uuid']['uuid'] = 'libprepprotol' + test_alias
+
+        with open(config.JSON_DIR + 'usi/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
+            expected_json = json.loads(data_file.read())
+        expected_json['alias'] = 'sequencingExperiment_' + test_alias
 
         hca_data = {
             'input_biomaterial': input_biomaterial,
@@ -61,26 +81,49 @@ class TestConverter(unittest.TestCase):
             'library_preparation_protocol': lib_prep_protocol
         }
 
-        expected_json['alias'] = 'sequencingExperiment_' + test_alias
-
+        converter = SequencingExperimentConverter()
         actual_json = converter.convert(hca_data)
-
         self.assertEqual(expected_json, actual_json)
 
+        instrument_model_text = "Illumina Hiseq 2500"
+        ena_instrument_model_text = "Illumina HiSeq 2500"
+        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
+        expected_json['attributes']['sequencing_protocol__instrument_manufacturer_model__text'][0]['value'] = instrument_model_text
+        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
+        actual_json = converter.convert(hca_data)
+        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
+
+        instrument_model_text = "HiSeq X Five"
+        ena_instrument_model_text = "HiSeq X Five"
+        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
+        expected_json['attributes']['sequencing_protocol__instrument_manufacturer_model__text'][0]['value'] = instrument_model_text
+        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
+        actual_json = converter.convert(hca_data)
+        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
+
+        instrument_model_text = "hiseq X Five"
+        ena_instrument_model_text = "HiSeq X Five"
+        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
+        expected_json['attributes']['sequencing_protocol__instrument_manufacturer_model__text'][0]['value'] = instrument_model_text
+        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
+        actual_json = converter.convert(hca_data)
+        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
+
+        instrument_model_text = "fsfa X Five"
+        ena_instrument_model_text = "unspecified"
+        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
+        expected_json['attributes']['sequencing_protocol__instrument_manufacturer_model__text'][0][
+            'value'] = instrument_model_text
+        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
+        expected_json['attributes']['platform_type'][0]['value'] = 'unspecified'
+        actual_json = converter.convert(hca_data)
+        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
+
     def test_convert_sequencing_run(self):
-        converter = SequencingRunConverter()
-
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
-            lib_prep_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/process.json', encoding=config.ENCODING) as data_file:
-            process = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
-            sequencing_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:
-            file = json.loads(data_file.read())
+        process = dict(self.hca_data.get('process'))
+        lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
+        sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
+        file = dict(self.hca_data.get('sequencing_file'))
 
         with open(config.JSON_DIR + 'usi/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
@@ -98,24 +141,18 @@ class TestConverter(unittest.TestCase):
 
         expected_json['alias'] = 'sequencingRun_' + test_alias
 
+        converter = SequencingRunConverter()
         actual_json = converter.convert(hca_data)
 
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_sequencing_run_10x(self):
-        converter = SequencingRunConverter()
+        process = dict(self.hca_data.get('process'))
+        sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
+        file = dict(self.hca_data.get('sequencing_file'))
 
         with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             lib_prep_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/process.json', encoding=config.ENCODING) as data_file:
-            process = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
-            sequencing_protocol = json.loads(data_file.read())
-
-        with open(config.JSON_DIR + 'hca/sequencing_file.json', encoding=config.ENCODING) as data_file:
-            file = json.loads(data_file.read())
 
         with open(config.JSON_DIR + 'usi/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
@@ -134,13 +171,12 @@ class TestConverter(unittest.TestCase):
 
         expected_json['alias'] = 'sequencingRun_' + test_alias
 
+        converter = SequencingRunConverter()
         actual_json = converter.convert(hca_data)
 
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_project(self):
-        converter = ProjectConverter()
-
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())
 
@@ -156,14 +192,12 @@ class TestConverter(unittest.TestCase):
             'project': hca_data
         }
 
+        converter = ProjectConverter()
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_study(self):
-        self.maxDiff = None
-        converter = StudyConverter()
-
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())
 
@@ -179,6 +213,7 @@ class TestConverter(unittest.TestCase):
             'project': hca_data
         }
 
+        converter = StudyConverter()
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)

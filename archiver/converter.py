@@ -151,23 +151,67 @@ class SequencingExperimentConverter(Converter):
             "random": "RANDOM",
         }
 
-        self.instrument_model = {
-            "Illumina Genome Analyzer": "ILLUMINA",
-            "Illumina Genome Analyzer II": "ILLUMINA",
-            "Illumina Genome Analyzer IIx": "ILLUMINA",
-            "Illumina HiSeq 2500": "ILLUMINA",
-            # "Illumina Hiseq 2500": "ILLUMINA",
-            "Illumina HiSeq 2000": "ILLUMINA",
-            "Illumina HiSeq 1500": "ILLUMINA",
-            "Illumina HiSeq 1000": "ILLUMINA",
-            "Illumina MiSeq": "ILLUMINA",
-            "Illumina HiScanSQ": "ILLUMINA",
-            "HiSeq X Ten": "ILLUMINA",
-            "NextSeq 500": "ILLUMINA",
-            "HiSeq X Five": "ILLUMINA",
-            "Illumina HiSeq 3000": "ILLUMINA",
-            "Illumina HiSeq 4000": "ILLUMINA",
-            "NextSeq 550": "ILLUMINA"
+        self.instrument_model_map = {
+            "illumina genome analyzer": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina Genome Analyzer"
+            },
+            "illumina genome analyzer ii": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina Genome Analyzer II"
+            },
+            "illumina genome analyzer iix": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina Genome Analyzer IIx"
+            },
+            "illumina hiseq 2500": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 2500"
+            },
+            "illumina hiseq 2000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 2000"
+            },
+            "illumina hiseq 1500": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 1500"
+            },
+            "illumina hiseq 1000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 1000"
+            },
+            "illumina miseq": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina MiSeq"
+            },
+            "illumina hiscansq": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiScanSQ"
+            },
+            "hiseq x ten": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "HiSeq X Ten"
+            },
+            "nextseq 500": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "NextSeq 500"
+            },
+            "hiseq x five": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "HiSeq X Five"
+            },
+            "illumina hiseq 3000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 3000"
+            },
+            "illumina Hiseq 4000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 4000"
+            },
+            "nextseq 550": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "NextSeq 550"
+            }
         }
 
         self.field_mapping = {
@@ -199,10 +243,13 @@ class SequencingExperimentConverter(Converter):
         else:
             extracted_data["attributes"]["library_layout"] = [dict(value="SINGLE")]
 
-        instr_model = flattened_hca_data.get("sequencing_protocol__content__instrument_manufacturer_model__text")
-        if instr_model:
-            extracted_data["attributes"]["instrument_model"] = [dict(value=instr_model)]
-            extracted_data["attributes"]["platform_type"] = [dict(value=self.instrument_model.get(instr_model, ""))]
+        # must correctly match ENA enum values
+        instr_model_text = flattened_hca_data.get("sequencing_protocol__content__instrument_manufacturer_model__text")
+        instrument_model_obj = self.instrument_model_map.get(instr_model_text.lower(), {})
+        instrument_model = instrument_model_obj.get('intrument_model', 'unspecified')
+        platform_type = instrument_model_obj.get('platform_type', 'unspecified')
+        extracted_data["attributes"]["instrument_model"] = [dict(value=instrument_model)]
+        extracted_data["attributes"]["platform_type"] = [dict(value=platform_type)]
 
         extracted_data["attributes"]["design_description"] = [dict(value="unspecified")]
 
