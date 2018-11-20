@@ -1,3 +1,4 @@
+import datetime
 import json
 import time
 import unittest
@@ -56,7 +57,8 @@ class TestIngestArchiver(unittest.TestCase):
         }
 
     def _generate_fake_id(self, prefix):
-        return prefix + str(randint(0, 1000)) + '_' + str(randint(0, 1000))
+        now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
+        return prefix + '_' + now
 
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
