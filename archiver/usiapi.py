@@ -54,6 +54,9 @@ class USIAPI:
         create_submissions_url = self.url + '/api/teams/' + self.aap_api_domain + '/submissions'
         return self._post(url=create_submissions_url, data_json={})
 
+    def get_submission(self, url):
+        return self._get(url=url)
+
     def delete_submission(self, delete_url):
         return self._delete(delete_url)
 

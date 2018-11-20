@@ -26,6 +26,13 @@ class IngestArchiver:
         self.usi_api = USIAPI()
 
     def archive(self, entities_dict_by_type):
+        archive_submission = self.archive_metadata(entities_dict_by_type)
+        # TODO Get all sequencing_run entities and notify file archiver
+        #     self.notify_file_archiver(sequencing_run_entity)
+        archive_submission.validate_and_submit()
+        return archive_submission
+
+    def archive_metadata(self, entities_dict_by_type):
         archive_submission = ArchiveSubmission(usi_api=self.usi_api)
         archive_submission.entities_dict_type = entities_dict_by_type
 
@@ -36,17 +43,18 @@ class IngestArchiver:
             archive_submission.usi_submission = self.usi_api.create_submission()
             print("####################### USI SUBMISSION")
             print(archive_submission.usi_submission['_links']['self']['href'])
-
-            # TODO Get all sequencing_run entities and notify file archiver
-            #     self.notify_file_archiver(sequencing_run_entity)
-
             archive_submission.add_entities(archive_submission.converted_entities)
-            archive_submission.validate_and_submit()
         else:
             archive_submission.is_completed = True
             archive_submission.errors.append('No entities found to submit.')
             return archive_submission
 
+        return archive_submission
+
+    def validate_and_complete_submission(self, usi_submission_url):
+        archive_submission = ArchiveSubmission(usi_api=self.usi_api)
+        archive_submission.usi_submission = self.usi_api.get_submission(usi_submission_url)
+        archive_submission.validate_and_submit()
         return archive_submission
 
     def get_converted_entities(self, entities_dict_by_type):
@@ -317,6 +325,9 @@ class ArchiveSubmission:
             entity.usi_json = created_entity
 
     def validate_and_submit(self):
+        if not self.usi_submission:
+            return self
+
         is_validated = False
         try:
             is_validated = polling.poll(
@@ -453,6 +464,10 @@ class ArchiveSubmission:
     def get_processing_results(self):
         return self.usi_api.get_processing_results(self.usi_submission)
 
+    def get_url(self):
+        # TODO remove projection placeholder
+        return self.usi_submission['_links']['self']['href'].split('{')[0]
+
     def find_entity(self, alias):
         for entities_dict in self.entities_dict_type.values():
             if entities_dict.get(alias):
@@ -467,7 +482,7 @@ class ArchiveSubmission:
         report['entities'] = {}
 
         if self.usi_submission:
-            report['submission_url'] = self.usi_submission['_links']['self']['href']
+            report['submission_url'] = self.get_url()
 
         for type, entities_dict in self.entities_dict_type.items():
             if not entities_dict:
