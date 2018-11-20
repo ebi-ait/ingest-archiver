@@ -65,55 +65,6 @@ class TestIngestArchiver(unittest.TestCase):
         entities_by_type = self.archiver.get_archivable_entities(assay_bundle)
         self.assertTrue(entities_by_type['sample'])
 
-    def test_is_submittable(self):
-        assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
-
-        usi_submission = self.usi_api.create_submission()
-
-        self.archiver.add_entities_to_submission(usi_submission, converted_entities)
-
-        time.sleep(3)
-        is_submittable = self.archiver.is_submittable(usi_submission)
-
-        self.archiver.delete_submission(usi_submission)
-
-        self.assertTrue(is_submittable)
-
-    def test_is_validated(self):
-        assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
-
-        usi_submission = self.usi_api.create_submission()
-
-        self.archiver.add_entities_to_submission(usi_submission, converted_entities)
-
-        time.sleep(3)
-        is_validated = self.archiver.is_validated(usi_submission)
-
-        self.archiver.delete_submission(usi_submission)
-
-        self.assertTrue(is_validated)
-
-    # @unittest.skip
-    def test_is_validated_and_submittable(self):
-        assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
-
-        usi_submission = self.usi_api.create_submission()
-
-        self.archiver.add_entities_to_submission(usi_submission, converted_entities)
-
-        time.sleep(3)
-        is_validated_and_submittable = self.archiver.is_validated_and_submittable(usi_submission)
-
-        self.archiver.delete_submission(usi_submission)
-
-        self.assertTrue(is_validated_and_submittable)
-
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
