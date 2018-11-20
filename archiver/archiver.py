@@ -12,6 +12,10 @@ from archiver.converter import ConversionError, SampleConverter, ProjectConverte
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 
 
+def _print_same_line(string):
+    print(f'\r{string}', end='')
+
+
 class IngestArchiver:
     def __init__(self, ingest_url=None, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
@@ -95,6 +99,8 @@ class IngestArchiver:
                 archive_submission.validation_result = errors
                 print("####################### VALIDATION ERRORS")
                 print(json.dumps(errors, indent=4))
+                print("####################### SUBMISSION REPORT")
+                print(json.dumps(archive_submission.generate_report(), indent=4))
 
         return False
 
@@ -156,9 +162,6 @@ class IngestArchiver:
 
         return archive_entities_by_type
 
-    def _print_same_line(self, string):
-        print(f'\r{string}', end='')
-
     def _get_samples_dict(self, assay_bundle):
         archive_entities = {}
         sample_converter = SampleConverter()
@@ -187,7 +190,7 @@ class IngestArchiver:
             archive_entities[archive_entity.id] = archive_entity
             samples_ctr = samples_ctr + 1
 
-            self._print_same_line(str(samples_ctr))
+            _print_same_line(str(samples_ctr))
         print('')
 
         return archive_entities
