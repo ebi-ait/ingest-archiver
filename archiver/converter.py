@@ -254,10 +254,9 @@ class SequencingExperimentConverter(Converter):
 
         for key, obj in self.instrument_model_map.items():
             synonyms = obj.get("synonymns")
-            if synonyms:
-                if instr_model_text in synonyms:
-                    instrument_model = obj.get('intrument_model', 'unspecified')
-                    platform_type = obj.get('platform_type', 'unspecified')
+            if synonyms and instr_model_text in synonyms:
+                instrument_model = obj.get('intrument_model', 'unspecified')
+                platform_type = obj.get('platform_type', 'unspecified')
 
         extracted_data["attributes"]["instrument_model"] = [dict(value=instrument_model)]
         extracted_data["attributes"]["platform_type"] = [dict(value=platform_type)]
