@@ -119,6 +119,16 @@ class TestConverter(unittest.TestCase):
         actual_json = converter.convert(hca_data)
         self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
 
+        instrument_model_text = "Illumina Hiseq X 10"
+        ena_instrument_model_text = "HiSeq X Ten"
+        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
+        expected_json['attributes']['sequencing_protocol__instrument_manufacturer_model__text'][0][
+            'value'] = instrument_model_text
+        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
+        expected_json['attributes']['platform_type'][0]['value'] = 'ILLUMINA'
+        actual_json = converter.convert(hca_data)
+        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
+
     def test_convert_sequencing_run(self):
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))

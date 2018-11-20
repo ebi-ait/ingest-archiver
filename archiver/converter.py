@@ -190,7 +190,10 @@ class SequencingExperimentConverter(Converter):
             },
             "hiseq x ten": {
                 "platform_type": "ILLUMINA",
-                "intrument_model": "HiSeq X Ten"
+                "intrument_model": "HiSeq X Ten",
+                "synonymns": [
+                    "Illumina Hiseq X 10"
+                ]
             },
             "nextseq 500": {
                 "platform_type": "ILLUMINA",
@@ -198,7 +201,7 @@ class SequencingExperimentConverter(Converter):
             },
             "hiseq x five": {
                 "platform_type": "ILLUMINA",
-                "intrument_model": "HiSeq X Five"
+                "intrument_model": "HiSeq X Five",
             },
             "illumina hiseq 3000": {
                 "platform_type": "ILLUMINA",
@@ -210,7 +213,7 @@ class SequencingExperimentConverter(Converter):
             },
             "nextseq 550": {
                 "platform_type": "ILLUMINA",
-                "intrument_model": "NextSeq 550"
+                "intrument_model": "NextSeq 550",
             }
         }
 
@@ -248,8 +251,17 @@ class SequencingExperimentConverter(Converter):
         instrument_model_obj = self.instrument_model_map.get(instr_model_text.lower(), {})
         instrument_model = instrument_model_obj.get('intrument_model', 'unspecified')
         platform_type = instrument_model_obj.get('platform_type', 'unspecified')
+
+        for key, obj in self.instrument_model_map.items():
+            synonyms = obj.get("synonymns")
+            if synonyms:
+                if instr_model_text in synonyms:
+                    instrument_model = obj.get('intrument_model', 'unspecified')
+                    platform_type = obj.get('platform_type', 'unspecified')
+
         extracted_data["attributes"]["instrument_model"] = [dict(value=instrument_model)]
         extracted_data["attributes"]["platform_type"] = [dict(value=platform_type)]
+
 
         extracted_data["attributes"]["design_description"] = [dict(value="unspecified")]
 
@@ -342,6 +354,14 @@ class ProjectConverter(Converter):
         self.alias_prefix = 'project_'
 
     def _build_output(self, extracted_data, flattened_hca_data):
+        # TODO BioStudies minimum length
+        title_len = len(extracted_data["title"])
+        MIN_LEN = 25
+
+        if title_len < MIN_LEN:
+            prefix = "HCA project: "
+            extracted_data["title"] = prefix + extracted_data["title"]
+
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["contacts"] = []
         extracted_data["publications"] = []
