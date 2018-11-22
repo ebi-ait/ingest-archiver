@@ -3,17 +3,16 @@
 [![codecov](https://codecov.io/gh/HumanCellAtlas/ingest-archiver/branch/master/graph/badge.svg)](https://codecov.io/gh/HumanCellAtlas/ingest-archiver)
 
 # Ingest Archiver
-The archiver service is one of the ingest components which is responsible for the following:
-- submitting metadata submitted to ingest database to appropriate external accessioning authorities (i.e. EBI archives - BioSamples etc.)
-- converting the metadata from ingest into a structure or format that each external accessioning authorities accepts
-- informing the accessioning service of the accessions acquired from submitting the ingest metadata / updating the metadata (Currently, the archiver updates the metadata directly in ingest core. Ideally, only the accessioning service should how the accessions will be updated. This should be implemented in the future.)
-- updating the archive should the data in ingest has been updated
+The archiver service is an ingest component that:
+- submits metadata to the appropriate external accessioning authorities. These are currently only EBI authorities (e.g. Biosamples).
+- converts metadata into the format accepted by each external authority
 
-Currently, the archiver uses the [USI Submissions API](https://submission-dev.ebi.ac.uk/api/docs/how_to_submit_data_programatically.html#_overview) to communicate with EBI archives. This service is designed to be used as the interface to EBI archive submissions where the accessions will be obtained.
+In the future it will:
+- update HCA metadata with accessions provided by external authorities
 
-This component listens for submissions on the ingest messaging queue. When a submission is completed in ingest the archiver will receive a message containing the submission uuid and trigger the archiving process.
+The archiver uses the [USI Submissions API](https://submission-dev.ebi.ac.uk/api/docs/how_to_submit_data_programatically.html#_overview) to communicate with EBI external authorities.
 
-Only the samples are the metadata being archived in BioSamples (thru USI) at the moment.
+This component is currently invoked manually after an HCA submission.
 
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
