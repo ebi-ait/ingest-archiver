@@ -2,13 +2,14 @@ import json
 import logging
 import os
 import sys
+import time
 
 from optparse import OptionParser
 
 from archiver.archiver import IngestArchiver
 
 
-def save_output_to_file(output_dir, report):
+def save_output_to_file(output_dir, filename, report):
     if not output_dir:
         return
 
@@ -17,7 +18,7 @@ def save_output_to_file(output_dir, report):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    tmp_file = open(directory + "/" + bundle_uuid + ".json", "w")
+    tmp_file = open(directory + "/" + filename + ".json", "w")
     tmp_file.write(json.dumps(report, indent=4))
     tmp_file.close()
 
@@ -36,6 +37,7 @@ if __name__ == '__main__':
     parser.add_option("-o", "--output_dir", help="Output dir name")
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-s", "--submission_url", help="USI Submission url to complete")
+    parser.add_option("-m", "--metadata_only", help="Archive the metadata only")
 
     (options, args) = parser.parse_args()
 
@@ -67,13 +69,20 @@ if __name__ == '__main__':
         archive_submission = archiver.validate_and_complete_submission(options.submission_url)
         print('##################### SUMMARY')
         report = archive_submission.generate_report()
-        save_output_to_file(options.output_dir, report)
+        submission_uuid = options.submission_url.rsplit('/', 1)[-1]
+        save_output_to_file(options.output_dir, f'SUBMISSION_{submission_uuid}', report)
     else:
         for bundle_uuid in bundles:
             print(f'##################### PROCESSING BUNDLE {bundle_uuid}')
             assay_bundle = archiver.get_assay_bundle(bundle_uuid)
             entities_dict = archiver.get_archivable_entities(assay_bundle)
-            archive_submission = archiver.archive(entities_dict)
+            if not options.metadata_only:
+                archive_submission = archiver.archive(entities_dict)
+            else:
+                archive_submission = archiver.archive_metadata(entities_dict)
+
             print('##################### SUMMARY')
             report = archive_submission.generate_report()
-            save_output_to_file(options.output_dir, report)
+            save_output_to_file(options.output_dir, bundle_uuid, report)
+
+            time.sleep(30)

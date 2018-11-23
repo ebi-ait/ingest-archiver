@@ -90,28 +90,47 @@ class IngestArchiver:
     def get_assay_bundle(self, bundle_uuid):
         return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
 
-    def get_archivable_entities(self, assay_bundle):
-        entities_dict_by_type = {}
+    def get_archivable_entities(self, bundle):
+        assay_bundles = [bundle]
 
-        if not self.exclude_types or (self.exclude_types and 'project' not in self.exclude_types):
-            print("Finding project in the bundle...")
-            entities_dict_by_type['project'] = self._get_project_dict(assay_bundle)
+        entities_dict_by_type = {
+            'project': {},
+            'study': {},
+            'sample': {},
+            'sequencing_experiment': {},
+            'sequencing_run': {}
+        }
 
-        if not self.exclude_types or (self.exclude_types and 'study' not in self.exclude_types):
-            print("Finding study in the bundle...")
-            entities_dict_by_type['study'] = self._get_study_dict(assay_bundle)
+        for assay_bundle in assay_bundles:
+            if not self.exclude_types or (self.exclude_types and 'project' not in self.exclude_types):
+                print("Finding project in the bundle...")
+                project_dict = self._get_project_dict(assay_bundle)
+                if project_dict:
+                    entities_dict_by_type['project'].update(project_dict)
 
-        if not self.exclude_types or (self.exclude_types and 'sample' not in self.exclude_types):
-            print("Finding samples in the bundle...")
-            entities_dict_by_type['sample'] = self._get_samples_dict(assay_bundle)
+            if not self.exclude_types or (self.exclude_types and 'study' not in self.exclude_types):
+                print("Finding study in the bundle...")
+                study_dict = self._get_study_dict(assay_bundle)
+                if study_dict:
+                    entities_dict_by_type['study'].update(study_dict)
 
-        if not self.exclude_types or (self.exclude_types and 'sequencing_experiment' not in self.exclude_types):
-            entities_dict_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
-            print("Finding assay in the bundle...")
+            if not self.exclude_types or (self.exclude_types and 'sample' not in self.exclude_types):
+                print("Finding samples in the bundle...")
+                samples_dict = self._get_samples_dict(assay_bundle)
+                if samples_dict:
+                    entities_dict_by_type['sample'].update(samples_dict)
 
-        if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
-            print("Finding sequencing run in the bundle...", end="", flush=True)
-            entities_dict_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
+            if not self.exclude_types or (self.exclude_types and 'sequencing_experiment' not in self.exclude_types):
+                seq_exp_dict = self._get_sequencing_experiment_dict(assay_bundle)
+                if seq_exp_dict:
+                    entities_dict_by_type['sequencing_experiment'].update(seq_exp_dict)
+                print("Finding assay in the bundle...")
+
+            if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
+                print("Finding sequencing run in the bundle...", end="", flush=True)
+                seq_run_dict = self._get_sequencing_run_dict(assay_bundle)
+                if seq_run_dict:
+                    entities_dict_by_type['sequencing_run'].update(seq_run_dict)
 
         return entities_dict_by_type
 
