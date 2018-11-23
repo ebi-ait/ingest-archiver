@@ -1,13 +1,12 @@
-FROM jfloff/alpine-python:3.4-slim
-MAINTAINER Alegria Aclan "aaclan@ebi.ac.uk"
+FROM python:3.6-slim
 
 RUN mkdir /app
-COPY archiver /app/archiver
-COPY tests /app/tests
-COPY config.py listener.py requirements.txt /app/
 WORKDIR /app
 
-RUN pip install -r /app/requirements.txt
+COPY archiver ./archiver
+COPY config.py listener.py cli.py requirements.txt ./
 
-ENTRYPOINT ["python"]
-CMD ["listener.py"]
+RUN pip install -r requirements.txt
+
+ENTRYPOINT ["python", "cli.py"]
+
