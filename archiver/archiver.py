@@ -12,78 +12,54 @@ from archiver.converter import ConversionError, SampleConverter, ProjectConverte
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 
 
+def _print_same_line(string):
+    print(f'\r{string}', end='')
+
+
 class IngestArchiver:
-    def __init__(self, ingest_url=None, exclude_types=None):
+    def __init__(self, ingest_url=None, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
-        self.usi_api = USIAPI()
-        self.converter = SampleConverter()
         self.ingest_api = IngestAPI(ingest_url)
         self.exclude_types = exclude_types if exclude_types else []
+        self.alias_prefix = f"{alias_prefix}_" if alias_prefix else ""
+
+        self.usi_api = USIAPI()
 
     def archive(self, entities_dict_by_type):
-        archive_submission = ArchiveSubmission()
+        archive_submission = self.archive_metadata(entities_dict_by_type)
+        # TODO Get all sequencing_run entities and notify file archiver
+        #     self.notify_file_archiver(sequencing_run_entity)
+        archive_submission.validate_and_submit()
+        return archive_submission
+
+    def archive_metadata(self, entities_dict_by_type):
+        archive_submission = ArchiveSubmission(usi_api=self.usi_api)
         archive_submission.entities_dict_type = entities_dict_by_type
 
-        converted_entities = self._get_converted_entities(entities_dict_by_type)
+        converted_entities = self.get_converted_entities(entities_dict_by_type)
 
         if converted_entities:
             archive_submission.converted_entities = converted_entities
             archive_submission.usi_submission = self.usi_api.create_submission()
             print("####################### USI SUBMISSION")
             print(archive_submission.usi_submission['_links']['self']['href'])
-            self.add_entities_to_submission(archive_submission.usi_submission, archive_submission.converted_entities)
+            archive_submission.add_entities(archive_submission.converted_entities)
         else:
             archive_submission.is_completed = True
             archive_submission.errors.append('No entities found to submit.')
             return archive_submission
 
-        is_validated = False
-        try:
-            is_validated = polling.poll(
-                lambda: self.is_validated(archive_submission.usi_submission) and self.is_submittable(archive_submission.usi_submission),
-                step=config.VALIDATION_POLLING_STEP,
-                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
-                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
-            )
-        except polling.TimeoutException as te:
-            archive_submission.errors.append('USI validation takes too long to complete.')
-
-        is_submittable = self.is_submittable(archive_submission.usi_submission)
-
-        if not is_validated or not is_submittable:
-            validation_summary = self.get_all_validation_result_details(archive_submission.usi_submission)
-            archive_submission.errors.append('Failed in USI validation.')
-            archive_submission.validation_result = validation_summary
-            return archive_submission
-
-        self.usi_api.update_submission_status(archive_submission.usi_submission, 'Submitted')
-
-        try:
-            archive_submission.is_completed = polling.poll(
-                lambda: self.is_processing_complete(archive_submission.usi_submission),
-                step=config.SUBMISSION_POLLING_STEP,
-                timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
-                poll_forever=True if config.SUBMISSION_POLL_FOREVER else False
-            )
-            archive_submission.processing_result = self.get_processing_results(archive_submission.usi_submission)
-            results = archive_submission.processing_result
-
-            for result in results:
-                if result['status'] == 'Completed':
-                    alias = result['alias']
-                    accession = result['accession']
-                    entity = archive_submission.find_entity(alias)
-                    if entity:
-                        entity.accession = accession
-
-        except polling.TimeoutException:
-            archive_submission.errors.append("USI submission takes too long complete.")
-
         return archive_submission
 
-    def _get_converted_entities(self, entities_dict_by_type):
+    def validate_and_complete_submission(self, usi_submission_url):
+        archive_submission = ArchiveSubmission(usi_api=self.usi_api)
+        archive_submission.usi_submission = self.usi_api.get_submission(usi_submission_url)
+        archive_submission.validate_and_submit()
+        return archive_submission
+
+    def get_converted_entities(self, entities_dict_by_type):
         converted_entities = []
-        self.logger.info("Getting converted entities...")
+        self.logger.info("Getting entities to be submitted...")
 
         summary = {}
         for entity_type, entity_dict in entities_dict_by_type.items():
@@ -106,7 +82,7 @@ class IngestArchiver:
                         summary[entity_type] = 0
                     summary[entity_type] = summary[entity_type] + 1
 
-        print("################### Conversion Summary:")
+        print("################### Entities to be archived:")
         print(json.dumps(summary, indent=4))
 
         return converted_entities
@@ -115,32 +91,29 @@ class IngestArchiver:
         return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
 
     def get_archivable_entities(self, assay_bundle):
-        archive_entities_by_type = {}
+        entities_dict_by_type = {}
 
         if not self.exclude_types or (self.exclude_types and 'project' not in self.exclude_types):
             print("Finding project in the bundle...")
-            archive_entities_by_type['project'] = self._get_project_dict(assay_bundle)
+            entities_dict_by_type['project'] = self._get_project_dict(assay_bundle)
 
         if not self.exclude_types or (self.exclude_types and 'study' not in self.exclude_types):
             print("Finding study in the bundle...")
-            archive_entities_by_type['study'] = self._get_study_dict(assay_bundle)
+            entities_dict_by_type['study'] = self._get_study_dict(assay_bundle)
 
         if not self.exclude_types or (self.exclude_types and 'sample' not in self.exclude_types):
             print("Finding samples in the bundle...")
-            archive_entities_by_type['sample'] = self._get_samples_dict(assay_bundle)
+            entities_dict_by_type['sample'] = self._get_samples_dict(assay_bundle)
 
         if not self.exclude_types or (self.exclude_types and 'sequencing_experiment' not in self.exclude_types):
-            archive_entities_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
+            entities_dict_by_type['sequencing_experiment'] = self._get_sequencing_experiment_dict(assay_bundle)
             print("Finding assay in the bundle...")
 
         if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
             print("Finding sequencing run in the bundle...", end="", flush=True)
-            archive_entities_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
+            entities_dict_by_type['sequencing_run'] = self._get_sequencing_run_dict(assay_bundle)
 
-        return archive_entities_by_type
-
-    def _print_same_line(self, string):
-        print('\r' + string, end='')
+        return entities_dict_by_type
 
     def _get_samples_dict(self, assay_bundle):
         archive_entities = {}
@@ -170,7 +143,8 @@ class IngestArchiver:
             archive_entities[archive_entity.id] = archive_entity
             samples_ctr = samples_ctr + 1
 
-            self._print_same_line(str(samples_ctr))
+            _print_same_line(str(samples_ctr))
+        print('')
 
         return archive_entities
 
@@ -247,6 +221,7 @@ class IngestArchiver:
             archive_entity.converted_data = seq_experiment_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
 
+            # TODO check if assignment of links can be done in the converter
             archive_entity.converted_data['studyRef'] = {
                 "alias": self._generate_archive_entity_id('study', assay_bundle.get_project())
             }
@@ -281,40 +256,28 @@ class IngestArchiver:
                 'bundle_uuid': assay_bundle.bundle_uuid
             }
 
-            print("####################### SEQ RUN")
+            print("####################### SEQUENCING RUN")
+            print("####################### INPUT")
             print(json.dumps(archive_entity.input_data, indent=4))
 
-
             seq_run_converter = SequencingRunConverter()
-
             archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
             archive_entity.converted_data['alias'] = archive_entity.id
             archive_entity.converted_data['assayRefs'] = {
                 "alias": self._generate_archive_entity_id('sequencingExperiment', assay)
             },
+            print("####################### CONVERSION")
+            print(json.dumps(archive_entity.converted_data, indent=4))
+
             archive_entities_dict[archive_entity.id] = archive_entity
 
         return archive_entities_dict
 
     def _generate_archive_entity_id(self, archive_entity_type, hca_entity):
-        uuid = hca_entity['uuid']['uuid']  # should always be present in an hca entity
-        return f'{archive_entity_type}_{uuid}'
+        uuid = hca_entity["uuid"]["uuid"]  # should always be present in an hca entity
+        return f"{self.alias_prefix}{archive_entity_type}_{uuid}"
 
-    def add_entities_to_submission(self, usi_submission, converted_entities):
-        get_contents_url = usi_submission['_links']['contents']['href']
-        contents = self.usi_api.get_contents(get_contents_url)
-
-        for entity in converted_entities:
-            entity_link = self.usi_api.get_entity_url(entity.archive_entity_type)
-            create_entity_url = contents['_links'][f'{entity_link}:create']['href']
-
-            created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
-            entity.usi_json = created_entity
-
-            # TODO notify file archiver
-            # if entity.archive_entity_type == 'sequencingRun':
-            #     self.notify_file_archiver(entity)
-
+    # TODO specify rabbit connection details and construct message from entity
     def notify_file_archiver(self, entity):
         rabbit_url = ''
         exchange = ''
@@ -329,17 +292,102 @@ class IngestArchiver:
                               body=json.dumps(message))
         connection.close()
 
-    def convert_entities(self, entities_dict_by_type):
-        converted_entities_dict = {}
+    @staticmethod
+    def is_metadata_accessioned(sample):
+        return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
 
-        samples = entities_dict_by_type['samples']
-        result = self._convert_to_samples(samples)
-        converted_entities_dict['samples'] = result
 
-        return converted_entities_dict
+class ArchiveSubmission:
+    def __init__(self, usi_api):
+        self.usi_submission = {}
+        self.errors = []
+        self.processing_result = []
+        self.validation_result = []
+        self.is_completed = False
+        self.entities_dict_type = {}
+        self.converted_entities = []
+        self.accessioned = {}
 
-    def get_all_validation_result_details(self, usi_submission):
-        get_validation_results_url = usi_submission['_links']['validationResults']['href']
+        self.usi_api = usi_api
+
+    def __str__(self):
+        return str(vars(self))
+
+    def add_entities(self, converted_entities):
+        get_contents_url = self.usi_submission['_links']['contents']['href']
+        contents = self.usi_api.get_contents(get_contents_url)
+
+        for entity in converted_entities:
+            entity_link = self.usi_api.get_entity_url(entity.archive_entity_type)
+            create_entity_url = contents['_links'][f'{entity_link}:create']['href']
+
+            created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
+            entity.usi_json = created_entity
+
+    def validate_and_submit(self):
+        if not self.usi_submission:
+            return self
+
+        is_validated = False
+        try:
+            is_validated = polling.poll(
+                lambda: self.is_ready_to_submit(),
+                step=config.VALIDATION_POLLING_STEP,
+                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
+                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
+            )
+        except polling.TimeoutException as te:
+            self.errors.append('USI validation takes too long to complete.')
+
+        is_submittable = self.is_submittable()
+
+        if not is_validated or not is_submittable:
+            validation_summary = self.get_all_validation_result_details()
+            self.errors.append('Failed in USI validation.')
+            self.validation_result = validation_summary
+            return self
+
+        self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
+
+        try:
+            self.is_completed = polling.poll(
+                lambda: self.is_processing_complete(),
+                step=config.SUBMISSION_POLLING_STEP,
+                timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
+                poll_forever=True if config.SUBMISSION_POLL_FOREVER else False
+            )
+            self.processing_result = self.get_processing_results()
+
+            for result in self.processing_result:
+                if result['status'] == 'Completed':
+                    alias = result['alias']
+                    accession = result['accession']
+                    entity = self.find_entity(alias)
+                    if entity:
+                        entity.accession = accession
+
+        except polling.TimeoutException:
+            self.errors.append("USI submission takes too long complete.")
+
+    def is_ready_to_submit(self):
+        is_validated = self.is_validated()
+
+        if is_validated:
+            is_submittable = self.is_submittable()
+            if is_submittable:
+                return True
+            else:
+                errors = self.get_all_validation_errors()
+                self.validation_result = errors
+                print("####################### VALIDATION ERRORS")
+                print(json.dumps(errors, indent=4))
+                print("####################### SUBMISSION REPORT")
+                print(json.dumps(self.generate_report(), indent=4))
+
+        return False
+
+    def get_all_validation_result_details(self):
+        get_validation_results_url = self.usi_submission['_links']['validationResults']['href']
         validation_results = self.usi_api.get_validation_results(get_validation_results_url)
 
         summary = []
@@ -353,8 +401,24 @@ class IngestArchiver:
 
         return summary
 
-    def is_submittable(self, usi_submission):
-        get_status_url = usi_submission['_links']['submissionStatus']['href']
+    def get_all_validation_errors(self):
+        get_validation_results_url = self.usi_submission['_links']['validationResults']['href']
+        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
+
+        errors = []
+        for validation_result in validation_results:
+            if validation_result['validationStatus'] == "Complete":
+                details_url = validation_result['_links']['validationResult']['href']
+                # TODO fix how what to put as projection param, check usi documentation, removing any params for now
+                details_url = details_url.split('{')[0]
+                validation_result_details = self.usi_api.get_validation_result_details(details_url)
+                if validation_result_details.get('errorMessages'):
+                    errors.append(validation_result_details.get('errorMessages'))
+
+        return errors
+
+    def is_submittable(self):
+        get_status_url = self.usi_submission['_links']['submissionStatus']['href']
         submission_status = self.usi_api.get_submission_status(get_status_url)
 
         get_available_statuses_url = submission_status['_links']['availableStatuses']['href']
@@ -366,8 +430,8 @@ class IngestArchiver:
 
         return False
 
-    def is_validated(self, usi_submission):
-        get_validation_results_url = usi_submission['_links']['validationResults']['href']
+    def is_validated(self):
+        get_validation_results_url = self.usi_submission['_links']['validationResults']['href']
         validation_results = self.usi_api.get_validation_results(get_validation_results_url)
 
         for validation_result in validation_results:
@@ -376,48 +440,33 @@ class IngestArchiver:
 
         return True
 
-    def is_validated_and_submittable(self, usi_submission):
-        return self.is_validated(usi_submission) and self.is_submittable(usi_submission)
+    def is_validated_and_submittable(self):
+        return self.is_validated(self.usi_submission) and self.is_submittable(self.usi_submission)
 
-    def complete_submission(self, usi_submission):
-        if self.is_validated_and_submittable(usi_submission):
-            return self.usi_api.update_submission_status(usi_submission, 'Submitted')
+    def submit(self):
+        if self.is_validated_and_submittable(self.usi_submission):
+            return self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
 
         return None
 
-    def is_processing_complete(self, usi_submission):
-        results = self.usi_api.get_processing_results(usi_submission)
+    def is_processing_complete(self):
+        results = self.usi_api.get_processing_results(self.usi_submission)
         for result in results:
             if result['status'] != "Completed":
                 return False
 
         return True
 
-    def delete_submission(self, usi_submission):
-        delete_url = usi_submission['_links']['self:delete']['href']
+    def delete_submission(self):
+        delete_url = self.usi_submission['_links']['self:delete']['href']
         return self.usi_api.delete_submission(delete_url)
 
-    def get_processing_results(self, usi_submission):
-        return self.usi_api.get_processing_results(usi_submission)
+    def get_processing_results(self):
+        return self.usi_api.get_processing_results(self.usi_submission)
 
-    @staticmethod
-    def is_metadata_accessioned(sample):
-        return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
-
-
-class ArchiveSubmission:
-    def __init__(self):
-        self.usi_submission = {}
-        self.errors = []
-        self.processing_result = []
-        self.validation_result = []
-        self.is_completed = False
-        self.entities_dict_type = {}
-        self.converted_entities = []
-        self.accessioned = {}
-
-    def __str__(self):
-        return str(vars(self))
+    def get_url(self):
+        # TODO remove projection placeholder
+        return self.usi_submission['_links']['self']['href'].split('{')[0]
 
     def find_entity(self, alias):
         for entities_dict in self.entities_dict_type.values():
@@ -433,7 +482,7 @@ class ArchiveSubmission:
         report['entities'] = {}
 
         if self.usi_submission:
-            report['submission_url'] = self.usi_submission['_links']['self']['href']
+            report['submission_url'] = self.get_url()
 
         for type, entities_dict in self.entities_dict_type.items():
             if not entities_dict:
@@ -518,7 +567,7 @@ class AssayBundle:
             self.assay_process = derived_by_processes[0]
 
             if len(derived_by_processes) > 1:
-                raise Error(f'Bundle {self.bundle_uuid} has many assay processes.')
+                raise ArchiverError(f'Bundle {self.bundle_uuid} has many assay processes.')
 
         return self.assay_process
 
@@ -560,10 +609,10 @@ class AssayBundle:
         sequencing_protocols = protocol_by_type.get('sequencing_protocol', [])
 
         if len(library_preparation_protocols) != 1:
-            raise Error('There should be 1 library preparation protocol for the assay process.')
+            raise ArchiverError('There should be 1 library preparation protocol for the assay process.')
 
         if len(sequencing_protocols) != 1:
-            raise Error('There should be 1 sequencing_protocol for the assay process.')
+            raise ArchiverError('There should be 1 sequencing_protocol for the assay process.')
 
         self.library_preparation_protocol = library_preparation_protocols[0]
         self.sequencing_protocol = sequencing_protocols[0]
@@ -578,11 +627,11 @@ class AssayBundle:
         input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
 
         if not input_biomaterials:
-            raise Error('No input biomaterial found to the assay process.')
+            raise ArchiverError('No input biomaterial found to the assay process.')
 
         # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
         return input_biomaterials[0]
 
 
-class Error(Exception):
+class ArchiverError(Exception):
     """Base-class for all exceptions raised by this module."""

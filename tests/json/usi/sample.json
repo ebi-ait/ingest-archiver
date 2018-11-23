@@ -1,24 +1,15 @@
 {
   "alias": "hca339",
-  "description": "",
+  "description": "Description",
   "attributes": {
     "biomaterial__biomaterial_core__biomaterial_id": [{
         "value": "Q4_DEMO-donor_MGH30"
-    }],
-    "biomaterial__describedBy": [{
-        "value": "http://schema.integration.data.humancellatlas.org/type/biomaterial/10.1.1/donor_organism"
-    }],
-    "biomaterial__genus_species__0__text": [{
-        "value": "Homo sapiens"
     }],
     "biomaterial__is_living": [{
         "value": "no"
     }],
     "biomaterial__medical_history__smoking_history": [{
         "value": "yes"
-    }],
-    "biomaterial__schema_type": [{
-        "value": "biomaterial"
     }],
     "biomaterial__sex": [{
         "value": "unknown"

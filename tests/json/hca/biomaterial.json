@@ -5,6 +5,7 @@
         "biomaterial_core": {
             "biomaterial_id": "Q4_DEMO-donor_MGH30",
             "biomaterial_name": "Q4 DEMO donor MGH30",
+            "biomaterial_description": "Description",
             "ncbi_taxon_id": [
                 9606
             ]
@@ -13,7 +14,8 @@
             "smoking_history": "yes"
         },
         "genus_species": [{
-            "text": "Homo sapiens"
+            "text": "Homo sapiens",
+            "ontology": "NCBITaxon:9606"
         }],
         "is_living": "no",
         "sex": "unknown"

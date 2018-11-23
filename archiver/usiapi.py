@@ -16,6 +16,7 @@ def get_aap_token(username, password):
 
     return token
 
+
 USI_ENTITY_LINK = {
     'study': 'enaStudies',
     'sample': 'samples',
@@ -31,6 +32,7 @@ USI_ENTITY_CURR_VERSION_LINK = {
     'project': 'projects',
     'sequencingRun': 'assayData'
 }
+
 
 class USIAPI:
     def __init__(self):
@@ -51,6 +53,9 @@ class USIAPI:
     def create_submission(self):
         create_submissions_url = self.url + '/api/teams/' + self.aap_api_domain + '/submissions'
         return self._post(url=create_submissions_url, data_json={})
+
+    def get_submission(self, url):
+        return self._get(url=url)
 
     def delete_submission(self, delete_url):
         return self._delete(delete_url)

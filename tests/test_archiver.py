@@ -1,3 +1,4 @@
+import datetime
 import json
 import time
 import unittest
@@ -56,68 +57,36 @@ class TestIngestArchiver(unittest.TestCase):
         }
 
     def _generate_fake_id(self, prefix):
-        return prefix + str(randint(0, 1000)) + '_' + str(randint(0, 1000))
+        now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
+        return prefix + '_' + now
 
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_by_type = self.archiver.get_archivable_entities(assay_bundle)
         self.assertTrue(entities_by_type['sample'])
 
-    def test_is_submittable(self):
-        assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
-
-        usi_submission = self.usi_api.create_submission()
-
-        self.archiver.add_entities_to_submission(usi_submission, converted_entities)
-
-        time.sleep(3)
-        is_submittable = self.archiver.is_submittable(usi_submission)
-
-        self.archiver.delete_submission(usi_submission)
-
-        self.assertTrue(is_submittable)
-
-    def test_is_validated(self):
-        assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities = self.archiver._get_converted_entities(entities_dict_by_type)
-
-        usi_submission = self.usi_api.create_submission()
-
-        self.archiver.add_entities_to_submission(usi_submission, converted_entities)
-
-        time.sleep(3)
-        is_validated = self.archiver.is_validated(usi_submission)
-
-        self.archiver.delete_submission(usi_submission)
-
-        self.assertTrue(is_validated)
-
-    # @unittest.skip
-    def test_is_validated_and_submittable(self):
-        assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        converted_entities =  self.archiver._get_converted_entities(entities_dict_by_type)
-
-        usi_submission = self.usi_api.create_submission()
-
-        self.archiver.add_entities_to_submission(usi_submission, converted_entities)
-
-        time.sleep(3)
-        is_validated_and_submittable = self.archiver.is_validated_and_submittable(usi_submission)
-
-        self.archiver.delete_submission(usi_submission)
-
-        self.assertTrue(is_validated_and_submittable)
-
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
         archive_submission = self.archiver.archive(entities_dict_by_type)
         self.assertTrue(archive_submission.is_completed)
-        self.assertTrue(archive_submission.processing_result)
+
+        for type, entity_dict in archive_submission.entities_dict_type.items():
+            for id, entity in entity_dict.items():
+                self.assertTrue(entity.accession, f"{entity.id} has no accession.")
+
+    def test_validate_and_complete_submission(self):
+        assay_bundle = self._mock_assay_bundle(self.bundle)
+        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
+        archive_submission = self.archiver.archive_metadata(entities_dict_by_type)
+        url = archive_submission.get_url()
+
+        archive_submission = self.archiver.validate_and_complete_submission(usi_submission_url=url)
+        self.assertTrue(archive_submission.is_completed)
+
+        for type, entity_dict in archive_submission.entities_dict_type.items():
+            for id, entity in entity_dict.items():
+                self.assertTrue(entity.accession, f"{entity.id} has no accession.")
 
     def _mock_assay_bundle(self, bundle):
         assay_bundle = MagicMock('assay_bundle')
@@ -144,7 +113,7 @@ class TestIngestArchiver(unittest.TestCase):
         assay_bundle = self._mock_assay_bundle(bundle)
         entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
         archive_submission = self.archiver.archive(entities_dict_by_type)
-        print(archive_submission.generate_report())
+
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.errors)
         self.assertFalse(archive_submission.processing_result)

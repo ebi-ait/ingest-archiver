@@ -3,13 +3,6 @@ import re
 
 from flatten_json import flatten
 
-
-class ConversionError(Exception):
-    def __init__(self, expression, message):
-        self.expression = expression
-        self.message = message
-
-
 """
 HCA to USI JSON Mapping
 https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
@@ -25,6 +18,7 @@ class Converter:
         }
         self.alias_prefix = ''
         self.exclude_data = []
+        self.exclude_fields_match = ['__schema_type', '__describedBy']
 
     def convert(self, hca_data):
         try:
@@ -37,7 +31,8 @@ class Converter:
             error_message = "Error:" + str(e)
             self.logger.error(error_message)
             raise ConversionError("Conversion Error",
-                                  "An error occurred in converting the metadata. Data maybe malformed.")
+                                  "An error occurred in converting the metadata. Data maybe malformed.",
+                                  details={'data': hca_data})
         return converted_data
 
     def _flatten(self, hca_data):
@@ -48,7 +43,19 @@ class Converter:
                 if key in input_data:
                     del input_data[key]
 
-        return flatten(input_data, '__')
+        flattened = flatten(input_data, '__')
+
+        delete_keys = []
+        if self.exclude_fields_match:
+            for key in flattened.keys():
+                for keyword in self.exclude_fields_match:
+                    if keyword in key:
+                        delete_keys.append(key)
+
+        for key in delete_keys:
+            del flattened[key]
+
+        return flattened
 
     def _extract_fields(self, flattened_hca_data):
         extracted_data = {"attributes": self._extract_attributes(flattened_hca_data)}
@@ -58,7 +65,6 @@ class Converter:
                 extracted_data[new_key] = flattened_hca_data[key]
             else:
                 extracted_data[new_key] = ""
-                self.logger.warning(key + ' is not found in the metadata.')
 
         return extracted_data
 
@@ -89,6 +95,7 @@ class SampleConverter(Converter):
         self.field_mapping = {
             "biomaterial__uuid__uuid": "alias",
             "biomaterial__content__biomaterial_core__biomaterial_name": "title",
+            "biomaterial__content__biomaterial_core__biomaterial_description": "description",
             "biomaterial__content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
             "biomaterial__submissionDate": "releaseDate"
         }
@@ -103,11 +110,13 @@ class SampleConverter(Converter):
     def _build_output(self, extracted_data, flattened_hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["sampleRelationships"] = []
-        extracted_data["description"] = ""
-        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
+        taxon_id = str(extracted_data.get("taxonId", ''))
+        extracted_data["taxon"] = self.taxon_map.get(taxon_id)
 
         if not extracted_data["taxon"]:
-            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
+            raise ConversionError("Sample Conversion Error",
+                                  f"Sample Converter find the taxon text from taxon id, {taxon_id}",
+                                  details={'taxon_id': taxon_id})
 
         # non required fields
         if "title" in extracted_data:
@@ -115,6 +124,18 @@ class SampleConverter(Converter):
 
         if not extracted_data.get("attributes"):
             extracted_data["attributes"] = {}
+
+        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
+
+        # TODO only donors contain this info but this is redundant with taxonId, removing this if it exists
+        if extracted_data["attributes"].get("biomaterial__genus_species__0__text"):
+            del extracted_data["attributes"]["biomaterial__genus_species__0__text"]
+
+        if extracted_data["attributes"].get("biomaterial__genus_species__0__ontology"):
+            del extracted_data["attributes"]["biomaterial__genus_species__0__ontology"]
+
+        if not extracted_data["taxon"]:
+            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
 
         return extracted_data
 
@@ -130,22 +151,70 @@ class SequencingExperimentConverter(Converter):
             "random": "RANDOM",
         }
 
-        self.instrument_model = {
-            "Illumina Genome Analyzer": "ILLUMINA",
-            "Illumina Genome Analyzer II": "ILLUMINA",
-            "Illumina Genome Analyzer IIx": "ILLUMINA",
-            "Illumina HiSeq 2500": "ILLUMINA",
-            "Illumina HiSeq 2000": "ILLUMINA",
-            "Illumina HiSeq 1500": "ILLUMINA",
-            "Illumina HiSeq 1000": "ILLUMINA",
-            "Illumina MiSeq": "ILLUMINA",
-            "Illumina HiScanSQ": "ILLUMINA",
-            "HiSeq X Ten": "ILLUMINA",
-            "NextSeq 500": "ILLUMINA",
-            "HiSeq X Five": "ILLUMINA",
-            "Illumina HiSeq 3000": "ILLUMINA",
-            "Illumina HiSeq 4000": "ILLUMINA",
-            "NextSeq 550": "ILLUMINA"
+        self.instrument_model_map = {
+            "illumina genome analyzer": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina Genome Analyzer"
+            },
+            "illumina genome analyzer ii": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina Genome Analyzer II"
+            },
+            "illumina genome analyzer iix": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina Genome Analyzer IIx"
+            },
+            "illumina hiseq 2500": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 2500"
+            },
+            "illumina hiseq 2000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 2000"
+            },
+            "illumina hiseq 1500": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 1500"
+            },
+            "illumina hiseq 1000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 1000"
+            },
+            "illumina miseq": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina MiSeq"
+            },
+            "illumina hiscansq": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiScanSQ"
+            },
+            "hiseq x ten": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "HiSeq X Ten",
+                "synonymns": [
+                    "Illumina Hiseq X 10"
+                ]
+            },
+            "nextseq 500": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "NextSeq 500"
+            },
+            "hiseq x five": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "HiSeq X Five",
+            },
+            "illumina hiseq 3000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 3000"
+            },
+            "illumina Hiseq 4000": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "Illumina HiSeq 4000"
+            },
+            "nextseq 550": {
+                "platform_type": "ILLUMINA",
+                "intrument_model": "NextSeq 550",
+            }
         }
 
         self.field_mapping = {
@@ -170,21 +239,35 @@ class SequencingExperimentConverter(Converter):
         paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_end")
         if paired_end:
             extracted_data["attributes"]["library_layout"] = [dict(value="PAIRED")]
+
+            # TODO put 0 as default as we don't really capture this in HCA but there's no way to specify 'unspecified'
             extracted_data["attributes"]["nominal_length"] = [dict(value="0")]
             extracted_data["attributes"]["nominal_sdev"] = [dict(value="0")]
         else:
             extracted_data["attributes"]["library_layout"] = [dict(value="SINGLE")]
 
-        instr_model = flattened_hca_data.get("sequencing_protocol__content__instrument_manufacturer_model__text")
-        if instr_model:
-            extracted_data["attributes"]["instrument_model"] = [dict(value=instr_model)]
-            extracted_data["attributes"]["platform_type"] = [dict(value=self.instrument_model.get(instr_model, ""))]
+        # must correctly match ENA enum values
+        instr_model_text = flattened_hca_data.get("sequencing_protocol__content__instrument_manufacturer_model__text")
+        instrument_model_obj = self.instrument_model_map.get(instr_model_text.lower(), {})
+        instrument_model = instrument_model_obj.get('intrument_model', 'unspecified')
+        platform_type = instrument_model_obj.get('platform_type', 'unspecified')
+
+        for key, obj in self.instrument_model_map.items():
+            synonyms = obj.get("synonymns")
+            if synonyms and instr_model_text in synonyms:
+                instrument_model = obj.get('intrument_model', 'unspecified')
+                platform_type = obj.get('platform_type', 'unspecified')
+
+        extracted_data["attributes"]["instrument_model"] = [dict(value=instrument_model)]
+        extracted_data["attributes"]["platform_type"] = [dict(value=platform_type)]
+
 
         extracted_data["attributes"]["design_description"] = [dict(value="unspecified")]
 
         library_name = flattened_hca_data.get("input_biomaterial__content__biomaterial_core__biomaterial_id", "")
         if not library_name:
-            raise ConversionError("Sequencing Experiment Conversion Error", "There is no id found for the input biomaterial.")
+            raise ConversionError("Sequencing Experiment Conversion Error",
+                                  "There is no id found for the input biomaterial.")
 
         extracted_data["attributes"]["library_name"] = [dict(value=library_name)]
 
@@ -270,6 +353,14 @@ class ProjectConverter(Converter):
         self.alias_prefix = 'project_'
 
     def _build_output(self, extracted_data, flattened_hca_data):
+        # TODO BioStudies minimum length
+        title_len = len(extracted_data["title"])
+        MIN_LEN = 25
+
+        if title_len < MIN_LEN:
+            prefix = "HCA project: "
+            extracted_data["title"] = prefix + extracted_data["title"]
+
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["contacts"] = []
         extracted_data["publications"] = []
@@ -285,8 +376,7 @@ class StudyConverter(Converter):
         self.field_mapping = {
             "project__uuid__uuid": "alias",
             "project__content__project_core__project_title": "title",
-            "project__content__project_core__project_description": "description",
-
+            "project__content__project_core__project_description": "description"
         }
         self.alias_prefix = 'study_'
 
@@ -303,3 +393,10 @@ class StudyConverter(Converter):
 
     def _build_links(self, extracted_data, links):
         extracted_data["projectRef"] = {"alias": "{projectAlias.placeholder}"}
+
+
+class ConversionError(Exception):
+    def __init__(self, expression, message, details=None):
+        self.expression = expression
+        self.message = message
+        self.details = details
