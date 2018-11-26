@@ -22,7 +22,7 @@ def save_output_to_file(output_dir, filename, report):
     tmp_file.write(json.dumps(report, indent=4))
     tmp_file.close()
 
-    print(f"Saved to {directory}/{bundle_uuid}.json!")
+    print(f"Saved to {directory}/{filename}.json!")
 
 
 if __name__ == '__main__':
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         for bundle_uuid in bundles:
             print(f'##################### PROCESSING BUNDLE {bundle_uuid}')
             assay_bundle = archiver.get_assay_bundle(bundle_uuid)
-            entities_dict = archiver.get_archivable_entities(assay_bundle)
+            entities_dict = archiver.convert(assay_bundle)
             if not options.metadata_only:
                 archive_submission = archiver.archive(entities_dict)
             else:

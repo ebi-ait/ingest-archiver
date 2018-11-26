@@ -60,15 +60,20 @@ class TestIngestArchiver(unittest.TestCase):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
+    # @unittest.skip("reason for skipping")
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_by_type = self.archiver.get_archivable_entities(assay_bundle)
+        entity_map = self.archiver.convert(assay_bundle)
+        entities_by_type = entity_map.entities_dict_type
+        self.assertTrue(entities_by_type['project'])
+        self.assertTrue(entities_by_type['study'])
         self.assertTrue(entities_by_type['sample'])
+        self.assertTrue(entities_by_type['sequencing_experiment'])
 
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        archive_submission = self.archiver.archive(entities_dict_by_type)
+        entity_map = self.archiver.convert(assay_bundle)
+        archive_submission = self.archiver.archive(entity_map)
         self.assertTrue(archive_submission.is_completed)
 
         for type, entity_dict in archive_submission.entities_dict_type.items():
@@ -77,8 +82,8 @@ class TestIngestArchiver(unittest.TestCase):
 
     def test_validate_and_complete_submission(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        archive_submission = self.archiver.archive_metadata(entities_dict_by_type)
+        entity_map = self.archiver.convert(assay_bundle)
+        archive_submission = self.archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
         archive_submission = self.archiver.validate_and_complete_submission(usi_submission_url=url)
@@ -111,8 +116,8 @@ class TestIngestArchiver(unittest.TestCase):
             biomaterials = json.loads(data_file.read())
         bundle = {'biomaterials': biomaterials}
         assay_bundle = self._mock_assay_bundle(bundle)
-        entities_dict_by_type = self.archiver.get_archivable_entities(assay_bundle)
-        archive_submission = self.archiver.archive(entities_dict_by_type)
+        entity_map = self.archiver.convert(assay_bundle)
+        archive_submission = self.archiver.archive(entity_map)
 
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.errors)

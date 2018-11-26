@@ -16,6 +16,49 @@ def _print_same_line(string):
     print(f'\r{string}', end='')
 
 
+class ArchiveEntity:
+    def __init__(self):
+        self.data = {}
+        self.conversion = {}
+        self.errors = []
+        self.warnings = []
+        self.id = None
+        self.archive_entity_type = None
+        self.accession = None
+        self.usi_json = None
+        self.usi_current_version = None
+        self.links = {}
+
+    def __str__(self):
+        return str(vars(self))
+
+
+class ArchiveEntityMap:
+    def __init__(self):
+        self.entities_dict_type = {}
+
+    def add_entity(self, archive_entity_type, entity: ArchiveEntity):
+        if not self.entities_dict_type.get(archive_entity_type):
+            self.entities_dict_type[archive_entity_type] = {}
+        self.entities_dict_type[archive_entity_type][entity.id] = entity
+
+    def get_entity(self, entity_type, archive_entity_id):
+        if self.entities_dict_type.get(entity_type):
+            return self.entities_dict_type[entity_type].get(archive_entity_id)
+        return None
+
+    def update(self, entity_type, entities: dict):
+        if not self.entities_dict_type.get(entity_type):
+            self.entities_dict_type[entity_type] = {}
+        self.entities_dict_type[entity_type].update(entities)
+
+    def get_converted_entities(self):
+        for entities_dict in self.entities_dict_type.values():
+            for entity in entities_dict.values():
+                if entity.conversion and not entity.errors:
+                    yield entity
+
+
 class IngestArchiver:
     def __init__(self, ingest_url=None, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
@@ -25,18 +68,27 @@ class IngestArchiver:
 
         self.usi_api = USIAPI()
 
-    def archive(self, entities_dict_by_type):
-        archive_submission = self.archive_metadata(entities_dict_by_type)
+        self.converter = {
+            "project": ProjectConverter(),
+            "sample": SampleConverter(),
+            "study": StudyConverter(),
+            "sequencing_run": SequencingRunConverter(),
+            "sequencing_experiment": SequencingExperimentConverter()
+        }
+
+    def archive(self, entity_map: ArchiveEntityMap):
+        archive_submission = self.archive_metadata(entity_map)
         # TODO Get all sequencing_run entities and notify file archiver
         #     self.notify_file_archiver(sequencing_run_entity)
         archive_submission.validate_and_submit()
         return archive_submission
 
-    def archive_metadata(self, entities_dict_by_type):
+    def archive_metadata(self, entity_map: ArchiveEntityMap):
         archive_submission = ArchiveSubmission(usi_api=self.usi_api)
-        archive_submission.entities_dict_type = entities_dict_by_type
+        archive_submission.entity_map = entity_map
+        archive_submission.entities_dict_type = entity_map.entities_dict_type
 
-        converted_entities = self.get_converted_entities(entities_dict_by_type)
+        converted_entities = list(entity_map.get_converted_entities())
 
         if converted_entities:
             archive_submission.converted_entities = converted_entities
@@ -57,244 +109,86 @@ class IngestArchiver:
         archive_submission.validate_and_submit()
         return archive_submission
 
-    def get_converted_entities(self, entities_dict_by_type):
-        converted_entities = []
-        self.logger.info("Getting entities to be submitted...")
-
-        summary = {}
-        for entity_type, entity_dict in entities_dict_by_type.items():
-            if not entity_dict:
-                continue
-            for alias, entity in entity_dict.items():
-                current_version = self.usi_api.get_current_version(entity.archive_entity_type, entity.id)
-                if current_version and current_version.get('accession'):
-                    entity.accession = current_version.get('accession')
-                    entity.errors.append(
-                        f'This alias has already been submitted to USI, accession: {entity.accession}.')
-                elif current_version and \
-                        current_version.get('_embedded') and \
-                        current_version['_embedded'].get('processingStatus') in ['Submitted', 'Completed']:
-                    entity.errors.append(
-                        f'This alias has already been submitted to USI')
-                elif entity.converted_data:
-                    converted_entities.append(entity)
-                    if not summary.get(entity_type):
-                        summary[entity_type] = 0
-                    summary[entity_type] = summary[entity_type] + 1
-
-        print("################### Entities to be archived:")
-        print(json.dumps(summary, indent=4))
-
-        return converted_entities
-
     def get_assay_bundle(self, bundle_uuid):
         return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
 
-    def get_archivable_entities(self, bundle):
+    def convert(self, bundle):
         assay_bundles = [bundle]
 
-        entities_dict_by_type = {
-            'project': {},
-            'study': {},
-            'sample': {},
-            'sequencing_experiment': {},
-            'sequencing_run': {}
-        }
+        entity_map = None
 
         for assay_bundle in assay_bundles:
-            if not self.exclude_types or (self.exclude_types and 'project' not in self.exclude_types):
-                print("Finding project in the bundle...")
-                project_dict = self._get_project_dict(assay_bundle)
-                if project_dict:
-                    entities_dict_by_type['project'].update(project_dict)
+            entity_map = self._convert_entities(assay_bundle)
 
-            if not self.exclude_types or (self.exclude_types and 'study' not in self.exclude_types):
-                print("Finding study in the bundle...")
-                study_dict = self._get_study_dict(assay_bundle)
-                if study_dict:
-                    entities_dict_by_type['study'].update(study_dict)
+        return entity_map
 
-            if not self.exclude_types or (self.exclude_types and 'sample' not in self.exclude_types):
-                print("Finding samples in the bundle...")
-                samples_dict = self._get_samples_dict(assay_bundle)
-                if samples_dict:
-                    entities_dict_by_type['sample'].update(samples_dict)
+    def _convert_entities(self, assay_bundle):
+        aggregator = ArchiveEntityAggregator(assay_bundle, alias_prefix=self.alias_prefix)
+        archive_entity_map = ArchiveEntityMap()
+        summary = {}
 
-            if not self.exclude_types or (self.exclude_types and 'sequencing_experiment' not in self.exclude_types):
-                seq_exp_dict = self._get_sequencing_experiment_dict(assay_bundle)
-                if seq_exp_dict:
-                    entities_dict_by_type['sequencing_experiment'].update(seq_exp_dict)
-                print("Finding assay in the bundle...")
+        for archive_entity_type in ["project", "study", "sample", "sequencing_experiment", "sequencing_run"]:
+            print(f"Finding {archive_entity_type} entities in the bundle...")
+            progress_ctr = 0
 
-            if not self.exclude_types or (self.exclude_types and 'sequencing_run' not in self.exclude_types):
-                print("Finding sequencing run in the bundle...", end="", flush=True)
-                seq_run_dict = self._get_sequencing_run_dict(assay_bundle)
-                if seq_run_dict:
-                    entities_dict_by_type['sequencing_run'].update(seq_run_dict)
-
-        return entities_dict_by_type
-
-    def _get_samples_dict(self, assay_bundle):
-        archive_entities = {}
-        sample_converter = SampleConverter()
-        biomaterials = assay_bundle.get_biomaterials()
-
-        samples_ctr = 0
-
-        for biomaterial in biomaterials:
-            archive_entity = ArchiveEntity()
-            archive_entity.archive_entity_type = 'sample'
-            archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, biomaterial)
-            archive_entity.input_data = {'biomaterial': biomaterial}
-
-            if IngestArchiver.is_metadata_accessioned(biomaterial):
-                archive_entity.warnings.append('Already accessioned')
-                archive_entities[archive_entity.id] = archive_entity
+            if self.exclude_types and archive_entity_type in self.exclude_types:
+                print(f"Skipping {archive_entity_type} entities...")
                 continue
 
-            try:
-                archive_entity.converted_data = sample_converter.convert(archive_entity.input_data)
-                archive_entity.converted_data['alias'] = archive_entity.id
-            except ConversionError as e:
-                archive_entity.errors.append(
-                    f'An error occured converting the biomaterial ({json.loads(biomaterial)}) to a sample in USI, {str(e)}')
+            for archive_entity in aggregator.get_archive_entities(archive_entity_type):
+                progress_ctr = progress_ctr + 1
+                _print_same_line(str(progress_ctr))
 
-            archive_entities[archive_entity.id] = archive_entity
-            samples_ctr = samples_ctr + 1
+                converter = self.converter[archive_entity_type]
 
-            _print_same_line(str(samples_ctr))
-        print('')
+                current_version = self.usi_api.get_current_version(archive_entity.archive_entity_type,
+                                                                   archive_entity.id)
+                if current_version and current_version.get('accession'):
+                    archive_entity.accession = current_version.get('accession')
+                    archive_entity.errors.append({
+                        "error_message": f"This alias has already been submitted to USI, accession: {archive_entity.accession}.",
+                        "details": {
+                            "current_version": current_version
+                        }
+                    })
+                elif current_version and \
+                        current_version.get('_embedded') and \
+                        current_version['_embedded'].get('processingStatus') in ['Submitted', 'Completed']:
 
-        return archive_entities
+                    archive_entity.errors.append({
+                        "error_message": f'This alias has already been submitted to USI',
+                        "details": {
+                            "current_version": current_version
+                        }
+                    })
 
-    def _get_project_dict(self, assay_bundle):
-        archive_entities_dict = {}
-        project = assay_bundle.get_project()
-        if not project:
-            return None
+                elif IngestArchiver.is_metadata_accessioned(archive_entity):
+                    archive_entity.errors.append({
+                        "error_message": 'Metadata already have an accession',
+                        "details": {"data":archive_entity.data}
+                    })
+                else:
+                    try:
+                        archive_entity.conversion = converter.convert(archive_entity.data)
+                        archive_entity.conversion['alias'] = archive_entity.id
+                        archive_entity.conversion.update(archive_entity.links)
+                        if not summary.get(archive_entity_type):
+                            summary[archive_entity_type] = 0
 
-        project_converter = ProjectConverter()
+                        summary[archive_entity_type] = summary[archive_entity_type] + 1
 
-        archive_entity = ArchiveEntity()
-        archive_entity.archive_entity_type = 'project'
-        archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, project)
-        archive_entity.input_data = {'project': project}
+                    except ConversionError as e:
+                        archive_entity.errors.append({
+                            "error_message": f'An error occured converting data to a {archive_entity_type}: {str(e)}.',
+                            "details": {"data": json.loads(archive_entity.data)}
+                        })
 
-        try:
-            archive_entity.converted_data = project_converter.convert(archive_entity.input_data)
-            archive_entity.converted_data['alias'] = archive_entity.id
-        except ConversionError as e:
-            archive_entity.errors.append(
-                f'An error occured converting the project ({json.loads(project)}) to a project in USI, {str(e)}')
+                archive_entity_map.add_entity(archive_entity_type, archive_entity)
+            print("")
+        print("Converted Entities Summary:")
+        print(f"{json.dumps(summary, indent=4)}")
 
-        archive_entities_dict[archive_entity.id] = archive_entity
-
-        return archive_entities_dict
-
-    def _get_study_dict(self, assay_bundle):
-        archive_entities_dict = {}
-        project = assay_bundle.get_project()
-        if not project:
-            return None
-
-        study_converter = StudyConverter()
-
-        archive_entity = ArchiveEntity()
-        archive_entity.archive_entity_type = 'study'
-        archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, project)
-        archive_entity.input_data = {'project': project}
-
-        try:
-            archive_entity.converted_data = study_converter.convert(archive_entity.input_data)
-            archive_entity.converted_data['alias'] = archive_entity.id
-            archive_entity.converted_data['projectRef'] = {
-                "alias": self._generate_archive_entity_id('project', project)
-            }
-
-        except ConversionError as e:
-            archive_entity.errors.append(
-                f'An error occured converting the project ({json.loads(project)}) to a project in USI, {str(e)}')
-
-        archive_entities_dict[archive_entity.id] = archive_entity
-
-        return archive_entities_dict
-
-    def _get_sequencing_experiment_dict(self, assay_bundle):
-        archive_entities_dict = {}
-
-        assay = assay_bundle.get_assay_process()
-
-        if assay:
-            archive_entity = ArchiveEntity()
-            archive_entity.archive_entity_type = 'sequencingExperiment'
-            archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, assay)
-
-            archive_entity.input_data = {
-                'process': assay,
-                'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
-                'sequencing_protocol': assay_bundle.get_sequencing_protocol(),
-                'input_biomaterial': assay_bundle.get_input_biomaterial()
-            }
-
-            seq_experiment_converter = SequencingExperimentConverter()
-            archive_entity.converted_data = seq_experiment_converter.convert(archive_entity.input_data)
-            archive_entity.converted_data['alias'] = archive_entity.id
-
-            # TODO check if assignment of links can be done in the converter
-            archive_entity.converted_data['studyRef'] = {
-                "alias": self._generate_archive_entity_id('study', assay_bundle.get_project())
-            }
-
-            input_biomaterial = assay_bundle.get_input_biomaterial()
-            archive_entity.converted_data['sampleUses'] = []
-            sample_ref = {
-                'sampleRef': {
-                    "alias": self._generate_archive_entity_id('sample', input_biomaterial)
-                }
-            }
-            archive_entity.converted_data['sampleUses'].append(sample_ref)
-
-            archive_entities_dict[archive_entity.id] = archive_entity
-
-        return archive_entities_dict
-
-    def _get_sequencing_run_dict(self, assay_bundle):
-        archive_entities_dict = {}
-
-        assay = assay_bundle.get_assay_process()
-
-        if assay:
-            archive_entity = ArchiveEntity()
-            archive_entity.archive_entity_type = 'sequencingRun'
-            archive_entity.id = self._generate_archive_entity_id(archive_entity.archive_entity_type, assay)
-
-            archive_entity.input_data = {
-                'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
-                'process': assay,
-                'files': assay_bundle.get_files(),
-                'bundle_uuid': assay_bundle.bundle_uuid
-            }
-
-            print("####################### SEQUENCING RUN")
-            print("####################### INPUT")
-            print(json.dumps(archive_entity.input_data, indent=4))
-
-            seq_run_converter = SequencingRunConverter()
-            archive_entity.converted_data = seq_run_converter.convert(archive_entity.input_data)
-            archive_entity.converted_data['alias'] = archive_entity.id
-            archive_entity.converted_data['assayRefs'] = {
-                "alias": self._generate_archive_entity_id('sequencingExperiment', assay)
-            },
-            print("####################### CONVERSION")
-            print(json.dumps(archive_entity.converted_data, indent=4))
-
-            archive_entities_dict[archive_entity.id] = archive_entity
-
-        return archive_entities_dict
-
-    def _generate_archive_entity_id(self, archive_entity_type, hca_entity):
-        uuid = hca_entity["uuid"]["uuid"]  # should always be present in an hca entity
-        return f"{self.alias_prefix}{archive_entity_type}_{uuid}"
+        return archive_entity_map
 
     # TODO specify rabbit connection details and construct message from entity
     def notify_file_archiver(self, entity):
@@ -312,8 +206,15 @@ class IngestArchiver:
         connection.close()
 
     @staticmethod
-    def is_metadata_accessioned(sample):
-        return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
+    def is_metadata_accessioned(entity: ArchiveEntity):
+        if entity.archive_entity_type != "sample":
+            return False
+
+        sample = entity.data.get("biomaterial")
+        if sample:
+            return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
+
+        return False
 
 
 class ArchiveSubmission:
@@ -325,7 +226,7 @@ class ArchiveSubmission:
         self.is_completed = False
         self.entities_dict_type = {}
         self.converted_entities = []
-        self.accessioned = {}
+        self.entity_map = None
 
         self.usi_api = usi_api
 
@@ -340,7 +241,7 @@ class ArchiveSubmission:
             entity_link = self.usi_api.get_entity_url(entity.archive_entity_type)
             create_entity_url = contents['_links'][f'{entity_link}:create']['href']
 
-            created_entity = self.usi_api.create_entity(create_entity_url, entity.converted_data)
+            created_entity = self.usi_api.create_entity(create_entity_url, entity.conversion)
             entity.usi_json = created_entity
 
     def validate_and_submit(self):
@@ -524,21 +425,6 @@ class ArchiveSubmission:
         return report
 
 
-class ArchiveEntity:
-    def __init__(self):
-        self.input_data = {}
-        self.converted_data = {}
-        self.errors = []
-        self.warnings = []
-        self.id = None
-        self.archive_entity_type = None
-        self.accession = None
-        self.usi_json = None
-
-    def __str__(self):
-        return str(vars(self))
-
-
 class AssayBundle:
     def __init__(self, ingest_api, bundle_uuid):
         self.ingest_api = ingest_api
@@ -650,6 +536,120 @@ class AssayBundle:
 
         # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
         return input_biomaterials[0]
+
+
+class ArchiveEntityAggregator:
+    def __init__(self, assay_bundle: AssayBundle, alias_prefix):
+        self.assay_bundle = assay_bundle
+        self.alias_prefix = alias_prefix
+
+    def _get_projects(self):
+        project = self.assay_bundle.get_project()
+        if not project:
+            return []
+        archive_entity = ArchiveEntity()
+        archive_type = "project"
+        archive_entity.archive_entity_type = archive_type
+        archive_entity.id = self.generate_archive_entity_id(archive_type, project)
+        archive_entity.data = {"project": project}
+        return [archive_entity]
+
+    def _get_studies(self):
+        project = self.assay_bundle.get_project()
+        if not project:
+            return []
+        archive_entity = ArchiveEntity()
+        archive_type = "study"
+        archive_entity.archive_entity_type = archive_type
+        archive_entity.id = self.generate_archive_entity_id(archive_type, project)
+        archive_entity.data = {"project": project}
+        archive_entity.links = {
+            "projectRef": {
+                "alias": self.generate_archive_entity_id('project', project)
+            }
+        }
+        return [archive_entity]
+
+    def _get_samples(self):
+        samples = []
+        for biomaterial in self.assay_bundle.get_biomaterials():
+            archive_entity = ArchiveEntity()
+            archive_type = "sample"
+            archive_entity.archive_entity_type = archive_type
+            archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial)
+            archive_entity.data = {"biomaterial": biomaterial}
+            samples.append(archive_entity)
+        return samples
+
+    def _get_sequencing_experiments(self):
+        assay_bundle = self.assay_bundle
+        process = assay_bundle.get_assay_process()
+        if not process:
+            return []
+        input_biomaterial = assay_bundle.get_input_biomaterial()
+
+        archive_entity = ArchiveEntity()
+        archive_type = "sequencingExperiment"
+        archive_entity.archive_entity_type = archive_type
+        archive_entity.id = self.generate_archive_entity_id(archive_type, process)
+        archive_entity.data = {
+            'process': process,
+            'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
+            'sequencing_protocol': assay_bundle.get_sequencing_protocol(),
+            'input_biomaterial': input_biomaterial
+        }
+
+        links = {}
+        links['studyRef'] = {
+            "alias": self.generate_archive_entity_id('study', assay_bundle.get_project())
+        }
+        links['sampleUses'] = []
+        sample_ref = {
+            'sampleRef': {
+                "alias": self.generate_archive_entity_id('sample', input_biomaterial)
+            }
+        }
+        links['sampleUses'].append(sample_ref)
+
+        archive_entity.links = links
+
+        return [archive_entity]
+
+    def _get_sequencing_runs(self):
+        assay_bundle = self.assay_bundle
+        process = assay_bundle.get_assay_process()
+        archive_entity = ArchiveEntity()
+        archive_type = "sequencingRun"
+        archive_entity.archive_entity_type = archive_type
+        archive_entity.id = self.generate_archive_entity_id(archive_type, process)
+        archive_entity.data = {
+            'library_preparation_protocol': assay_bundle.get_library_preparation_protocol(),
+            'process': assay_bundle.get_assay_process(),
+            'files': assay_bundle.get_files(),
+            'bundle_uuid': assay_bundle.bundle_uuid
+        }
+        archive_entity.links = {
+            'assayRefs': {
+                "alias": self.generate_archive_entity_id('sequencingExperiment', process)
+            }
+        }
+        return [archive_entity]
+
+    def get_archive_entities(self, archive_entity_type):
+        if archive_entity_type == "project":
+            return self._get_projects()
+        elif archive_entity_type == "study":
+            return self._get_studies()
+        elif archive_entity_type == "sample":
+            return self._get_samples()
+        elif archive_entity_type == "sequencing_experiment":
+            return self._get_sequencing_experiments()
+        elif archive_entity_type == "sequencing_run":
+            return self._get_sequencing_runs()
+
+    def generate_archive_entity_id(self, archive_entity_type, entity):
+        uuid = entity["uuid"]["uuid"]
+        return f"{self.alias_prefix}{archive_entity_type}_{uuid}"
 
 
 class ArchiverError(Exception):

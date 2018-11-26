@@ -21,7 +21,7 @@ class ArchiveBundleProcessor:
     def run(self, bundle_uuid):
         assay_bundle = AssayBundle(ingest_api=self.ingest_api,
                                    bundle_uuid=bundle_uuid)
-        entities_dict = self.archiver.get_archivable_entities(assay_bundle)
+        entities_dict = self.archiver.convert(assay_bundle)
 
         archive_submission = self.archiver.archive(entities_dict)
 
