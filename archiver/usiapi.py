@@ -35,7 +35,7 @@ USI_ENTITY_CURR_VERSION_LINK = {
 
 
 class USIAPI:
-    def __init__(self):
+    def __init__(self, url=None):
         self.logger = logging.getLogger(__name__)
         self.token = get_aap_token(config.AAP_API_USER, config.AAP_API_PASSWORD)
         self.headers = {
@@ -43,7 +43,7 @@ class USIAPI:
             'Accept': 'application/json',
             'Authorization': 'Bearer ' + self.token
         }
-        self.url = config.USI_API_URL
+        self.url = url if url else config.USI_API_URL
         self.logger.info(f'Using {self.url}')
         self.aap_api_domain = config.AAP_API_DOMAIN
 

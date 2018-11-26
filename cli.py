@@ -7,7 +7,8 @@ import time
 from optparse import OptionParser
 
 from archiver.archiver import IngestArchiver
-
+from archiver.usiapi import USIAPI
+from archiver.ingestapi import IngestAPI
 
 def save_output_to_file(output_dir, filename, report):
     if not output_dir:
@@ -62,7 +63,9 @@ if __name__ == '__main__':
         bundle_list = [x.strip() for x in content]
         bundles = bundle_list
 
-    archiver = IngestArchiver(ingest_url=options.ingest_url, exclude_types=exclude_types, alias_prefix=options.alias_prefix)
+    ingest_api = IngestAPI(options.ingest_url)
+    usi_api = USIAPI()
+    archiver = IngestArchiver(ingest_api=ingest_api, usi_api=usi_api, exclude_types=exclude_types, alias_prefix=options.alias_prefix)
 
     if options.submission_url:
         print(f'##################### COMPLETING USI SUBMISSION {options.submission_url}')
