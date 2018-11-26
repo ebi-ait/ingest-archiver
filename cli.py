@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -77,6 +78,7 @@ if __name__ == '__main__':
         submission_uuid = options.submission_url.rsplit('/', 1)[-1]
         save_output_to_file(options.output_dir, f'SUBMISSION_{submission_uuid}', report)
     else:
+        all_messages = []
         for bundle_uuid in bundles:
             print(f'##################### PROCESSING BUNDLE {bundle_uuid}')
             assay_bundle = archiver.get_assay_bundle(bundle_uuid)
@@ -85,9 +87,15 @@ if __name__ == '__main__':
                 archive_submission = archiver.archive(entities_dict)
             else:
                 archive_submission = archiver.archive_metadata(entities_dict)
-                archiver.notify_file_archiver(archive_submission)
+                messages = archiver.notify_file_archiver(archive_submission)
+                all_messages.extend(messages)
+
             print('##################### SUMMARY')
             report = archive_submission.generate_report()
             save_output_to_file(options.output_dir, bundle_uuid, report)
 
             # time.sleep(30)
+        print(f'##################### FILE ARCHIVER NOTIFICATION')
+        filename = f"file_archiver_notifications.json"
+        save_output_to_file(options.output_dir, filename, all_messages)
+        print(f'Saved to {options.output_dir}/{filename}')

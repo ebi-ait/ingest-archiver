@@ -75,8 +75,8 @@ class ArchiveSubmission:
         self.converted_entities = []
         self.entity_map = None
         self.bundle_uuid = None
-
         self.usi_api = usi_api
+        self.file_upload_messages = []
 
     def __str__(self):
         return str(vars(self))
@@ -449,16 +449,9 @@ class IngestArchiver:
                     message["files"] = [f"{data['bundle_uuid']}.bam"]
 
                 messages.append(message)
-                now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
-                filename = f"file_archiver_notification_{archive_submission.entity_map.bundle_uuid}_{now}"
-                with open(filename, 'w') as outfile:
-                    json.dump(message, outfile, indent=4)
-                    print(f"File Notification saved to {filename}")
 
-        print(f"Notified file archiver: {json.dumps(messages, indent=4)}")
-
-
-
+        print(f"File archiver messages: {json.dumps(messages, indent=4)}")
+        archive_submission.file_upload_messages = messages
         return messages
 
     @staticmethod
