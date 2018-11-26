@@ -24,7 +24,7 @@ AAP_API_USER = 'hca-ingest'
 AAP_API_PASSWORD = os.environ['AAP_API_PASSWORD'] if 'AAP_API_PASSWORD' in os.environ else ''
 AAP_API_DOMAIN = 'subs.test-team-21'
 
-USI_API_URL = 'https://submission-dev.ebi.ac.uk'
+USI_API_URL = os.environ.get('USI_API_URL', 'https://submission-dev.ebi.ac.uk')
 
 JSON_DIR = 'tests/json/'
 ENCODING = 'utf-8'
