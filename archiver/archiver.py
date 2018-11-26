@@ -362,29 +362,26 @@ class IngestArchiver:
 
                 current_version = self.usi_api.get_current_version(archive_entity.archive_entity_type,
                                                                    archive_entity.id)
+
                 if current_version and current_version.get('accession'):
                     archive_entity.accession = current_version.get('accession')
                     archive_entity.errors.append({
                         "error_message": f"This alias has already been submitted to USI, accession: {archive_entity.accession}.",
                         "details": {
-                            "current_version": current_version
+                            "current_version": current_version["_links"]["self"]["href"]
                         }
                     })
-                elif current_version and \
-                        current_version.get('_embedded') and \
-                        current_version['_embedded'].get('processingStatus') in ['Submitted', 'Completed']:
-
+                elif current_version and not current_version.get('accession'):
                     archive_entity.errors.append({
-                        "error_message": f'This alias has already been submitted to USI',
+                        "error_message": f'This alias has already been submitted to USI, but still has no accession.',
                         "details": {
-                            "current_version": current_version
+                            "current_version": current_version["_links"]["self"]["href"]
                         }
                     })
 
                 elif IngestArchiver.is_metadata_accessioned(archive_entity):
                     archive_entity.errors.append({
-                        "error_message": 'Metadata already have an accession',
-                        "details": {"data":archive_entity.data}
+                        "error_message": 'Metadata already have an accession'
                     })
                 else:
                     try:

@@ -69,7 +69,6 @@ class TestIngestArchiver(unittest.TestCase):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
-    @unittest.skip("reason for skipping")
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entity_map = self.archiver.convert(assay_bundle)
@@ -79,7 +78,6 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(entities_by_type['sample'])
         self.assertTrue(entities_by_type['sequencing_experiment'])
 
-    @unittest.skip("reason for skipping")
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entity_map = self.archiver.convert(assay_bundle)
@@ -122,7 +120,7 @@ class TestIngestArchiver(unittest.TestCase):
             "usi_api_url": 'usi_url',
             'ingest_api_url': 'ingest_url',
             'submission_url': 'url',
-            'files': ['R1.fastq.gz', 'R2.fastq.gz'],
+            'files': ['bundle_uuid.bam'],
             'conversion': {
                 'output_name': 'bundle_uuid.bam',
                 'inputs': ['R1.fastq.gz', 'R2.fastq.gz']
@@ -132,7 +130,6 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(messages)
         self.assertEqual(expected, messages[0])
 
-    @unittest.skip("reason for skipping")
     def test_validate_and_complete_submission(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         entity_map = self.archiver.convert(assay_bundle)
@@ -146,7 +143,6 @@ class TestIngestArchiver(unittest.TestCase):
             for id, entity in entity_dict.items():
                 self.assertTrue(entity.accession, f"{entity.id} has no accession.")
 
-    # @unittest.skip("reason for skipping")
     def _mock_assay_bundle(self, bundle):
         assay_bundle = MagicMock('assay_bundle')
         assay_bundle.get_biomaterials = MagicMock(
@@ -166,7 +162,7 @@ class TestIngestArchiver(unittest.TestCase):
         assay_bundle.bundle_uuid = 'bundle_uuid'
         return assay_bundle
 
-    @unittest.skip("reason for skipping")
+    # @unittest.skip("reason for skipping")
     def test_archive_skip_metadata_with_accessions(self):
         with open(config.JSON_DIR + 'hca/biomaterial_with_accessions.json', encoding=config.ENCODING) as data_file:
             biomaterials = json.loads(data_file.read())

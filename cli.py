@@ -10,6 +10,7 @@ from archiver.archiver import IngestArchiver
 from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
 
+
 def save_output_to_file(output_dir, filename, report):
     if not output_dir:
         return
@@ -39,6 +40,7 @@ if __name__ == '__main__':
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-s", "--submission_url", help="USI Submission url to complete")
     parser.add_option("-m", "--metadata_only", help="Archive the metadata only")
+    parser.add_option("-p", "--project-uuid", help="Project UUID")
 
     (options, args) = parser.parse_args()
 
@@ -83,9 +85,9 @@ if __name__ == '__main__':
                 archive_submission = archiver.archive(entities_dict)
             else:
                 archive_submission = archiver.archive_metadata(entities_dict)
-
+                archiver.notify_file_archiver(archive_submission)
             print('##################### SUMMARY')
             report = archive_submission.generate_report()
             save_output_to_file(options.output_dir, bundle_uuid, report)
 
-            time.sleep(30)
+            # time.sleep(30)
