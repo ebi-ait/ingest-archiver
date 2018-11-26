@@ -26,7 +26,7 @@ AAP_API_DOMAIN = 'subs.test-team-21'
 
 USI_API_URL = 'https://submission-dev.ebi.ac.uk'
 
-JSON_DIR = 'json/'
+JSON_DIR = 'tests/json/'
 ENCODING = 'utf-8'
 
 # polling config
