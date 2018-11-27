@@ -12,7 +12,7 @@ from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
 
 
-def save_output_to_file(output_dir, filename, report):
+def save_dict_to_file(output_dir, filename, obj):
     if not output_dir:
         return
 
@@ -22,10 +22,10 @@ def save_output_to_file(output_dir, filename, report):
         os.makedirs(directory)
 
     tmp_file = open(directory + "/" + filename + ".json", "w")
-    tmp_file.write(json.dumps(report, indent=4))
+    tmp_file.write(json.dumps(obj, indent=4))
     tmp_file.close()
 
-    print(f"Saved to {directory}/{filename}.json!")
+    print(f"Saved to {directory}/{filename}!")
 
 
 if __name__ == '__main__':
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         print('##################### SUMMARY')
         report = archive_submission.generate_report()
         submission_uuid = options.submission_url.rsplit('/', 1)[-1]
-        save_output_to_file(options.output_dir, f'SUBMISSION_{submission_uuid}', report)
+        save_dict_to_file(options.output_dir, f'SUBMISSION_{submission_uuid}', report)
     else:
         all_messages = []
         for bundle_uuid in bundles:
@@ -92,10 +92,9 @@ if __name__ == '__main__':
 
             print('##################### SUMMARY')
             report = archive_submission.generate_report()
-            save_output_to_file(options.output_dir, bundle_uuid, report)
+            save_dict_to_file(options.output_dir, bundle_uuid, report)
 
             # time.sleep(30)
         print(f'##################### FILE ARCHIVER NOTIFICATION')
-        filename = f"file_archiver_notifications.json"
-        save_output_to_file(options.output_dir, filename, all_messages)
-        print(f'Saved to {options.output_dir}/{filename}')
+        filename = f"file_archiver_notifications"
+        save_dict_to_file(options.output_dir, filename, all_messages)
