@@ -306,6 +306,7 @@ class ArchiveSubmission:
                 entities[entity.id]['entity_url'] = entity.usi_json['_links']['self']['href']
 
         report['entities'] = entities
+        report['accessions'] = self.accession_map
         return report
 
 

@@ -22,10 +22,9 @@ def save_dict_to_file(output_dir, filename, obj):
         os.makedirs(directory)
 
     with open(directory + "/" + filename + ".json", "w") as outfile:
-        json.dump(report, outfile, indent=4)
+        json.dump(obj, outfile, indent=4)
 
     print(f"Saved to {directory}/{filename}.json!")
-
 
 if __name__ == '__main__':
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -40,6 +39,7 @@ if __name__ == '__main__':
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-s", "--submission_url", help="USI Submission url to complete")
     parser.add_option("-m", "--metadata_only", help="Archive the metadata only")
+    parser.add_option("-p", "--project_uuid", help="Project UUID")
 
     (options, args) = parser.parse_args()
 
@@ -51,20 +51,23 @@ if __name__ == '__main__':
         logging.error("You must supply the Ingest API url.")
         exit(2)
 
+    ingest_api = IngestAPI(options.ingest_url)
+
     exclude_types = []
     if options.exclude_types:
         exclude_types = [x.strip() for x in options.exclude_types.split(',')]
         logging.warning(f"Excluding {', '.join(exclude_types)}")
 
     bundles = [options.bundle_uuid]
-    if options.bundle_list_file:
+    if options.project_uuid:
+        bundles = ingest_api.get_bundle_uuids(project_uuid=options.project_uuid)
+    elif options.bundle_list_file:
         with open(options.bundle_list_file) as f:
             content = f.readlines()
 
-        bundle_list = [x.strip() for x in content]
-        bundles = bundle_list
+        parsed_bundle_list = [x.strip() for x in content]
+        bundles = parsed_bundle_list
 
-    ingest_api = IngestAPI(options.ingest_url)
     usi_api = USIAPI()
     archiver = IngestArchiver(ingest_api=ingest_api, usi_api=usi_api, exclude_types=exclude_types, alias_prefix=options.alias_prefix)
 
