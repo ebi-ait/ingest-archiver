@@ -26,6 +26,7 @@ def save_dict_to_file(output_dir, filename, obj):
 
     print(f"Saved to {directory}/{filename}.json!")
 
+
 if __name__ == '__main__':
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(format=format, stream=sys.stdout, level=logging.INFO)
@@ -43,8 +44,8 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not (options.bundle_uuid or options.bundle_list_file):
-        logging.error("You must supply a bundle UUID or a file with list of bundle uuids")
+    if not (options.bundle_uuid or options.bundle_list_file or options.project_uuid):
+        logging.error("You must supply a project UUID, bundle UUID or a file with list of bundle uuids")
         exit(2)
 
     if not options.ingest_url:
@@ -74,16 +75,17 @@ if __name__ == '__main__':
     if options.submission_url:
         print(f'##################### COMPLETING USI SUBMISSION {options.submission_url}')
         archive_submission = archiver.validate_and_complete_submission(options.submission_url)
-        print('##################### SUMMARY')
         report = archive_submission.generate_report()
         submission_uuid = options.submission_url.rsplit('/', 1)[-1]
+
         save_dict_to_file(options.output_dir, f'COMPLETE_SUBMISSION_{submission_uuid}', report)
     else:
         all_messages = []
         for bundle_uuid in bundles:
-            print(f'##################### PROCESSING BUNDLE {bundle_uuid}')
+            print(f'##################### ARCHIVING BUNDLE {bundle_uuid}')
             assay_bundle = archiver.get_assay_bundle(bundle_uuid)
             entities_dict = archiver.convert(assay_bundle)
+
             if not options.metadata_only:
                 archive_submission = archiver.archive(entities_dict)
             else:
@@ -91,11 +93,11 @@ if __name__ == '__main__':
                 messages = archiver.notify_file_archiver(archive_submission)
                 all_messages.extend(messages)
 
-            print('##################### SUMMARY')
             report = archive_submission.generate_report()
-            save_dict_to_file(options.output_dir, f'ARCHIVE_{bundle_uuid}', report)
+            print("Saving bundle report file...")
+            save_dict_to_file(options.output_dir, f'BUNDLE_{bundle_uuid}', report)
 
             # time.sleep(30)
         print(f'##################### FILE ARCHIVER NOTIFICATION')
-        filename = f"file_archiver_notifications"
+        filename = f"FILE_UPLOAD_INFO"
         save_dict_to_file(options.output_dir, filename, all_messages)

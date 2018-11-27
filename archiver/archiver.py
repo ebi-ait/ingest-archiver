@@ -86,7 +86,7 @@ class ArchiveSubmission:
         self.entity_map = None
         self.bundle_uuid = None
         self.usi_api = usi_api
-        self.file_upload_messages = []
+        self.file_upload_info = []
         self.accession_map = None
 
     def __str__(self):
@@ -291,6 +291,7 @@ class ArchiveSubmission:
         report = {}
         report['completed'] = self.is_completed
         report['submission_errors'] = self.errors
+        report['file_upload_info'] = self.file_upload_info
 
         if self.usi_submission:
             report['submission_url'] = self.get_url()
@@ -329,7 +330,6 @@ class IngestArchiver:
 
     def archive(self, entity_map: ArchiveEntityMap):
         archive_submission = self.archive_metadata(entity_map)
-        # TODO Get all sequencing_run entities and notify file archiver
         self.notify_file_archiver(archive_submission)
         archive_submission.validate_and_submit()
         return archive_submission
@@ -472,8 +472,7 @@ class IngestArchiver:
 
                 messages.append(message)
 
-        print(f"File archiver messages: {json.dumps(messages, indent=4)}")
-        archive_submission.file_upload_messages = messages
+        archive_submission.file_upload_info = messages
         return messages
 
     @staticmethod

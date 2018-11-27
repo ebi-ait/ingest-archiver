@@ -68,6 +68,18 @@ class IngestAPI:
     def get_file_by_uuid(self, file_uuid):
         return self.get_entity_by_uuid('files', file_uuid)
 
+    def get_bundle_uuids(self, project_uuid):
+        project = self.get_project_by_uuid(project_uuid)
+        submissions = self.get_related_entity(project, "submissionEnvelopes", "submissionEnvelopes")
+
+        bundle_uuids = []
+        for submission in submissions:
+            bundle_manifests = self.get_related_entity(submission, "bundleManifests", "bundleManifests")
+            for bundle_manifest in bundle_manifests:
+                bundle_uuids.append(bundle_manifest.get("bundleUuid"))
+
+        return bundle_uuids
+
     def get_samples(self, get_samples_url):
         response = requests.get(get_samples_url, headers=self.headers)
 
