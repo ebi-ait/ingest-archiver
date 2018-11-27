@@ -14,6 +14,7 @@ class TestIngestAPI(unittest.TestCase):
         self.ingest_api = IngestAPI()
         pass
 
+    @unittest.skip("update submission is not being done at the moment")
     def test_create_submission_no_input_token_success(self):
         token = self.ingest_api.get_auth_token()
         submission = self.ingest_api.create_submission(token)
@@ -24,6 +25,7 @@ class TestIngestAPI(unittest.TestCase):
 
         self.assertTrue(submission)
 
+    @unittest.skip("update submission is not being done at the moment")
     def test_create_submission_success(self):
         token = self.ingest_api.get_auth_token()
         submission = self.ingest_api.create_submission(token)
@@ -34,10 +36,12 @@ class TestIngestAPI(unittest.TestCase):
 
         self.assertTrue(submission)
 
+    @unittest.skip("update submission is not being done at the moment")
     def test_create_submission_fail(self):
         invalid_token = {'token_type': 'Bearer', 'access_token': 'invalid'};
         self.assertRaises(requests.exceptions.HTTPError, self.ingest_api.create_submission, invalid_token)
 
+    @unittest.skip("update submission is not being done at the moment")
     def test_update_content(self):
         sample_content = {}
 
