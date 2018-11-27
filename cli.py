@@ -40,7 +40,6 @@ if __name__ == '__main__':
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-s", "--submission_url", help="USI Submission url to complete")
     parser.add_option("-m", "--metadata_only", help="Archive the metadata only")
-    parser.add_option("-p", "--project-uuid", help="Project UUID")
 
     (options, args) = parser.parse_args()
 
