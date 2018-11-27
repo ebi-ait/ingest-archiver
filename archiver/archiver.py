@@ -1,14 +1,10 @@
-import datetime
 import json
 import logging
 
-import pika
 import polling as polling
 
 import config
 
-from archiver.usiapi import USIAPI
-from archiver.ingestapi import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 
@@ -406,22 +402,8 @@ class IngestArchiver:
 
         return archive_entity_map
 
-    # TODO specify rabbit connection details and construct message from entity
+    # TODO save notification to file for now, should be sending to rabbit mq in the future
     def notify_file_archiver(self, archive_submission: ArchiveSubmission):
-        # TODO send message to rabbit mq in the future
-        # rabbit_url = ''
-        # exchange = ''
-        # routing_key = ''
-        #
-        # message = dict()
-        #
-        # connection = pika.BlockingConnection(pika.URLParameters(rabbit_url))
-        # channel = connection.channel()
-        # channel.basic_publish(exchange=exchange,
-        #                       routing_key=routing_key,
-        #                       body=json.dumps(message))
-        # connection.close()
-
         message = {
             "usi_api_url": self.usi_api.url,
             "ingest_api_url": self.ingest_api.url,
