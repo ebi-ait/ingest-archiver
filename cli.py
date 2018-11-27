@@ -1,3 +1,12 @@
+# Sample usage:
+#     python cli.py \
+#         --ingest_url="http://api.ingest.data.humancellatlas.org/" \
+#         --output_dir="TEST_prod_bundles_5bd878c09460a300074b7d81" \
+#         --alias_prefix="20181127" \
+#         --exclude_types="sequencing_run" \
+#         --project_uuid="2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb"
+
+
 import datetime
 import json
 import logging
