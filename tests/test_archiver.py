@@ -84,9 +84,8 @@ class TestIngestArchiver(unittest.TestCase):
         archive_submission = self.archiver.archive(entity_map)
         self.assertTrue(archive_submission.is_completed)
 
-        for type, entity_dict in archive_submission.entities_dict_type.items():
-            for id, entity in entity_dict.items():
-                self.assertTrue(entity.accession, f"{entity.id} has no accession.")
+        for entity in archive_submission.entity_map.get_entities():
+            self.assertTrue(archive_submission.accession_map.get(entity.id), f"{entity.id} has no accession.")
 
     def test_notify_file_archiver(self):
         archive_submission = MagicMock()
@@ -138,10 +137,7 @@ class TestIngestArchiver(unittest.TestCase):
 
         archive_submission = self.archiver.validate_and_complete_submission(usi_submission_url=url)
         self.assertTrue(archive_submission.is_completed)
-
-        for type, entity_dict in archive_submission.entities_dict_type.items():
-            for id, entity in entity_dict.items():
-                self.assertTrue(entity.accession, f"{entity.id} has no accession.")
+        self.assertTrue(archive_submission.accession_map)
 
     def _mock_assay_bundle(self, bundle):
         assay_bundle = MagicMock('assay_bundle')

@@ -59,6 +59,21 @@ class ArchiveEntityMap:
                 if entity.conversion and not entity.errors:
                     yield entity
 
+    def find_entity(self, alias):
+        for entities_dict in self.entities_dict_type.values():
+            if entities_dict.get(alias):
+                return entities_dict.get(alias)
+        return None
+
+    def get_entities(self):
+        entities = []
+        for entity_type, entities_dict in self.entities_dict_type.items():
+            if not entities_dict:
+                continue
+            for alias, entity in entities_dict.items():
+                entities.append(entity)
+        return entities
+
 
 class ArchiveSubmission:
     def __init__(self, usi_api):
@@ -67,12 +82,12 @@ class ArchiveSubmission:
         self.processing_result = []
         self.validation_result = []
         self.is_completed = False
-        self.entities_dict_type = {}
         self.converted_entities = []
         self.entity_map = None
         self.bundle_uuid = None
         self.usi_api = usi_api
         self.file_upload_messages = []
+        self.accession_map = None
 
     def __str__(self):
         return str(vars(self))
@@ -88,6 +103,36 @@ class ArchiveSubmission:
             created_entity = self.usi_api.create_entity(create_entity_url, entity.conversion)
             entity.usi_json = created_entity
 
+    def validate(self):
+        if not self.usi_submission:
+            return self
+
+        is_validated = False
+        try:
+            is_validated = polling.poll(
+                lambda: self.is_validated(),
+                step=config.VALIDATION_POLLING_STEP,
+                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
+                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
+            )
+        except polling.TimeoutException as te:
+            self.errors.append({
+                "error_message": "USI validation takes too long to complete.",
+            })
+
+        if is_validated and not self.is_submittable():
+            validation_summary = self.get_all_validation_result_details()
+            self.errors.append({
+                "error_message": "Failed in USI validation.",
+                "details": {
+                    "usi_validation_errors": self.get_all_validation_errors()
+                }
+            })
+            self.validation_result = validation_summary
+            return self
+
+        return self
+
     def validate_and_submit(self):
         if not self.usi_submission:
             return self
@@ -101,14 +146,19 @@ class ArchiveSubmission:
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
         except polling.TimeoutException as te:
-            self.errors.append('USI validation takes too long to complete.')
+            self.errors.append({
+                "error_message": "USI validation takes too long to complete.",
+            })
 
-        is_submittable = self.is_submittable()
-
-        if not is_validated or not is_submittable:
+        if is_validated and not self.is_submittable():
             validation_summary = self.get_all_validation_result_details()
-            self.errors.append('Failed in USI validation.')
             self.validation_result = validation_summary
+            self.errors.append({
+                "error_message": "Failed in USI validation.",
+                "details": {
+                    "usi_validation_errors": self.get_all_validation_errors()
+                }
+            })
             return self
 
         self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
@@ -122,16 +172,18 @@ class ArchiveSubmission:
             )
             self.processing_result = self.get_processing_results()
 
+            accession_map = {}
             for result in self.processing_result:
                 if result['status'] == 'Completed':
                     alias = result['alias']
                     accession = result['accession']
-                    entity = self.find_entity(alias)
-                    if entity:
-                        entity.accession = accession
+                    accession_map[alias] = accession
+            self.accession_map = accession_map
 
         except polling.TimeoutException:
-            self.errors.append("USI submission takes too long complete.")
+            self.errors.append({
+                "error_message": "USI submission takes too long to complete.",
+            })
 
     def is_ready_to_submit(self):
         is_validated = self.is_validated()
@@ -235,40 +287,25 @@ class ArchiveSubmission:
 
         return None
 
-    def find_entity(self, alias):
-        for entities_dict in self.entities_dict_type.values():
-            if entities_dict.get(alias):
-                return entities_dict.get(alias)
-        return None
-
-    def generate_report(self, output_to_file=None):
+    def generate_report(self):
         report = {}
         report['completed'] = self.is_completed
         report['submission_errors'] = self.errors
-        report['validation_result'] = self.validation_result
-        report['entities'] = {}
 
         if self.usi_submission:
             report['submission_url'] = self.get_url()
 
-        for type, entities_dict in self.entities_dict_type.items():
-            if not entities_dict:
-                continue
-            for alias, entity in entities_dict.items():
-                report[alias] = {}
-                report[alias]['errors'] = entity.errors
-                report[alias]['accession'] = entity.accession
-                report[alias]['warnings'] = entity.warnings
+        entities = {}
+        for entity in self.entity_map.get_entities():
+            entities[entity.id] = {}
+            entities[entity.id]['errors'] = entity.errors
+            entities[entity.id]['accession'] = entity.accession
+            entities[entity.id]['warnings'] = entity.warnings
 
-                if entity.usi_json:
-                    report[alias]['entity_url'] = entity.usi_json['_links']['self']['href']
+            if entity.usi_json:
+                entities[entity.id]['entity_url'] = entity.usi_json['_links']['self']['href']
 
-        print(json.dumps(report, indent=4))
-
-        if output_to_file:
-            with open(output_to_file, 'w') as outfile:
-                json.dump(report, outfile, indent=4)
-
+        report['entities'] = entities
         return report
 
 
@@ -299,7 +336,6 @@ class IngestArchiver:
     def archive_metadata(self, entity_map: ArchiveEntityMap):
         archive_submission = ArchiveSubmission(usi_api=self.usi_api)
         archive_submission.entity_map = entity_map
-        archive_submission.entities_dict_type = entity_map.entities_dict_type
 
         converted_entities = list(entity_map.get_converted_entities())
 
@@ -309,9 +345,12 @@ class IngestArchiver:
             print("####################### USI SUBMISSION")
             print(archive_submission.usi_submission['_links']['self']['href'])
             archive_submission.add_entities(archive_submission.converted_entities)
+            archive_submission.validate()
         else:
             archive_submission.is_completed = True
-            archive_submission.errors.append('No entities found to submit.')
+            archive_submission.errors.append({
+                "error_message": "No entities found to submit."
+            })
             return archive_submission
 
         return archive_submission
@@ -397,7 +436,7 @@ class IngestArchiver:
 
                 archive_entity_map.add_entity(archive_entity_type, archive_entity)
             print("")
-        print("Converted Entities Summary:")
+        print("Entities to be archived:")
         print(f"{json.dumps(summary, indent=4)}")
 
         return archive_entity_map
