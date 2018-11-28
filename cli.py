@@ -122,4 +122,4 @@ if __name__ == '__main__':
             # time.sleep(30)
         print(f'##################### FILE ARCHIVER NOTIFICATION')
         filename = f"FILE_UPLOAD_INFO"
-        save_dict_to_file(output_dir, filename, all_messages)
+        save_dict_to_file(output_dir, filename, {"jobs": all_messages})
