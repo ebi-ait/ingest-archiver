@@ -24,6 +24,7 @@ class IngestAPI:
             'Content-type': 'application/json',
         }
         self.url = url if url else config.INGEST_API_URL
+        self.logger.info(f'Using {self.url}')
 
     def get_related_entity(self, entity, relation, related_entity_type):
         related_entity_url = entity['_links'][relation]['href']

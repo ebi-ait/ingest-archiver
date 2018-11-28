@@ -94,6 +94,7 @@ class TestIngestArchiver(unittest.TestCase):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         assay_bundle.get_library_preparation_protocol = MagicMock(
             return_value=self.bundle.get('library_preparation_protocol_10x'))
+
         seq_files = self.bundle.get('files')
         seq_file = copy.deepcopy(seq_files[0])
         seq_file['content']['file_core']['file_name'] = "R2.fastq.gz"
@@ -109,7 +110,6 @@ class TestIngestArchiver(unittest.TestCase):
 
         archiver = IngestArchiver(ingest_api, usi_api)
         entity_map = archiver.convert(assay_bundle)
-        entity_map.bundle_uuid = 'bundle_uuid'
         archive_submission.converted_entities = list(entity_map.get_converted_entities())
         archive_submission.entity_map = entity_map
 

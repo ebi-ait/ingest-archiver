@@ -15,6 +15,10 @@ def _print_same_line(string):
     print(f'\r{string}', end='')
 
 
+class ArchiverError(Exception):
+    """Base-class for all exceptions raised by this module."""
+
+
 class ArchiveEntity:
     def __init__(self):
         self.data = {}
@@ -27,6 +31,7 @@ class ArchiveEntity:
         self.usi_json = None
         self.usi_current_version = None
         self.links = {}
+        self.bundle_uuid = None
 
     def __str__(self):
         return str(vars(self))
@@ -35,8 +40,6 @@ class ArchiveEntity:
 class ArchiveEntityMap:
     def __init__(self):
         self.entities_dict_type = {}
-        self.bundle_uuid = None
-        self.bundle = None
 
     def add_entity(self, archive_entity_type, entity: ArchiveEntity):
         if not self.entities_dict_type.get(archive_entity_type):
@@ -47,11 +50,6 @@ class ArchiveEntityMap:
         if self.entities_dict_type.get(entity_type):
             return self.entities_dict_type[entity_type].get(archive_entity_id)
         return None
-
-    def update(self, entity_type, entities: dict):
-        if not self.entities_dict_type.get(entity_type):
-            self.entities_dict_type[entity_type] = {}
-        self.entities_dict_type[entity_type].update(entities)
 
     def get_converted_entities(self):
         for entities_dict in self.entities_dict_type.values():
@@ -75,6 +73,119 @@ class ArchiveEntityMap:
         return entities
 
 
+class AssayBundle:
+    def __init__(self, ingest_api, bundle_uuid):
+        self.ingest_api = ingest_api
+
+        self.bundle_uuid = bundle_uuid
+        self.bundle_manifest = None
+
+        self.project = None
+        self.biomaterials = None
+        self.files = None
+        self.assay_process = None
+        self.library_preparation_protocol = None
+        self.sequencing_protocol = None
+        self.input_biomaterial = None
+
+    def get_bundle_manifest(self):
+        if not self.bundle_manifest:
+            bundle_uuid = self.bundle_uuid
+            self.bundle_manifest = self.ingest_api.get_bundle_manifest(bundle_uuid)
+
+        return self.bundle_manifest
+
+    def get_project(self):
+        if not self.project:
+            bundle_manifest = self.get_bundle_manifest()
+            project_uuid = list(bundle_manifest['fileProjectMap'].keys())[0]  # TODO one project per bundle
+            self.project = self.ingest_api.get_project_by_uuid(project_uuid)
+
+        return self.project
+
+    def get_biomaterials(self):
+        if not self.biomaterials:
+            self.biomaterials = self._init_biomaterials()
+
+        return self.biomaterials
+
+    def get_assay_process(self):
+        bundle_manifest = self.get_bundle_manifest()
+        file_uuid = list(bundle_manifest['fileFilesMap'].keys())[0]
+
+        file = self.ingest_api.get_file_by_uuid(file_uuid)
+        derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
+
+        if derived_by_processes:
+            self.assay_process = derived_by_processes[0]
+
+            if len(derived_by_processes) > 1:
+                raise ArchiverError(f'Bundle {self.bundle_uuid} has many assay processes.')
+
+        return self.assay_process
+
+    def get_library_preparation_protocol(self):
+        if not self.library_preparation_protocol:
+            self._init_protocols()
+        return self.library_preparation_protocol
+
+    def get_sequencing_protocol(self):
+        if not self.sequencing_protocol:
+            self._init_protocols()
+        return self.sequencing_protocol
+
+    def get_files(self):
+        if not self.files:
+            assay = self.get_assay_process()
+            self.files = self.ingest_api.get_related_entity(assay, 'derivedFiles', 'files')
+
+        return self.files
+
+    def get_input_biomaterial(self):
+        if not self.input_biomaterial:
+            self.input_biomaterial = self._retrieve_input_biomaterial()
+
+        return self.input_biomaterial
+
+    def _init_protocols(self):
+        assay = self.get_assay_process()
+        protocols = self.ingest_api.get_related_entity(assay, 'protocols', 'protocols')
+        protocol_by_type = {}
+        for protocol in protocols:
+            concrete_entity_type = self.ingest_api.get_concrete_entity_type(protocol)
+            if not protocol_by_type.get(concrete_entity_type):
+                protocol_by_type[concrete_entity_type] = []
+
+            protocol_by_type[concrete_entity_type].append(protocol)
+
+        library_preparation_protocols = protocol_by_type.get('library_preparation_protocol', [])
+        sequencing_protocols = protocol_by_type.get('sequencing_protocol', [])
+
+        if len(library_preparation_protocols) != 1:
+            raise ArchiverError('There should be 1 library preparation protocol for the assay process.')
+
+        if len(sequencing_protocols) != 1:
+            raise ArchiverError('There should be 1 sequencing_protocol for the assay process.')
+
+        self.library_preparation_protocol = library_preparation_protocols[0]
+        self.sequencing_protocol = sequencing_protocols[0]
+
+    def _init_biomaterials(self):
+        bundle_manifest = self.get_bundle_manifest()
+        for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
+            yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+
+    def _retrieve_input_biomaterial(self):
+        assay = self.get_assay_process()
+        input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
+
+        if not input_biomaterials:
+            raise ArchiverError('No input biomaterial found to the assay process.')
+
+        # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
+        return input_biomaterials[0]
+
+
 class ArchiveSubmission:
     def __init__(self, usi_api):
         self.usi_submission = {}
@@ -83,8 +194,7 @@ class ArchiveSubmission:
         self.validation_result = []
         self.is_completed = False
         self.converted_entities = []
-        self.entity_map = None
-        self.bundle_uuid = None
+        self.entity_map = ArchiveEntityMap()
         self.usi_api = usi_api
         self.file_upload_info = []
         self.accession_map = None
@@ -334,7 +444,7 @@ class IngestArchiver:
         archive_submission.validate_and_submit()
         return archive_submission
 
-    def archive_metadata(self, entity_map: ArchiveEntityMap):
+    def archive_metadata(self, entity_map: ArchiveEntityMap, usi_submission=None):
         archive_submission = ArchiveSubmission(usi_api=self.usi_api)
         archive_submission.entity_map = entity_map
 
@@ -342,9 +452,8 @@ class IngestArchiver:
 
         if converted_entities:
             archive_submission.converted_entities = converted_entities
-            archive_submission.usi_submission = self.usi_api.create_submission()
-            print("####################### USI SUBMISSION")
-            print(archive_submission.usi_submission['_links']['self']['href'])
+            archive_submission.usi_submission = usi_submission if usi_submission else self.usi_api.create_submission()
+            print(f"USI SUBMISSION: {archive_submission.get_url()}")
             archive_submission.add_entities(archive_submission.converted_entities)
             archive_submission.validate()
         else:
@@ -368,16 +477,12 @@ class IngestArchiver:
     def convert(self, bundle):
         assay_bundles = [bundle]
 
-        entity_map = None
-
         for assay_bundle in assay_bundles:
             entity_map = self._convert_entities(assay_bundle)
-            entity_map.bundle_uuid = assay_bundle.bundle_uuid
-            entity_map.bundle = assay_bundle
 
         return entity_map
 
-    def _convert_entities(self, assay_bundle):
+    def _convert_entities(self, assay_bundle: AssayBundle):
         aggregator = ArchiveEntityAggregator(assay_bundle, alias_prefix=self.alias_prefix)
         archive_entity_map = ArchiveEntityMap()
         summary = {}
@@ -448,8 +553,7 @@ class IngestArchiver:
             "usi_api_url": self.usi_api.url,
             "ingest_api_url": self.ingest_api.url,
             "submission_url": archive_submission.get_url(),
-            "files": [],
-            "bundle_uuid": archive_submission.entity_map.bundle_uuid
+            "files": []
         }
         messages = []
         # TODO a bit redundant with converter, refactor this
@@ -462,6 +566,7 @@ class IngestArchiver:
                     files.append(file['content']['file_core']['file_name'])
 
                 message["files"] = files
+                message["bundle_uuid"] = entity.bundle_uuid
 
                 if util.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
@@ -487,117 +592,6 @@ class IngestArchiver:
         return False
 
 
-class AssayBundle:
-    def __init__(self, ingest_api, bundle_uuid):
-        self.ingest_api = ingest_api
-
-        self.bundle_uuid = bundle_uuid
-        self.bundle_manifest = None
-
-        self.project = None
-        self.biomaterials = None
-        self.files = None
-        self.assay_process = None
-        self.library_preparation_protocol = None
-        self.sequencing_protocol = None
-        self.input_biomaterial = None
-
-    def get_bundle_manifest(self):
-        if not self.bundle_manifest:
-            bundle_uuid = self.bundle_uuid
-            self.bundle_manifest = self.ingest_api.get_bundle_manifest(bundle_uuid)
-
-        return self.bundle_manifest
-
-    def get_project(self):
-        if not self.project:
-            bundle_manifest = self.get_bundle_manifest()
-            project_uuid = list(bundle_manifest['fileProjectMap'].keys())[0]  # TODO one project per bundle
-            self.project = self.ingest_api.get_project_by_uuid(project_uuid)
-
-        return self.project
-
-    def get_biomaterials(self):
-        if not self.biomaterials:
-            self.biomaterials = self._init_biomaterials()
-
-        return self.biomaterials
-
-    def get_assay_process(self):
-        bundle_manifest = self.get_bundle_manifest()
-        file_uuid = list(bundle_manifest['fileFilesMap'].keys())[0]
-
-        file = self.ingest_api.get_file_by_uuid(file_uuid)
-        derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
-
-        if derived_by_processes:
-            self.assay_process = derived_by_processes[0]
-
-            if len(derived_by_processes) > 1:
-                raise ArchiverError(f'Bundle {self.bundle_uuid} has many assay processes.')
-
-        return self.assay_process
-
-    def get_library_preparation_protocol(self):
-        if not self.library_preparation_protocol:
-            self._init_protocols()
-        return self.library_preparation_protocol
-
-    def get_sequencing_protocol(self):
-        if not self.sequencing_protocol:
-            self._init_protocols()
-        return self.sequencing_protocol
-
-    def get_files(self):
-        if not self.files:
-            assay = self.get_assay_process()
-            self.files = self.ingest_api.get_related_entity(assay, 'derivedFiles', 'files')
-
-        return self.files
-
-    def get_input_biomaterial(self):
-        if not self.input_biomaterial:
-            self.input_biomaterial = self._retrieve_input_biomaterial()
-
-        return self.input_biomaterial
-
-    def _init_protocols(self):
-        assay = self.get_assay_process()
-        protocols = self.ingest_api.get_related_entity(assay, 'protocols', 'protocols')
-        protocol_by_type = {}
-        for protocol in protocols:
-            concrete_entity_type = self.ingest_api.get_concrete_entity_type(protocol)
-            if not protocol_by_type.get(concrete_entity_type):
-                protocol_by_type[concrete_entity_type] = []
-
-            protocol_by_type[concrete_entity_type].append(protocol)
-
-        library_preparation_protocols = protocol_by_type.get('library_preparation_protocol', [])
-        sequencing_protocols = protocol_by_type.get('sequencing_protocol', [])
-
-        if len(library_preparation_protocols) != 1:
-            raise ArchiverError('There should be 1 library preparation protocol for the assay process.')
-
-        if len(sequencing_protocols) != 1:
-            raise ArchiverError('There should be 1 sequencing_protocol for the assay process.')
-
-        self.library_preparation_protocol = library_preparation_protocols[0]
-        self.sequencing_protocol = sequencing_protocols[0]
-
-    def _init_biomaterials(self):
-        bundle_manifest = self.get_bundle_manifest()
-        for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
-            yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
-
-    def _retrieve_input_biomaterial(self):
-        assay = self.get_assay_process()
-        input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
-
-        if not input_biomaterials:
-            raise ArchiverError('No input biomaterial found to the assay process.')
-
-        # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
-        return input_biomaterials[0]
 
 
 class ArchiveEntityAggregator:
@@ -614,6 +608,7 @@ class ArchiveEntityAggregator:
         archive_entity.archive_entity_type = archive_type
         archive_entity.id = self.generate_archive_entity_id(archive_type, project)
         archive_entity.data = {"project": project}
+        archive_entity.bundle_uuid = self.assay_bundle.bundle_uuid
         return [archive_entity]
 
     def _get_studies(self):
@@ -621,6 +616,7 @@ class ArchiveEntityAggregator:
         if not project:
             return []
         archive_entity = ArchiveEntity()
+        archive_entity.bundle_uuid = self.assay_bundle.bundle_uuid
         archive_type = "study"
         archive_entity.archive_entity_type = archive_type
         archive_entity.id = self.generate_archive_entity_id(archive_type, project)
@@ -636,6 +632,7 @@ class ArchiveEntityAggregator:
         samples = []
         for biomaterial in self.assay_bundle.get_biomaterials():
             archive_entity = ArchiveEntity()
+            archive_entity.bundle_uuid = self.assay_bundle.bundle_uuid
             archive_type = "sample"
             archive_entity.archive_entity_type = archive_type
             archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial)
@@ -651,6 +648,7 @@ class ArchiveEntityAggregator:
         input_biomaterial = assay_bundle.get_input_biomaterial()
 
         archive_entity = ArchiveEntity()
+        archive_entity.bundle_uuid = self.assay_bundle.bundle_uuid
         archive_type = "sequencingExperiment"
         archive_entity.archive_entity_type = archive_type
         archive_entity.id = self.generate_archive_entity_id(archive_type, process)
@@ -681,6 +679,7 @@ class ArchiveEntityAggregator:
         assay_bundle = self.assay_bundle
         process = assay_bundle.get_assay_process()
         archive_entity = ArchiveEntity()
+        archive_entity.bundle_uuid = self.assay_bundle.bundle_uuid
         archive_type = "sequencingRun"
         archive_entity.archive_entity_type = archive_type
         archive_entity.id = self.generate_archive_entity_id(archive_type, process)
@@ -698,21 +697,20 @@ class ArchiveEntityAggregator:
         return [archive_entity]
 
     def get_archive_entities(self, archive_entity_type):
+        entities = []
         if archive_entity_type == "project":
-            return self._get_projects()
+            entities = self._get_projects()
         elif archive_entity_type == "study":
-            return self._get_studies()
+            entities = self._get_studies()
         elif archive_entity_type == "sample":
-            return self._get_samples()
+            entities = self._get_samples()
         elif archive_entity_type == "sequencing_experiment":
-            return self._get_sequencing_experiments()
+            entities = self._get_sequencing_experiments()
         elif archive_entity_type == "sequencing_run":
-            return self._get_sequencing_runs()
+            entities = self._get_sequencing_runs()
+        return entities
 
     def generate_archive_entity_id(self, archive_entity_type, entity):
         uuid = entity["uuid"]["uuid"]
         return f"{self.alias_prefix}{archive_entity_type}_{uuid}"
 
-
-class ArchiverError(Exception):
-    """Base-class for all exceptions raised by this module."""
