@@ -71,6 +71,7 @@ if __name__ == '__main__':
     bundles = [options.bundle_uuid]
     if options.project_uuid:
         bundles = ingest_api.get_bundle_uuids(project_uuid=options.project_uuid)
+        print(f'Found {len(bundles)} bundles for project with UUID {options.project_uuid}.')
     elif options.bundle_list_file:
         with open(options.bundle_list_file) as f:
             content = f.readlines()
@@ -90,6 +91,8 @@ if __name__ == '__main__':
         save_dict_to_file(options.output_dir, f'COMPLETE_SUBMISSION_{submission_uuid}', report)
     else:
         all_messages = []
+        print('Processing the following bundles:')
+        print(*bundles, sep="\n")
         for bundle_uuid in bundles:
             print(f'##################### ARCHIVING BUNDLE {bundle_uuid}')
             assay_bundle = archiver.get_assay_bundle(bundle_uuid)
