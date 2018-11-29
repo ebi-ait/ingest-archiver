@@ -208,14 +208,14 @@ class AssayBundle:
 class ArchiveSubmission:
     def __init__(self, usi_api):
         self.usi_submission = {}
-        self.errors = []
-        self.processing_result = []
-        self.validation_result = []
+        self.errors = list()
+        self.processing_result = list()
+        self.validation_result = list()
         self.is_completed = False
-        self.converted_entities = []
+        self.converted_entities = list()
         self.entity_map = ArchiveEntityMap()
         self.usi_api = usi_api
-        self.file_upload_info = []
+        self.file_upload_info = list()
         self.accession_map = None
 
     def __str__(self):
@@ -564,12 +564,7 @@ class IngestArchiver:
 
     # TODO save notification to file for now, should be sending to rabbit mq in the future
     def notify_file_archiver(self, archive_submission: ArchiveSubmission):
-        message = {
-            "usi_api_url": self.usi_api.url,
-            "ingest_api_url": self.ingest_api.url,
-            "submission_url": archive_submission.get_url(),
-            "files": []
-        }
+
         messages = []
         # TODO a bit redundant with converter, refactor this
         for entity in archive_submission.converted_entities:
@@ -585,8 +580,13 @@ class IngestArchiver:
                      }
                     files.append(obj)
 
-                message["files"] = files
-                message["bundle_uuid"] = entity.bundle_uuid
+                message = {
+                    "usi_api_url": self.usi_api.url,
+                    "ingest_api_url": self.ingest_api.url,
+                    "submission_url": archive_submission.get_url(),
+                    "files": files,
+                    "bundle_uuid": entity.bundle_uuid
+                }
 
                 if util.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
