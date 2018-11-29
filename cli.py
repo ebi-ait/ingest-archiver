@@ -12,7 +12,7 @@ import config
 
 from optparse import OptionParser
 
-from archiver.archiver import IngestArchiver
+from archiver.archiver import IngestArchiver, ArchiveEntityMap
 from archiver.usiapi import USIAPI
 from archiver.ingestapi import IngestAPI
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     logging.basicConfig(format=format, stream=sys.stdout, level=logging.INFO)
 
     parser = OptionParser()
-    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencing_experiment,sequencing_run\"")
+    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
     parser.add_option("-f", "--bundle_list_file", help="Path to file containing list of bundle uuid's")
     parser.add_option("-o", "--output_dir", help="Output dir name")
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
@@ -102,24 +102,19 @@ if __name__ == '__main__':
         print(f'\nProcessing {bundle_len} bundles:')
         print(*bundles, sep="\n")
 
-        usi_submission = None
-        for idx, bundle_uuid in enumerate(bundles):
-            print(f'\n##################### PROCESSING BUNDLE {idx + 1}/{bundle_len}: {bundle_uuid}')
-            assay_bundle = archiver.get_assay_bundle(bundle_uuid)
-            entity_map = archiver.convert(assay_bundle)
-            archive_submission = archiver.archive_metadata(entity_map, usi_submission=usi_submission)
-            messages = archiver.notify_file_archiver(archive_submission)
+        entity_map = archiver.convert(bundles)
+        summary = entity_map.get_conversion_summary()
+        print(f'\nEntities to be converted: {json.dumps(summary, indent=4)}')
+        archive_submission = archiver.archive_metadata(entity_map)
+        all_messages = archiver.notify_file_archiver(archive_submission)
+        archive_submission.validate()
 
-            all_messages.extend(messages)
+        report = archive_submission.generate_report()
+        print("Saving Report file...")
+        save_dict_to_file(output_dir, f'REPORT', report)
 
-            if usi_submission is None:
-                usi_submission = archive_submission.usi_submission
+        archive_submission.validate()
 
-            report = archive_submission.generate_report()
-            print("Saving bundle report file...")
-            save_dict_to_file(output_dir, f'BUNDLE_{bundle_uuid}', report)
-
-            # time.sleep(30)
         print(f'##################### FILE ARCHIVER NOTIFICATION')
         filename = f"FILE_UPLOAD_INFO"
         save_dict_to_file(output_dir, filename, {"jobs": all_messages})

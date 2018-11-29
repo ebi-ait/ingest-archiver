@@ -41,10 +41,14 @@ class ArchiveEntityMap:
     def __init__(self):
         self.entities_dict_type = {}
 
-    def add_entity(self, archive_entity_type, entity: ArchiveEntity):
-        if not self.entities_dict_type.get(archive_entity_type):
-            self.entities_dict_type[archive_entity_type] = {}
-        self.entities_dict_type[archive_entity_type][entity.id] = entity
+    def add_entities(self, entities):
+        for entity in entities:
+            self.add_entity(entity)
+
+    def add_entity(self, entity: ArchiveEntity):
+        if not self.entities_dict_type.get(entity.archive_entity_type):
+            self.entities_dict_type[entity.archive_entity_type] = {}
+        self.entities_dict_type[entity.archive_entity_type][entity.id] = entity
 
     def get_entity(self, entity_type, archive_entity_id):
         if self.entities_dict_type.get(entity_type):
@@ -56,6 +60,16 @@ class ArchiveEntityMap:
             for entity in entities_dict.values():
                 if entity.conversion and not entity.errors:
                     yield entity
+
+    def get_conversion_summary(self):
+        summary = {}
+        for entities_dict in self.entities_dict_type.values():
+            for entity in entities_dict.values():
+                if entity.conversion and not entity.errors:
+                    if not summary.get(entity.archive_entity_type):
+                        summary[entity.archive_entity_type] = 0
+                    summary[entity.archive_entity_type] = summary[entity.archive_entity_type] + 1
+        return summary
 
     def find_entity(self, alias):
         for entities_dict in self.entities_dict_type.values():
@@ -71,6 +85,11 @@ class ArchiveEntityMap:
             for alias, entity in entities_dict.items():
                 entities.append(entity)
         return entities
+
+    def update(self, entity_type, entities: dict):
+        if not self.entities_dict_type.get(entity_type):
+            self.entities_dict_type[entity_type] = {}
+        self.entities_dict_type[entity_type].update(entities)
 
 
 class AssayBundle:
@@ -250,7 +269,8 @@ class ArchiveSubmission:
         is_validated = False
         try:
             is_validated = polling.poll(
-                lambda: self.is_ready_to_submit(),
+                # lambda: self.is_ready_to_submit(),
+                lambda: self.is_submittable(),
                 step=config.VALIDATION_POLLING_STEP,
                 timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
@@ -418,6 +438,10 @@ class ArchiveSubmission:
 
         report['entities'] = entities
         report['accessions'] = self.accession_map
+
+        if self.entity_map:
+            report['conversion_summary'] = self.entity_map.get_conversion_summary()
+
         return report
 
 
@@ -434,8 +458,8 @@ class IngestArchiver:
             "project": ProjectConverter(),
             "sample": SampleConverter(),
             "study": StudyConverter(),
-            "sequencing_run": SequencingRunConverter(),
-            "sequencing_experiment": SequencingExperimentConverter()
+            "sequencingRun": SequencingRunConverter(),
+            "sequencingExperiment": SequencingExperimentConverter()
         }
 
     def archive(self, entity_map: ArchiveEntityMap):
@@ -444,7 +468,7 @@ class IngestArchiver:
         archive_submission.validate_and_submit()
         return archive_submission
 
-    def archive_metadata(self, entity_map: ArchiveEntityMap, usi_submission=None):
+    def archive_metadata(self, entity_map: ArchiveEntityMap):
         archive_submission = ArchiveSubmission(usi_api=self.usi_api)
         archive_submission.entity_map = entity_map
 
@@ -452,10 +476,9 @@ class IngestArchiver:
 
         if converted_entities:
             archive_submission.converted_entities = converted_entities
-            archive_submission.usi_submission = usi_submission if usi_submission else self.usi_api.create_submission()
+            archive_submission.usi_submission = self.usi_api.create_submission()
             print(f"USI SUBMISSION: {archive_submission.get_url()}")
             archive_submission.add_entities(archive_submission.converted_entities)
-            archive_submission.validate()
         else:
             archive_submission.is_completed = True
             archive_submission.errors.append({
@@ -474,25 +497,25 @@ class IngestArchiver:
     def get_assay_bundle(self, bundle_uuid):
         return AssayBundle(ingest_api=self.ingest_api, bundle_uuid=bundle_uuid)
 
-    def convert(self, bundle):
-        assay_bundles = [bundle]
-
-        for assay_bundle in assay_bundles:
-            entity_map = self._convert_entities(assay_bundle)
-
+    def convert(self, bundles):
+        entity_map = ArchiveEntityMap()
+        for idx, bundle_uuid in enumerate(bundles):
+            print(f'\n* PROCESSING BUNDLE {idx + 1}/{len(bundles)}: {bundle_uuid}')
+            assay_bundle = self.get_assay_bundle(bundle_uuid)
+            entities = self._convert(assay_bundle)
+            entity_map.add_entities(entities)
         return entity_map
 
-    def _convert_entities(self, assay_bundle: AssayBundle):
+    def _convert(self, assay_bundle: AssayBundle):
         aggregator = ArchiveEntityAggregator(assay_bundle, alias_prefix=self.alias_prefix)
-        archive_entity_map = ArchiveEntityMap()
-        summary = {}
 
-        for archive_entity_type in ["project", "study", "sample", "sequencing_experiment", "sequencing_run"]:
-            print(f"Finding {archive_entity_type} entities in the bundle...")
+        entities = []
+        for archive_entity_type in ["project", "study", "sample", "sequencingExperiment", "sequencingRun"]:
+            print(f"Finding {archive_entity_type} entities in bundle...")
             progress_ctr = 0
 
             if self.exclude_types and archive_entity_type in self.exclude_types:
-                print(f"Skipping {archive_entity_type} entities...")
+                print(f"Skipping {archive_entity_type} entities in bundle...")
                 continue
 
             for archive_entity in aggregator.get_archive_entities(archive_entity_type):
@@ -503,7 +526,6 @@ class IngestArchiver:
 
                 current_version = self.usi_api.get_current_version(archive_entity.archive_entity_type,
                                                                    archive_entity.id)
-
                 if current_version and current_version.get('accession'):
                     archive_entity.accession = current_version.get('accession')
                     archive_entity.errors.append({
@@ -529,10 +551,6 @@ class IngestArchiver:
                         archive_entity.conversion = converter.convert(archive_entity.data)
                         archive_entity.conversion['alias'] = archive_entity.id
                         archive_entity.conversion.update(archive_entity.links)
-                        if not summary.get(archive_entity_type):
-                            summary[archive_entity_type] = 0
-
-                        summary[archive_entity_type] = summary[archive_entity_type] + 1
 
                     except ConversionError as e:
                         archive_entity.errors.append({
@@ -540,12 +558,10 @@ class IngestArchiver:
                             "details": {"data": json.loads(archive_entity.data)}
                         })
 
-                archive_entity_map.add_entity(archive_entity_type, archive_entity)
+                entities.append(archive_entity)
             print("")
-        print("Entities to be archived:")
-        print(f"{json.dumps(summary, indent=4)}")
 
-        return archive_entity_map
+        return entities
 
     # TODO save notification to file for now, should be sending to rabbit mq in the future
     def notify_file_archiver(self, archive_submission: ArchiveSubmission):
@@ -590,8 +606,6 @@ class IngestArchiver:
             return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
 
         return False
-
-
 
 
 class ArchiveEntityAggregator:
@@ -704,9 +718,9 @@ class ArchiveEntityAggregator:
             entities = self._get_studies()
         elif archive_entity_type == "sample":
             entities = self._get_samples()
-        elif archive_entity_type == "sequencing_experiment":
+        elif archive_entity_type == "sequencingExperiment":
             entities = self._get_sequencing_experiments()
-        elif archive_entity_type == "sequencing_run":
+        elif archive_entity_type == "sequencingRun":
             entities = self._get_sequencing_runs()
         return entities
 
