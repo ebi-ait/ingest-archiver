@@ -78,12 +78,10 @@ class USIAPI:
             self.create_entity(create_sample_url, converted_sample)
 
     def get_available_statuses(self, get_available_statuses_url):
-        response = self._get(get_available_statuses_url)
-        return self._get_embedded_list(response, 'statusDescriptions')
+        return self._get_all(get_available_statuses_url, 'statusDescriptions')
 
     def get_validation_results(self, get_validation_results_url):
-        response = self._get(get_validation_results_url)
-        return self._get_embedded_list(response, 'validationResults')
+        return self._get_all(get_validation_results_url, 'validationResults')
 
     def get_validation_result_details(self, get_validation_result_url):
         return self._get(get_validation_result_url)
@@ -103,9 +101,7 @@ class USIAPI:
 
     def get_processing_results(self, usi_submission):
         get_results_url = usi_submission['_links']['processingStatuses']['href']
-        response = self._get(get_results_url)
-
-        return self._get_embedded_list(response, 'processingStatuses')
+        return self._get_all(get_results_url, 'processingStatuses')
 
     def get_current_version(self, entity_type, alias):
         entity_link = USI_ENTITY_CURR_VERSION_LINK[entity_type]
@@ -151,3 +147,14 @@ class USIAPI:
         if response and "_embedded" in response:
             return response["_embedded"][list_name]
         return []
+
+    def _get_all(self, url, entity_type):
+        r = requests.get(url, headers=self.headers)
+        r.raise_for_status()
+        if "_embedded" in r.json():
+            for entity in r.json()["_embedded"][entity_type]:
+                yield entity
+            while "next" in r.json()["_links"]:
+                r = requests.get(r.json()["_links"]["next"]["href"], headers=self.headers)
+                for entity in r.json()["_embedded"][entity_type]:
+                    yield entity
