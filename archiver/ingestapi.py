@@ -25,6 +25,8 @@ class IngestAPI:
         }
         self.url = url if url else config.INGEST_API_URL
         self.logger.info(f'Using {self.url}')
+        self.entity_cache = {}
+        self.cache_enabled = True
 
     def get_related_entity(self, entity, relation, related_entity_type):
         related_entity_url = entity['_links'][relation]['href']
@@ -53,8 +55,23 @@ class IngestAPI:
 
     def get_entity_by_uuid(self, entity_type, uuid):
         entity_url = f'{self.url}{entity_type}/search/findByUuid?uuid={uuid}'
-        response = requests.get(entity_url, headers=self.headers)
-        return self._handle_response(response)
+
+        entity_json = self._get_cached_entity(uuid)
+
+        if not entity_json:
+            response = requests.get(entity_url, headers=self.headers)
+            entity_json = self._handle_response(response)
+            self._cache_entity(uuid, entity_json)
+
+        return entity_json
+
+    def _get_cached_entity(self, uuid):
+        if self.cache_enabled and self.entity_cache.get(uuid):
+            return self.entity_cache.get(uuid)
+
+    def _cache_entity(self, uuid, entity_json):
+        if self.cache_enabled and not self.entity_cache.get(uuid):
+            self.entity_cache[uuid] = entity_json
 
     def get_submission_by_uuid(self, submission_uuid):
         return self.get_entity_by_uuid('submissionEnvelopes', submission_uuid)
