@@ -125,7 +125,14 @@ class TestIngestArchiver(unittest.TestCase):
             'files': ['bundle_uuid.bam'],
             'conversion': {
                 'output_name': 'bundle_uuid.bam',
-                'inputs': ['R1.fastq.gz', 'R2.fastq.gz']
+                'inputs': [
+                    {'name': 'R1.fastq.gz',
+                     'read_index': 'read1'
+                    },
+                    {'name': 'R2.fastq.gz',
+                     'read_index': 'read1'
+                    }
+                ]
             },
             'bundle_uuid': "bundle_uuid"
         }
