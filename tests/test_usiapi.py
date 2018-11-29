@@ -3,7 +3,7 @@ import os
 import json
 import config
 
-from archiver.usiapi import USIAPI
+from archiver.usiapi import USIAPI, AAPTokenClient
 from archiver.converter import SampleConverter
 
 
@@ -20,17 +20,14 @@ class TestUSIAPI(unittest.TestCase):
 
         self.hca_submission = {'samples': hca_samples}
         self.converter = SampleConverter()
-
         pass
 
     def test_get_token_given_valid_credentials_return_token(self):
         aap_user = 'hca-ingest'
-        aap_password = ''
+        aap_password = os.environ.get('AAP_API_PASSWORD', '')
 
-        if 'AAP_API_PASSWORD' in os.environ:
-            aap_password = os.environ['AAP_API_PASSWORD']
-
-        token = self.usi_api.get_token(aap_user, aap_password)
+        token_client = AAPTokenClient(username=aap_user, password=aap_password)
+        token = token_client.retrieve_token()
 
         self.assertTrue(token)
 
@@ -38,7 +35,8 @@ class TestUSIAPI(unittest.TestCase):
         username = 'invalid'
         password = 'invalid'
 
-        token = self.usi_api.get_token(username, password)
+        token_client = AAPTokenClient(username=username, password=password)
+        token = token_client.retrieve_token()
 
         self.assertFalse(token)
 

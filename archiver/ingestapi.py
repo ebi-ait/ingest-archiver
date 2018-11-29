@@ -24,12 +24,14 @@ class IngestAPI:
             'Content-type': 'application/json',
         }
         self.url = url if url else config.INGEST_API_URL
+        self.logger.info(f'Using {self.url}')
+        self.entity_cache = {}
+        self.cache_enabled = True
 
     def get_related_entity(self, entity, relation, related_entity_type):
         related_entity_url = entity['_links'][relation]['href']
-        response = requests.get(related_entity_url, headers=self.headers)
-        related_entity = self._handle_response(response)
-        return related_entity['_embedded'][related_entity_type]
+        related_entities = list(self._get_all(related_entity_url, related_entity_type))
+        return related_entities
 
     def get_submission_by_id(self, submission_id):
         get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
@@ -53,8 +55,23 @@ class IngestAPI:
 
     def get_entity_by_uuid(self, entity_type, uuid):
         entity_url = f'{self.url}{entity_type}/search/findByUuid?uuid={uuid}'
-        response = requests.get(entity_url, headers=self.headers)
-        return self._handle_response(response)
+
+        entity_json = self._get_cached_entity(uuid)
+
+        if not entity_json:
+            response = requests.get(entity_url, headers=self.headers)
+            entity_json = self._handle_response(response)
+            self._cache_entity(uuid, entity_json)
+
+        return entity_json
+
+    def _get_cached_entity(self, uuid):
+        if self.cache_enabled and self.entity_cache.get(uuid):
+            return self.entity_cache.get(uuid)
+
+    def _cache_entity(self, uuid, entity_json):
+        if self.cache_enabled and not self.entity_cache.get(uuid):
+            self.entity_cache[uuid] = entity_json
 
     def get_submission_by_uuid(self, submission_uuid):
         return self.get_entity_by_uuid('submissionEnvelopes', submission_uuid)
@@ -197,3 +214,14 @@ class IngestAPI:
         except polling.TimeoutException:
             self.logger.error("Failed to do an update submission. The submission takes too long to get " +
                               "validated and couldn't be submitted.")
+
+    def _get_all(self, url, entity_type):
+        r = requests.get(url, headers=self.headers)
+        r.raise_for_status()
+        if "_embedded" in r.json():
+            for entity in r.json()["_embedded"][entity_type]:
+                yield entity
+            while "next" in r.json()["_links"]:
+                r = requests.get(r.json()["_links"]["next"]["href"], headers=self.headers)
+                for entity in r.json()["_embedded"][entity_type]:
+                    yield entity
