@@ -2,19 +2,21 @@ import json
 import requests
 import logging
 import config
+from ingest.utils.token_manager import TokenManager
 
 
-# TODO figure out how to refresh token when it's expired
-def get_aap_token(username, password):
-    token = ''
+class AAPTokenClient:
+    def __init__(self, url=None, username=None, password=None):
+        self.url = url if url else config.AAP_API_URL
+        self.username = username if username else config.AAP_API_USER
+        self.password = password if password else config.AAP_API_PASSWORD
 
-    get_token_url = config.AAP_API_URL
-    response = requests.get(get_token_url, auth=(username, password))
-
-    if response.ok:
-        token = response.text
-
-    return token
+    def retrieve_token(self):
+        token = ''
+        response = requests.get(self.url, auth=(self.username, self.password))
+        if response.ok:
+            token = response.text
+        return token
 
 
 USI_ENTITY_LINK = {
@@ -37,18 +39,19 @@ USI_ENTITY_CURR_VERSION_LINK = {
 class USIAPI:
     def __init__(self, url=None):
         self.logger = logging.getLogger(__name__)
-        self.token = get_aap_token(config.AAP_API_USER, config.AAP_API_PASSWORD)
-        self.headers = {
-            'Content-type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + self.token
-        }
         self.url = url if url else config.USI_API_URL
         self.logger.info(f'Using {self.url}')
-        self.aap_api_domain = config.AAP_API_DOMAIN
 
-    def get_token(self, user, password):
-        return get_aap_token(user, password)
+        self.aap_api_domain = config.AAP_API_DOMAIN
+        self.token_client = AAPTokenClient(url=config.AAP_API_URL)
+        self.token_manager = TokenManager(token_client=self.token_client)
+
+    def get_headers(self):
+        return {
+            'Content-type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + self.token_manager.get_token()
+        }
 
     def create_submission(self):
         create_submissions_url = self.url + '/api/teams/' + self.aap_api_domain + '/submissions'
@@ -106,7 +109,7 @@ class USIAPI:
     def get_current_version(self, entity_type, alias):
         entity_link = USI_ENTITY_CURR_VERSION_LINK[entity_type]
         url = f'{self.url}/api/{entity_link}/search/current-version?teamName={self.aap_api_domain}&alias={alias}'
-        response = requests.get(url, headers=self.headers)
+        response = requests.get(url, headers=self.get_headers())
 
         if response.status_code == requests.codes.not_found:
             return None
@@ -118,19 +121,19 @@ class USIAPI:
     # ===
 
     def _get(self, url):
-        response = requests.get(url, headers=self.headers)
+        response = requests.get(url, headers=self.get_headers())
         return self._get_json(response)
 
     def _post(self, url, data_json):
-        response = requests.post(url, data=json.dumps(data_json), headers=self.headers)
+        response = requests.post(url, data=json.dumps(data_json), headers=self.get_headers())
         return self._get_json(response)
 
     def _patch(self, url, data_json):
-        response = requests.patch(url, data=json.dumps(data_json), headers=self.headers)
+        response = requests.patch(url, data=json.dumps(data_json), headers=self.get_headers())
         return self._get_json(response)
 
     def _delete(self, delete_url):
-        response = requests.delete(delete_url, headers=self.headers)
+        response = requests.delete(delete_url, headers=self.get_headers())
 
         if response.ok:
             return True
@@ -149,12 +152,12 @@ class USIAPI:
         return []
 
     def _get_all(self, url, entity_type):
-        r = requests.get(url, headers=self.headers)
+        r = requests.get(url, headers=self.get_headers())
         r.raise_for_status()
         if "_embedded" in r.json():
             for entity in r.json()["_embedded"][entity_type]:
                 yield entity
             while "next" in r.json()["_links"]:
-                r = requests.get(r.json()["_links"]["next"]["href"], headers=self.headers)
+                r = requests.get(r.json()["_links"]["next"]["href"], headers=self.get_headers())
                 for entity in r.json()["_embedded"][entity_type]:
                     yield entity
