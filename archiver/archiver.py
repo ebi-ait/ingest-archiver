@@ -269,8 +269,7 @@ class ArchiveSubmission:
         is_validated = False
         try:
             is_validated = polling.poll(
-                # lambda: self.is_ready_to_submit(),
-                lambda: self.is_submittable(),
+                lambda: self.is_ready_to_submit(),
                 step=config.VALIDATION_POLLING_STEP,
                 timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False

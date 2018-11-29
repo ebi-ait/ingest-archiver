@@ -1,6 +1,9 @@
 import json
 import requests
 import logging
+
+import requests.packages.urllib3.util.retry as retry
+
 import config
 import polling
 
@@ -28,6 +31,19 @@ class IngestAPI:
         self.entity_cache = {}
         self.cache_enabled = True
 
+        retry_policy = retry.Retry(
+            total=100,  # seems that this has a default value of 10,
+            # setting this to a very high number so that it'll respect the status retry count
+            status=17,  # status is the no. of retries if response is in status_forcelist,
+            # this count will retry for ~20mins with back off timeout within
+            read=10,
+            status_forcelist=[500, 502, 503, 504],
+            backoff_factor=0.6)
+
+        self.session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
+        self.session.mount('http://', adapter)
+
     def get_related_entity(self, entity, relation, related_entity_type):
         related_entity_url = entity['_links'][relation]['href']
         related_entities = list(self._get_all(related_entity_url, related_entity_type))
@@ -36,7 +52,7 @@ class IngestAPI:
     def get_submission_by_id(self, submission_id):
         get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
 
-        response = requests.get(get_submission_url, headers=self.headers)
+        response = self.session.get(get_submission_url, headers=self.headers)
 
         submission = None
 
@@ -48,7 +64,7 @@ class IngestAPI:
     def get_concrete_entity_type(self, entity):
         content = entity.get('content')
         schema_url = content.get('describedBy')
-        response = requests.get(schema_url, headers=self.headers)
+        response = self.session.get(schema_url, headers=self.headers)
         schema = self._handle_response(response)
 
         return schema.get('name')
@@ -59,7 +75,7 @@ class IngestAPI:
         entity_json = self._get_cached_entity(uuid)
 
         if not entity_json:
-            response = requests.get(entity_url, headers=self.headers)
+            response = self.session.get(entity_url, headers=self.headers)
             entity_json = self._handle_response(response)
             self._cache_entity(uuid, entity_json)
 
@@ -98,7 +114,7 @@ class IngestAPI:
         return bundle_uuids
 
     def get_samples(self, get_samples_url):
-        response = requests.get(get_samples_url, headers=self.headers)
+        response = self.session.get(get_samples_url, headers=self.headers)
 
         samples = []
 
@@ -109,11 +125,11 @@ class IngestAPI:
 
     def get_bundle_manifest(self, bundle_uuid):
         get_bundle_manifest_url = self.url + '/bundleManifests/search/findByBundleUuid?uuid=' + bundle_uuid
-        response = requests.get(get_bundle_manifest_url, headers=self.headers)
+        response = self.session.get(get_bundle_manifest_url, headers=self.headers)
         return self._handle_response(response)
 
     def update_content(self, entity_url, content_json):
-        response = requests.get(entity_url)
+        response = self.session.get(entity_url)
         content = self._handle_response(response)['content']
         content.update(content_json)
         response = requests.patch(entity_url, json.dumps({'content': content}))
@@ -150,7 +166,7 @@ class IngestAPI:
         response.raise_for_status()
 
     def get_ingest_links(self):
-        response = requests.get(self.url, headers=self.headers)
+        response = self.session.get(self.url, headers=self.headers)
         ingest = self._handle_response(response)
 
         if ingest:
@@ -167,7 +183,7 @@ class IngestAPI:
 
     def get_submit_url(self, submission):
         submission_url = submission['_links']['self']['href']
-        response = requests.get(submission_url, headers=self.headers)
+        response = self.session.get(submission_url, headers=self.headers)
         submission = self._handle_response(response)
 
         if submission and 'submit' in submission['_links']:
@@ -216,12 +232,12 @@ class IngestAPI:
                               "validated and couldn't be submitted.")
 
     def _get_all(self, url, entity_type):
-        r = requests.get(url, headers=self.headers)
+        r = self.session.get(url, headers=self.headers)
         r.raise_for_status()
         if "_embedded" in r.json():
             for entity in r.json()["_embedded"][entity_type]:
                 yield entity
             while "next" in r.json()["_links"]:
-                r = requests.get(r.json()["_links"]["next"]["href"], headers=self.headers)
+                r = self.session.get(r.json()["_links"]["next"]["href"], headers=self.headers)
                 for entity in r.json()["_embedded"][entity_type]:
                     yield entity
