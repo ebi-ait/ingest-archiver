@@ -42,7 +42,6 @@ class TestUSIAPI(unittest.TestCase):
 
     def test_create_submission(self):
         usi_submission = self.usi_api.create_submission()
-        print(usi_submission)
 
         delete_url = usi_submission['_links']['self:delete']['href']
         self.usi_api.delete_submission(delete_url)
