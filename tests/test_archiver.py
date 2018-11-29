@@ -21,7 +21,7 @@ class TestIngestArchiver(unittest.TestCase):
         self.archiver = IngestArchiver(
             ingest_api=self.ingest_api,
             usi_api=self.usi_api,
-            exclude_types=['sequencing_run'])
+            exclude_types=['sequencingRun'])
 
         with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             biomaterials = json.loads(data_file.read())
@@ -71,16 +71,18 @@ class TestIngestArchiver(unittest.TestCase):
 
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        entity_map = self.archiver.convert(assay_bundle)
+        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = self.archiver.convert(['bundle_uuid'])
         entities_by_type = entity_map.entities_dict_type
-        self.assertTrue(entities_by_type['project'])
-        self.assertTrue(entities_by_type['study'])
-        self.assertTrue(entities_by_type['sample'])
-        self.assertTrue(entities_by_type['sequencing_experiment'])
+        self.assertTrue(entities_by_type.get('project'))
+        self.assertTrue(entities_by_type.get('study'))
+        self.assertTrue(entities_by_type.get('sample'))
+        self.assertTrue(entities_by_type.get('sequencingExperiment'))
 
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        entity_map = self.archiver.convert(assay_bundle)
+        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = self.archiver.convert(['bundle_uuid'])
         archive_submission = self.archiver.archive(entity_map)
         self.assertTrue(archive_submission.is_completed)
 
@@ -109,7 +111,8 @@ class TestIngestArchiver(unittest.TestCase):
         usi_api.get_current_version = MagicMock(return_value=None)
 
         archiver = IngestArchiver(ingest_api, usi_api)
-        entity_map = archiver.convert(assay_bundle)
+        archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = archiver.convert(['bundle_uuid'])
         archive_submission.converted_entities = list(entity_map.get_converted_entities())
         archive_submission.entity_map = entity_map
 
@@ -131,7 +134,8 @@ class TestIngestArchiver(unittest.TestCase):
 
     def test_validate_and_complete_submission(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        entity_map = self.archiver.convert(assay_bundle)
+        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = self.archiver.convert(['bundle_uuid'])
         archive_submission = self.archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
@@ -164,7 +168,8 @@ class TestIngestArchiver(unittest.TestCase):
             biomaterials = json.loads(data_file.read())
         bundle = {'biomaterials': biomaterials}
         assay_bundle = self._mock_assay_bundle(bundle)
-        entity_map = self.archiver.convert(assay_bundle)
+        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = self.archiver.convert('')
         archive_submission = self.archiver.archive(entity_map)
 
         self.assertTrue(archive_submission.is_completed)
