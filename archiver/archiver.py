@@ -579,7 +579,12 @@ class IngestArchiver:
                 files = []
 
                 for file in data.get('files'):
-                    files.append(file['content']['file_core']['file_name'])
+                    obj = {
+                        # required fields
+                        "name": file['content']['file_core']['file_name'],
+                        "read_index": file['content']['read_index'],
+                     }
+                    files.append(obj)
 
                 message["files"] = files
                 message["bundle_uuid"] = entity.bundle_uuid
@@ -587,7 +592,6 @@ class IngestArchiver:
                 if util.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
                     message["conversion"]["output_name"] = f"{data['bundle_uuid']}.bam"
-                    files.sort()
                     message["conversion"]["inputs"] = files
                     message["files"] = [f"{data['bundle_uuid']}.bam"]
 
