@@ -2,6 +2,9 @@ import json
 import requests
 import logging
 import config
+
+import requests.packages.urllib3.util.retry as retry
+
 from ingest.utils.token_manager import TokenManager
 
 
@@ -45,6 +48,17 @@ class USIAPI:
         self.aap_api_domain = config.AAP_API_DOMAIN
         self.token_client = AAPTokenClient(url=config.AAP_API_URL)
         self.token_manager = TokenManager(token_client=self.token_client)
+        retry_policy = retry.Retry(
+            total=100,  # seems that this has a default value of 10,
+            # setting this to a very high number so that it'll respect the status retry count
+            status=17,  # status is the no. of retries if response is in status_forcelist,
+            # this count will retry for ~20mins with back off timeout within
+            read=10,
+            status_forcelist=[500, 502, 503, 504],
+            backoff_factor=0.6)
+        self.session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
+        self.session.mount('https://', adapter)
 
     def get_headers(self):
         return {
@@ -109,7 +123,7 @@ class USIAPI:
     def get_current_version(self, entity_type, alias):
         entity_link = USI_ENTITY_CURR_VERSION_LINK[entity_type]
         url = f'{self.url}/api/{entity_link}/search/current-version?teamName={self.aap_api_domain}&alias={alias}'
-        response = requests.get(url, headers=self.get_headers())
+        response = self.session.get(url, headers=self.get_headers())
 
         if response.status_code == requests.codes.not_found:
             return None
@@ -121,19 +135,19 @@ class USIAPI:
     # ===
 
     def _get(self, url):
-        response = requests.get(url, headers=self.get_headers())
+        response = self.session.get(url, headers=self.get_headers())
         return self._get_json(response)
 
     def _post(self, url, data_json):
-        response = requests.post(url, data=json.dumps(data_json), headers=self.get_headers())
+        response = self.session.post(url, data=json.dumps(data_json), headers=self.get_headers())
         return self._get_json(response)
 
     def _patch(self, url, data_json):
-        response = requests.patch(url, data=json.dumps(data_json), headers=self.get_headers())
+        response = self.session.patch(url, data=json.dumps(data_json), headers=self.get_headers())
         return self._get_json(response)
 
     def _delete(self, delete_url):
-        response = requests.delete(delete_url, headers=self.get_headers())
+        response = self.session.delete(delete_url, headers=self.get_headers())
 
         if response.ok:
             return True
@@ -152,12 +166,12 @@ class USIAPI:
         return []
 
     def _get_all(self, url, entity_type):
-        r = requests.get(url, headers=self.get_headers())
+        r = self.session.get(url, headers=self.get_headers())
         r.raise_for_status()
         if "_embedded" in r.json():
             for entity in r.json()["_embedded"][entity_type]:
                 yield entity
             while "next" in r.json()["_links"]:
-                r = requests.get(r.json()["_links"]["next"]["href"], headers=self.get_headers())
+                r = self.session.get(r.json()["_links"]["next"]["href"], headers=self.get_headers())
                 for entity in r.json()["_embedded"][entity_type]:
                     yield entity
