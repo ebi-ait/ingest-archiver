@@ -192,12 +192,15 @@ class SequencingExperimentConverter(Converter):
                 "platform_type": "ILLUMINA",
                 "intrument_model": "HiSeq X Ten",
                 "synonymns": [
-                    "Illumina Hiseq X 10"
+                    "illumina hiseq x 10"
                 ]
             },
             "nextseq 500": {
                 "platform_type": "ILLUMINA",
-                "intrument_model": "NextSeq 500"
+                "intrument_model": "NextSeq 500",
+                "synonymns": [
+                    "illumina nextseq 500"
+                ]
             },
             "hiseq x five": {
                 "platform_type": "ILLUMINA",
@@ -254,7 +257,7 @@ class SequencingExperimentConverter(Converter):
 
         for key, obj in self.instrument_model_map.items():
             synonyms = obj.get("synonymns")
-            if synonyms and instr_model_text in synonyms:
+            if synonyms and instr_model_text.lower() in synonyms:
                 instrument_model = obj.get('intrument_model', 'unspecified')
                 platform_type = obj.get('platform_type', 'unspecified')
 
