@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not (options.project_uuid or options.bundle_list_file):
+    if not options.submission_url and not (options.project_uuid or options.bundle_list_file):
         logging.error("You must supply a project UUID or a file with list of bundle UUIDs")
         exit(2)
 
