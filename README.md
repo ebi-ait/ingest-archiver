@@ -41,15 +41,26 @@ $ export SUBMISSION_POLL_FOREVER=TRUE
 4. Run the metadata archiver
 `python3 cli.py --project_uuid="2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb"`
 
-5. Take the JSON file from AM and move to a well known location on /ebi/teams/hca
-6. Login to EBI CLI
-7. Run <cmd> which will 
-* Download the data from HCA to /ebi/teams/hca/<project-uuid>
-* Convert the data to a different format where necessary
-* Upload the data from /ebi/teams/hca/<project-uuid> to USI
-8. Run the metadata archiver with this switch
+5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>`. Change to this directory, e.g. 
+`cd ARCHIVER_2018-12-10T141748`
 
-`python cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/f0db1f2f-718a-46fe-a162-c2256850e5a1"`
+6. In this directory there will be a file called `FILE_UPLOAD_INFO.json`. Copy this file to the HCA NFS namespace via the cluster. For this step you must be connected to the EBI internal network
+`scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca`
+
+EITHER
+7a . Login to EBI CLI with your usual user and password
+`ssh ebi-cli.ebi.ac.uk`
+  
+OR
+7b. On your local machine run
+`docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
+
+8. Run the metadata archiver with this switch
+`python3 cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
+
+e.g. 
+
+`python3 cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/68fb4263-0868-4391-a9dc-eb59ab30a833`
 
 Keep running or rerun until it says SUCCESSFULLY SUBMITTED
 
