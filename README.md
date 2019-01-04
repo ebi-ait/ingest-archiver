@@ -57,7 +57,7 @@ $ export SUBMISSION_POLL_FOREVER=TRUE
 ```
 
 4. Run the metadata archiver
-`python3 cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
+`./cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
 
 You should get output like
 ```
@@ -103,11 +103,11 @@ OR
 `docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
 
 8. Run the metadata archiver with this switch
-`python3 cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
+`./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
 
 e.g. 
 
-`python3 cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/68fb4263-0868-4391-a9dc-eb59ab30a833`
+`./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/68fb4263-0868-4391-a9dc-eb59ab30a833`
 
 Keep running or rerun until it says SUCCESSFULLY SUBMITTED
 
