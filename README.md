@@ -30,7 +30,7 @@ This component is currently invoked manually after an HCA submission.
 # Required variables
 # If you don’t know the EBI AAP password we’re using for archiving please ask an ingest dev or another 
 # EBI wrangler
-$ export AAP_API_PASSWORD=’password’
+$ export AAP_API_PASSWORD=password
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 
 # https://submission-dev-ebi.ac.uk - USI test archiving. This only gets wiped every 24 hours so if you
