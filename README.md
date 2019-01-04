@@ -38,6 +38,10 @@ $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 $ export USI_API_URL=https://submission-dev.ebi.ac.uk
 
 # Optional variables
+# If uploading to test you can keep this as the default subs.test-team-21. Otherwise you will need to
+# set this to subs.team-2 as below.
+$ export AAP_API_DOMAIN=subs.team-2
+
 # VALIDATION_POLL_FOREVER and SUBMISSION_POLL_FOREVER control whether this script keeps checking for 
 # successful validation then submission through the USI once it has completed the metadata archiving
 # part. If these aren't set to TRUE or you stop the script before validation/submission has 
