@@ -51,7 +51,7 @@ $ export SUBMISSION_POLL_FOREVER=TRUE
 ```
 
 4. Run the metadata archiver
-`python3 cli.py --project_uuid="2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb"`
+`python3 cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
 
 5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>`. Change to this directory, e.g. 
 `cd ARCHIVER_2018-12-10T141748`
