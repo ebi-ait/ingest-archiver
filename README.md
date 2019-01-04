@@ -28,8 +28,8 @@ This component is currently invoked manually after an HCA submission.
 3. Set environment variables
 ```
 # Required variables
-# If you don’t know the EBI AAP password we’re using for archiving please ask an ingest dev or another 
-# EBI wrangler
+# If you don’t know the EBI Authentication and Authorization Profile (AAP) password we’re using for 
+# archiving please ask an ingest dev or another EBI wrangler.
 $ export AAP_API_PASSWORD=password
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 
