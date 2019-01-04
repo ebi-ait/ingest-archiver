@@ -21,7 +21,7 @@ This component is currently invoked manually after an HCA submission.
 # How to run
 # Run the archiver script
 1. Install the script requirements
-`pip3 install -r requirements.txt`
+`sudo pip3 install -r requirements.txt`
 
 2. Get the project UUID of the project you want to archive. For example rsatija dataset `5f256182-5dfc-4070-8404-f6fa71d37c73`
 
