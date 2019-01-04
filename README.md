@@ -29,7 +29,8 @@ This component is currently invoked manually after an HCA submission.
 ```
 # Required variables
 # If you don’t know the EBI Authentication and Authorization Profile (AAP) password we’re using for 
-# archiving please ask an ingest dev or another EBI wrangler.
+# archiving please ask an ingest dev or another EBI wrangler. This password will be different
+# depending on whether you're upload to test archives through USI or production ones.
 $ export AAP_API_PASSWORD=password
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 
