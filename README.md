@@ -27,13 +27,20 @@ This component is currently invoked manually after an HCA submission.
 
 3. Set environment variables
 ```
-# If you don’t know the EBI AAP password we’re using for archiving please ask an ingest dev or another EBI wrangler
+# Required
+# If you don’t know the EBI AAP password we’re using for archiving please ask an ingest dev or another 
+# EBI wrangler
 $ export AAP_API_PASSWORD=’password’
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 $ export USI_API_URL=https://submission-dev.ebi.ac.uk # should point to prod
 
-# Optional environment variables, if you want the process to run until validation and submission completed , you may have to run the metadata archiver multiple times if the following are not set
-
+# Optional 
+# VALIDATION_POLL_FOREVER and SUBMISSION_POLL_FOREVER control whether this script keeps checking for 
+# successful validation then submission through the USI once it has completed the metadata archiving
+# part. If these aren't set to TRUE or you stop the script before validation/submission has 
+# completed, then you can always run the script again later, at which point it will jump back to 
+# validation/submission polling rather than trying to archive metadata again. 
+# Default for these parameters is FALSE.
 $ export VALIDATION_POLL_FOREVER=TRUE
 $ export SUBMISSION_POLL_FOREVER=TRUE
 ```
