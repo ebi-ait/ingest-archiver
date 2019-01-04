@@ -88,7 +88,7 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/REPORT.json!
 Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.json!
 ```
 
-5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp> containing two files, `REPORT.json` and `FILE_UPLOAD_INFO.json`. Inspect `REPORT.json` for errors.
+5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>` containing two files, `REPORT.json` and `FILE_UPLOAD_INFO.json`. Inspect `REPORT.json` for errors.
 
 6. `FILE_UPLOAD_INFO.json` contains the instructions necessary for the file uploader to convert and upload submission data to the USI. Copy this file to the HCA NFS namespace via the cluster. For this step you must be connected to the EBI internal network
 
