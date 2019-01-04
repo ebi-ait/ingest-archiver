@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Sample usage:
 #     python cli.py --project_uuid="2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb"
 #
