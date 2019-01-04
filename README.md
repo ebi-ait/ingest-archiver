@@ -4,11 +4,11 @@
 
 # Ingest Archiver
 The archiver service is an ingest component that:
-- submits metadata to the appropriate external accessioning authorities. These are currently only EBI authorities (e.g. Biosamples).
-- converts metadata into the format accepted by each external authority
+- Submits metadata to the appropriate external accessioning authorities. These are currently only EBI authorities (e.g. Biosamples).
+- Converts metadata into the format accepted by each external authority
 
 In the future it will:
-- update HCA metadata with accessions provided by external authorities
+- Update HCA metadata with accessions provided by external authorities
 
 At the moment it consists of a minimum of 2 steps.
 1. A metadata archiver (MA) script (the one in this repository) which archives the metadata of a submission through the USI. This script also checks the submission of the files by the file uploader (see below).
