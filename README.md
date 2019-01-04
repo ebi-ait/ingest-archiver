@@ -80,21 +80,19 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/REPORT.json!
 Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.json!
 ```
 
-5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>`. Change to this directory, e.g. 
-`cd ARCHIVER_2018-12-10T141748`
+5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>`. In this directory there will be a file called `FILE_UPLOAD_INFO.json`. This contains the instructions necessary for the file uploader to convert and upload submission data to the USI. Copy this file to the HCA NFS namespace via the cluster. For this step you must be connected to the EBI internal network
 
-6. In this directory there will be a file called `FILE_UPLOAD_INFO.json`. Copy this file to the HCA NFS namespace via the cluster. For this step you must be connected to the EBI internal network
-`scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca`
+```scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca```
 
 EITHER
-7a . Login to EBI CLI with your usual user and password
+6a . Login to EBI CLI with your usual user and password
 `ssh ebi-cli.ebi.ac.uk`
   
 OR
-7b. On your local machine run
+6b. On your local machine run
 `docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
 
-8. Run the metadata archiver with this switch
+7. Run the metadata archiver with this switch
 `python3 cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
 
 e.g. 
