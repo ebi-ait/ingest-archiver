@@ -53,6 +53,35 @@ $ export SUBMISSION_POLL_FOREVER=TRUE
 4. Run the metadata archiver
 `python3 cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
 
+You should get output like
+```
+Processing 6 bundles:
+0d172fd7-f5af-4307-805b-3a421cdabd76
+9526f387-bb5a-4a1b-9fd1-8ff977c62ffd
+4d07290e-8bcc-4060-9b67-505133798ab0
+b6d096f4-239a-476d-9685-2a03c86dc06b
+985a9cb6-3665-4c04-9b93-8f41e56a2c71
+19f1a1f8-d563-43a8-9eb3-e93de1563555
+
+* PROCESSING BUNDLE 1/6: 0d172fd7-f5af-4307-805b-3a421cdabd76
+Finding project entities in bundle...
+1
+Finding study entities in bundle...
+1
+Finding sample entities in bundle...
+17
+Finding sequencingExperiment entities in bundle...
+1
+Finding sequencingRun entities in bundle...
+1
+...
+Entities to be converted: {}
+Saving Report file...
+Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/REPORT.json!
+##################### FILE ARCHIVER NOTIFICATION
+Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.json!
+```
+
 5. In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>`. Change to this directory, e.g. 
 `cd ARCHIVER_2018-12-10T141748`
 
