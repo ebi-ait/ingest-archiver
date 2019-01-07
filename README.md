@@ -17,7 +17,6 @@ At the moment it consists of a minimum of 2 steps.
 This component is currently invoked manually after an HCA submission.
 
 # How to run
-# Run the archiver script
 1. Install the script requirements
 `sudo pip3 install -r requirements.txt`
 
@@ -109,22 +108,38 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.js
 
 ```scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca```
 
-EITHER
-7a . Login to EBI CLI with your usual user and password
+7. Login to EBI CLI with your usual user and password
 `ssh ebi-cli.ebi.ac.uk`
-  
-OR
-7b. On your local machine run
-`docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
 
-8. Run the metadata archiver with this switch
+8. Run the file uploader with this command (this is for test, for production you would need to replace the `-l` switch with `-l=https://api.aai.ebi.ac.uk/auth`
+
+`singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest`
+
+This will now take a very long time to run if you have a large dataset where data needs format conversion. You can see the progress of your job with the command
+
+`bjobs -W`
+
+Once the data upload has finished or failed the cluster will send you an e-mail.
+
+9. If the metadata archiver is still running, wait for that to report success. Or if it isn't or you stopped it, run it with this command to validate and submit the archive entries.
+
 `./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
 
-e.g. 
+The submission uuid can be found either in the output of the initial metadata archiver run, e.g.
 
-`./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/68fb4263-0868-4391-a9dc-eb59ab30a833`
+`USI SUBMISSION: https://submission-dev.ebi.ac.uk/api/submissions/b729f228-d587-440c-ae5b-d0c1f34b8766`
 
-Keep running or rerun until it says SUCCESSFULLY SUBMITTED
+or in the `REPORT.json` in the `submission-url` field (there will be several). For example,
+
+`"submission_url": "https://submission-dev.ebi.ac.uk/api/submissions/b729f228-d587-440c-ae5b-d0c1f34b8766"`
+USI SUBMISSION: https://submission-dev.ebi.ac.uk/api/submissions/b729f228-d587-440c-ae5b-d0c1f34b8766
+
+On success you will get the message `SUCCESSFULLY SUBMITTED`.
+
+## Running the data uploader outside of singularity.
+For test purposes you can run the data uploader outside of singularity with the command
+
+`docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
 
 # How to run the tests
 
