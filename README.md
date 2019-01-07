@@ -59,7 +59,13 @@ $ export SUBMISSION_POLL_FOREVER=TRUE
 4. Run the metadata archiver
 `./cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
 
-You should get output like
+Note, if you are doing this in debug on anything other than the first time then you will need to add a custom 'alias' prefix. An alias is a technical artifact that USI uses to identify an entity for local linking purposes. However, even in test USI these are permanent, so subsequent attempts to test the same data set, even if they come from different projects, will need a unique alias.
+
+This alias prefix can be anything though you may want to stick with something along the lines of HCA_2019-01-07_
+
+`./cli.py --alias_prefix=HCA_2019-01-07-13-53_ --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
+
+You should get output like:
 ```
 Processing 6 bundles:
 0d172fd7-f5af-4307-805b-3a421cdabd76
@@ -81,7 +87,13 @@ Finding sequencingExperiment entities in bundle...
 Finding sequencingRun entities in bundle...
 1
 ...
-Entities to be converted: {}
+Entities to be converted: {
+    "project": 1,
+    "study": 1,
+    "sample": 19,
+    "sequencingExperiment": 6,
+    "sequencingRun": 6
+}
 Saving Report file...
 Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/REPORT.json!
 ##################### FILE ARCHIVER NOTIFICATION
