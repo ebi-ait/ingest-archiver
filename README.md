@@ -33,18 +33,21 @@ $ export AAP_API_PASSWORD=password
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 
 # https://submission-dev-ebi.ac.uk - USI test archiving. This only gets wiped every 24 hours so if you
-# want to eep testing you may have to do so with a different dataset.
+# want to keep testing you may have to do so with a different dataset.
 # https://submission.ebi.ac.uk - USI production archiving.
 $ export USI_API_URL=https://submission-dev.ebi.ac.uk
+# $ export USI_API_URL=https://submission.ebi.ac.uk
 
 # Optional variables
-# If archiving to test you can keep this as the default subs.test-team-21. Otherwise you will need to
+# If archiving to test you can keep this as subs.test-team-21. Otherwise you will need to
 # set this to subs.team-2 as below.
-$ export AAP_API_DOMAIN=subs.team-2
+$ export AAP_API_DOMAIN=subs.team-21
+# $ export AAP_API_DOMAIN=subs.team-2
 
-# If archiving to test you can keep this as the default https://explore.api.aai.ebi.ac.uk/auth
-# Otherwise you will need to set it to https://api.aai.ebi.ac.uk/auth as below.
-$ export AAP_API_URL=https://api.aai.ebi.ac.uk/auth
+# If archiving to test you can keep this as https://explore.api.aai.ebi.ac.uk/auth
+# Otherwise you will need to set it to https://api.aai.ebi.ac.uk/auth
+$ export AAP_API_URL=https://explore.api.aai.ebi.ac.uk/auth
+# $ export AAP_API_URL=https://api.aai.ebi.ac.uk/auth
 
 # VALIDATION_POLL_FOREVER and SUBMISSION_POLL_FOREVER control whether this script keeps checking for 
 # successful validation then submission through the USI once it has completed the metadata archiving
