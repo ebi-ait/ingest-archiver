@@ -132,7 +132,6 @@ The submission uuid can be found either in the output of the initial metadata ar
 or in the `REPORT.json` in the `submission-url` field (there will be several). For example,
 
 `"submission_url": "https://submission-dev.ebi.ac.uk/api/submissions/b729f228-d587-440c-ae5b-d0c1f34b8766"`
-USI SUBMISSION: https://submission-dev.ebi.ac.uk/api/submissions/b729f228-d587-440c-ae5b-d0c1f34b8766
 
 On success you will get the message `SUCCESSFULLY SUBMITTED`.
 
