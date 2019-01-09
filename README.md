@@ -113,11 +113,17 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.js
 
 8. Run the file uploader with this command (this is for test, for production you would need to replace the `-l` switch with `-l=https://api.aai.ebi.ac.uk/auth`
 
-`singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest`
+`bsub 'singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest'`
 
-This will now take a very long time to run if you have a large dataset where data needs format conversion. You can see the progress of your job with the command
+This will now take a very long time to run if you have a large dataset where data needs format conversion. The job may also remain in pending if the cluster is busy. You can whether you're job is running in the cluster with the command
 
 `bjobs -W`
+
+Here are some further useful links about using the cluster and associated commands.
+
+https://sysinf.ebi.ac.uk/doku.php?id=sysinf_computing
+https://sysinf.ebi.ac.uk/doku.php?id=ebi_cluster_good_computing_guide
+https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
 
 Once the data upload has finished or failed the cluster will send you an e-mail.
 
