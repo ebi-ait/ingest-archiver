@@ -153,11 +153,6 @@ python -m unittest discover -s tests -t tests
 
 ```
 
-# Deployment
-See https://github.com/HumanCellAtlas/ingest-kube-deployment.
-
-An AAP username and password is also needed to use the USI API and must be set in the config.py or as environment variable.
-
 # Versioning
 
 For the versions available, see the [tags on this repository](https://github.com/HumanCellAtlas/ingest-archiver/tags).
