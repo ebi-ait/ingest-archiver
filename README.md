@@ -48,24 +48,20 @@ $ export AAP_API_DOMAIN=subs.team-21
 $ export AAP_API_URL=https://explore.api.aai.ebi.ac.uk/auth
 # $ export AAP_API_URL=https://api.aai.ebi.ac.uk/auth
 
-# VALIDATION_POLL_FOREVER and SUBMISSION_POLL_FOREVER control whether this script keeps checking for 
-# successful validation then submission through the USI once it has completed the metadata archiving
-# part. If these aren't set to TRUE or you stop the script before validation/submission has 
-# completed, then you can always run the script again later, at which point it will jump back to 
-# validation/submission polling rather than trying to archive metadata again. 
-# Default for these parameters is FALSE.
-$ export VALIDATION_POLL_FOREVER=TRUE
-$ export SUBMISSION_POLL_FOREVER=TRUE
 ```
 
 4. Run the metadata archiver
 `./cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
 
+Add `--submit` flag to let the script running while the files are being uploaded. Please note that file uploading might take long.
+
+`./cli.py --project_uuid="2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb" --submit`
+
 Note, if you are doing this in debug on anything other than the first time then you will need to add a custom 'alias' prefix. An alias is a technical artifact that USI uses to identify an entity for local linking purposes. However, even in test USI these are permanent, so subsequent attempts to test the same data set, even if they come from different projects, will need a unique alias.
 
 This alias prefix can be anything though you may want to stick with something along the lines of HCA_2019-01-07_
-
 `./cli.py --alias_prefix=HCA_2019-01-07-13-53_ --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
+
 
 You should get output like:
 ```
