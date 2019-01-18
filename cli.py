@@ -36,6 +36,7 @@ def save_dict_to_file(output_dir, filename, obj):
 
     with open(directory + "/" + filename + ".json", "w") as outfile:
         json.dump(obj, outfile, indent=4)
+        outfile.close()
 
     print(f"Saved to {directory}/{filename}.json!")
 
@@ -72,8 +73,9 @@ if __name__ == '__main__':
     parser.add_option("-f", "--bundle_list_file", help="Path to file containing list of bundle uuid's")
     parser.add_option("-o", "--output_dir", help="Output dir name")
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
-    parser.add_option("-s", "--submission_url", help="USI Submission url to complete")
+    parser.add_option("-u", "--submission_url", help="USI Submission url to complete")
     parser.add_option("-p", "--project_uuid", help="Project UUID")
+    parser.add_option("-s", "--submit", help="Add this flag to wait for entities submit to archives once valid", action="store_true", default=False)
 
     (options, args) = parser.parse_args()
 
@@ -109,14 +111,16 @@ if __name__ == '__main__':
         print(f'\nEntities to be converted: {json.dumps(summary, indent=4)}')
         archive_submission = archiver.archive_metadata(entity_map)
         all_messages = archiver.notify_file_archiver(archive_submission)
-        archive_submission.validate()
-
-        report = archive_submission.generate_report()
-        print("Saving Report file...")
-        save_dict_to_file(output_dir, f'REPORT', report)
-
-        archive_submission.validate()
 
         print(f'##################### FILE ARCHIVER NOTIFICATION')
         filename = f"FILE_UPLOAD_INFO"
         save_dict_to_file(output_dir, filename, {"jobs": all_messages})
+
+        if options.submit:
+            archive_submission.validate_and_submit()
+        else:
+            archive_submission.validate()
+
+        report = archive_submission.generate_report()
+        print("Saving Report file...")
+        save_dict_to_file(output_dir, f'REPORT', report)

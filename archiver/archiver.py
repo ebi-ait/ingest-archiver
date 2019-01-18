@@ -290,6 +290,9 @@ class ArchiveSubmission:
             })
             return self
 
+        self.submit()
+
+    def submit(self):
         self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
 
         try:
@@ -387,12 +390,6 @@ class ArchiveSubmission:
 
     def is_validated_and_submittable(self):
         return self.is_validated(self.usi_submission) and self.is_submittable(self.usi_submission)
-
-    def submit(self):
-        if self.is_validated_and_submittable(self.usi_submission):
-            return self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
-
-        return None
 
     def is_processing_complete(self):
         results = self.usi_api.get_processing_results(self.usi_submission)
