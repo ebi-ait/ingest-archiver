@@ -127,7 +127,7 @@ https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
 
 Once the data upload has finished or failed the cluster will send you an e-mail.
 
-9. If the metadata archiver is still running, wait for that to report success. Or if it isn't or you stopped it, run it with this command to validate and submit the archive entries.
+9. If the metadata archiver is still running because you set the `VALIDATION_POLL_FOREVER` and `SUBMISSION_POLL_FOREVER` switches above then wait for that to report success. If it isn't or you stopped it, run it with this switch to validate and submit the archive entries.
 
 `./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
 
@@ -139,7 +139,7 @@ or in the `REPORT.json` in the `submission-url` field (there will be several). F
 
 `"submission_url": "https://submission-dev.ebi.ac.uk/api/submissions/b729f228-d587-440c-ae5b-d0c1f34b8766"`
 
-On success you will get the message `SUCCESSFULLY SUBMITTED`.
+On success you will get the message `SUCCESSFULLY SUBMITTED`. You're done!
 
 ## Running the data uploader outside of singularity.
 For test purposes you can run the data uploader outside of singularity with the command
