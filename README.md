@@ -113,6 +113,8 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.js
 
 8. Run the file uploader with this command (this is for test, for production you would need to replace the `-l` switch with `-l=https://api.aai.ebi.ac.uk/auth`
 
+If the job fails during bundle download simply re-run the above command
+
 `bsub 'singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest'`
 
 This will now take a very long time to run if you have a large dataset where data needs format conversion. The job may also remain in pending if the cluster is busy. You can check whether your job is running in the cluster with the command
