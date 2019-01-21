@@ -94,7 +94,47 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.js
 ```
 
 ## Step 5 - Inspect REPORT.json ##
-In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>` containing two files, `REPORT.json` and `FILE_UPLOAD_INFO.json`. Inspect `REPORT.json` for errors.
+In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>` containing two files, `REPORT.json` and `FILE_UPLOAD_INFO.json`. Inspect `REPORT.json` for errors. If there are any data files to upload you will always see FileReference usi_validation_errors in the submission_errors field. These you can ignore - we will upload the files in the following steps. For example: 
+
+```
+    "completed": false,
+    "submission_errors": [
+        {
+            "error_message": "Failed in USI validation.",
+            "details": {
+                "usi_validation_errors": [
+                    {
+                        "FileReference": [
+                            "The file [306982e4-5a13-4938-b759-3feaa7d44a73.bam] referenced in the metadata is not exists on the file storage area."
+                        ]
+                    },
+                    {
+                        "FileReference": [
+                            "The file [988de423-1543-4a84-be9a-dd81f5feecff.bam] referenced in the metadata is not exists on the file storage area."
+                        ]
+                    },
+                    {
+                        "FileReference": [
+                            "The file [fd226091-9a8f-44a8-b49e-257fffa2b931.bam] referenced in the metadata is not exists on the file storage area."
+                        ]
+                    }
+                ]
+            }
+        }
+    ],
+```
+
+If you see problems in the entities added to the submission with non-empty errors and warnings fields then please report. This is a small snippet showing a successful entity addition:
+
+```
+    "entities": {
+        "HCA_2019-01-07-13-53__project_2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb": {
+            "errors": [], 
+            "accession": null,
+            "warnings": [], 
+            "entity_url": "https://submission-dev.ebi.ac.uk/api/projects/c26466cd-9551-46c9-b760-72e05cfc51ac"
+        },
+```
 
 ## Step 6 - Copy FILE_UPLOAD_INFO.json to cluster ###
 `FILE_UPLOAD_INFO.json` contains the instructions necessary for the file uploader to convert and upload submission data to the USI. Copy this file to the HCA NFS namespace via the cluster. For this step you must be connected to the EBI internal network. This commmand will require your EBI password.
