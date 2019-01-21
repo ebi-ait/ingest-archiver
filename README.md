@@ -122,7 +122,7 @@ Here are some further useful links about using the cluster and associated comman
 
 Once the data upload has finished or failed the cluster will send you an e-mail.
 
-9. If the metadata archiver is still running because you set `--submit` flag above then wait for that to report success. If it isn't or you stopped it, run it with this switch to validate and submit the archive entries.
+9. Finally run the metadata archiver again to validate and submit the archive entries.
 
 `./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
 
