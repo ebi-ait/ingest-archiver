@@ -137,22 +137,44 @@ If you see problems in the entities added to the submission with non-empty error
 ```
 
 ## Step 6 - Copy FILE_UPLOAD_INFO.json to cluster ###
-`FILE_UPLOAD_INFO.json` contains the instructions necessary for the file uploader to convert and upload submission data to the USI. Copy this file to the HCA NFS namespace via the cluster. For this step you must be connected to the EBI internal network. This commmand will require your EBI password.
+`FILE_UPLOAD_INFO.json` contains the instructions necessary for the file uploader to convert and upload submission data to the USI. You need to copy this file to HCA NFS directory accessible by the cluster. However, you also need to give it a unique name so that it doesn't clash with any existing JSON files.
 
-```scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca```
+Therefore, prepend something to the filename to make it unique. This can be anything but we suggest your username and the dataset. For example `mfreeberg_rsatija_FILE_UPLOAD_INFO.json`
+
+You will copy the file using the secure copy (`scp`) command. This will need your EBI password and is equivalent to copying a file through ssh. For example
+
+```scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca/mfreeberg_rsatija_FILE_UPLOAD_INFO.json```
 
 ## Step 7 - Login to cluster ##
 Login to EBI CLI to access the cluster with your EBI password
 `ssh ebi-cli.ebi.ac.uk`
 
 ## Step 8 - Run the file uploader ##
-Run the file uploader with the bsub command below (this is for test, for production you would need to replace the `-l` switch with `-l=https://api.aai.ebi.ac.uk/auth`
+Run the file uploader with the bsub command below. We will explain more about the components below.
 
-`bsub 'singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest'`
+`bsub 'singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/mfreeberg_rsatija_FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest'`
 
-This will now take a very long time to run if you have a large dataset where data needs format conversion. The job may also remain in pending if the cluster is busy. You can check whether your job is running in the cluster with the command
+* `bsub` - the command for submitting a job to the cluster
+* `singularity` - the cluster runs jobs using Singularity containers.
+* `B /nfs/production/hca:/data` - this binds the `/nfs/production/hca` directory to `/data` inside the container.
+* `docker://quay.io/humancellatlas/ingest-file-archiver` - Singularity can run Docker images directly. This is the image for the file uploader.
+* `-d=/data` - workspace used to store downloaded files, metadata and conversions.
+* `-f=/data/mfreeberg_rsatija_FILE_UPLOAD_INFO.json` - the location of the `FILE_UPLOAD_INFO.json` you copied in a previous step.
+* `-l=https://explore.api.aai.ebi.ac.uk/auth` - The AAP API url, same as the AAP_API_URL environmental variable. As above, this will need to be `-l=https://api.aai.ebi.ac.uk/auth` instead if you are submitting to production USI.
+* `-p=<ebi-aap-password>` - Test or production USI AAP password as used previously
+* `-u=hca-ingest` - The USI user to use. This will always be hca-ingest right now.
+
+On submitting you will see a response along the lines
+
+`Job <894044> is submitted to default queue <research-rh7>.`
+
+This shows that the job has been submitted to the cluster. To see the status of the job run
 
 `bjobs -W`
+
+The job should be reported as running but may also be pending if the cluster is busy.
+
+Once the job is running processing may take a long time, many days in the case where a dataset has many data file conversions to perform. It will continue running after you logout and on completion or failure will e-mail you with the results. 
 
 If the job fails during bundle download simply re-run the command.
 
@@ -160,8 +182,6 @@ Here are some further useful links about using the cluster and associated comman
 
 * https://sysinf.ebi.ac.uk/doku.php?id=ebi_cluster_good_computing_guide
 * https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
-
-Once the data upload has finished or failed the cluster will send you an e-mail.
 
 ## Step 9 - Validate submission and submit ##
 To do this you need to run the metadata archiver again on your local machine as you did earlier.
