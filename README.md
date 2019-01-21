@@ -26,29 +26,29 @@ This component is currently invoked manually after an HCA submission.
 3. Set environment variables
 ```
 # Required variables
-# If you don’t know the EBI Authentication and Authorization Profile (AAP) password we’re using for 
-# archiving please ask an ingest dev or another EBI wrangler. This password will be different
-# depending on whether you're upload to test archives through USI or production ones.
-$ export AAP_API_PASSWORD=password
+# The location from which to pull metadata for submission. This is currently always the ingest production environment.
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 
-# https://submission-dev-ebi.ac.uk - USI test archiving. This only gets wiped every 24 hours so if you
-# want to keep testing you may have to do so with a different dataset.
-# https://submission.ebi.ac.uk - USI production archiving.
+# The USI service to use for the submission. Choose between test and production
+# TEST - https://submission-dev-ebi.ac.uk
+# PROD - https://submission.ebi.ac.uk
 $ export USI_API_URL=https://submission-dev.ebi.ac.uk
-# $ export USI_API_URL=https://submission.ebi.ac.uk
 
-# Optional variables
-# If archiving to test you can keep this as subs.test-team-21. Otherwise you will need to
-# set this to subs.team-2 as below.
-$ export AAP_API_DOMAIN=subs.team-21
-# $ export AAP_API_DOMAIN=subs.team-2
-
-# If archiving to test you can keep this as https://explore.api.aai.ebi.ac.uk/auth
-# Otherwise you will need to set it to https://api.aai.ebi.ac.uk/auth
+# The USI uses an EBI Authentication and Authorization Profile (AAP) account.
+# There are separate ones for test and production.
+# First we need to specify the AAP URL.
+# TEST - https://explore.api.aai.ebi.ac.uk/auth
+# PROD - https://api.aai.ebi.ac.uk/auth
 $ export AAP_API_URL=https://explore.api.aai.ebi.ac.uk/auth
-# $ export AAP_API_URL=https://api.aai.ebi.ac.uk/auth
 
+# Second we need to specify different AAP domains for test and production
+# TEST - subs.test-team-21
+# PROD - subs.team-2
+$ export AAP_API_DOMAIN=subs.test-team-21
+
+# Lastly we need to specify the password. It will be different for test and production services.
+# If you don't know them then please ask an ingest dev or another EBI wrangler.
+$ export AAP_API_PASSWORD=password
 ```
 
 4. Run the metadata archiver
