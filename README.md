@@ -26,7 +26,8 @@ This component is currently invoked manually after an HCA submission.
 3. Set environment variables
 ```
 # Required variables
-# The location from which to pull metadata for submission. This is currently always the ingest production environment.
+# The location from which to pull metadata for submission. This is currently always the ingest production 
+# environment.
 $ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
 
 # The USI service to use for the submission. Choose between test and production
