@@ -104,7 +104,7 @@ Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.js
 7. Login to EBI CLI with your EBI password
 `ssh ebi-cli.ebi.ac.uk`
 
-8. Run the file uploader with this command (this is for test, for production you would need to replace the `-l` switch with `-l=https://api.aai.ebi.ac.uk/auth`
+8. Run the file uploader with the bsub command below (this is for test, for production you would need to replace the `-l` switch with `-l=https://api.aai.ebi.ac.uk/auth`
 
 `bsub 'singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest'`
 
