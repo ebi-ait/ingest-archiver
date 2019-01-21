@@ -52,13 +52,9 @@ $ export AAP_API_PASSWORD=password
 ```
 
 4. Run the metadata archiver
-`./cli.py --project_uuid=5f256182-5dfc-4070-8404-f6fa71d37c73
+`./cli.py --alias_prefix=HCA_2019-01-07 --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
 
-Note, if you are doing this in debug on anything other than the first time then you will need to add a custom 'alias' prefix. An alias is a technical artifact that USI uses to identify an entity for local linking purposes. However, even in test USI these are permanent, so subsequent attempts to test the same data set, even if they come from different projects, will need a unique alias.
-
-This alias prefix can be anything though you may want to stick with something along the lines of HCA_2019-01-07_
-`./cli.py --alias_prefix=HCA_2019-01-07-13-53 --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
-
+The --alias-prefix above is something the USI users to identify entities for linking purposes. It is not related to HCA data and will not appear in the submission itself. However it needs to be unique for each submission. In principle it could be anything but we suggest that you stick with something along the lines of `--alias_prefix=HCA_YYYY-MM-DD`, e.g. `--alias_prefix=HCA_2019-01-07`
 
 You should get output like:
 ```
