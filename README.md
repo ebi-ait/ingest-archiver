@@ -116,9 +116,9 @@ If the job fails during bundle download simply re-run the command.
 
 Here are some further useful links about using the cluster and associated commands.
 
-https://sysinf.ebi.ac.uk/doku.php?id=sysinf_computing
-https://sysinf.ebi.ac.uk/doku.php?id=ebi_cluster_good_computing_guide
-https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
+* https://sysinf.ebi.ac.uk/doku.php?id=sysinf_computing
+* https://sysinf.ebi.ac.uk/doku.php?id=ebi_cluster_good_computing_guide
+* https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
 
 Once the data upload has finished or failed the cluster will send you an e-mail.
 
