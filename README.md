@@ -125,7 +125,7 @@ https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
 
 Once the data upload has finished or failed the cluster will send you an e-mail.
 
-9. If the metadata archiver is still running because you set the `VALIDATION_POLL_FOREVER` and `SUBMISSION_POLL_FOREVER` switches above then wait for that to report success. If it isn't or you stopped it, run it with this switch to validate and submit the archive entries.
+9. If the metadata archiver is still running because you set `--submit` flag above then wait for that to report success. If it isn't or you stopped it, run it with this switch to validate and submit the archive entries.
 
 `./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
 
