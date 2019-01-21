@@ -52,11 +52,7 @@ $ export AAP_API_URL=https://explore.api.aai.ebi.ac.uk/auth
 ```
 
 4. Run the metadata archiver
-`./cli.py --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
-
-Add `--submit` flag to let the script running while the files are being uploaded. Please note that file uploading might take long.
-
-`./cli.py --project_uuid="2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb" --submit`
+`./cli.py --project_uuid=5f256182-5dfc-4070-8404-f6fa71d37c73
 
 Note, if you are doing this in debug on anything other than the first time then you will need to add a custom 'alias' prefix. An alias is a technical artifact that USI uses to identify an entity for local linking purposes. However, even in test USI these are permanent, so subsequent attempts to test the same data set, even if they come from different projects, will need a unique alias.
 
