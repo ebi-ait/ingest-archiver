@@ -198,7 +198,7 @@ If you see any `WARNING` or `ERROR` messages please re-run the singularity comma
 ## Step 10 - Validate submission and submit ##
 To do this you need to run the metadata archiver again on your local machine as you did earlier.
 
-`./cli.py --submission_url="https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>"`
+`./cli.py --submission_url=https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>`
 
 You can get the submission UUID from either the output of the initial metadata archiver run, e.g.
 
