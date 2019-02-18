@@ -175,6 +175,10 @@ This shows that the job has been submitted to the cluster. To see the status of 
 
 The job should be reported as running but may also be pending if the cluster is busy.
 
+If you want to see the job's current stdout/stderr then run the [bpeek command](https://www.ibm.com/support/knowledgecenter/en/SSETD4_9.1.3/lsf_command_ref/bpeek.1.html)
+
+`bpeek <job-id>`
+
 Once the job is running processing may take a long time, many days in the case where a dataset has many data file conversions to perform. It will continue running after you logout and on completion or failure will e-mail you with the results. Wait until you receive this e-mail before proceeding with the next step.
 
 Here are some further useful links about using the cluster and associated commands.
