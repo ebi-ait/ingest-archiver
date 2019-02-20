@@ -266,6 +266,8 @@ class ArchiveSubmission:
         if not self.usi_submission:
             return self
 
+        print("Waiting for the submission to be validated in USI...")
+
         is_validated = False
         try:
             is_validated = polling.poll(
@@ -294,6 +296,8 @@ class ArchiveSubmission:
 
     def submit(self):
         self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
+
+        print("USI Submission is submitted! Waiting for the submission result. Please do not submit again.")
 
         try:
             self.is_completed = polling.poll(
