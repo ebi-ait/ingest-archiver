@@ -42,7 +42,7 @@ class IngestAPI:
 
         self.session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
-        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
 
     def get_related_entity(self, entity, relation, related_entity_type):
         related_entity_url = entity['_links'][relation]['href']
