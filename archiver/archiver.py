@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 
 import polling as polling
 
@@ -206,7 +207,7 @@ class AssayBundle:
 
 
 class ArchiveSubmission:
-    def __init__(self, usi_api):
+    def __init__(self, usi_api, usi_submission_url=None):
         self.usi_submission = {}
         self.errors = list()
         self.processing_result = list()
@@ -217,6 +218,18 @@ class ArchiveSubmission:
         self.usi_api = usi_api
         self.file_upload_info = list()
         self.accession_map = None
+        self.invalid = False
+        self.status = None
+
+        if usi_submission_url:
+            self.usi_submission = self.usi_api.get_submission(usi_submission_url)
+            self.status = self.get_status()
+
+    def get_status(self):
+        get_status_url = self.usi_submission['_links']['submissionStatus']['href']
+        submission_status = self.usi_api.get_submission_status(get_status_url)
+        state = submission_status.get('status')
+        return state
 
     def __str__(self):
         return str(vars(self))
@@ -249,11 +262,11 @@ class ArchiveSubmission:
                 "error_message": "USI validation takes too long to complete.",
             })
 
-        if is_validated and not self.is_submittable():
+        if is_validated and self.get_all_validation_errors():
             validation_summary = self.get_all_validation_result_details()
             self.errors.append({
                 "error_message": "Failed in USI validation.",
-                "details": {
+                "details"      : {
                     "usi_validation_errors": self.get_all_validation_errors()
                 }
             })
@@ -281,7 +294,7 @@ class ArchiveSubmission:
                 "error_message": "USI validation takes too long to complete.",
             })
 
-        if is_validated and not self.is_submittable():
+        if is_validated and self.get_all_validation_errors():
             validation_summary = self.get_all_validation_result_details()
             self.validation_result = validation_summary
             self.errors.append({
@@ -290,9 +303,12 @@ class ArchiveSubmission:
                     "usi_validation_errors": self.get_all_validation_errors()
                 }
             })
-            return self
+            self.invalid = True
 
-        self.submit()
+        if self.is_submittable():
+            self.submit()
+
+        return self
 
     def submit(self):
         self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
@@ -306,20 +322,29 @@ class ArchiveSubmission:
                 timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
                 poll_forever=True if config.SUBMISSION_POLL_FOREVER else False
             )
-            self.processing_result = self.get_processing_results()
 
-            accession_map = {}
-            for result in self.processing_result:
-                if result['status'] == 'Completed':
-                    alias = result['alias']
-                    accession = result['accession']
-                    accession_map[alias] = accession
-            self.accession_map = accession_map
+            self.process_result()
 
         except polling.TimeoutException:
             self.errors.append({
                 "error_message": "USI submission takes too long to complete.",
             })
+
+    def process_result(self):
+        self.processing_result = self.get_processing_results()
+        accession_map = {}
+        for result in self.processing_result:
+            if result['status'] == 'Completed':
+                alias = result['alias']
+                accession = result['accession']
+                accession_map[alias] = accession
+            elif result['status'] == 'Error':
+                self.errors.append(f"There was an error submitting a "
+                                   f"{result.get('submittableType','') } with alias {result.get('alias','')} to "
+                                   f"{result.get('archive','')}.")
+        self.accession_map = accession_map
+
+        return self
 
     def is_ready_to_submit(self):
         is_validated = self.is_validated()
@@ -398,7 +423,7 @@ class ArchiveSubmission:
     def is_processing_complete(self):
         results = self.usi_api.get_processing_results(self.usi_submission)
         for result in results:
-            if result['status'] != "Completed":
+            if result['status'] != "Completed" and result['status'] != "Error":
                 return False
 
         return True
@@ -488,10 +513,15 @@ class IngestArchiver:
 
         return archive_submission
 
-    def validate_and_complete_submission(self, usi_submission_url):
-        archive_submission = ArchiveSubmission(usi_api=self.usi_api)
-        archive_submission.usi_submission = self.usi_api.get_submission(usi_submission_url)
-        archive_submission.validate_and_submit()
+    def complete_submission(self, usi_submission_url):
+        archive_submission = ArchiveSubmission(usi_api=self.usi_api, usi_submission_url=usi_submission_url)
+
+        if archive_submission.status == 'Draft':
+            archive_submission.validate_and_submit()
+        elif archive_submission.status == 'Completed':
+            archive_submission.is_completed = True
+            archive_submission.process_result()
+
         return archive_submission
 
     def get_assay_bundle(self, bundle_uuid):

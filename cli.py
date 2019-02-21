@@ -69,13 +69,27 @@ if __name__ == '__main__':
     logging.basicConfig(format=format, stream=sys.stdout, level=logging.INFO)
 
     parser = OptionParser()
-    parser.add_option("-e", "--exclude_types", help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
-    parser.add_option("-f", "--bundle_list_file", help="Path to file containing list of bundle uuid's")
-    parser.add_option("-o", "--output_dir", help="Output dir name")
-    parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
-    parser.add_option("-u", "--submission_url", help="USI Submission url to complete")
+
+    # required
     parser.add_option("-p", "--project_uuid", help="Project UUID")
-    parser.add_option("-s", "--submit", help="Add this flag to wait for entities submit to archives once valid", action="store_true", default=False)
+
+    # submit only
+    parser.add_option("-u", "--submission_url",
+                      help="USI Submission url to complete")
+
+    # options helpful for testing
+    parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
+    parser.add_option("-x", "--exclude_types",
+                      help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
+    parser.add_option("-f", "--bundle_list_file",
+                      help="Specify a path to a file containing list of bundle uuid's to be archived."
+                           "If project uuid is already specified then this parameter will be ignored.")
+
+    # preferences
+    parser.add_option("-s", "--submit",
+                      help="Add this flag to wait for entities submit to archives once valid",
+                      action="store_true", default=False)
+    parser.add_option("-o", "--output_dir", help="Customise output directory name")
 
     (options, args) = parser.parse_args()
 
@@ -95,7 +109,7 @@ if __name__ == '__main__':
 
     if options.submission_url:
         print(f'##################### COMPLETING USI SUBMISSION {options.submission_url}')
-        archive_submission = archiver.validate_and_complete_submission(options.submission_url)
+        archive_submission = archiver.complete_submission(options.submission_url)
         report = archive_submission.generate_report()
         submission_uuid = options.submission_url.rsplit('/', 1)[-1]
         save_dict_to_file(output_dir, f'COMPLETE_SUBMISSION_{submission_uuid}', report)

@@ -146,7 +146,7 @@ class TestIngestArchiver(unittest.TestCase):
         archive_submission = self.archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
-        archive_submission = self.archiver.validate_and_complete_submission(usi_submission_url=url)
+        archive_submission = self.archiver.complete_submission(usi_submission_url=url)
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.accession_map)
 
