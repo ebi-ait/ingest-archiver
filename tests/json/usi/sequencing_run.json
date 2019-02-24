@@ -3,6 +3,9 @@
         "alias": "{assayAlias.placeholder}"
     },
     "attributes": {
+        "HCA ID":[{
+          "value": ""
+        }],
         "files__0__file_core__file_format": [{
             "value": "fastq.gz"
         }],

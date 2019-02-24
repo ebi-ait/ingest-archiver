@@ -2,6 +2,9 @@
   "alias": "hca339",
   "description": "Description",
   "attributes": {
+    "HCA ID":[{
+          "value": ""
+    }],
     "biomaterial__biomaterial_core__biomaterial_id": [{
         "value": "Q4_DEMO-donor_MGH30"
     }],

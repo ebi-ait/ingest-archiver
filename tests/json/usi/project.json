@@ -1,6 +1,9 @@
 {
   "alias": "study_hca592",
   "attributes": {
+      "HCA ID":[{
+          "value": "study_hca592"
+      }],
       "project__contributors__0__contact_name": [{
           "value": "Q4_DEMO-MintTeam"
       }],

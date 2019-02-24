@@ -58,7 +58,7 @@ class Converter:
         return flattened
 
     def _extract_fields(self, flattened_hca_data):
-        extracted_data = {"attributes": self._extract_attributes(flattened_hca_data)}
+        extracted_data = {}
 
         for key, new_key in self.field_mapping.items():
             if key in flattened_hca_data:
@@ -66,6 +66,8 @@ class Converter:
             else:
                 extracted_data[new_key] = ""
 
+        extracted_data["attributes"] = self._extract_attributes(flattened_hca_data)
+        extracted_data["attributes"]["HCA ID"] = [dict(value=extracted_data["alias"])]
         return extracted_data
 
     def _extract_attributes(self, flattened_hca_data):
@@ -80,10 +82,10 @@ class Converter:
                     "terms": []
                 }
                 attributes[attr['name']] = [dict(value=value)]
+
         return attributes
 
     def _build_output(self, extracted_data):
-
         return extracted_data
 
 
