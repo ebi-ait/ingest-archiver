@@ -2,6 +2,7 @@ import unittest
 import os
 import json
 import config
+from archiver.ingestapi import IngestAPI
 
 from archiver.usiapi import USIAPI, AAPTokenClient
 from archiver.converter import SampleConverter
@@ -20,6 +21,7 @@ class TestUSIAPI(unittest.TestCase):
 
         self.hca_submission = {'samples': hca_samples}
         self.converter = SampleConverter()
+        self.converter.ingest_api = IngestAPI()
         pass
 
     def test_get_token_given_valid_credentials_return_token(self):
