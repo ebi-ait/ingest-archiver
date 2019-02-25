@@ -1,7 +1,10 @@
 import logging
 import re
+import requests
 
 from flatten_json import flatten
+
+from archiver.ingestapi import IngestAPI
 
 """
 HCA to USI JSON Mapping
@@ -19,12 +22,13 @@ class Converter:
         self.alias_prefix = ''
         self.exclude_data = []
         self.exclude_fields_match = ['__schema_type', '__describedBy']
+        self.ingest_api = None
 
     def convert(self, hca_data):
         try:
             flattened_hca_data = self._flatten(hca_data)
             extracted_data = self._extract_fields(flattened_hca_data)
-            converted_data = self._build_output(extracted_data, flattened_hca_data)
+            converted_data = self._build_output(extracted_data, flattened_hca_data, hca_data=hca_data)
             extracted_data["alias"] = f'{self.alias_prefix}{extracted_data["alias"]}'
 
         except KeyError as e:
@@ -68,6 +72,7 @@ class Converter:
 
         extracted_data["attributes"] = self._extract_attributes(flattened_hca_data)
         extracted_data["attributes"]["HCA ID"] = [dict(value=extracted_data["alias"])]
+
         return extracted_data
 
     def _extract_attributes(self, flattened_hca_data):
@@ -85,7 +90,7 @@ class Converter:
 
         return attributes
 
-    def _build_output(self, extracted_data):
+    def _build_output(self, extracted_data, flattened_hca_data=None, hca_data=None):
         return extracted_data
 
 
@@ -109,7 +114,8 @@ class SampleConverter(Converter):
             "10090": "Mus musculus"
         }
 
-    def _build_output(self, extracted_data, flattened_hca_data):
+
+    def _build_output(self, extracted_data, flattened_hca_data, hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         extracted_data["sampleRelationships"] = []
         taxon_id = str(extracted_data.get("taxonId", ''))
@@ -139,7 +145,14 @@ class SampleConverter(Converter):
         if not extracted_data["taxon"]:
             raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
 
+        concrete_type = self._get_concrete_type(hca_data.get('biomaterial'))
+        extracted_data["attributes"]["HCA Biomaterial Type"] = [dict(value=concrete_type)]
+
         return extracted_data
+
+    def _get_concrete_type(self, entity):
+        concrete_type = self.ingest_api.get_concrete_entity_type(entity)
+        return concrete_type
 
 
 class SequencingExperimentConverter(Converter):
@@ -228,7 +241,7 @@ class SequencingExperimentConverter(Converter):
             "sequencing_protocol__content__protocol_core__protocol_description": "description"
         }
 
-    def _build_output(self, extracted_data, flattened_hca_data):
+    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         extracted_data["studyRef"] = {}
         extracted_data["sampleUses"] = []
 
@@ -334,7 +347,7 @@ class SequencingRunConverter(Converter):
 
         return converted_data
 
-    def _build_output(self, extracted_data, flattened_hca_data):
+    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         self._build_links(extracted_data, {})
 
         return extracted_data
@@ -357,7 +370,7 @@ class ProjectConverter(Converter):
         }
         self.alias_prefix = 'project_'
 
-    def _build_output(self, extracted_data, flattened_hca_data):
+    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         # TODO BioStudies minimum length
         title_len = len(extracted_data["title"])
         MIN_LEN = 25
@@ -385,7 +398,7 @@ class StudyConverter(Converter):
         }
         self.alias_prefix = 'study_'
 
-    def _build_output(self, extracted_data, flattened_hca_data):
+    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         if not extracted_data.get("attributes"):
             extracted_data["attributes"] = {}
 

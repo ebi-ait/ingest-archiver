@@ -6,6 +6,7 @@ from random import randint
 
 from archiver.converter import Converter, SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
+from archiver.ingestapi import IngestAPI
 
 
 class TestConverter(unittest.TestCase):
@@ -38,6 +39,7 @@ class TestConverter(unittest.TestCase):
         }
 
         self.maxDiff = None
+        self.ingest_api = IngestAPI()
 
     def test_convert_sample(self):
         biomaterial = self.hca_data.get('biomaterial')
@@ -56,6 +58,7 @@ class TestConverter(unittest.TestCase):
         }
 
         converter = SampleConverter()
+        converter.ingest_api = self.ingest_api
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json )

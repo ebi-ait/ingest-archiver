@@ -2,6 +2,9 @@
   "alias": "hca339",
   "description": "Description",
   "attributes": {
+    "HCA Biomaterial Type":[{
+          "value": "donor_organism"
+    }],
     "HCA ID":[{
           "value": ""
     }],

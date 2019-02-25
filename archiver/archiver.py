@@ -486,6 +486,7 @@ class IngestArchiver:
             "sequencingRun": SequencingRunConverter(),
             "sequencingExperiment": SequencingExperimentConverter()
         }
+        self.converter['sample'].ingest_api = self.ingest_api
 
     def archive(self, entity_map: ArchiveEntityMap):
         archive_submission = self.archive_metadata(entity_map)
