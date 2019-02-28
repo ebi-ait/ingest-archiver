@@ -402,11 +402,10 @@ class ProjectConverter(Converter):
                 "middleInitials": "",
                 "lastName": "",
                 "email": contributor.get("email", ""),
-                "roles": contributor.get("project_role", ""),
                 "address": contributor.get("address", ""),
                 "affiliation": contributor.get("institution", ""),
                 "phone": contributor.get("phone", ""),
-                # "fax": "",
+
             }
             contacts.append(contact)
         extracted_data["contacts"] = contacts
@@ -419,13 +418,7 @@ class ProjectConverter(Converter):
                 "doi": hca_publication.get("doi", ""),
                 "articleTitle": hca_publication.get("publication_title", ""),
                 "journalTitle": hca_publication.get("publication_title", ""),
-                "authors": f"{DELIM}".join(hca_publication.get("authors", [])),
-                # "journalIssn": "",
-                # "issue": "",
-                # "year": "",
-                # "volume": "",
-                # "pageInfo": "",
-                # "status": ""
+                "authors": f"{DELIM}".join(hca_publication.get("authors", []))
             }
             publications.append(publication)
         extracted_data["publications"] = publications
