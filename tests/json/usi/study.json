@@ -7,15 +7,6 @@
     "project__project_core__project_short_name": [{
         "value": "integration/Smart-seq2/2018-10-22T08:01:13Z"
     }],
-    "project__contributors__0__contact_name": [{
-        "value": "Q4_DEMO-MintTeam"
-    }],
-    "project__contributors__0__email": [{
-        "value": "dummy@email.com"
-    }],
-    "project__contributors__0__institution": [{
-        "value": "Fake Institution"
-    }],
     "study_type": [{
         "value": "Transcriptome Analysis"
     }],

@@ -11,7 +11,37 @@
 			"contact_name": "Q4_DEMO-MintTeam",
 			"email": "dummy@email.com",
 			"institution": "Fake Institution"
-		}]
+		}],
+		"publications": [
+			{
+				"authors": [
+					"Vento-Tormo R",
+					"Efremova M",
+					"Botting RA",
+					"Turco MY",
+					"Vento-Tormo M",
+					"Meyer KB",
+					"Park J",
+					"Stephenson E",
+					"Polanski K",
+					"Payne RP",
+					"Goncalves A",
+					"Zou A",
+					"Henriksson J",
+					"Wood L",
+					"Lisgo S",
+					"Filby A",
+					"Wright GJ",
+					"Stubbington MJ",
+					"Haniffa M",
+					"Moffett A",
+					"Teichmann SA"
+				],
+				"publication_title": "Reconstructing the human first trimester fetal-maternal interface using single cell transcriptomics",
+				"doi": "10.1101/429589",
+				"publication_url": "https://www.biorxiv.org/content/early/2018/09/29/429589"
+			}
+		]
 	},
 	"submissionDate": "2018-10-22T08:01:17.060Z",
 	"updateDate": "2018-10-22T08:01:22.513Z",

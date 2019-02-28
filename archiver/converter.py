@@ -369,20 +369,56 @@ class ProjectConverter(Converter):
             "project__submissionDate": "releaseDate"
         }
         self.alias_prefix = 'project_'
+        self.exclude_data = ['contributors', 'publications']
+        self.exclude_fields_match = ['__schema_type', '__describedBy',
+                                     '__contributors', '__publications']
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         # TODO BioStudies minimum length
         title_len = len(extracted_data["title"])
         MIN_LEN = 25
-
+        DELIM = ' | '
         if title_len < MIN_LEN:
             prefix = "HCA project: "
             extracted_data["title"] = prefix + extracted_data["title"]
 
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
-        extracted_data["contacts"] = []
-        extracted_data["publications"] = []
+        contacts = []
+        contributors = hca_data['project']['content'].get('contributors', [])
+        for contributor in contributors:
+            contact = {
+                "orcid": contributor.get("orcid_id", ""),
+                "firstName": contributor.get("contact_name", ""),
+                "middleInitials": "",
+                "lastName": "",
+                "email": contributor.get("email", ""),
+                "roles": contributor.get("project_role", ""),
+                "address": contributor.get("address", ""),
+                "affiliation": contributor.get("institution", ""),
+                "phone": contributor.get("phone", ""),
+                # "fax": "",
+            }
+            contacts.append(contact)
+        extracted_data["contacts"] = contacts
 
+        hca_publications = hca_data['project']['content'].get('publications', [])
+        publications = []
+        for hca_publication in hca_publications:
+            publication = {
+                "pubmedId": hca_publication.get("pmid", ""),
+                "doi": hca_publication.get("doi", ""),
+                "articleTitle": hca_publication.get("publication_title", ""),
+                "journalTitle": hca_publication.get("publication_title", ""),
+                "authors": f"{DELIM}".join(hca_publication.get("authors", [])),
+                # "journalIssn": "",
+                # "issue": "",
+                # "year": "",
+                # "volume": "",
+                # "pageInfo": "",
+                # "status": ""
+            }
+            publications.append(publication)
+        extracted_data["publications"] = publications
         return extracted_data
 
 
@@ -397,6 +433,8 @@ class StudyConverter(Converter):
             "project__content__project_core__project_description": "description"
         }
         self.alias_prefix = 'study_'
+        self.exclude_data = ['contributors', 'publications']
+        self.exclude_fields_match = ['__schema_type', '__describedBy', '__contributors', '__publications']
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         if not extracted_data.get("attributes"):
