@@ -5,7 +5,7 @@
     "HCA Biomaterial Type":[{
           "value": "donor_organism"
     }],
-    "HCA ID":[{
+    "HCA Biomaterial UUID":[{
           "value": ""
     }],
     "biomaterial__biomaterial_core__biomaterial_id": [{

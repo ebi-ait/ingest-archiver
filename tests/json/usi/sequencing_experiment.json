@@ -3,9 +3,6 @@
     "title": "assay name",
     "description": "assay description",
     "attributes": {
-        "HCA ID":[{
-          "value": ""
-        }],
         "input_biomaterial__biomaterial_core__biomaterial_id": [{
             "value": "Q4_DEMO-cellsus_SAMN02797092"
         }],

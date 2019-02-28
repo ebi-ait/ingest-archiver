@@ -51,7 +51,7 @@ class TestConverter(unittest.TestCase):
 
         biomaterial['uuid']['uuid'] = test_alias
         expected_json['alias'] = test_alias
-        expected_json['attributes']['HCA ID'] = [{'value': test_alias}]
+        expected_json['attributes']['HCA Biomaterial UUID'] = [{'value': test_alias}]
 
         input = {
             'biomaterial': biomaterial
@@ -77,7 +77,18 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'usi/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
         expected_json['alias'] = 'sequencingExperiment_' + test_alias
-        expected_json['attributes']['HCA ID'] = [{'value': test_alias}]
+
+        expected_json['attributes'][
+            'HCA Input Biomaterial UUID'] = [
+            {'value': input_biomaterial['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Library Preparation Protocol UUID'] = [
+            {'value': lib_prep_protocol['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Sequencing Protocol UUID'] = [
+            {'value': sequencing_protocol['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
 
         hca_data = {
             'input_biomaterial': input_biomaterial,
@@ -155,7 +166,16 @@ class TestConverter(unittest.TestCase):
         }
 
         expected_json['alias'] = 'sequencingRun_' + test_alias
-        expected_json['attributes']['HCA ID'] = [{'value': test_alias}]
+
+        expected_json['attributes'][
+            'HCA Library Preparation Protocol UUID'] = [{'value': lib_prep_protocol['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Sequencing Protocol UUID'] = [{'value': sequencing_protocol['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
+        expected_json['attributes'][
+            "HCA Files UUID's"] = [
+            {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
 
         converter = SequencingRunConverter()
         actual_json = converter.convert(hca_data)
@@ -186,7 +206,17 @@ class TestConverter(unittest.TestCase):
         }
 
         expected_json['alias'] = 'sequencingRun_' + test_alias
-        expected_json['attributes']['HCA ID'] = [{'value': test_alias}]
+        expected_json['attributes'][
+            'HCA Library Preparation Protocol UUID'] = [
+            {'value': lib_prep_protocol['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Sequencing Protocol UUID'] = [
+            {'value': sequencing_protocol['uuid']['uuid']}]
+        expected_json['attributes'][
+            'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
+        expected_json['attributes'][
+            "HCA Files UUID's"] = [
+            {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
 
         converter = SequencingRunConverter()
         actual_json = converter.convert(hca_data)
@@ -204,7 +234,7 @@ class TestConverter(unittest.TestCase):
 
         hca_data['uuid']['uuid'] = test_alias
         expected_json['alias'] = 'project_' + test_alias
-        expected_json['attributes']['HCA ID'] = [{'value': test_alias}]
+        expected_json['attributes']['HCA Project UUID'] = [{'value': test_alias}]
 
         input = {
             'project': hca_data
@@ -226,7 +256,7 @@ class TestConverter(unittest.TestCase):
 
         hca_data['uuid']['uuid'] = test_alias
         expected_json['alias'] = 'study_' + test_alias
-        expected_json['attributes']['HCA ID'] = [{'value': test_alias}]
+        expected_json['attributes']['HCA Project UUID'] = [{'value': test_alias}]
 
         input = {
             'project': hca_data

@@ -27,7 +27,7 @@ class Converter:
     def convert(self, hca_data):
         try:
             flattened_hca_data = self._flatten(hca_data)
-            extracted_data = self._extract_fields(flattened_hca_data)
+            extracted_data = self._extract_fields(flattened_hca_data, hca_data)
             converted_data = self._build_output(extracted_data, flattened_hca_data, hca_data=hca_data)
             extracted_data["alias"] = f'{self.alias_prefix}{extracted_data["alias"]}'
 
@@ -61,7 +61,7 @@ class Converter:
 
         return flattened
 
-    def _extract_fields(self, flattened_hca_data):
+    def _extract_fields(self, flattened_hca_data, hca_data):
         extracted_data = {}
 
         for key, new_key in self.field_mapping.items():
@@ -71,7 +71,18 @@ class Converter:
                 extracted_data[new_key] = ""
 
         extracted_data["attributes"] = self._extract_attributes(flattened_hca_data)
-        extracted_data["attributes"]["HCA ID"] = [dict(value=extracted_data["alias"])]
+
+        try:
+            for input_key, entity in hca_data.items():
+                if isinstance(entity, dict):
+                    extracted_data["attributes"][f"HCA {input_key.replace('_', ' ').title()} UUID"] = [dict(value=entity["uuid"]["uuid"])]
+                elif isinstance(entity, list):
+                    uuid_list = [e["uuid"]["uuid"] for e in entity]
+                    extracted_data["attributes"][
+                        f"HCA {input_key.replace('_', ' ').title()} UUID's"] = [
+                        dict(value=', '.join(uuid_list))]
+        except Exception as e:
+            bp=0
 
         return extracted_data
 
@@ -113,7 +124,6 @@ class SampleConverter(Converter):
             "9606": "Homo sapiens",
             "10090": "Mus musculus"
         }
-
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]

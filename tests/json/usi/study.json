@@ -1,9 +1,6 @@
 
 {
   "attributes": {
-    "HCA ID":[{
-        "value": ""
-    }],
     "project__project_core__project_short_name": [{
         "value": "integration/Smart-seq2/2018-10-22T08:01:13Z"
     }],
