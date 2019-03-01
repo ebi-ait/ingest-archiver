@@ -457,6 +457,7 @@ class ArchiveSubmission:
             entities[entity.id]['errors'] = entity.errors
             entities[entity.id]['accession'] = entity.accession
             entities[entity.id]['warnings'] = entity.warnings
+            entities[entity.id]['converted_data'] = entity.conversion
 
             if entity.usi_json:
                 entities[entity.id]['entity_url'] = entity.usi_json['_links']['self']['href']
