@@ -417,7 +417,6 @@ class ProjectConverter(Converter):
                 "pubmedId": hca_publication.get("pmid", ""),
                 "doi": hca_publication.get("doi", ""),
                 "articleTitle": hca_publication.get("publication_title", ""),
-                "journalTitle": hca_publication.get("publication_title", ""),
                 "authors": f"{DELIM}".join(hca_publication.get("authors", []))
             }
             publications.append(publication)

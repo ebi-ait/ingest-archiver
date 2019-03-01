@@ -29,7 +29,7 @@ AAP_API_DOMAIN = 'subs.test-team-21'
 AAP_API_DOMAIN = os.environ.get('AAP_API_DOMAIN', AAP_API_DOMAIN)
 
 
-USI_API_URL = os.environ.get('USI_API_URL', 'https://submission-dev.ebi.ac.uk')
+USI_API_URL = os.environ.get('USI_API_URL', 'https://submission-test.ebi.ac.uk')
 
 JSON_DIR = 'tests/json/'
 ENCODING = 'utf-8'
