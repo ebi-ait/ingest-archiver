@@ -1,49 +1,62 @@
 {
-    "assayRefs": {
-        "alias": "{assayAlias.placeholder}"
-    },
-    "attributes": {
-        "files__0__file_core__file_format": [{
-            "value": "fastq.gz"
-        }],
-        "files__0__file_core__file_name": [{
-            "value": "R1.fastq.gz"
-        }],
-        "files__0__lane_index": [{
-            "value": 1
-        }],
-        "files__0__read_index": [{
-            "value": "read1"
-        }],
-        "process__process_core__process_id": [{
-            "value": "sequence_process_file_1"
-        }],
-        "sequencing_protocol__protocol_core__protocol_description": [{
-            "value": "assay description"
-        }],
-        "sequencing_protocol__protocol_core__protocol_name": [{
-            "value": "assay name"
-        }],
-        "sequencing_protocol__instrument_manufacturer_model__text": [{
-            "value": "Illumina HiSeq 2500"
-        }],
-        "sequencing_protocol__paired_end": [{
-            "value": true
-        }],
-        "sequencing_protocol__protocol_core__protocol_id": [{
-            "value": "assay_1"
-        }],
-        "sequencing_protocol__sequencing_approach__ontology": [{
-            "value": "EFO:0008441"
-        }],
-        "sequencing_protocol__sequencing_approach__text": [{
-            "value": "full length single cell RNA sequencing"
-        }]
-    },
-    "description": "",
-    "files": [{
-        "name": "dummy_bundle_uuid.bam",
-        "type": "bam"
-    }],
-    "title": ""
+	"alias": "sequencingRun_process352",
+	"title": "",
+	"description": "",
+	"attributes": {
+		"Sequencing Protocol - Protocol Core - Protocol Id": [{
+			"value": "assay_1"
+		}],
+		"Sequencing Protocol - Protocol Core - Protocol Name": [{
+			"value": "assay name"
+		}],
+		"Sequencing Protocol - Protocol Core - Protocol Description": [{
+			"value": "assay description"
+		}],
+		"Sequencing Protocol - Instrument Manufacturer Model - Text": [{
+			"value": "Illumina HiSeq 2500"
+		}],
+		"Sequencing Protocol - Paired End": [{
+			"value": true
+		}],
+		"Sequencing Protocol - Sequencing Approach - Text": [{
+			"value": "full length single cell RNA sequencing"
+		}],
+		"Sequencing Protocol - Sequencing Approach - Ontology": [{
+			"value": "EFO:0008441"
+		}],
+		"Process - Process Core - Process Id": [{
+			"value": "sequence_process_file_1"
+		}],
+		"Files - 0 - File Core - File Name": [{
+			"value": "R1.fastq.gz"
+		}],
+		"Files - 0 - File Core - File Format": [{
+			"value": "fastq.gz"
+		}],
+		"Files - 0 - Read Index": [{
+			"value": "read1"
+		}],
+		"Files - 0 - Lane Index": [{
+			"value": 1
+		}],
+		"HCA Library Preparation Protocol UUID": [{
+			"value": "e5e709f8-7a14-449b-bae0-03e135e0b21b"
+		}],
+		"HCA Sequencing Protocol UUID": [{
+			"value": "3159d750-036b-44ec-aaef-4c751e27f635"
+		}],
+		"HCA Process UUID": [{
+			"value": "process352"
+		}],
+		"HCA Files UUID's": [{
+			"value": "a7a93430-6bb1-44b5-81ea-cf6443073c8d"
+		}]
+	},
+	"assayRefs": {
+		"alias": "{assayAlias.placeholder}"
+	},
+	"files": [{
+		"name": "dummy_bundle_uuid.bam",
+		"type": "bam"
+	}]
 }

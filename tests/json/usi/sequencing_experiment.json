@@ -3,10 +3,10 @@
     "title": "assay name",
     "description": "assay description",
     "attributes": {
-        "input_biomaterial__biomaterial_core__biomaterial_id": [{
+        "Input Biomaterial - Biomaterial Core - Biomaterial Id": [{
             "value": "Q4_DEMO-cellsus_SAMN02797092"
         }],
-        "input_biomaterial__biomaterial_core__ncbi_taxon_id__0": [{
+        "Input Biomaterial - Biomaterial Core - Ncbi Taxon Id - 0": [{
           "value": 9606
         }],
         "library_strategy": [{
@@ -30,28 +30,28 @@
         "library_name": [{
             "value": "Q4_DEMO-cellsus_SAMN02797092"
         }],
-        "library_preparation_protocol__end_bias": [{
+        "Library Preparation Protocol - End Bias": [{
             "value": "5 prime end bias"
         }],
-        "library_preparation_protocol__input_nucleic_acid_molecule__text": [{
+        "Library Preparation Protocol - Input Nucleic Acid Molecule - Text": [{
             "value": "polyA RNA"
         }],
-        "library_preparation_protocol__library_construction_approach__ontology": [{
+        "Library Preparation Protocol - Library Construction Approach - Ontology": [{
             "value": "EFO:0008931"
         }],
-        "library_preparation_protocol__library_construction_approach__text": [{
+        "Library Preparation Protocol - Library Construction Approach - Text": [{
             "value": "Smart-seq2"
         }],
-        "library_preparation_protocol__nucleic_acid_source": [{
+        "Library Preparation Protocol - Nucleic Acid Source": [{
             "value": "single cell"
         }],
-        "library_preparation_protocol__primer": [{
+        "Library Preparation Protocol - Primer": [{
             "value": "poly-dT"
         }],
-        "library_preparation_protocol__protocol_core__protocol_id": [{
+        "Library Preparation Protocol - Protocol Core - Protocol Id": [{
             "value": "preparation1"
         }],
-        "library_preparation_protocol__strand": [{
+        "Library Preparation Protocol - Strand": [{
             "value": "unstranded"
         }],
         "library_selection": [{
@@ -63,22 +63,22 @@
         "nominal_sdev": [{
             "value": "0"
         }],
-        "process__process_core__process_id": [{
+        "Process - Process Core - Process Id": [{
             "value": "sequence_process_file_1"
         }],
-        "sequencing_protocol__instrument_manufacturer_model__text": [{
+        "Sequencing Protocol - Instrument Manufacturer Model - Text": [{
             "value": "Illumina HiSeq 2500"
         }],
-        "sequencing_protocol__paired_end": [{
+        "Sequencing Protocol - Paired End": [{
             "value": true
         }],
-        "sequencing_protocol__protocol_core__protocol_id": [{
+        "Sequencing Protocol - Protocol Core - Protocol Id": [{
             "value": "assay_1"
         }],
-        "sequencing_protocol__sequencing_approach__ontology": [{
+        "Sequencing Protocol - Sequencing Approach - Ontology": [{
             "value": "EFO:0008441"
         }],
-        "sequencing_protocol__sequencing_approach__text": [{
+        "Sequencing Protocol - Sequencing Approach - Text": [{
             "value": "full length single cell RNA sequencing"
         }]
     },

@@ -29,6 +29,7 @@ class Converter:
             flattened_hca_data = self._flatten(hca_data)
             extracted_data = self._extract_fields(flattened_hca_data, hca_data)
             converted_data = self._build_output(extracted_data, flattened_hca_data, hca_data=hca_data)
+            converted_data = self.rename_attributes(converted_data, hca_data)
             extracted_data["alias"] = f'{self.alias_prefix}{extracted_data["alias"]}'
 
         except KeyError as e:
@@ -72,17 +73,14 @@ class Converter:
 
         extracted_data["attributes"] = self._extract_attributes(flattened_hca_data)
 
-        try:
-            for input_key, entity in hca_data.items():
-                if isinstance(entity, dict):
-                    extracted_data["attributes"][f"HCA {input_key.replace('_', ' ').title()} UUID"] = [dict(value=entity["uuid"]["uuid"])]
-                elif isinstance(entity, list):
-                    uuid_list = [e["uuid"]["uuid"] for e in entity]
-                    extracted_data["attributes"][
-                        f"HCA {input_key.replace('_', ' ').title()} UUID's"] = [
-                        dict(value=', '.join(uuid_list))]
-        except Exception as e:
-            bp=0
+        for input_key, entity in hca_data.items():
+            if isinstance(entity, dict):
+                extracted_data["attributes"][f"HCA {input_key.replace('_', ' ').title()} UUID"] = [dict(value=entity["uuid"]["uuid"])]
+            elif isinstance(entity, list):
+                uuid_list = [e["uuid"]["uuid"] for e in entity]
+                extracted_data["attributes"][
+                    f"HCA {input_key.replace('_', ' ').title()} UUID's"] = [
+                    dict(value=', '.join(uuid_list))]
 
         return extracted_data
 
@@ -92,8 +90,9 @@ class Converter:
 
         for key, value in flattened_hca_data.items():
             if re.search(prefix, key) and key not in self.field_mapping:
+                field = key.replace(prefix, '')
                 attr = {
-                    "name": key.replace(prefix, ""),
+                    "name": field,
                     "value": value,
                     "terms": []
                 }
@@ -103,6 +102,20 @@ class Converter:
 
     def _build_output(self, extracted_data, flattened_hca_data=None, hca_data=None):
         return extracted_data
+
+    def rename_attributes(self, converted_data, hca_data):
+        new_attributes = {}
+        attributes = converted_data.get('attributes')
+
+        for field, value in attributes.items():
+            if '__' in field:
+                new_field = field.replace('__', ' - ')
+                new_field = new_field.replace('_', ' ').title()
+                new_attributes[new_field] = value
+            else:
+                new_attributes[field] = value
+        converted_data['attributes'] = new_attributes
+        return converted_data
 
 
 class SampleConverter(Converter):
@@ -441,7 +454,6 @@ class StudyConverter(Converter):
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         if not extracted_data.get("attributes"):
             extracted_data["attributes"] = {}
-
         extracted_data["attributes"]["study_type"] = [dict(value="Transcriptome Analysis")]
         description = extracted_data['description']
         extracted_data["attributes"]["study_abstract"] = [dict(value=description)]

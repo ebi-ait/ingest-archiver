@@ -8,16 +8,16 @@
     "HCA Biomaterial UUID":[{
           "value": ""
     }],
-    "biomaterial__biomaterial_core__biomaterial_id": [{
+    "Biomaterial - Biomaterial Core - Biomaterial Id": [{
         "value": "Q4_DEMO-donor_MGH30"
     }],
-    "biomaterial__is_living": [{
+    "Biomaterial - Is Living": [{
         "value": "no"
     }],
-    "biomaterial__medical_history__smoking_history": [{
+    "Biomaterial - Medical History - Smoking History": [{
         "value": "yes"
     }],
-    "biomaterial__sex": [{
+    "Biomaterial - Sex": [{
         "value": "unknown"
     }]
   },
