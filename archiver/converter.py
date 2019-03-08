@@ -24,6 +24,7 @@ class Converter:
         self.ingest_api = None
         self.ontology_api = ontology_api
         self.remove_input_prefix = False
+        self.to_lowercase_attributes = False
 
     def convert(self, hca_data):
         try:
@@ -134,7 +135,10 @@ class Converter:
                     new_field = split_fields[-1] if split_fields else field
 
                 new_field = new_field.replace('__', ' - ')
-                new_field = new_field.replace('_', ' ').title()
+                if self.to_lowercase_attributes:
+                    new_field = new_field.replace('_', ' ').lower()
+                else:
+                    new_field = new_field.replace('_', ' ').title()
                 new_attributes[new_field] = value
             else:
                 new_attributes[field] = value
@@ -194,6 +198,7 @@ class SampleConverter(Converter):
 
         concrete_type = self._get_concrete_type(hca_data.get('biomaterial'))
         extracted_data["attributes"]["HCA Biomaterial Type"] = [dict(value=concrete_type)]
+        extracted_data["attributes"]["project"] = [dict(value="Human Cell Atlas")]
 
         return extracted_data
 

@@ -19,6 +19,9 @@
     }],
     "Sex": [{
         "value": "unknown"
+    }],
+    "project": [{
+      "value": "Human Cell Atlas"
     }]
   },
   "releaseDate": "2018-09-12",
