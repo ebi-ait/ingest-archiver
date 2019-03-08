@@ -6,7 +6,7 @@ import requests
 import config
 import json
 
-from archiver.ingestapi import IngestAPI
+from archiver.ingest_api import IngestAPI
 
 
 class TestIngestAPI(unittest.TestCase):

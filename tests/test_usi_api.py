@@ -2,9 +2,9 @@ import unittest
 import os
 import json
 import config
-from archiver.ingestapi import IngestAPI
+from archiver.ingest_api import IngestAPI
 
-from archiver.usiapi import USIAPI, AAPTokenClient
+from archiver.usi_api import USIAPI, AAPTokenClient
 from archiver.converter import SampleConverter
 
 

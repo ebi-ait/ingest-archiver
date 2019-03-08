@@ -15,8 +15,8 @@ import config
 from optparse import OptionParser
 
 from archiver.archiver import IngestArchiver, ArchiveEntityMap
-from archiver.usiapi import USIAPI
-from archiver.ingestapi import IngestAPI
+from archiver.usi_api import USIAPI
+from archiver.ingest_api import IngestAPI
 
 ingest_url = config.INGEST_API_URL
 usi_url = config.USI_API_URL

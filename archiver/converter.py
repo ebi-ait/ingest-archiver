@@ -4,7 +4,7 @@ import requests
 
 from flatten_json import flatten
 
-from archiver.ingestapi import IngestAPI
+from archiver.ingest_api import IngestAPI
 
 """
 HCA to USI JSON Mapping
@@ -21,8 +21,9 @@ class Converter:
         }
         self.alias_prefix = ''
         self.exclude_data = []
-        self.exclude_fields_match = ['__schema_type', '__describedBy']
+        self.exclude_fields_match = ['__schema_type', '__describedBy', '__ontology_label']
         self.ingest_api = None
+        self.ontology_api = None
 
     def convert(self, hca_data):
         try:

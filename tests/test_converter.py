@@ -6,7 +6,7 @@ from random import randint
 
 from archiver.converter import Converter, SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
-from archiver.ingestapi import IngestAPI
+from archiver.ingest_api import IngestAPI
 
 
 class TestConverter(unittest.TestCase):

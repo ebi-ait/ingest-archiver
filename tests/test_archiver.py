@@ -9,8 +9,8 @@ from mock import MagicMock
 import config
 from archiver.archiver import IngestArchiver, AssayBundle, ArchiveEntityAggregator, ArchiveEntityMap
 from archiver.converter import Converter
-from archiver.ingestapi import IngestAPI
-from archiver.usiapi import USIAPI
+from archiver.ingest_api import IngestAPI
+from archiver.usi_api import USIAPI
 
 
 class TestIngestArchiver(unittest.TestCase):

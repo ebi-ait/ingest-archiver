@@ -15,7 +15,8 @@
         },
         "genus_species": [{
             "text": "Homo sapiens",
-            "ontology": "NCBITaxon:9606"
+            "ontology": "NCBITaxon:9606",
+            "label"" ""
         }],
         "is_living": "no",
         "sex": "unknown"
