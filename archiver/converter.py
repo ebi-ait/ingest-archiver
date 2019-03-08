@@ -439,7 +439,7 @@ class ProjectConverter(Converter):
 
             if len(names) == 3:
                 first = names[0]
-                middle = names[1][0]
+                middle = names[1][0] if names[1] else ''
                 last = names[2]
             else:
                 raise ConversionError("HCA Contributor contact name, {contact_name}, couldn't be parsed.")
