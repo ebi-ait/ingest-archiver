@@ -12,7 +12,7 @@
 			"email": "dummy@email.com",
 			"institution": "Fake Institution"
 		},{
-			"contact_name": "First2,Middle2,Last2",
+			"contact_name": "First2,,Last2",
 			"email": "dummy2@email.com",
 			"institution": "Fake Institution2"
 		}],
