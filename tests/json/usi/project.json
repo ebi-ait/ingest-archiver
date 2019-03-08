@@ -13,18 +13,27 @@
     },
     "contacts": [{
         "orcid": "",
-        "firstName": "Q4_DEMO-MintTeam",
-        "middleInitials": "",
-        "lastName": "",
+        "firstName": "First",
+        "middleInitials": "M",
+        "lastName": "Last",
         "email": "dummy@email.com",
         "address": "",
         "affiliation": "Fake Institution",
+        "phone": ""
+    },{
+        "orcid": "",
+        "firstName": "First2",
+        "middleInitials": "M",
+        "lastName": "Last2",
+        "email": "dummy2@email.com",
+        "address": "",
+        "affiliation": "Fake Institution2",
         "phone": ""
     }],
     "publications": [{
         "pubmedId": "",
         "doi": "10.1101/429589",
         "articleTitle": "Reconstructing the human first trimester fetal-maternal interface using single cell transcriptomics",
-        "authors": "Vento-Tormo R | Efremova M | Botting RA | Turco MY | Vento-Tormo M | Meyer KB | Park J | Stephenson E | Polanski K | Payne RP | Goncalves A | Zou A | Henriksson J | Wood L | Lisgo S | Filby A | Wright GJ | Stubbington MJ | Haniffa M | Moffett A | Teichmann SA"
+        "authors": "Vento-Tormo R , Efremova M , Botting RA , Turco MY , Vento-Tormo M , Meyer KB , Park J , Stephenson E , Polanski K , Payne RP , Goncalves A , Zou A , Henriksson J , Wood L , Lisgo S , Filby A , Wright GJ , Stubbington MJ , Haniffa M , Moffett A , Teichmann SA"
     }]
 }

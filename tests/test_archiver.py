@@ -1,14 +1,12 @@
 import copy
 import datetime
 import json
-import time
 import unittest
-from random import randint
+
 from mock import MagicMock
 
 import config
-from archiver.archiver import IngestArchiver, AssayBundle, ArchiveEntityAggregator, ArchiveEntityMap
-from archiver.converter import Converter
+from archiver.archiver import IngestArchiver
 from archiver.ingest_api import IngestAPI
 from archiver.ontology_api import OntologyAPI
 from archiver.usi_api import USIAPI
@@ -112,7 +110,7 @@ class TestIngestArchiver(unittest.TestCase):
         usi_api.url = 'usi_url'
         usi_api.get_current_version = MagicMock(return_value=None)
 
-        archiver = IngestArchiver(ingest_api, usi_api)
+        archiver = IngestArchiver(ingest_api, usi_api, ontology_api=self.ontology_api)
         archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission.converted_entities = list(entity_map.get_converted_entities())

@@ -425,7 +425,7 @@ class ProjectConverter(Converter):
         # TODO BioStudies minimum length
         title_len = len(extracted_data["title"])
         MIN_LEN = 25
-        DELIM = ' | '
+        DELIM = ' , '
         if title_len < MIN_LEN:
             prefix = "HCA project: "
             extracted_data["title"] = prefix + extracted_data["title"]
@@ -434,11 +434,21 @@ class ProjectConverter(Converter):
         contacts = []
         contributors = hca_data['project']['content'].get('contributors', [])
         for contributor in contributors:
+            contact_name = contributor.get("contact_name", "")
+            names = contact_name.split(',', 2)
+
+            if len(names) == 3:
+                first = names[0]
+                middle = names[1][0]
+                last = names[2]
+            else:
+                raise ConversionError("HCA Contributor contact name, {contact_name}, couldn't be parsed.")
+
             contact = {
                 "orcid": contributor.get("orcid_id", ""),
-                "firstName": contributor.get("contact_name", ""),
-                "middleInitials": "",
-                "lastName": "",
+                "firstName": first,
+                "middleInitials": middle,
+                "lastName": last,
                 "email": contributor.get("email", ""),
                 "address": contributor.get("address", ""),
                 "affiliation": contributor.get("institution", ""),
