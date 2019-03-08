@@ -10,15 +10,17 @@ import config
 from archiver.archiver import IngestArchiver, AssayBundle, ArchiveEntityAggregator, ArchiveEntityMap
 from archiver.converter import Converter
 from archiver.ingest_api import IngestAPI
+from archiver.ontology_api import OntologyAPI
 from archiver.usi_api import USIAPI
 
 
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
-        self.converter = Converter()
+        self.ontology_api = OntologyAPI()
         self.ingest_api = IngestAPI()
         self.usi_api = USIAPI()
         self.archiver = IngestArchiver(
+            ontology_api=self.ontology_api,
             ingest_api=self.ingest_api,
             usi_api=self.usi_api,
             exclude_types=['sequencingRun'])
