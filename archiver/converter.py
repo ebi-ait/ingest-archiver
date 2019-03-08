@@ -1,10 +1,9 @@
 import logging
 import re
-import requests
 
 from flatten_json import flatten
 
-from archiver.ingest_api import IngestAPI
+from archiver.ontology_api import OntologyAPI
 
 """
 HCA to USI JSON Mapping
@@ -13,7 +12,7 @@ https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/
 
 
 class Converter:
-    def __init__(self):
+    def __init__(self, ontology_api=None):
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
             "uuid__uuid": "alias",
@@ -23,7 +22,7 @@ class Converter:
         self.exclude_data = []
         self.exclude_fields_match = ['__schema_type', '__describedBy', '__ontology_label']
         self.ingest_api = None
-        self.ontology_api = None
+        self.ontology_api = ontology_api
 
     def convert(self, hca_data):
         try:
@@ -51,14 +50,14 @@ class Converter:
 
         flattened = flatten(input_data, '__')
 
-        delete_keys = []
+        delete_keys = {}
         if self.exclude_fields_match:
             for key in flattened.keys():
                 for keyword in self.exclude_fields_match:
                     if keyword in key:
-                        delete_keys.append(key)
+                        delete_keys[key] = True
 
-        for key in delete_keys:
+        for key in delete_keys.keys():
             del flattened[key]
 
         return flattened
@@ -88,16 +87,34 @@ class Converter:
     def _extract_attributes(self, flattened_hca_data):
         attributes = {}
         prefix = "content__"
+        ontology_keyword = "__ontology"
+        ontology_text_keyword = "__text"
 
         for key, value in flattened_hca_data.items():
-            if re.search(prefix, key) and key not in self.field_mapping:
-                field = key.replace(prefix, '')
-                attr = {
-                    "name": field,
-                    "value": value,
-                    "terms": []
-                }
-                attributes[attr['name']] = [dict(value=value)]
+            if re.search(f'__{prefix}', key) and key not in self.field_mapping:
+                if ontology_keyword in key:
+                    text_field = key.replace(ontology_keyword, ontology_text_keyword)
+                    text = flattened_hca_data.get(text_field, '')
+                    attr = {
+                        "value": text,
+                        "terms": [{
+                            "url": self.ontology_api.expand_curie(value)
+                        }]
+                    }
+                    text_field = text_field.replace(prefix, '')
+                    name = text_field.replace(ontology_text_keyword, '')
+                    attributes[name] = [attr]
+                elif ontology_text_keyword in key:
+                    # ignore
+                    pass
+                else:
+                    field = key.replace(prefix, '')
+                    attr = {
+                        "name" : field,
+                        "value": value,
+                        "terms": []
+                    }
+                    attributes[attr['name']] = [dict(value=value)]
 
         return attributes
 
@@ -121,8 +138,8 @@ class Converter:
 
 class SampleConverter(Converter):
 
-    def __init__(self):
-        super(SampleConverter, self).__init__()
+    def __init__(self, ontology_api):
+        super(SampleConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
             "biomaterial__uuid__uuid": "alias",
@@ -138,6 +155,12 @@ class SampleConverter(Converter):
             "9606": "Homo sapiens",
             "10090": "Mus musculus"
         }
+        self.exclude_data = ['genus_species']
+        self.exclude_fields_match = ['__schema_type', '__describedBy',
+                                     '__ontology_label',
+        # FIXME only donors contain this info but this is redundant with taxonId, removing this if it exists
+                                     'biomaterial__content__genus_species__0__ontology',
+                                     'biomaterial__content__genus_species__0__text']
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
@@ -159,13 +182,6 @@ class SampleConverter(Converter):
 
         extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
 
-        # TODO only donors contain this info but this is redundant with taxonId, removing this if it exists
-        if extracted_data["attributes"].get("biomaterial__genus_species__0__text"):
-            del extracted_data["attributes"]["biomaterial__genus_species__0__text"]
-
-        if extracted_data["attributes"].get("biomaterial__genus_species__0__ontology"):
-            del extracted_data["attributes"]["biomaterial__genus_species__0__ontology"]
-
         if not extracted_data["taxon"]:
             raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
 
@@ -180,8 +196,8 @@ class SampleConverter(Converter):
 
 
 class SequencingExperimentConverter(Converter):
-    def __init__(self):
-        super(SequencingExperimentConverter, self).__init__()
+    def __init__(self, ontology_api):
+        super(SequencingExperimentConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
         self.alias_prefix = 'sequencingExperiment_'
 
@@ -324,8 +340,8 @@ class SequencingExperimentConverter(Converter):
 
 
 class SequencingRunConverter(Converter):
-    def __init__(self):
-        super(SequencingRunConverter, self).__init__()
+    def __init__(self, ontology_api):
+        super(SequencingRunConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
 
         self.field_mapping = {
@@ -383,8 +399,8 @@ class SequencingRunConverter(Converter):
 
 class ProjectConverter(Converter):
 
-    def __init__(self):
-        super(ProjectConverter, self).__init__()
+    def __init__(self, ontology_api):
+        super(ProjectConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
             "project__uuid__uuid": "alias",
@@ -440,8 +456,8 @@ class ProjectConverter(Converter):
 
 class StudyConverter(Converter):
 
-    def __init__(self):
-        super(StudyConverter, self).__init__()
+    def __init__(self, ontology_api):
+        super(StudyConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
         self.field_mapping = {
             "project__uuid__uuid": "alias",

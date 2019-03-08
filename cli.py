@@ -15,6 +15,7 @@ import config
 from optparse import OptionParser
 
 from archiver.archiver import IngestArchiver, ArchiveEntityMap
+from archiver.ontology_api import OntologyAPI
 from archiver.usi_api import USIAPI
 from archiver.ingest_api import IngestAPI
 
@@ -23,6 +24,7 @@ usi_url = config.USI_API_URL
 
 ingest_api = IngestAPI(ingest_url)
 usi_api = USIAPI(usi_url)
+ontology_api = OntologyAPI()
 
 
 def save_dict_to_file(output_dir, filename, obj):
@@ -104,6 +106,7 @@ if __name__ == '__main__':
 
     archiver = IngestArchiver(ingest_api=ingest_api,
                               usi_api=usi_api,
+                              ontology_api=ontology_api,
                               exclude_types=exclude_types,
                               alias_prefix=options.alias_prefix)
 

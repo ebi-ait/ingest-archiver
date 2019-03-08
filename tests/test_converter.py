@@ -7,6 +7,7 @@ from random import randint
 from archiver.converter import Converter, SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
 from archiver.ingest_api import IngestAPI
+from archiver.ontology_api import OntologyAPI
 
 
 class TestConverter(unittest.TestCase):
@@ -40,6 +41,7 @@ class TestConverter(unittest.TestCase):
 
         self.maxDiff = None
         self.ingest_api = IngestAPI()
+        self.ontology_api = OntologyAPI()
 
     def test_convert_sample(self):
         biomaterial = self.hca_data.get('biomaterial')
@@ -57,7 +59,7 @@ class TestConverter(unittest.TestCase):
             'biomaterial': biomaterial
         }
 
-        converter = SampleConverter()
+        converter = SampleConverter(ontology_api=self.ontology_api)
         converter.ingest_api = self.ingest_api
         actual_json = converter.convert(input)
 
@@ -97,7 +99,7 @@ class TestConverter(unittest.TestCase):
             'library_preparation_protocol': lib_prep_protocol
         }
 
-        converter = SequencingExperimentConverter()
+        converter = SequencingExperimentConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)
         self.assertEqual(expected_json, actual_json)
 
@@ -177,7 +179,7 @@ class TestConverter(unittest.TestCase):
             "HCA Files UUID's"] = [
             {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
 
-        converter = SequencingRunConverter()
+        converter = SequencingRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)
 
         self.assertEqual(expected_json, actual_json)
@@ -218,7 +220,7 @@ class TestConverter(unittest.TestCase):
             "HCA Files UUID's"] = [
             {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
 
-        converter = SequencingRunConverter()
+        converter = SequencingRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)
 
         self.assertEqual(expected_json, actual_json)
@@ -240,7 +242,7 @@ class TestConverter(unittest.TestCase):
             'project': hca_data
         }
 
-        converter = ProjectConverter()
+        converter = ProjectConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)
@@ -262,7 +264,7 @@ class TestConverter(unittest.TestCase):
             'project': hca_data
         }
 
-        converter = StudyConverter()
+        converter = StudyConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)

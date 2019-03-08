@@ -472,21 +472,22 @@ class ArchiveSubmission:
 
 
 class IngestArchiver:
-    def __init__(self, ingest_api, usi_api, exclude_types=None, alias_prefix=None):
+    def __init__(self, ingest_api, usi_api, ontology_api, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
         self.ingest_api = ingest_api
         self.exclude_types = exclude_types if exclude_types else []
         self.alias_prefix = f"{alias_prefix}_" if alias_prefix else ""
-
+        self.ontology_api = ontology_api
         self.usi_api = usi_api
 
         self.converter = {
-            "project": ProjectConverter(),
-            "sample": SampleConverter(),
-            "study": StudyConverter(),
-            "sequencingRun": SequencingRunConverter(),
-            "sequencingExperiment": SequencingExperimentConverter()
+            "project": ProjectConverter(ontology_api=ontology_api),
+            "sample": SampleConverter(ontology_api=ontology_api),
+            "study": StudyConverter(ontology_api=ontology_api),
+            "sequencingRun": SequencingRunConverter(ontology_api=ontology_api),
+            "sequencingExperiment": SequencingExperimentConverter(ontology_api=ontology_api)
         }
+
         self.converter['sample'].ingest_api = self.ingest_api
 
     def archive(self, entity_map: ArchiveEntityMap):
