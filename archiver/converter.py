@@ -23,6 +23,7 @@ class Converter:
         self.exclude_fields_match = ['__schema_type', '__describedBy', '__ontology_label']
         self.ingest_api = None
         self.ontology_api = ontology_api
+        self.remove_input_prefix = False
 
     def convert(self, hca_data):
         try:
@@ -127,7 +128,12 @@ class Converter:
 
         for field, value in attributes.items():
             if '__' in field:
-                new_field = field.replace('__', ' - ')
+                new_field = field
+                if self.remove_input_prefix:
+                    split_fields = field.split('__', 1)
+                    new_field = split_fields[-1] if split_fields else field
+
+                new_field = new_field.replace('__', ' - ')
                 new_field = new_field.replace('_', ' ').title()
                 new_attributes[new_field] = value
             else:
@@ -161,6 +167,7 @@ class SampleConverter(Converter):
         # FIXME only donors contain this info but this is redundant with taxonId, removing this if it exists
                                      'biomaterial__content__genus_species__0__ontology',
                                      'biomaterial__content__genus_species__0__text']
+        self.remove_input_prefix = True
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
@@ -412,6 +419,7 @@ class ProjectConverter(Converter):
         self.exclude_data = ['contributors', 'publications']
         self.exclude_fields_match = ['__schema_type', '__describedBy',
                                      '__contributors', '__publications']
+        self.remove_input_prefix = True
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         # TODO BioStudies minimum length
@@ -467,6 +475,7 @@ class StudyConverter(Converter):
         self.alias_prefix = 'study_'
         self.exclude_data = ['contributors', 'publications']
         self.exclude_fields_match = ['__schema_type', '__describedBy', '__contributors', '__publications']
+        self.remove_input_prefix = True
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         if not extracted_data.get("attributes"):
