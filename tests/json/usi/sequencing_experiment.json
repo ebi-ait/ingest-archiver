@@ -33,13 +33,10 @@
         "Library Preparation Protocol - End Bias": [{
             "value": "5 prime end bias"
         }],
-        "Library Preparation Protocol - Input Nucleic Acid Molecule - Text": [{
-            "value": "polyA RNA"
-        }],
-        "Library Preparation Protocol - Library Construction Approach - Ontology": [{
-            "value": "EFO:0008931"
-        }],
-        "Library Preparation Protocol - Library Construction Approach - Text": [{
+        "Library Preparation Protocol - Library Construction Approach": [{
+            "terms": [{
+                "url": "http://www.ebi.ac.uk/efo/EFO_0008931"
+            }],
             "value": "Smart-seq2"
         }],
         "Library Preparation Protocol - Nucleic Acid Source": [{
@@ -66,20 +63,17 @@
         "Process - Process Core - Process Id": [{
             "value": "sequence_process_file_1"
         }],
-        "Sequencing Protocol - Instrument Manufacturer Model - Text": [{
-            "value": "Illumina HiSeq 2500"
-        }],
         "Sequencing Protocol - Paired End": [{
             "value": true
         }],
         "Sequencing Protocol - Protocol Core - Protocol Id": [{
             "value": "assay_1"
         }],
-        "Sequencing Protocol - Sequencing Approach - Ontology": [{
-            "value": "EFO:0008441"
-        }],
-        "Sequencing Protocol - Sequencing Approach - Text": [{
-            "value": "full length single cell RNA sequencing"
+        "Sequencing Protocol - Sequencing Approach": [{
+            "terms": [{
+                "url": "http://www.ebi.ac.uk/efo/EFO_0008441"
+            }],
+           "value": "full length single cell RNA sequencing"
         }]
     },
     "studyRef": {

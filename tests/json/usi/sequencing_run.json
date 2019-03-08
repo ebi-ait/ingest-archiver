@@ -12,18 +12,15 @@
 		"Sequencing Protocol - Protocol Core - Protocol Description": [{
 			"value": "assay description"
 		}],
-		"Sequencing Protocol - Instrument Manufacturer Model - Text": [{
-			"value": "Illumina HiSeq 2500"
-		}],
 		"Sequencing Protocol - Paired End": [{
 			"value": true
 		}],
-		"Sequencing Protocol - Sequencing Approach - Text": [{
-			"value": "full length single cell RNA sequencing"
-		}],
-		"Sequencing Protocol - Sequencing Approach - Ontology": [{
-			"value": "EFO:0008441"
-		}],
+		"Sequencing Protocol - Sequencing Approach": [{
+            "terms": [{
+                "url": "http://www.ebi.ac.uk/efo/EFO_0008441"
+            }],
+           "value": "full length single cell RNA sequencing"
+        }],
 		"Process - Process Core - Process Id": [{
 			"value": "sequence_process_file_1"
 		}],
