@@ -3,6 +3,7 @@ import os
 import json
 import config
 from archiver.ingest_api import IngestAPI
+from archiver.ontology_api import OntologyAPI
 
 from archiver.usi_api import USIAPI, AAPTokenClient
 from archiver.converter import SampleConverter
@@ -20,7 +21,8 @@ class TestUSIAPI(unittest.TestCase):
             hca_samples = json.loads(data_file.read())
 
         self.hca_submission = {'samples': hca_samples}
-        self.converter = SampleConverter()
+        self.ontology_api = OntologyAPI()
+        self.converter = SampleConverter(ontology_api=self.ontology_api)
         self.converter.ingest_api = IngestAPI()
         pass
 
