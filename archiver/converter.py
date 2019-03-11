@@ -45,10 +45,9 @@ class Converter:
     def _flatten(self, hca_data):
         input_data = dict(hca_data)
 
-        if self.exclude_data:
-            for key in self.exclude_data:
-                if key in input_data:
-                    del input_data[key]
+        for key in self.exclude_data:
+            if key in input_data:
+                del input_data[key]
 
         flattened = flatten(input_data, '__')
 
@@ -421,9 +420,9 @@ class ProjectConverter(Converter):
             "project__submissionDate": "releaseDate"
         }
         self.alias_prefix = 'project_'
-        self.exclude_data = ['contributors', 'publications']
         self.exclude_fields_match = ['__schema_type', '__describedBy',
-                                     '__contributors', '__publications']
+                                     '__contributors', '__publications',
+                                     '__funders']
         self.remove_input_prefix = True
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
@@ -474,6 +473,17 @@ class ProjectConverter(Converter):
             }
             publications.append(publication)
         extracted_data["publications"] = publications
+
+        hca_funders = hca_data['project']['content'].get('funders', [])
+        funders = []
+        for hca_funder in hca_funders:
+            funder = {
+                "grantTitle": hca_funder.get("grant_title", ""),
+                "grantId": hca_funder.get("grant_id", ""),
+                "organization": hca_funder.get("organization", "")
+            }
+            funders.append(funder)
+        extracted_data["funders"] = funders
         return extracted_data
 
 
@@ -489,7 +499,7 @@ class StudyConverter(Converter):
         }
         self.alias_prefix = 'study_'
         self.exclude_data = ['contributors', 'publications']
-        self.exclude_fields_match = ['__schema_type', '__describedBy', '__contributors', '__publications']
+        self.exclude_fields_match = ['__schema_type', '__describedBy', '__contributors', '__publications', '__funders']
         self.remove_input_prefix = True
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
