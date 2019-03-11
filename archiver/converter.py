@@ -277,7 +277,7 @@ class SequencingExperimentConverter(Converter):
                 "platform_type": "ILLUMINA",
                 "intrument_model": "Illumina HiSeq 3000"
             },
-            "illumina Hiseq 4000": {
+            "illumina hiseq 4000": {
                 "platform_type": "ILLUMINA",
                 "intrument_model": "Illumina HiSeq 4000"
             },
