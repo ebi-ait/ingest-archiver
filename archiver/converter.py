@@ -438,6 +438,11 @@ class ProjectConverter(Converter):
         contacts = []
         contributors = hca_data['project']['content'].get('contributors', [])
         for contributor in contributors:
+            project_role = contributor.get("project_role", "")
+
+            if "wrangler" in project_role:
+                continue
+
             contact_name = contributor.get("contact_name", "")
             names = contact_name.split(',', 2)
 

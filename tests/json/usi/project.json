@@ -11,7 +11,8 @@
             "value": "9202c871-81ce-4b29-a588-e1dbc2864be9"
         }]
     },
-    "contacts": [{
+    "contacts": [
+    {
         "orcid": "",
         "firstName": "First",
         "middleInitials": "M",
@@ -20,7 +21,8 @@
         "address": "",
         "affiliation": "Fake Institution",
         "phone": ""
-    },{
+    },
+    {
         "orcid": "",
         "firstName": "First2",
         "middleInitials": "",
@@ -29,6 +31,16 @@
         "address": "",
         "affiliation": "Fake Institution2",
         "phone": ""
+    },
+    {
+        "orcid": "",
+        "firstName": "First3",
+        "middleInitials": "",
+        "lastName": "Last3",
+        "email": "dummy3@email.com",
+        "address": "address",
+        "affiliation": "Fake Institution3",
+        "phone": "1234567"
     }],
     "publications": [{
         "pubmedId": "",
