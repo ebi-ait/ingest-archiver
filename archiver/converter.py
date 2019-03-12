@@ -437,10 +437,11 @@ class ProjectConverter(Converter):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         contacts = []
         contributors = hca_data['project']['content'].get('contributors', [])
+
         for contributor in contributors:
             project_role = contributor.get("project_role", "")
 
-            if "wrangler" in project_role:
+            if "wrangler" in project_role or "curator" in project_role:
                 continue
 
             contact_name = contributor.get("contact_name", "")

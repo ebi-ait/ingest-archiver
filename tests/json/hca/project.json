@@ -24,6 +24,14 @@
 			"phone": "1234567"
 		},
 		{
+			"contact_name": "First3,,Last3",
+			"email": "dummy3@email.com",
+			"institution": "Fake Institution3",
+			"address": "address",
+			"phone": "1234567",
+			"project_role": "external curator"
+		},
+		{
 			"contact_name": "First4,,Last4",
 			"email": "dummy4@email.com",
 			"institution": "Fake Institution4",
