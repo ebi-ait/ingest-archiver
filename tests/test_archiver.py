@@ -66,7 +66,8 @@ class TestIngestArchiver(unittest.TestCase):
             'input_biomaterial': biomaterials[0]
         }
 
-    def _generate_fake_id(self, prefix):
+    @staticmethod
+    def _generate_fake_id(prefix):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
@@ -134,10 +135,10 @@ class TestIngestArchiver(unittest.TestCase):
                 'inputs': [
                     {'name': 'R1.fastq.gz',
                      'read_index': 'read1'
-                    },
+                     },
                     {'name': 'R2.fastq.gz',
                      'read_index': 'read1'
-                    }
+                     }
                 ]
             },
             'bundle_uuid': "bundle_uuid"
@@ -157,7 +158,8 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.accession_map)
 
-    def _mock_assay_bundle(self, bundle):
+    @staticmethod
+    def _mock_assay_bundle(bundle):
         assay_bundle = MagicMock('assay_bundle')
         assay_bundle.get_biomaterials = MagicMock(
             return_value=bundle.get('biomaterials'))
