@@ -12,6 +12,7 @@ from archiver.ontology_api import OntologyAPI
 from archiver.usi_api import USIAPI
 
 
+# TODO use mocks for integration tests
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
         self.ontology_api = OntologyAPI()
@@ -72,6 +73,10 @@ class TestIngestArchiver(unittest.TestCase):
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        usi_api = MagicMock()
+        usi_api.url = 'usi_url'
+        usi_api.get_current_version = MagicMock(return_value=None)
+        self.archiver.usi_api = usi_api
         entity_map = self.archiver.convert(['bundle_uuid'])
         entities_by_type = entity_map.entities_dict_type
         self.assertTrue(entities_by_type.get('project'))
@@ -79,6 +84,7 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(entities_by_type.get('sample'))
         self.assertTrue(entities_by_type.get('sequencingExperiment'))
 
+    @unittest.skip("This is an Integration Test")
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
@@ -139,6 +145,7 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(messages)
         self.assertEqual(expected, messages[0])
 
+    @unittest.skip("This is an Integration Test")
     def test_validate_and_complete_submission(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
         self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)

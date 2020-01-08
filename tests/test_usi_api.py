@@ -12,7 +12,7 @@ from archiver.converter import SampleConverter
 # TODO use mocks for requests
 # TODO add test cases
 
-
+@unittest.skip("These are Integration Tests")
 class TestUSIAPI(unittest.TestCase):
     def setUp(self):
         self.usi_api = USIAPI()
