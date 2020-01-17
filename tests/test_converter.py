@@ -43,6 +43,9 @@ class TestConverter(unittest.TestCase):
         self.ingest_api = IngestAPI()
         self.ontology_api = OntologyAPI()
 
+    def tearDown(self):
+        self.ingest_api.session.close()
+
     def test_convert_sample(self):
         biomaterial = self.hca_data.get('biomaterial')
 

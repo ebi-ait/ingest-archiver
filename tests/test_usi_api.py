@@ -26,6 +26,10 @@ class TestUSIAPI(unittest.TestCase):
         self.converter.ingest_api = IngestAPI()
         pass
 
+    def tearDown(self):
+        self.usi_api.session.close()
+        self.converter.ingest_api.session.close()
+
     def test_get_token_given_valid_credentials_return_token(self):
         aap_user = 'hca-ingest'
         aap_password = os.environ.get('AAP_API_PASSWORD', '')

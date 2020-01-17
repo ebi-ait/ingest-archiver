@@ -66,8 +66,11 @@ class TestIngestArchiver(unittest.TestCase):
             'input_biomaterial': biomaterials[0]
         }
 
-    @staticmethod
-    def _generate_fake_id(prefix):
+    def tearDown(self):
+        self.ingest_api.session.close()
+        self.usi_api.session.close()
+
+    def _generate_fake_id(self, prefix):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
