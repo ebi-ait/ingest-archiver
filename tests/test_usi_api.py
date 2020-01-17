@@ -2,9 +2,8 @@ import unittest
 import os
 import json
 import config
-from archiver.ingest_api import IngestAPI
-from archiver.ontology_api import OntologyAPI
 
+from mock import MagicMock
 from archiver.usi_api import USIAPI, AAPTokenClient
 from archiver.converter import SampleConverter
 
@@ -20,14 +19,19 @@ class TestUSIAPI(unittest.TestCase):
             hca_samples = json.loads(data_file.read())
 
         self.hca_submission = {'samples': hca_samples}
-        self.ontology_api = OntologyAPI()
+        self.ontology_api = MagicMock()
+        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
+
+        self.ingest_api = MagicMock()
+        self.ingest_api.url = 'ingest_url'
+        self.ingest_api.get_concrete_entity_type = MagicMock(return_value='donor_organism')
+
         self.converter = SampleConverter(ontology_api=self.ontology_api)
-        self.converter.ingest_api = IngestAPI()
+        self.converter.ingest_api = self.ingest_api
         pass
 
     def tearDown(self):
         self.usi_api.session.close()
-        self.converter.ingest_api.session.close()
 
     def test_get_token_given_valid_credentials_return_token(self):
         aap_user = os.environ.get('AAP_API_USER', '')

@@ -1,13 +1,14 @@
 import unittest
 import json
+
+from mock import MagicMock
+
 import config
 
 from random import randint
 
 from archiver.converter import Converter, SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
-from archiver.ingest_api import IngestAPI
-from archiver.ontology_api import OntologyAPI
 
 
 class TestConverter(unittest.TestCase):
@@ -40,11 +41,11 @@ class TestConverter(unittest.TestCase):
         }
 
         self.maxDiff = None
-        self.ingest_api = IngestAPI()
-        self.ontology_api = OntologyAPI()
-
-    def tearDown(self):
-        self.ingest_api.session.close()
+        self.ingest_api = MagicMock()
+        self.ingest_api.url = 'ingest_url'
+        self.ingest_api.get_concrete_entity_type = MagicMock(return_value='donor_organism')
+        self.ontology_api = MagicMock()
+        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
 
     def test_convert_sample(self):
         biomaterial = self.hca_data.get('biomaterial')
@@ -66,9 +67,10 @@ class TestConverter(unittest.TestCase):
         converter.ingest_api = self.ingest_api
         actual_json = converter.convert(input)
 
-        self.assertEqual(expected_json, actual_json )
+        self.assertEqual(expected_json, actual_json)
 
     def test_convert_sequencing_experiment(self):
+        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         input_biomaterial = dict(self.hca_data.get('input_biomaterial'))
@@ -144,6 +146,7 @@ class TestConverter(unittest.TestCase):
         self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
 
     def test_convert_sequencing_run(self):
+        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
@@ -181,6 +184,8 @@ class TestConverter(unittest.TestCase):
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_sequencing_run_10x(self):
+        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
+
         process = dict(self.hca_data.get('process'))
         sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
         file = dict(self.hca_data.get('sequencing_file'))
@@ -264,4 +269,3 @@ class TestConverter(unittest.TestCase):
         actual_json = converter.convert(input)
 
         self.assertEqual(expected_json, actual_json)
-

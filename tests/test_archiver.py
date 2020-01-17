@@ -7,22 +7,20 @@ from mock import MagicMock
 
 import config
 from archiver.archiver import IngestArchiver
-from archiver.ingest_api import IngestAPI
-from archiver.ontology_api import OntologyAPI
-from archiver.usi_api import USIAPI
 
 
 # TODO use mocks for integration tests
 class TestIngestArchiver(unittest.TestCase):
     def setUp(self):
-        self.ontology_api = OntologyAPI()
-        self.ingest_api = IngestAPI()
-        self.usi_api = USIAPI()
-        self.archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            usi_api=self.usi_api,
-            exclude_types=['sequencingRun'])
+        self.ontology_api = MagicMock()
+        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
+
+        self.ingest_api = MagicMock()
+        self.ingest_api.url = 'ingest_url'
+
+        self.usi_api = MagicMock()
+        self.usi_api.url = 'usi_url'
+        self.usi_api.get_current_version = MagicMock(return_value=None)
 
         with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             biomaterials = json.loads(data_file.read())
@@ -66,22 +64,19 @@ class TestIngestArchiver(unittest.TestCase):
             'input_biomaterial': biomaterials[0]
         }
 
-    def tearDown(self):
-        self.ingest_api.session.close()
-        self.usi_api.session.close()
-
     def _generate_fake_id(self, prefix):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
     def test_get_archivable_entities(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
-        usi_api = MagicMock()
-        usi_api.url = 'usi_url'
-        usi_api.get_current_version = MagicMock(return_value=None)
-        self.archiver.usi_api = usi_api
-        entity_map = self.archiver.convert(['bundle_uuid'])
+        archiver = IngestArchiver(
+            ontology_api=self.ontology_api,
+            ingest_api=self.ingest_api,
+            usi_api=self.usi_api,
+            exclude_types=['sequencingRun'])
+        archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = archiver.convert(['bundle_uuid'])
         entities_by_type = entity_map.entities_dict_type
         self.assertTrue(entities_by_type.get('project'))
         self.assertTrue(entities_by_type.get('study'))
@@ -91,9 +86,14 @@ class TestIngestArchiver(unittest.TestCase):
     @unittest.skip("This is an Integration Test")
     def test_archive(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
-        entity_map = self.archiver.convert(['bundle_uuid'])
-        archive_submission = self.archiver.archive(entity_map)
+        archiver = IngestArchiver(
+            ontology_api=self.ontology_api,
+            ingest_api=self.ingest_api,
+            usi_api=self.usi_api,
+            exclude_types=['sequencingRun'])
+        archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = archiver.convert(['bundle_uuid'])
+        archive_submission = archiver.archive(entity_map)
         self.assertTrue(archive_submission.is_completed)
 
         for entity in archive_submission.entity_map.get_entities():
@@ -113,14 +113,7 @@ class TestIngestArchiver(unittest.TestCase):
         seq_files.append(seq_file)
         assay_bundle.get_files = MagicMock(
             return_value=seq_files)
-
-        ingest_api = MagicMock()
-        ingest_api.url = 'ingest_url'
-        usi_api = MagicMock()
-        usi_api.url = 'usi_url'
-        usi_api.get_current_version = MagicMock(return_value=None)
-
-        archiver = IngestArchiver(ingest_api, usi_api, ontology_api=self.ontology_api)
+        archiver = IngestArchiver(ingest_api=self.ingest_api, usi_api=self.usi_api, ontology_api=self.ontology_api)
         archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission.converted_entities = list(entity_map.get_converted_entities())
@@ -152,12 +145,17 @@ class TestIngestArchiver(unittest.TestCase):
     @unittest.skip("This is an Integration Test")
     def test_validate_and_complete_submission(self):
         assay_bundle = self._mock_assay_bundle(self.bundle)
-        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
-        entity_map = self.archiver.convert(['bundle_uuid'])
-        archive_submission = self.archiver.archive_metadata(entity_map)
+        archiver = IngestArchiver(
+            ontology_api=self.ontology_api,
+            ingest_api=self.ingest_api,
+            usi_api=self.usi_api,
+            exclude_types=['sequencingRun'])
+        archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = archiver.convert(['bundle_uuid'])
+        archive_submission = archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
-        archive_submission = self.archiver.complete_submission(usi_submission_url=url)
+        archive_submission = archiver.complete_submission(usi_submission_url=url)
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.accession_map)
 
@@ -187,9 +185,14 @@ class TestIngestArchiver(unittest.TestCase):
             biomaterials = json.loads(data_file.read())
         bundle = {'biomaterials': biomaterials}
         assay_bundle = self._mock_assay_bundle(bundle)
-        self.archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
-        entity_map = self.archiver.convert('')
-        archive_submission = self.archiver.archive(entity_map)
+        archiver = IngestArchiver(
+            ontology_api=self.ontology_api,
+            ingest_api=self.ingest_api,
+            usi_api=self.usi_api,
+            exclude_types=['sequencingRun'])
+        archiver.get_assay_bundle = MagicMock(return_value=assay_bundle)
+        entity_map = archiver.convert('')
+        archive_submission = archiver.archive(entity_map)
 
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.errors)
