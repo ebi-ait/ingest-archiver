@@ -22,6 +22,7 @@ INGEST_API_URL = os.path.expandvars(os.environ.get('INGEST_API_URL', INGEST_API_
 AAP_API_URL = 'https://explore.api.aai.ebi.ac.uk/auth'
 AAP_API_URL = os.environ.get('AAP_API_URL', AAP_API_URL)
 AAP_API_USER = 'hca-ingest'
+AAP_API_USER = os.environ.get('AAP_API_USER', AAP_API_USER)
 AAP_API_PASSWORD = 'INSERT_PASSWORD'
 AAP_API_PASSWORD = os.environ.get('AAP_API_PASSWORD', AAP_API_PASSWORD)
 
