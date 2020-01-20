@@ -1,1 +1,4 @@
+mock
 coverage
+pylint
+-r requirements.txt

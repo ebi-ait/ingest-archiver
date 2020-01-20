@@ -35,7 +35,7 @@
         }],
         "Library Preparation Protocol - Library Construction Approach": [{
             "terms": [{
-                "url": "http://www.ebi.ac.uk/efo/EFO_0008931"
+                "url": "http://purl.obolibrary.org/obo/UO_0000015"
             }],
             "value": "Smart-seq2"
         }],
@@ -71,7 +71,7 @@
         }],
         "Sequencing Protocol - Sequencing Approach": [{
             "terms": [{
-                "url": "http://www.ebi.ac.uk/efo/EFO_0008441"
+                "url": "http://purl.obolibrary.org/obo/UO_0000015"
             }],
            "value": "full length single cell RNA sequencing"
         }]
