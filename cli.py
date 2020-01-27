@@ -24,7 +24,7 @@ class ArchiveCLI:
         self.ingest_api = IngestAPI(config.INGEST_API_URL)
 
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
-        self.output_dir = output_dir if output_dir else f"ARCHIVER_{now}"
+        self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
         self.archiver = IngestArchiver(ingest_api=self.ingest_api,
                                        usi_api=USIAPI(config.USI_API_URL),
                                        ontology_api=OntologyAPI(),
