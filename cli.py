@@ -47,9 +47,9 @@ class ArchiveCLI:
         submission_uuid = submission_url.rsplit('/', 1)[-1]
         self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
 
-    def archive(self, submit):
+    def build_submission(self):
         all_messages = []
-        logging.info(f'Processing {len(self.bundles)} bundles:\n' + "\n".join(map(str,self.bundles)))
+        logging.info(f'Processing {len(self.bundles)} bundles:\n' + "\n".join(map(str, self.bundles)))
 
         entity_map = self.archiver.convert(self.bundles)
         summary = entity_map.get_conversion_summary()
@@ -59,7 +59,9 @@ class ArchiveCLI:
 
         logging.info("##################### FILE ARCHIVER NOTIFICATION")
         self.save_dict_to_file("FILE_UPLOAD_INFO", {"jobs": all_messages})
+        return archive_submission
 
+    def validate_submission(self, archive_submission, submit):
         if submit:
             archive_submission.validate_and_submit()
         else:
@@ -117,6 +119,9 @@ if __name__ == '__main__':
     parser.add_option("-s", "--submit",
                       help="Add this flag to wait for entities submit to archives once valid",
                       action="store_true", default=False)
+    parser.add_option("-v", "--no_validation",
+                      help="Add this flag to not send submission to USI/DSP for validation, will override submit flag to false.",
+                      action="store_true", default=False)
     parser.add_option("-o", "--output_dir", help="Customise output directory name")
 
     (options, args) = parser.parse_args()
@@ -134,4 +139,6 @@ if __name__ == '__main__':
     if options.submission_url:
         cli.complete_submission(options.submission_url)
     else:
-        cli.archive(options.submit)
+        submission = cli.build_submission()
+        if not options.no_validation:
+            cli.validate_submission(submission, options.submit)
