@@ -27,6 +27,7 @@ class IngestAPI:
             'Content-type': 'application/json',
         }
         self.url = url if url else config.INGEST_API_URL
+        self.url = self.url.rstrip('/')
         self.logger.info(f'Using {self.url}')
         self.entity_cache = {}
         self.cache_enabled = True
@@ -70,7 +71,7 @@ class IngestAPI:
         return schema.get('name')
 
     def get_entity_by_uuid(self, entity_type, uuid):
-        entity_url = f'{self.url}{entity_type}/search/findByUuid?uuid={uuid}'
+        entity_url = f'{self.url}/{entity_type}/search/findByUuid?uuid={uuid}'
 
         entity_json = self._get_cached_entity(uuid)
 
