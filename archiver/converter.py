@@ -8,6 +8,7 @@ from archiver.ontology_api import OntologyAPI
 """
 HCA to USI JSON Mapping
 https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
+## TODO: Use SchemaTemplate.replaced_by_latest() to check for template migrations.
 """
 
 
@@ -378,7 +379,7 @@ class SequencingRunConverter(Converter):
         files = []
         lib_prep = hca_data.get("library_preparation_protocol", {})
         content = lib_prep.get("content", {})
-        library_const_approach_obj = content.get("library_construction_approach", {})
+        library_const_approach_obj = content.get("library_construction_method", {})
         library_const_approach = library_const_approach_obj.get('ontology')
 
         if library_const_approach and library_const_approach == self.ONTOLOGY_10x:
@@ -391,7 +392,7 @@ class SequencingRunConverter(Converter):
                 flattened_file = self._flatten(file)
                 files.append({
                     'name': flattened_file.get('content__file_core__file_name'),
-                    'type': self.file_format[flattened_file.get('content__file_core__file_format')]
+                    'type': self.file_format[flattened_file.get('content__file_core__format')]
                 })
 
         converted_data['files'] = files
@@ -444,7 +445,7 @@ class ProjectConverter(Converter):
             if "wrangler" in project_role or "curator" in project_role:
                 continue
 
-            contact_name = contributor.get("contact_name", "")
+            contact_name = contributor.get("name", "")
             names = contact_name.split(',', 2)
 
             if len(names) == 3:
