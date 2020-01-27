@@ -118,7 +118,7 @@ class AssayBundle:
     def get_project(self):
         if not self.project:
             bundle_manifest = self.get_bundle_manifest()
-            project_uuid = list(bundle_manifest['fileProjectMap'].keys())[0]  # TODO one project per bundle
+            project_uuid = list(bundle_manifest['_embedded']['bundleManifests'][0]['fileProjectMap'])[0]
             self.project = self.ingest_api.get_project_by_uuid(project_uuid)
 
         return self.project
@@ -131,7 +131,7 @@ class AssayBundle:
 
     def get_assay_process(self):
         bundle_manifest = self.get_bundle_manifest()
-        file_uuid = list(bundle_manifest['fileFilesMap'].keys())[0]
+        file_uuid = list(bundle_manifest['_embedded']['bundleManifests'][0]['fileFilesMap'])[0]
 
         file = self.ingest_api.get_file_by_uuid(file_uuid)
         derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
@@ -192,7 +192,7 @@ class AssayBundle:
 
     def _init_biomaterials(self):
         bundle_manifest = self.get_bundle_manifest()
-        for biomaterial_uuid in bundle_manifest['fileBiomaterialMap'].keys():
+        for biomaterial_uuid in list(bundle_manifest['_embedded']['bundleManifests'][0]['fileBiomaterialMap']):
             yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
 
     def _retrieve_input_biomaterial(self):
@@ -266,7 +266,7 @@ class ArchiveSubmission:
             validation_summary = self.get_all_validation_result_details()
             self.errors.append({
                 "error_message": "Failed in USI validation.",
-                "details"      : {
+                "details": {
                     "usi_validation_errors": self.get_all_validation_errors()
                 }
             })
