@@ -13,9 +13,9 @@ from optparse import OptionParser
 
 import config
 from archiver.archiver import IngestArchiver
-from archiver.ingest_api import IngestAPI
-from archiver.ontology_api import OntologyAPI
-from archiver.usi_api import USIAPI
+from api.ingest import IngestAPI
+from api.ontology import OntologyAPI
+from api.dsp import DataSubmissionPortal
 
 
 class ArchiveCLI:
@@ -26,7 +26,7 @@ class ArchiveCLI:
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
         self.archiver = IngestArchiver(ingest_api=self.ingest_api,
-                                       usi_api=USIAPI(config.USI_API_URL),
+                                       usi_api=DataSubmissionPortal(config.DSP_API_URL),
                                        ontology_api=OntologyAPI(),
                                        exclude_types=self.split_exclude_types(exclude_types),
                                        alias_prefix=alias_prefix)

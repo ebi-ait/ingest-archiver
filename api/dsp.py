@@ -40,7 +40,7 @@ USI_ENTITY_CURR_VERSION_LINK = {
 }
 
 
-class USIAPI:
+class DataSubmissionPortal:
     def __init__(self, url=None):
         self.logger = logging.getLogger(__name__)
         self.url = url if url else config.USI_API_URL

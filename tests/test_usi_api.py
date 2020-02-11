@@ -4,7 +4,7 @@ import json
 import config
 
 from mock import MagicMock
-from archiver.usi_api import USIAPI, AAPTokenClient
+from api.dsp import DataSubmissionPortal, AAPTokenClient
 from archiver.converter import SampleConverter
 
 
@@ -13,7 +13,7 @@ from archiver.converter import SampleConverter
 
 class TestUSIAPI(unittest.TestCase):
     def setUp(self):
-        self.usi_api = USIAPI()
+        self.usi_api = DataSubmissionPortal()
 
         with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
