@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 
 import polling as polling
 
@@ -9,7 +8,7 @@ import config
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 
-from archiver import util
+from utils import protocols
 
 
 def _print_same_line(string):
@@ -614,7 +613,7 @@ class IngestArchiver:
                     "manifest_id": entity.manifest_id
                 }
 
-                if util.is_10x(data.get("library_preparation_protocol")):
+                if protocols.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
                     message["conversion"]["output_name"] = f"{data['manifest_id']}.bam"
                     message["conversion"]["inputs"] = files

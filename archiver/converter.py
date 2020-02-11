@@ -3,7 +3,7 @@ import re
 
 from flatten_json import flatten
 
-from archiver import util
+from utils import protocols
 
 """
 HCA to USI JSON Mapping
@@ -377,7 +377,7 @@ class SequencingRunConverter(Converter):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
 
         files = []
-        if util.is_10x(hca_data.get("library_preparation_protocol")):
+        if protocols.is_10x(hca_data.get("library_preparation_protocol")):
             files = [{
                 'name': f"{hca_data['manifest_id']}.bam",
                 'type': 'bam'
