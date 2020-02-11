@@ -6,7 +6,7 @@ from flatten_json import flatten
 from utils import protocols
 
 """
-HCA to USI JSON Mapping
+HCA to DSP JSON Mapping
 https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
 ## TODO: Use SchemaTemplate.replaced_by_latest() to check for template migrations.
 """

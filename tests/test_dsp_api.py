@@ -11,9 +11,9 @@ from archiver.converter import SampleConverter
 # TODO use mocks for requests
 # TODO add test cases
 
-class TestUSIAPI(unittest.TestCase):
+class TestDataSubmissionPortal(unittest.TestCase):
     def setUp(self):
-        self.usi_api = DataSubmissionPortal()
+        self.dsp_api = DataSubmissionPortal()
 
         with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             hca_samples = json.loads(data_file.read())
@@ -31,7 +31,7 @@ class TestUSIAPI(unittest.TestCase):
         pass
 
     def tearDown(self):
-        self.usi_api.session.close()
+        self.dsp_api.session.close()
 
     def test_get_token_given_valid_credentials_return_token(self):
         aap_user = os.environ.get('AAP_API_USER', '')
@@ -52,30 +52,30 @@ class TestUSIAPI(unittest.TestCase):
         self.assertFalse(token)
 
     def test_create_submission(self):
-        usi_submission = self.usi_api.create_submission()
+        submission = self.dsp_api.create_submission()
 
-        delete_url = usi_submission['_links']['self:delete']['href']
-        self.usi_api.delete_submission(delete_url)
+        delete_url = submission['_links']['self:delete']['href']
+        self.dsp_api.delete_submission(delete_url)
 
-        self.assertTrue(usi_submission['_links']['self']['href'])
+        self.assertTrue(submission['_links']['self']['href'])
 
     def test_get_submission_contents(self):
-        usi_submission = self.usi_api.create_submission()
+        submission = self.dsp_api.create_submission()
 
-        get_contents_url = usi_submission['_links']['contents']['href']
+        get_contents_url = submission['_links']['contents']['href']
 
-        contents = self.usi_api.get_contents(get_contents_url)
+        contents = self.dsp_api.get_contents(get_contents_url)
 
-        delete_url = usi_submission['_links']['self:delete']['href']
-        self.usi_api.delete_submission(delete_url)
+        delete_url = submission['_links']['self:delete']['href']
+        self.dsp_api.delete_submission(delete_url)
 
         self.assertTrue(contents)
 
     def test_create_sample(self):
-        usi_submission = self.usi_api.create_submission()
+        submission = self.dsp_api.create_submission()
 
-        get_contents_url = usi_submission['_links']['contents']['href']
-        contents = self.usi_api.get_contents(get_contents_url)
+        get_contents_url = submission['_links']['contents']['href']
+        contents = self.dsp_api.get_contents(get_contents_url)
         create_sample_url = contents['_links']['samples:create']['href']
 
         samples = self.hca_submission['samples']
@@ -86,10 +86,10 @@ class TestUSIAPI(unittest.TestCase):
 
         converted_sample = self.converter.convert(sample)
 
-        created_usi_sample = self.usi_api.create_entity(create_sample_url, converted_sample)
+        created_sample = self.dsp_api.create_entity(create_sample_url, converted_sample)
 
-        # clean up submission in USI
-        delete_url = usi_submission['_links']['self:delete']['href']
-        self.usi_api.delete_submission(delete_url)
+        # clean up submission in DSP
+        delete_url = submission['_links']['self:delete']['href']
+        self.dsp_api.delete_submission(delete_url)
 
-        self.assertTrue(created_usi_sample)
+        self.assertTrue(created_sample)

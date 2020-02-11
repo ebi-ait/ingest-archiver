@@ -18,9 +18,9 @@ class TestIngestArchiver(unittest.TestCase):
         self.ingest_api = MagicMock()
         self.ingest_api.url = 'ingest_url'
 
-        self.usi_api = MagicMock()
-        self.usi_api.url = 'usi_url'
-        self.usi_api.get_current_version = MagicMock(return_value=None)
+        self.dsp_api = MagicMock()
+        self.dsp_api.url = 'dsp_url'
+        self.dsp_api.get_current_version = MagicMock(return_value=None)
 
         with open(config.JSON_DIR + 'hca/biomaterials.json', encoding=config.ENCODING) as data_file:
             biomaterials = json.loads(data_file.read())
@@ -74,7 +74,7 @@ class TestIngestArchiver(unittest.TestCase):
         archiver = IngestArchiver(
             ontology_api=self.ontology_api,
             ingest_api=self.ingest_api,
-            usi_api=self.usi_api,
+            dsp_api=self.dsp_api,
             exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['manifest_id'])
@@ -90,7 +90,7 @@ class TestIngestArchiver(unittest.TestCase):
         archiver = IngestArchiver(
             ontology_api=self.ontology_api,
             ingest_api=self.ingest_api,
-            usi_api=self.usi_api,
+            dsp_api=self.dsp_api,
             exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
@@ -113,7 +113,7 @@ class TestIngestArchiver(unittest.TestCase):
         seq_file['content']['file_core']['file_name'] = "R2.fastq.gz"
         seq_files.append(seq_file)
         mock_manifest.get_files = MagicMock(return_value=seq_files)
-        archiver = IngestArchiver(ingest_api=self.ingest_api, usi_api=self.usi_api, ontology_api=self.ontology_api)
+        archiver = IngestArchiver(ingest_api=self.ingest_api, dsp_api=self.dsp_api, ontology_api=self.ontology_api)
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission.converted_entities = list(entity_map.get_converted_entities())
@@ -122,7 +122,7 @@ class TestIngestArchiver(unittest.TestCase):
         messages = archiver.notify_file_archiver(archive_submission)
 
         expected = {
-            "usi_api_url": 'usi_url',
+            "dsp_api_url": 'dsp_url',
             'ingest_api_url': 'ingest_url',
             'submission_url': 'url',
             'files': ['dummy_manifest_id.bam'],
@@ -148,14 +148,14 @@ class TestIngestArchiver(unittest.TestCase):
         archiver = IngestArchiver(
             ontology_api=self.ontology_api,
             ingest_api=self.ingest_api,
-            usi_api=self.usi_api,
+            dsp_api=self.dsp_api,
             exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission = archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
-        archive_submission = archiver.complete_submission(usi_submission_url=url)
+        archive_submission = archiver.complete_submission(dsp_submission_url=url)
         self.assertTrue(archive_submission.is_completed)
         self.assertTrue(archive_submission.accession_map)
 
@@ -187,7 +187,7 @@ class TestIngestArchiver(unittest.TestCase):
         archiver = IngestArchiver(
             ontology_api=self.ontology_api,
             ingest_api=self.ingest_api,
-            usi_api=self.usi_api,
+            dsp_api=self.dsp_api,
             exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert('')

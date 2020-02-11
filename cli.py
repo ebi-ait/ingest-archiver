@@ -26,7 +26,7 @@ class ArchiveCLI:
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
         self.archiver = IngestArchiver(ingest_api=self.ingest_api,
-                                       usi_api=DataSubmissionPortal(config.DSP_API_URL),
+                                       dsp_api=DataSubmissionPortal(config.DSP_API_URL),
                                        ontology_api=OntologyAPI(),
                                        exclude_types=self.split_exclude_types(exclude_types),
                                        alias_prefix=alias_prefix)
@@ -43,7 +43,7 @@ class ArchiveCLI:
         self.manifests = parsed_manifest_list
 
     def complete_submission(self, submission_url):
-        logging.info(f'##################### COMPLETING USI SUBMISSION {submission_url}')
+        logging.info(f'##################### COMPLETING DSP SUBMISSION {submission_url}')
         archive_submission = self.archiver.complete_submission(submission_url)
         report = archive_submission.generate_report()
         submission_uuid = submission_url.rsplit('/', 1)[-1]
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     # submit only
     parser.add_option("-u", "--submission_url",
-                      help="USI Submission url to complete")
+                      help="DSP Submission url to complete")
 
     # options helpful for testing
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
@@ -122,7 +122,7 @@ if __name__ == '__main__':
                       help="Add this flag to wait for entities submit to archives once valid",
                       action="store_true", default=False)
     parser.add_option("-v", "--no_validation",
-                      help="Add this flag to not send submission to USI/DSP for validation, will override submit flag to false.",
+                      help="Add this flag to not send submission to DSP for validation, will override submit flag to false.",
                       action="store_true", default=False)
     parser.add_option("-o", "--output_dir", help="Customise output directory name")
 

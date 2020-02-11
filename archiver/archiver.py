@@ -28,8 +28,8 @@ class ArchiveEntity:
         self.id = None
         self.archive_entity_type = None
         self.accession = None
-        self.usi_json = None
-        self.usi_current_version = None
+        self.dsp_json = None
+        self.dsp_current_version = None
         self.links = {}
         self.manifest_id = None
 
@@ -198,27 +198,27 @@ class Manifest:
 
 
 class ArchiveSubmission:
-    def __init__(self, usi_api, usi_submission_url=None):
-        self.usi_submission = {}
+    def __init__(self, dsp_api, dsp_submission_url=None):
+        self.submission = {}
         self.errors = list()
         self.processing_result = list()
         self.validation_result = list()
         self.is_completed = False
         self.converted_entities = list()
         self.entity_map = ArchiveEntityMap()
-        self.usi_api = usi_api
+        self.dsp_api = dsp_api
         self.file_upload_info = list()
         self.accession_map = None
         self.invalid = False
         self.status = None
 
-        if usi_submission_url:
-            self.usi_submission = self.usi_api.get_submission(usi_submission_url)
+        if dsp_submission_url:
+            self.submission = self.dsp_api.get_submission(dsp_submission_url)
             self.status = self.get_status()
 
     def get_status(self):
-        get_status_url = self.usi_submission['_links']['submissionStatus']['href']
-        submission_status = self.usi_api.get_submission_status(get_status_url)
+        get_status_url = self.submission['_links']['submissionStatus']['href']
+        submission_status = self.dsp_api.get_submission_status(get_status_url)
         state = submission_status.get('status')
         return state
 
@@ -226,18 +226,19 @@ class ArchiveSubmission:
         return str(vars(self))
 
     def add_entities(self, converted_entities):
-        get_contents_url = self.usi_submission['_links']['contents']['href']
-        contents = self.usi_api.get_contents(get_contents_url)
+        get_contents_url = self.submission['_links']['contents']['href']
+        contents = self.dsp_api.get_contents(get_contents_url)
 
+        entity: ArchiveEntity
         for entity in converted_entities:
-            entity_link = self.usi_api.get_entity_url(entity.archive_entity_type)
+            entity_link = self.dsp_api.get_entity_url(entity.archive_entity_type)
             create_entity_url = contents['_links'][f'{entity_link}:create']['href']
 
-            created_entity = self.usi_api.create_entity(create_entity_url, entity.conversion)
-            entity.usi_json = created_entity
+            created_entity = self.dsp_api.create_entity(create_entity_url, entity.conversion)
+            entity.dsp_json = created_entity
 
     def validate(self):
-        if not self.usi_submission:
+        if not self.submission:
             return self
 
         is_validated = False
@@ -250,15 +251,15 @@ class ArchiveSubmission:
             )
         except polling.TimeoutException as te:
             self.errors.append({
-                "error_message": "USI validation takes too long to complete.",
+                "error_message": "DSP validation takes too long to complete.",
             })
 
         if is_validated and self.get_all_validation_errors():
             validation_summary = self.get_all_validation_result_details()
             self.errors.append({
-                "error_message": "Failed in USI validation.",
+                "error_message": "Failed in DSP validation.",
                 "details": {
-                    "usi_validation_errors": self.get_all_validation_errors()
+                    "dsp_validation_errors": self.get_all_validation_errors()
                 }
             })
             self.validation_result = validation_summary
@@ -267,10 +268,10 @@ class ArchiveSubmission:
         return self
 
     def validate_and_submit(self):
-        if not self.usi_submission:
+        if not self.submission:
             return self
 
-        print("Waiting for the submission to be validated in USI...")
+        print("Waiting for the submission to be validated in DSP...")
 
         is_validated = False
         try:
@@ -282,16 +283,16 @@ class ArchiveSubmission:
             )
         except polling.TimeoutException as te:
             self.errors.append({
-                "error_message": "USI validation takes too long to complete.",
+                "error_message": "DSP validation takes too long to complete.",
             })
 
         if is_validated and self.get_all_validation_errors():
             validation_summary = self.get_all_validation_result_details()
             self.validation_result = validation_summary
             self.errors.append({
-                "error_message": "Failed in USI validation.",
+                "error_message": "Failed in DSP validation.",
                 "details": {
-                    "usi_validation_errors": self.get_all_validation_errors()
+                    "dsp_validation_errors": self.get_all_validation_errors()
                 }
             })
             self.invalid = True
@@ -302,9 +303,9 @@ class ArchiveSubmission:
         return self
 
     def submit(self):
-        self.usi_api.update_submission_status(self.usi_submission, 'Submitted')
+        self.dsp_api.update_submission_status(self.submission, 'Submitted')
 
-        print("USI Submission is submitted! Waiting for the submission result. Please do not submit again.")
+        print("DSP Submission is submitted! Waiting for the submission result. Please do not submit again.")
 
         try:
             self.is_completed = polling.poll(
@@ -318,7 +319,7 @@ class ArchiveSubmission:
 
         except polling.TimeoutException:
             self.errors.append({
-                "error_message": "USI submission takes too long to complete.",
+                "error_message": "DSP submission takes too long to complete.",
             })
 
     def process_result(self):
@@ -355,42 +356,42 @@ class ArchiveSubmission:
         return False
 
     def get_all_validation_result_details(self):
-        get_validation_results_url = self.usi_submission['_links']['validationResults']['href']
-        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
+        get_validation_results_url = self.submission['_links']['validationResults']['href']
+        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
 
         summary = []
         for validation_result in validation_results:
             if validation_result['validationStatus'] == "Complete":
                 details_url = validation_result['_links']['validationResult']['href']
-                # TODO fix how what to put as projection param, check usi documentation, removing any params for now
+                # TODO fix how what to put as projection param, check dsp documentation, removing any params for now
                 details_url = details_url.split('{')[0]
-                validation_result_details = self.usi_api.get_validation_result_details(details_url)
+                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
                 summary.append(validation_result_details)
 
         return summary
 
     def get_all_validation_errors(self):
-        get_validation_results_url = self.usi_submission['_links']['validationResults']['href']
-        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
+        get_validation_results_url = self.submission['_links']['validationResults']['href']
+        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
 
         errors = []
         for validation_result in validation_results:
             if validation_result['validationStatus'] == "Complete":
                 details_url = validation_result['_links']['validationResult']['href']
-                # TODO fix how what to put as projection param, check usi documentation, removing any params for now
+                # TODO fix how what to put as projection param, check dsp documentation, removing any params for now
                 details_url = details_url.split('{')[0]
-                validation_result_details = self.usi_api.get_validation_result_details(details_url)
+                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
                 if validation_result_details.get('errorMessages'):
                     errors.append(validation_result_details.get('errorMessages'))
 
         return errors
 
     def is_submittable(self):
-        get_status_url = self.usi_submission['_links']['submissionStatus']['href']
-        submission_status = self.usi_api.get_submission_status(get_status_url)
+        get_status_url = self.submission['_links']['submissionStatus']['href']
+        submission_status = self.dsp_api.get_submission_status(get_status_url)
 
         get_available_statuses_url = submission_status['_links']['availableStatuses']['href']
-        available_statuses = self.usi_api.get_available_statuses(get_available_statuses_url)
+        available_statuses = self.dsp_api.get_available_statuses(get_available_statuses_url)
 
         for status in available_statuses:
             if status['statusName'] == 'Submitted':
@@ -399,8 +400,8 @@ class ArchiveSubmission:
         return False
 
     def is_validated(self):
-        get_validation_results_url = self.usi_submission['_links']['validationResults']['href']
-        validation_results = self.usi_api.get_validation_results(get_validation_results_url)
+        get_validation_results_url = self.submission['_links']['validationResults']['href']
+        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
 
         for validation_result in validation_results:
             if validation_result['validationStatus'] != "Complete":
@@ -409,10 +410,10 @@ class ArchiveSubmission:
         return True
 
     def is_validated_and_submittable(self):
-        return self.is_validated(self.usi_submission) and self.is_submittable(self.usi_submission)
+        return self.is_validated(self.submission) and self.is_submittable(self.submission)
 
     def is_processing_complete(self):
-        results = self.usi_api.get_processing_results(self.usi_submission)
+        results = self.dsp_api.get_processing_results(self.submission)
         for result in results:
             if result['status'] != "Completed" and result['status'] != "Error":
                 return False
@@ -420,16 +421,16 @@ class ArchiveSubmission:
         return True
 
     def delete_submission(self):
-        delete_url = self.usi_submission['_links']['self:delete']['href']
-        return self.usi_api.delete_submission(delete_url)
+        delete_url = self.submission['_links']['self:delete']['href']
+        return self.dsp_api.delete_submission(delete_url)
 
     def get_processing_results(self):
-        return self.usi_api.get_processing_results(self.usi_submission)
+        return self.dsp_api.get_processing_results(self.submission)
 
     def get_url(self):
         # TODO remove projection placeholder
-        if self.usi_submission:
-            return self.usi_submission['_links']['self']['href'].split('{')[0]
+        if self.submission:
+            return self.submission['_links']['self']['href'].split('{')[0]
 
         return None
 
@@ -439,10 +440,11 @@ class ArchiveSubmission:
         report['submission_errors'] = self.errors
         report['file_upload_info'] = self.file_upload_info
 
-        if self.usi_submission:
+        if self.submission:
             report['submission_url'] = self.get_url()
 
         entities = {}
+        entity: ArchiveEntity
         for entity in self.entity_map.get_entities():
             entities[entity.id] = {}
             entities[entity.id]['errors'] = entity.errors
@@ -450,8 +452,8 @@ class ArchiveSubmission:
             entities[entity.id]['warnings'] = entity.warnings
             entities[entity.id]['converted_data'] = entity.conversion
 
-            if entity.usi_json:
-                entities[entity.id]['entity_url'] = entity.usi_json['_links']['self']['href']
+            if entity.dsp_json:
+                entities[entity.id]['entity_url'] = entity.dsp_json['_links']['self']['href']
 
         report['entities'] = entities
         report['accessions'] = self.accession_map
@@ -463,13 +465,13 @@ class ArchiveSubmission:
 
 
 class IngestArchiver:
-    def __init__(self, ingest_api, usi_api, ontology_api, exclude_types=None, alias_prefix=None):
+    def __init__(self, ingest_api, dsp_api, ontology_api, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
         self.ingest_api = ingest_api
         self.exclude_types = exclude_types if exclude_types else []
         self.alias_prefix = f"{alias_prefix}_" if alias_prefix else ""
         self.ontology_api = ontology_api
-        self.usi_api = usi_api
+        self.dsp_api = dsp_api
 
         self.converter = {
             "project": ProjectConverter(ontology_api=ontology_api),
@@ -488,15 +490,15 @@ class IngestArchiver:
         return archive_submission
 
     def archive_metadata(self, entity_map: ArchiveEntityMap):
-        archive_submission = ArchiveSubmission(usi_api=self.usi_api)
+        archive_submission = ArchiveSubmission(dsp_api=self.dsp_api)
         archive_submission.entity_map = entity_map
 
         converted_entities = list(entity_map.get_converted_entities())
 
         if converted_entities:
             archive_submission.converted_entities = converted_entities
-            archive_submission.usi_submission = self.usi_api.create_submission()
-            print(f"USI SUBMISSION: {archive_submission.get_url()}")
+            archive_submission.submission = self.dsp_api.create_submission()
+            print(f"DSP SUBMISSION: {archive_submission.get_url()}")
             archive_submission.add_entities(archive_submission.converted_entities)
         else:
             archive_submission.is_completed = True
@@ -507,8 +509,8 @@ class IngestArchiver:
 
         return archive_submission
 
-    def complete_submission(self, usi_submission_url):
-        archive_submission = ArchiveSubmission(usi_api=self.usi_api, usi_submission_url=usi_submission_url)
+    def complete_submission(self, dsp_submission_url):
+        archive_submission = ArchiveSubmission(dsp_api=self.dsp_api, dsp_submission_url=dsp_submission_url)
 
         if archive_submission.status == 'Draft':
             archive_submission.validate_and_submit()
@@ -548,19 +550,19 @@ class IngestArchiver:
 
                 converter = self.converter[archive_entity_type]
 
-                current_version = self.usi_api.get_current_version(archive_entity.archive_entity_type,
+                current_version = self.dsp_api.get_current_version(archive_entity.archive_entity_type,
                                                                    archive_entity.id)
                 if current_version and current_version.get('accession'):
                     archive_entity.accession = current_version.get('accession')
                     archive_entity.errors.append({
-                        "error_message": f"This alias has already been submitted to USI, accession: {archive_entity.accession}.",
+                        "error_message": f"This alias has already been submitted to DSP, accession: {archive_entity.accession}.",
                         "details": {
                             "current_version": current_version["_links"]["self"]["href"]
                         }
                     })
                 elif current_version and not current_version.get('accession'):
                     archive_entity.errors.append({
-                        "error_message": f'This alias has already been submitted to USI, but still has no accession.',
+                        "error_message": f'This alias has already been submitted to DSP, but still has no accession.',
                         "details": {
                             "current_version": current_version["_links"]["self"]["href"]
                         }
@@ -606,7 +608,7 @@ class IngestArchiver:
                     files.append(obj)
 
                 message = {
-                    "usi_api_url": self.usi_api.url,
+                    "dsp_api_url": self.dsp_api.url,
                     "ingest_api_url": self.ingest_api.url,
                     "submission_url": archive_submission.get_url(),
                     "files": files,
