@@ -3,4 +3,3 @@ flatten_json
 requests
 pika
 polling
--e git+https://github.com/HumanCellAtlas/ingest-client.git@b5caeba3a0fcb7e489d5a0e87a2747891cb5c86e#egg=hca_ingest

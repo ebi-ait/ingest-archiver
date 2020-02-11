@@ -1,11 +1,12 @@
 import json
-import requests
 import logging
 import config
 
-import requests.packages.urllib3.util.retry as retry
+import requests
+from requests import adapters
+from urllib3.util import retry
 
-from ingest.utils.token_manager import TokenManager
+from utils.token_manager import TokenManager
 
 
 class AAPTokenClient:
