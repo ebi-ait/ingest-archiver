@@ -53,7 +53,7 @@
 		"alias": "{assayAlias.placeholder}"
 	},
 	"files": [{
-		"name": "dummy_bundle_uuid.bam",
+		"name": "dummy_manifest_id.bam",
 		"type": "bam"
 	}]
 }

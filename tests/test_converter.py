@@ -205,7 +205,7 @@ class TestConverter(unittest.TestCase):
             'sequencing_protocol': sequencing_protocol,
             'process': process,
             'files': [file],
-            'bundle_uuid': 'dummy_bundle_uuid'
+            'manifest_id': 'dummy_manifest_id'
         }
 
         expected_json['alias'] = 'sequencingRun_' + test_alias

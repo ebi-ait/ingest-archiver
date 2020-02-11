@@ -3,7 +3,7 @@ import re
 
 from flatten_json import flatten
 
-from archiver.ontology_api import OntologyAPI
+from archiver import util
 
 """
 HCA to USI JSON Mapping
@@ -371,20 +371,15 @@ class SequencingRunConverter(Converter):
         }
 
         self.alias_prefix = 'sequencingRun_'
-        self.exclude_data = ['bundle_uuid', 'library_preparation_protocol']
+        self.exclude_data = ['manifest_id', 'library_preparation_protocol']
 
     def convert(self, hca_data):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
 
         files = []
-        lib_prep = hca_data.get("library_preparation_protocol", {})
-        content = lib_prep.get("content", {})
-        library_const_approach_obj = content.get("library_construction_method", {})
-        library_const_approach = library_const_approach_obj.get('ontology')
-
-        if library_const_approach and library_const_approach == self.ONTOLOGY_10x:
+        if util.is_10x(hca_data.get("library_preparation_protocol")):
             files = [{
-                'name': f"{hca_data['bundle_uuid']}.bam",
+                'name': f"{hca_data['manifest_id']}.bam",
                 'type': 'bam'
             }]
         else:

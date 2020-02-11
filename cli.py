@@ -20,7 +20,7 @@ from archiver.usi_api import USIAPI
 
 class ArchiveCLI:
     def __init__(self, alias_prefix, output_dir, exclude_types):
-        self.bundles = []
+        self.manifests = []
         self.ingest_api = IngestAPI(config.INGEST_API_URL)
 
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
@@ -31,14 +31,16 @@ class ArchiveCLI:
                                        exclude_types=self.split_exclude_types(exclude_types),
                                        alias_prefix=alias_prefix)
 
-    def get_bundles_from_project(self, project_uuid):
-        self.bundles = self.ingest_api.get_bundle_uuids(project_uuid=project_uuid)
+    def get_manifests_from_project(self, project_uuid):
+        logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
+        self.manifests = self.ingest_api.get_manifest_ids(project_uuid=project_uuid)
 
-    def get_bundles_from_list(self, bundle_list_file):
-        with open(bundle_list_file) as f:
+    def get_manifests_from_list(self, manifest_list_file):
+        logging.info(f'GETTING MANIFESTS FROM FILE: {manifest_list_file}')
+        with open(manifest_list_file) as f:
             content = f.readlines()
-        parsed_bundle_list = [x.strip() for x in content]
-        self.bundles = parsed_bundle_list
+        parsed_manifest_list = [x.strip() for x in content]
+        self.manifests = parsed_manifest_list
 
     def complete_submission(self, submission_url):
         logging.info(f'##################### COMPLETING USI SUBMISSION {submission_url}')
@@ -49,9 +51,9 @@ class ArchiveCLI:
 
     def build_submission(self):
         all_messages = []
-        logging.info(f'Processing {len(self.bundles)} bundles:\n' + "\n".join(map(str, self.bundles)))
+        logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
 
-        entity_map = self.archiver.convert(self.bundles)
+        entity_map = self.archiver.convert(self.manifests)
         summary = entity_map.get_conversion_summary()
         logging.info(f'Entities to be converted: {json.dumps(summary, indent=4)}')
         archive_submission = self.archiver.archive_metadata(entity_map)
@@ -111,8 +113,8 @@ if __name__ == '__main__':
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-x", "--exclude_types",
                       help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
-    parser.add_option("-f", "--bundle_list_file",
-                      help="Specify a path to a file containing list of bundle uuid's to be archived."
+    parser.add_option("-f", "--manifest_list_file",
+                      help="Specify a path to a file containing list of manifest id's to be archived."
                            "If project uuid is already specified then this parameter will be ignored.")
 
     # preferences
@@ -126,15 +128,15 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not options.submission_url and not (options.project_uuid or options.bundle_list_file):
-        logging.error("You must supply a project UUID or a file with list of bundle UUIDs")
+    if not options.submission_url and not (options.project_uuid or options.manifest_list_file):
+        logging.error("You must supply a project UUID or a file with list of manifest IDs")
         exit(2)
 
     cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types)
     if options.project_uuid:
-        cli.get_bundles_from_project(options.project_uuid)
-    elif options.bundle_list_file:
-        cli.get_bundles_from_list(options.bundle_list_file)
+        cli.get_manifests_from_project(options.project_uuid)
+    elif options.manifest_list_file:
+        cli.get_manifests_from_list(options.manifest_list_file)
 
     if options.submission_url:
         cli.complete_submission(options.submission_url)
