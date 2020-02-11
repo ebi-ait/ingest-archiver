@@ -1,3 +1,4 @@
+urllib3
 flatten_json
 requests
 pika
