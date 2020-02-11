@@ -8,7 +8,7 @@
 		"input_nucleic_acid_molecule": {
 			"text": "polyA RNA"
 		},
-		"library_construction_approach": {
+		"library_construction_method": {
 			"text": "10X v2 sequencing",
 			"ontology": "EFO:0009310"
 		},

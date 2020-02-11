@@ -27,7 +27,7 @@
 		"Files - 0 - File Core - File Name": [{
 			"value": "R1.fastq.gz"
 		}],
-		"Files - 0 - File Core - File Format": [{
+		"Files - 0 - File Core - Format": [{
 			"value": "fastq.gz"
 		}],
 		"Files - 0 - Read Index": [{

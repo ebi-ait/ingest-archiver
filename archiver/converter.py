@@ -435,7 +435,7 @@ class ProjectConverter(Converter):
         contributors = hca_data['project']['content'].get('contributors', [])
 
         for contributor in contributors:
-            project_role = contributor.get("project_role", "")
+            project_role = contributor.get('project_role').get('text', '') if contributor.get('project_role') else ''
 
             if "wrangler" in project_role or "curator" in project_role:
                 continue
@@ -470,7 +470,7 @@ class ProjectConverter(Converter):
             publication = {
                 "pubmedId": hca_publication.get("pmid", ""),
                 "doi": hca_publication.get("doi", ""),
-                "articleTitle": hca_publication.get("publication_title", ""),
+                "articleTitle": hca_publication.get("title", ""),
                 "authors": f"{DELIM}".join(hca_publication.get("authors", []))
             }
             publications.append(publication)

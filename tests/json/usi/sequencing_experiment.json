@@ -33,7 +33,7 @@
         "Library Preparation Protocol - End Bias": [{
             "value": "5 prime end bias"
         }],
-        "Library Preparation Protocol - Library Construction Approach": [{
+        "Library Preparation Protocol - Library Construction Method": [{
             "terms": [{
                 "url": "http://purl.obolibrary.org/obo/UO_0000015"
             }],
