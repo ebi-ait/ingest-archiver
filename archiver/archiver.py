@@ -604,6 +604,7 @@ class IngestArchiver:
                         # required fields
                         "name": file['content']['file_core']['file_name'],
                         "read_index": file['content']['read_index'],
+                        "cloud_url": file['cloudUrl']
                     }
                     files.append(obj)
 
