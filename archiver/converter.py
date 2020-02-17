@@ -7,7 +7,7 @@ from utils import protocols
 
 """
 HCA to DSP JSON Mapping
-https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
+https://docs.google.com/document/d/1DvF0S9rL0IxnMdsi9P3qUVRt-IOT25KWqjwwIU7C9_s
 ## TODO: Use SchemaTemplate.replaced_by_latest() to check for template migrations.
 """
 
