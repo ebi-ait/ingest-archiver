@@ -50,14 +50,13 @@ class ArchiveCLI:
         self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
 
     def build_submission(self):
-        all_messages = []
         logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
 
         entity_map = self.archiver.convert(self.manifests)
         summary = entity_map.get_conversion_summary()
         logging.info(f'Entities to be converted: {json.dumps(summary, indent=4)}')
         archive_submission = self.archiver.archive_metadata(entity_map)
-        all_messages.append(self.archiver.notify_file_archiver(archive_submission))
+        all_messages = self.archiver.notify_file_archiver(archive_submission)
 
         logging.info("##################### FILE ARCHIVER NOTIFICATION")
         self.save_dict_to_file("FILE_UPLOAD_INFO", {"jobs": all_messages})
