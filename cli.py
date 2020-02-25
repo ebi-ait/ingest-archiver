@@ -9,66 +9,95 @@ import json
 import logging
 import os
 import sys
-
-import config
-
 from optparse import OptionParser
 
-from archiver.archiver import IngestArchiver, ArchiveEntityMap
-from archiver.ontology_api import OntologyAPI
-from archiver.usi_api import USIAPI
-from archiver.ingest_api import IngestAPI
-
-ingest_url = config.INGEST_API_URL
-usi_url = config.USI_API_URL
-
-ingest_api = IngestAPI(ingest_url)
-usi_api = USIAPI(usi_url)
-ontology_api = OntologyAPI()
+import config
+from archiver.archiver import IngestArchiver
+from api.ingest import IngestAPI
+from api.ontology import OntologyAPI
+from api.dsp import DataSubmissionPortal
 
 
-def save_dict_to_file(output_dir, filename, obj):
-    if not output_dir:
-        return
+class ArchiveCLI:
+    def __init__(self, alias_prefix, output_dir, exclude_types):
+        self.manifests = []
+        self.ingest_api = IngestAPI(config.INGEST_API_URL)
 
-    directory = os.path.abspath(output_dir)
+        now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
+        self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
+        self.archiver = IngestArchiver(ingest_api=self.ingest_api,
+                                       dsp_api=DataSubmissionPortal(config.DSP_API_URL),
+                                       ontology_api=OntologyAPI(),
+                                       exclude_types=self.split_exclude_types(exclude_types),
+                                       alias_prefix=alias_prefix)
 
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    def get_manifests_from_project(self, project_uuid):
+        logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
+        self.manifests = self.ingest_api.get_manifest_ids(project_uuid=project_uuid)
 
-    with open(directory + "/" + filename + ".json", "w") as outfile:
-        json.dump(obj, outfile, indent=4)
-        outfile.close()
-
-    print(f"Saved to {directory}/{filename}.json!")
-
-
-def get_exclude_types(options):
-    exclude_types = []
-    if options.exclude_types:
-        exclude_types = [x.strip() for x in options.exclude_types.split(',')]
-        logging.warning(f"Excluding {', '.join(exclude_types)}")
-
-    return exclude_types
-
-
-def get_bundles(options):
-    bundles = []
-
-    if options.project_uuid:
-        bundles = ingest_api.get_bundle_uuids(project_uuid=options.project_uuid)
-    elif options.bundle_list_file:
-        with open(options.bundle_list_file) as f:
+    def get_manifests_from_list(self, manifest_list_file):
+        logging.info(f'GETTING MANIFESTS FROM FILE: {manifest_list_file}')
+        with open(manifest_list_file) as f:
             content = f.readlines()
-        parsed_bundle_list = [x.strip() for x in content]
-        bundles = parsed_bundle_list
+        parsed_manifest_list = [x.strip() for x in content]
+        self.manifests = parsed_manifest_list
 
-    return bundles
+    def complete_submission(self, submission_url):
+        logging.info(f'##################### COMPLETING DSP SUBMISSION {submission_url}')
+        archive_submission = self.archiver.complete_submission(submission_url)
+        report = archive_submission.generate_report()
+        submission_uuid = submission_url.rsplit('/', 1)[-1]
+        self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
+
+    def build_submission(self):
+        logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
+
+        entity_map = self.archiver.convert(self.manifests)
+        summary = entity_map.get_conversion_summary()
+        logging.info(f'Entities to be converted: {json.dumps(summary, indent=4)}')
+        archive_submission = self.archiver.archive_metadata(entity_map)
+        all_messages = self.archiver.notify_file_archiver(archive_submission)
+
+        logging.info("##################### FILE ARCHIVER NOTIFICATION")
+        self.save_dict_to_file("FILE_UPLOAD_INFO", {"jobs": all_messages})
+        return archive_submission
+
+    def validate_submission(self, archive_submission, submit):
+        if submit:
+            archive_submission.validate_and_submit()
+        else:
+            archive_submission.validate()
+
+        report = archive_submission.generate_report()
+        logging.info("Saving Report file...")
+        self.save_dict_to_file("REPORT", report)
+
+    def save_dict_to_file(self, file_name, json_content):
+        if not self.output_dir:
+            return
+
+        directory = os.path.abspath(self.output_dir)
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(directory + "/" + file_name + ".json", "w") as new_file_path:
+            json.dump(json_content, new_file_path, indent=4)
+            new_file_path.close()
+
+        logging.info(f"Saved to {directory}/{file_name}.json!")
+
+    @staticmethod
+    def split_exclude_types(exclude_types):
+        if exclude_types:
+            exclude_types = [x.strip() for x in options.exclude_types.split(',')]
+            logging.warning(f"Excluding {', '.join(exclude_types)}")
+        return exclude_types
 
 
 if __name__ == '__main__':
-    format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(format=format, stream=sys.stdout, level=logging.INFO)
+    logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(format=logging_format, stream=sys.stdout, level=logging.INFO)
 
     parser = OptionParser()
 
@@ -77,67 +106,40 @@ if __name__ == '__main__':
 
     # submit only
     parser.add_option("-u", "--submission_url",
-                      help="USI Submission url to complete")
+                      help="DSP Submission url to complete")
 
     # options helpful for testing
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-x", "--exclude_types",
                       help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
-    parser.add_option("-f", "--bundle_list_file",
-                      help="Specify a path to a file containing list of bundle uuid's to be archived."
+    parser.add_option("-f", "--manifest_list_file",
+                      help="Specify a path to a file containing list of manifest id's to be archived."
                            "If project uuid is already specified then this parameter will be ignored.")
 
     # preferences
     parser.add_option("-s", "--submit",
                       help="Add this flag to wait for entities submit to archives once valid",
                       action="store_true", default=False)
+    parser.add_option("-v", "--no_validation",
+                      help="Add this flag to not send submission to DSP for validation, will override submit flag to false.",
+                      action="store_true", default=False)
     parser.add_option("-o", "--output_dir", help="Customise output directory name")
 
     (options, args) = parser.parse_args()
 
-    if not options.submission_url and not (options.project_uuid or options.bundle_list_file):
-        logging.error("You must supply a project UUID or a file with list of bundle UUIDs")
+    if not options.submission_url and not (options.project_uuid or options.manifest_list_file):
+        logging.error("You must supply a project UUID or a file with list of manifest IDs")
         exit(2)
 
-    now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
-    output_dir = options.output_dir if options.output_dir else f"ARCHIVER_{now}"
-    exclude_types = get_exclude_types(options)
-    bundles = get_bundles(options)
-
-    archiver = IngestArchiver(ingest_api=ingest_api,
-                              usi_api=usi_api,
-                              ontology_api=ontology_api,
-                              exclude_types=exclude_types,
-                              alias_prefix=options.alias_prefix)
+    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types)
+    if options.project_uuid:
+        cli.get_manifests_from_project(options.project_uuid)
+    elif options.manifest_list_file:
+        cli.get_manifests_from_list(options.manifest_list_file)
 
     if options.submission_url:
-        print(f'##################### COMPLETING USI SUBMISSION {options.submission_url}')
-        archive_submission = archiver.complete_submission(options.submission_url)
-        report = archive_submission.generate_report()
-        submission_uuid = options.submission_url.rsplit('/', 1)[-1]
-        save_dict_to_file(output_dir, f'COMPLETE_SUBMISSION_{submission_uuid}', report)
-
-    if not options.submission_url:
-        all_messages = []
-        bundle_len = len(bundles)
-        print(f'\nProcessing {bundle_len} bundles:')
-        print(*bundles, sep="\n")
-
-        entity_map = archiver.convert(bundles)
-        summary = entity_map.get_conversion_summary()
-        print(f'\nEntities to be converted: {json.dumps(summary, indent=4)}')
-        archive_submission = archiver.archive_metadata(entity_map)
-        all_messages = archiver.notify_file_archiver(archive_submission)
-
-        print(f'##################### FILE ARCHIVER NOTIFICATION')
-        filename = f"FILE_UPLOAD_INFO"
-        save_dict_to_file(output_dir, filename, {"jobs": all_messages})
-
-        if options.submit:
-            archive_submission.validate_and_submit()
-        else:
-            archive_submission.validate()
-
-        report = archive_submission.generate_report()
-        print("Saving Report file...")
-        save_dict_to_file(output_dir, f'REPORT', report)
+        cli.complete_submission(options.submission_url)
+    else:
+        submission = cli.build_submission()
+        if not options.no_validation:
+            cli.validate_submission(submission, options.submit)

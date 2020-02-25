@@ -3,11 +3,12 @@ import re
 
 from flatten_json import flatten
 
-from archiver.ontology_api import OntologyAPI
+from utils import protocols
 
 """
-HCA to USI JSON Mapping
-https://docs.google.com/document/d/1yXTelUt-CvlI7-Jkh7K_NCPIBfhRXMvjT4wRkyxpIN0/edit#
+HCA to DSP JSON Mapping
+https://docs.google.com/document/d/1DvF0S9rL0IxnMdsi9P3qUVRt-IOT25KWqjwwIU7C9_s
+## TODO: Use SchemaTemplate.replaced_by_latest() to check for template migrations.
 """
 
 
@@ -370,20 +371,15 @@ class SequencingRunConverter(Converter):
         }
 
         self.alias_prefix = 'sequencingRun_'
-        self.exclude_data = ['bundle_uuid', 'library_preparation_protocol']
+        self.exclude_data = ['manifest_id', 'library_preparation_protocol']
 
     def convert(self, hca_data):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
 
         files = []
-        lib_prep = hca_data.get("library_preparation_protocol", {})
-        content = lib_prep.get("content", {})
-        library_const_approach_obj = content.get("library_construction_approach", {})
-        library_const_approach = library_const_approach_obj.get('ontology')
-
-        if library_const_approach and library_const_approach == self.ONTOLOGY_10x:
+        if protocols.is_10x(hca_data.get("library_preparation_protocol")):
             files = [{
-                'name': f"{hca_data['bundle_uuid']}.bam",
+                'name': f"{hca_data['manifest_id']}.bam",
                 'type': 'bam'
             }]
         else:
@@ -391,7 +387,7 @@ class SequencingRunConverter(Converter):
                 flattened_file = self._flatten(file)
                 files.append({
                     'name': flattened_file.get('content__file_core__file_name'),
-                    'type': self.file_format[flattened_file.get('content__file_core__file_format')]
+                    'type': self.file_format[flattened_file.get('content__file_core__format')]
                 })
 
         converted_data['files'] = files
@@ -439,12 +435,12 @@ class ProjectConverter(Converter):
         contributors = hca_data['project']['content'].get('contributors', [])
 
         for contributor in contributors:
-            project_role = contributor.get("project_role", "")
+            project_role = contributor.get('project_role').get('text', '') if contributor.get('project_role') else ''
 
             if "wrangler" in project_role or "curator" in project_role:
                 continue
 
-            contact_name = contributor.get("contact_name", "")
+            contact_name = contributor.get("name", "")
             names = contact_name.split(',', 2)
 
             if len(names) == 3:
@@ -474,7 +470,7 @@ class ProjectConverter(Converter):
             publication = {
                 "pubmedId": hca_publication.get("pmid", ""),
                 "doi": hca_publication.get("doi", ""),
-                "articleTitle": hca_publication.get("publication_title", ""),
+                "articleTitle": hca_publication.get("title", ""),
                 "authors": f"{DELIM}".join(hca_publication.get("authors", []))
             }
             publications.append(publication)

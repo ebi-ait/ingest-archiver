@@ -1,5 +1,5 @@
 import unittest
-from archiver.ontology_api import OntologyAPI
+from api.ontology import OntologyAPI
 
 
 class TestOntologyAPI(unittest.TestCase):

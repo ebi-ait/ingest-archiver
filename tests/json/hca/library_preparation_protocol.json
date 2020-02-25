@@ -8,7 +8,7 @@
 		"input_nucleic_acid_molecule": {
 			"text": "polyA RNA"
 		},
-		"library_construction_approach": {
+		"library_construction_method": {
 			"text": "Smart-seq2",
 			"ontology": "EFO:0008931"
 		},

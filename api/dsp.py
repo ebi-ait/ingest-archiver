@@ -1,11 +1,12 @@
 import json
-import requests
 import logging
 import config
 
-import requests.packages.urllib3.util.retry as retry
+import requests
+from requests import adapters
+from urllib3.util import retry
 
-from ingest.utils.token_manager import TokenManager
+from utils.token_manager import TokenManager
 
 
 class AAPTokenClient:
@@ -22,7 +23,7 @@ class AAPTokenClient:
         return token
 
 
-USI_ENTITY_LINK = {
+DSP_ENTITY_LINK = {
     'study': 'enaStudies',
     'sample': 'samples',
     'sequencingExperiment': 'sequencingExperiments',
@@ -30,7 +31,7 @@ USI_ENTITY_LINK = {
     'sequencingRun': 'sequencingRuns'
 }
 
-USI_ENTITY_CURR_VERSION_LINK = {
+DSP_ENTITY_CURR_VERSION_LINK = {
     'study': 'studies',
     'sample': 'samples',
     'sequencingExperiment': 'assays',
@@ -39,10 +40,10 @@ USI_ENTITY_CURR_VERSION_LINK = {
 }
 
 
-class USIAPI:
+class DataSubmissionPortal:
     def __init__(self, url=None):
         self.logger = logging.getLogger(__name__)
-        self.url = url if url else config.USI_API_URL
+        self.url = url if url else config.DSP_API_URL
         self.logger.info(f'Using {self.url}')
 
         self.aap_api_domain = config.AAP_API_DOMAIN
@@ -81,7 +82,7 @@ class USIAPI:
         return self._get(get_contents_url)
 
     def get_entity_url(self, entity_type):
-        return USI_ENTITY_LINK[entity_type]
+        return DSP_ENTITY_LINK[entity_type]
 
     def get_submission_status(self, get_submission_status_url):
         return self._get(get_submission_status_url)
@@ -103,25 +104,25 @@ class USIAPI:
     def get_validation_result_details(self, get_validation_result_url):
         return self._get(get_validation_result_url)
 
-    def update_submission_status(self, usi_submission, new_status):
-        submission_status_url = usi_submission['_links']['submissionStatus']['href']
+    def update_submission_status(self, dsp_submission, new_status):
+        submission_status_url = dsp_submission['_links']['submissionStatus']['href']
         status_json = {"status": new_status}
 
         updated_submission = self._patch(submission_status_url, status_json)
 
         return updated_submission
 
-    def get_processing_summary(self, usi_submission):
-        get_summary_url = usi_submission['_links']['processingStatusSummary']['href']
+    def get_processing_summary(self, dsp_submission):
+        get_summary_url = dsp_submission['_links']['processingStatusSummary']['href']
 
         return self._get(get_summary_url)
 
-    def get_processing_results(self, usi_submission):
-        get_results_url = usi_submission['_links']['processingStatuses']['href']
+    def get_processing_results(self, dsp_submission):
+        get_results_url = dsp_submission['_links']['processingStatuses']['href']
         return self._get_all(get_results_url, 'processingStatuses')
 
     def get_current_version(self, entity_type, alias):
-        entity_link = USI_ENTITY_CURR_VERSION_LINK[entity_type]
+        entity_link = DSP_ENTITY_CURR_VERSION_LINK[entity_type]
         url = f'{self.url}/api/{entity_link}/search/current-version?teamName={self.aap_api_domain}&alias={alias}'
         response = self.session.get(url, headers=self.get_headers())
 

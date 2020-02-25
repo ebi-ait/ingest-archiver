@@ -50,7 +50,7 @@ class TestConverter(unittest.TestCase):
     def test_convert_sample(self):
         biomaterial = self.hca_data.get('biomaterial')
 
-        with open(config.JSON_DIR + 'usi/sample.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/sample.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
         test_alias = 'hca' + str(randint(0, 1000))
@@ -81,7 +81,7 @@ class TestConverter(unittest.TestCase):
         sequencing_protocol['uuid']['uuid'] = 'seqprotocol' + test_alias
         lib_prep_protocol['uuid']['uuid'] = 'libprepprotol' + test_alias
 
-        with open(config.JSON_DIR + 'usi/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
         expected_json['alias'] = 'sequencingExperiment_' + test_alias
 
@@ -152,7 +152,7 @@ class TestConverter(unittest.TestCase):
         sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
         file = dict(self.hca_data.get('sequencing_file'))
 
-        with open(config.JSON_DIR + 'usi/sequencing_run.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
         test_alias = 'process' + str(randint(0, 1000))
@@ -193,7 +193,7 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             lib_prep_protocol = json.loads(data_file.read())
 
-        with open(config.JSON_DIR + 'usi/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
         test_alias = 'process' + str(randint(0, 1000))
@@ -205,7 +205,7 @@ class TestConverter(unittest.TestCase):
             'sequencing_protocol': sequencing_protocol,
             'process': process,
             'files': [file],
-            'bundle_uuid': 'dummy_bundle_uuid'
+            'manifest_id': 'dummy_manifest_id'
         }
 
         expected_json['alias'] = 'sequencingRun_' + test_alias
@@ -230,7 +230,7 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())
 
-        with open(config.JSON_DIR + 'usi/project.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/project.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
         test_alias = 'hca' + str(randint(0, 1000))
@@ -252,7 +252,7 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())
 
-        with open(config.JSON_DIR + 'usi/study.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/study.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
         test_alias = 'hca' + str(randint(0, 1000))
