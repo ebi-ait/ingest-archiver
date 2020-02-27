@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from archiver.data_node import DataNode
+from conversion.data_node import DataNode
 
 
 class DataNodeTest(TestCase):
