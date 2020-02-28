@@ -31,6 +31,10 @@ class DataNode:
                 current_node = current_node.get(field)
         return current_node
 
+    def get(self, key: str, default=None):
+        value = self[key]
+        return value if value else default
+
     def remove_field(self, field):
         del self.node[field]
 

@@ -64,3 +64,12 @@ class DataNodeTest(TestCase):
 
         # then:
         self.assertEqual(['id'], list(data_node.as_dict().keys()))
+
+    def test_get(self):
+        # given:
+        data_node = DataNode({'content': {'text': 'this is a test'}})
+        default_value = 'default'
+
+        # expect:
+        self.assertEqual(default_value, data_node.get('non.existent.field', default_value))
+        self.assertEqual('this is a test', data_node.get('content.text', default_value))
