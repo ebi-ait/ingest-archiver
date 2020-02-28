@@ -16,11 +16,18 @@ class NodeMapping:
         else:
             self.node = node
 
-    def using(self, mapping_spec: dict):
+    def using(self, mapping_spec: dict) -> dict:
         result = {}
         for field_name, spec in mapping_spec.items():
             source_field_name = spec[0]
-            result[field_name] = self.node.get(source_field_name)
+            field_value = self.node.get(source_field_name)
+            has_customisation = len(spec) > 0
+            if has_customisation:
+                operation = spec[1]
+                args = [field_value]
+                args.extend(spec[2:])
+                field_value = operation(*args)
+            result[field_name] = field_value
         return result
 
 

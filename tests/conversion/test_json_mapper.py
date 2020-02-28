@@ -61,3 +61,27 @@ class JsonMapperTest(TestCase):
         # and: raise exception if anchor can't be found
         with self.assertRaises(InvalidNode):
             mapper.map('non.existent.node')
+
+    def test_map_object_with_custom_processing(self):
+        # given:
+        json_object = json.loads('''{
+            "name": "Pedro,Catapang,de Guzman"
+        }''')
+
+        # and:
+        def parse_name(*args):
+            name = args[0]
+            index = args[1]
+            return name.split(',')[index]
+
+        # when:
+        resulting_json = JsonMapper(json_object).map().using({
+            'first_name': ['name', parse_name, 0],
+            'middle_name': ['name', parse_name, 1],
+            'last_name': ['name', parse_name, 2]
+        })
+
+        # then:
+        self.assertEqual('Pedro', resulting_json['first_name'])
+        self.assertEqual('Catapang', resulting_json['middle_name'])
+        self.assertEqual('de Guzman', resulting_json['last_name'])
