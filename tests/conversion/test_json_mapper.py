@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from conversion.json_mapper import JsonMapper
+from conversion.json_mapper import JsonMapper, InvalidNode
 
 
 class JsonMapperTest(TestCase):
@@ -46,3 +46,18 @@ class JsonMapperTest(TestCase):
         self.assertIsNotNone(address_json)
         self.assertEqual('Cambridge', address_json['address_city'])
         self.assertEqual('UK', address_json['address_country'])
+
+    def test_map_object_with_non_node_anchor(self):
+        # given:
+        json_object = json.loads('''{
+            "name": "Boaty McBoatface"
+        }''')
+        mapper = JsonMapper(json_object)
+
+        # expect:
+        with self.assertRaises(InvalidNode):
+            mapper.map('name')
+
+        # and: raise exception if anchor can't be found
+        with self.assertRaises(InvalidNode):
+            mapper.map('non.existent.node')

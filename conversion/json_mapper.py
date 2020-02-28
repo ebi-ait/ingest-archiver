@@ -1,3 +1,5 @@
+from collections import Mapping
+
 from conversion.data_node import DataNode
 
 
@@ -5,7 +7,12 @@ class NodeMapping:
 
     def __init__(self, node: DataNode, anchor: str):
         if anchor:
-            self.node = DataNode(node.get(anchor))
+            anchored_node = node.get(anchor)
+            # check if anchored_node is dict-like
+            if isinstance(anchored_node, Mapping):
+                self.node = DataNode(anchored_node)
+            else:
+                raise InvalidNode()
         else:
             self.node = node
 
@@ -24,3 +31,7 @@ class JsonMapper:
 
     def map(self, field_key='') -> NodeMapping:
         return NodeMapping(self.root_node, field_key)
+
+
+class InvalidNode(Exception):
+    pass
