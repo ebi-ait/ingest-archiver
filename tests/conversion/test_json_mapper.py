@@ -8,7 +8,10 @@ class JsonMapperTest(TestCase):
 
     def test_map_object(self):
         # given:
-        json_object = json.dumps('{}')
+        json_object = json.loads('''{
+            "user_name": "jdelacruz",
+            "user_age": 31
+        }''')
 
         # when:
         converted_json = JsonMapper(json_object).map().using({
@@ -18,3 +21,5 @@ class JsonMapperTest(TestCase):
 
         # then:
         self.assertIsNotNone(converted_json)
+        self.assertEqual('jdelacruz', converted_json['name'])
+        self.assertEqual(31, converted_json['age'])
