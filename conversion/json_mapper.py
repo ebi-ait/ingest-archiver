@@ -12,7 +12,7 @@ class NodeMapping:
             if isinstance(anchored_node, Mapping):
                 self.node = DataNode(anchored_node)
             else:
-                raise InvalidNode()
+                raise InvalidNode(anchor)
         else:
             self.node = node
 
@@ -34,4 +34,7 @@ class JsonMapper:
 
 
 class InvalidNode(Exception):
-    pass
+
+    def __init__(self, field):
+        super(InvalidNode, self).__init__(f'Invalid node [{field}].')
+        self.field = field
