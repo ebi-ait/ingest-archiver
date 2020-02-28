@@ -3,6 +3,7 @@ import re
 
 from flatten_json import flatten
 
+from conversion.data_node import DataNode
 from utils import protocols
 
 """
@@ -432,9 +433,11 @@ class ProjectConverter(Converter):
 
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         contacts = []
-        contributors = hca_data['project']['content'].get('contributors', [])
+        hca_data_node = DataNode(hca_data)
 
-        for contributor in contributors:
+        contributors = hca_data_node.get('project.content.contributors', [])
+        for contributor_source in contributors:
+            contributor = DataNode(contributor_source)
             project_role = contributor.get('project_role').get('text', '') if contributor.get('project_role') else ''
 
             if "wrangler" in project_role or "curator" in project_role:
@@ -451,7 +454,7 @@ class ProjectConverter(Converter):
                 raise ConversionError("HCA Contributor contact name, {contact_name}, couldn't be parsed.")
 
             contact = {
-                "orcid": contributor.get("orcid_id", ""),
+                "orcid": contributor.get("orcid", ""),
                 "firstName": first,
                 "middleInitials": middle,
                 "lastName": last,

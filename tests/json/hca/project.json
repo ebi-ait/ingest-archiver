@@ -10,18 +10,21 @@
 		"contributors": [{
 			"name": "First,Middle,Last",
 			"email": "dummy@email.com",
-			"institution": "Fake Institution"
+			"institution": "Fake Institution",
+			"orcid": "orcid120"
 		},{
 			"name": "First2,,Last2",
 			"email": "dummy2@email.com",
-			"institution": "Fake Institution2"
+			"institution": "Fake Institution2",
+			"phone": "5555123321"
 		},
 		{
 			"name": "First3,,Last3",
 			"email": "dummy3@email.com",
 			"institution": "Fake Institution3",
 			"address": "address",
-			"phone": "1234567"
+			"phone": "1234567",
+			"orcid": "orcid121"
 		},
 		{
 			"name": "First3,,Last3",
