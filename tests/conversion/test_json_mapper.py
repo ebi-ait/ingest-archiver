@@ -65,7 +65,8 @@ class JsonMapperTest(TestCase):
     def test_map_object_with_custom_processing(self):
         # given:
         json_object = json.loads('''{
-            "name": "Pedro,Catapang,de Guzman"
+            "name": "Pedro,Catapang,de Guzman",
+            "age": 44
         }''')
 
         # and:
@@ -74,14 +75,21 @@ class JsonMapperTest(TestCase):
             index = args[1]
             return name.split(',')[index]
 
+        # and:
+        def fake_age(*args):
+            age = args[0]
+            return age - 10
+
         # when:
         resulting_json = JsonMapper(json_object).map().using({
             'first_name': ['name', parse_name, 0],
             'middle_name': ['name', parse_name, 1],
-            'last_name': ['name', parse_name, 2]
+            'last_name': ['name', parse_name, 2],
+            'fake_age': ['age', fake_age]
         })
 
         # then:
         self.assertEqual('Pedro', resulting_json['first_name'])
         self.assertEqual('Catapang', resulting_json['middle_name'])
         self.assertEqual('de Guzman', resulting_json['last_name'])
+        self.assertEqual(34, resulting_json['fake_age'])
