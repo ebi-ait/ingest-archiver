@@ -433,13 +433,13 @@ class ProjectConverter(Converter):
 
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
         contacts = []
-        hca_data_node = DataNode(hca_data)
 
+        hca_data_node = DataNode(hca_data)
         contributors = hca_data_node.get('project.content.contributors', [])
         for contributor_source in contributors:
             contributor = DataNode(contributor_source)
-            project_role = contributor.get('project_role').get('text', '') if contributor.get('project_role') else ''
 
+            project_role = contributor.get('project_role.text', '')
             if "wrangler" in project_role or "curator" in project_role:
                 continue
 
@@ -461,13 +461,12 @@ class ProjectConverter(Converter):
                 "email": contributor.get("email", ""),
                 "address": contributor.get("address", ""),
                 "affiliation": contributor.get("institution", ""),
-                "phone": contributor.get("phone", ""),
-
+                "phone": contributor.get("phone", "")
             }
             contacts.append(contact)
         extracted_data["contacts"] = contacts
 
-        hca_publications = hca_data['project']['content'].get('publications', [])
+        hca_publications = hca_data_node.get('project.content.publications', [])
         publications = []
         for hca_publication in hca_publications:
             publication = {
@@ -479,7 +478,7 @@ class ProjectConverter(Converter):
             publications.append(publication)
         extracted_data["publications"] = publications
 
-        hca_funders = hca_data['project']['content'].get('funders', [])
+        hca_funders = hca_data_node.get('project.content.funders', [])
         funders = []
         for hca_funder in hca_funders:
             funder = {
