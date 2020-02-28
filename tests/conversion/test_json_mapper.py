@@ -23,3 +23,26 @@ class JsonMapperTest(TestCase):
         self.assertIsNotNone(converted_json)
         self.assertEqual('jdelacruz', converted_json['name'])
         self.assertEqual(31, converted_json['age'])
+
+    def test_map_object_with_anchored_key(self):
+        # given:
+        json_object = json.loads('''{
+            "user": {
+                "name": "Jane Doe"
+            },
+            "address": {
+                "city": "Cambridge",
+                "country": "UK"
+            }
+        }''')
+
+        # when:
+        address_json = JsonMapper(json_object).map("address").using({
+            'address_city': ['city'],
+            'address_country': ['country']
+        })
+
+        # then:
+        self.assertIsNotNone(address_json)
+        self.assertEqual('Cambridge', address_json['address_city'])
+        self.assertEqual('UK', address_json['address_country'])

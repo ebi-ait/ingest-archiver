@@ -3,8 +3,11 @@ from conversion.data_node import DataNode
 
 class NodeMapping:
 
-    def __init__(self, node: DataNode):
-        self.node = node
+    def __init__(self, node: DataNode, anchor: str):
+        if anchor:
+            self.node = DataNode(node.get(anchor))
+        else:
+            self.node = node
 
     def using(self, mapping_spec: dict):
         result = {}
@@ -20,4 +23,4 @@ class JsonMapper:
         self.root_node = DataNode(source)
 
     def map(self, field_key='') -> NodeMapping:
-        return NodeMapping(self.root_node)
+        return NodeMapping(self.root_node, field_key)
