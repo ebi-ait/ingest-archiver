@@ -3,7 +3,7 @@ from collections import Mapping
 from conversion.data_node import DataNode
 
 
-class NodeMapping:
+class MappingSpec:
 
     def __init__(self, node: DataNode, anchor: str):
         if anchor:
@@ -36,8 +36,8 @@ class JsonMapper:
     def __init__(self, source: dict):
         self.root_node = DataNode(source)
 
-    def map(self, field_key='') -> NodeMapping:
-        return NodeMapping(self.root_node, field_key)
+    def on(self, field_key='') -> MappingSpec:
+        return MappingSpec(self.root_node, field_key)
 
 
 class InvalidNode(Exception):
