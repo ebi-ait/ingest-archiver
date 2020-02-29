@@ -14,7 +14,7 @@ class JsonMapperTest(TestCase):
         }''')
 
         # when:
-        converted_json = JsonMapper(json_object).on().using({
+        converted_json = JsonMapper(json_object).map(using={
             'name': ['user_name'],
             'age': ['user_age']
         })
@@ -31,7 +31,7 @@ class JsonMapperTest(TestCase):
         }''')
 
         # when:
-        profile_json = JsonMapper(json_object).on().using({
+        profile_json = JsonMapper(json_object).map(using={
             'user.profile': ['name']
         })
 
@@ -52,10 +52,12 @@ class JsonMapperTest(TestCase):
         }''')
 
         # when:
-        address_json = JsonMapper(json_object).on("address").using({
-            'address_city': ['city'],
-            'address_country': ['country']
-        })
+        address_json = JsonMapper(json_object).map(
+            on='address',
+            using={
+                'address_city': ['city'],
+                'address_country': ['country']
+            })
 
         # then:
         self.assertIsNotNone(address_json)
@@ -71,11 +73,11 @@ class JsonMapperTest(TestCase):
 
         # expect:
         with self.assertRaises(InvalidNode):
-            mapper.on('name')
+            mapper.map('name')
 
         # and: raise exception if anchor can't be found
         with self.assertRaises(InvalidNode):
-            mapper.on('non.existent.node')
+            mapper.map('non.existent.node')
 
     def test_map_object_with_custom_processing(self):
         # given:
@@ -96,7 +98,7 @@ class JsonMapperTest(TestCase):
             return age - 10
 
         # when:
-        resulting_json = JsonMapper(json_object).on().using({
+        resulting_json = JsonMapper(json_object).map(using={
             'first_name': ['name', parse_name, 0],
             'middle_name': ['name', parse_name, 1],
             'last_name': ['name', parse_name, 2],

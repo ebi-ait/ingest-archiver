@@ -3,24 +3,18 @@ from collections import Mapping
 from conversion.data_node import DataNode
 
 
-class MappingSpec:
+class JsonMapper:
 
-    def __init__(self, node: DataNode, anchor: str):
-        if anchor:
-            anchored_node = node.get(anchor)
-            # check if anchored_node is dict-like
-            if isinstance(anchored_node, Mapping):
-                self.node = DataNode(anchored_node)
-            else:
-                raise InvalidNode(anchor)
-        else:
-            self.node = node
+    def __init__(self, source: dict):
+        self.root_node = DataNode(source)
 
-    def using(self, mapping_spec: dict) -> dict:
+    def map(self, on='', using={}):
+        node = self.root_node if not on else self._anchor_node(on)
+        spec = using
         result = DataNode()
-        for field_name, spec in mapping_spec.items():
+        for field_name, spec in spec.items():
             source_field_name = spec[0]
-            field_value = self.node.get(source_field_name)
+            field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
             if has_customisation:
                 operation = spec[1]
@@ -30,14 +24,14 @@ class MappingSpec:
             result[field_name] = field_value
         return result.as_dict()
 
-
-class JsonMapper:
-
-    def __init__(self, source: dict):
-        self.root_node = DataNode(source)
-
-    def on(self, field_key='') -> MappingSpec:
-        return MappingSpec(self.root_node, field_key)
+    def _anchor_node(self, field):
+        if field:
+            anchored_node = self.root_node.get(field)
+            # check if anchored_node is dict-like
+            if isinstance(anchored_node, Mapping):
+                return DataNode(anchored_node)
+            else:
+                raise InvalidNode(field)
 
 
 class InvalidNode(Exception):
