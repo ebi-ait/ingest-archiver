@@ -24,6 +24,21 @@ class JsonMapperTest(TestCase):
         self.assertEqual('jdelacruz', converted_json['name'])
         self.assertEqual(31, converted_json['age'])
 
+    def test_map_object_using_field_chaining(self):
+        # given:
+        json_object = json.loads('''{
+            "name": "John Doe"
+        }''')
+
+        # when:
+        profile_json = JsonMapper(json_object).map().using({
+            'user.profile': ['name']
+        })
+
+        # then:
+        self.assertIsNotNone(profile_json)
+        self.assertEqual('John Doe', profile_json.get('user', {'profile': 'error'}).get('profile'))
+
     def test_map_object_with_anchored_key(self):
         # given:
         json_object = json.loads('''{

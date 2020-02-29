@@ -17,7 +17,7 @@ class NodeMapping:
             self.node = node
 
     def using(self, mapping_spec: dict) -> dict:
-        result = {}
+        result = DataNode()
         for field_name, spec in mapping_spec.items():
             source_field_name = spec[0]
             field_value = self.node.get(source_field_name)
@@ -28,7 +28,7 @@ class NodeMapping:
                 args.extend(spec[2:])
                 field_value = operation(*args)
             result[field_name] = field_value
-        return result
+        return result.as_dict()
 
 
 class JsonMapper:
