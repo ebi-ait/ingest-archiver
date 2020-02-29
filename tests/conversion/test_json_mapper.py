@@ -27,17 +27,25 @@ class JsonMapperTest(TestCase):
     def test_map_object_using_field_chaining(self):
         # given:
         json_object = json.loads('''{
-            "name": "John Doe"
+            "name": "John Doe",
+            "address": {
+                "city": "London",
+                "country": "UK"
+            }
         }''')
 
         # when:
         profile_json = JsonMapper(json_object).map(using={
-            'user.profile': ['name']
+            'user.profile': ['name'],
+            'user.address_city': ['address.city'],
+            'user.address_country': ['address.country']
         })
 
         # then:
         self.assertIsNotNone(profile_json)
-        self.assertEqual('John Doe', profile_json.get('user', {'profile': 'error'}).get('profile'))
+        self.assertEqual('John Doe', profile_json.get('user', {}).get('profile'))
+        self.assertEqual('London', profile_json.get('user', {}).get('address_city'))
+        self.assertEqual('UK', profile_json.get('user', {}).get('address_country'))
 
     def test_map_object_with_anchored_key(self):
         # given:
