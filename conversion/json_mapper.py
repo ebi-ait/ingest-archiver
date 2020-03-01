@@ -16,7 +16,7 @@ class JsonMapper:
             if isinstance(spec, list):
                 field_value = self._do_map(node, spec)
             elif isinstance(spec, dict):
-                field_value = JsonMapper(node).map(using=spec)
+                field_value = self.map(using=spec)
             if field_value:
                 result[field_name] = field_value
         return result.as_dict()
