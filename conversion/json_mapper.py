@@ -13,15 +13,20 @@ class JsonMapper:
         spec = using
         result = DataNode()
         for field_name, spec in spec.items():
-            source_field_name = spec[0]
-            field_value = node.get(source_field_name)
-            has_customisation = len(spec) > 1
-            if has_customisation:
-                operation = spec[1]
-                args = [field_value]
-                args.extend(spec[2:])
-                field_value = operation(*args)
-            result[field_name] = field_value
+            field_value = None
+            if isinstance(spec, list):
+                source_field_name = spec[0]
+                field_value = node.get(source_field_name)
+                has_customisation = len(spec) > 1
+                if has_customisation:
+                    operation = spec[1]
+                    args = [field_value]
+                    args.extend(spec[2:])
+                    field_value = operation(*args)
+            elif isinstance(spec, dict):
+                field_value = JsonMapper(node).map(using=spec)
+            if field_value:
+                result[field_name] = field_value
         return result.as_dict()
 
     def _anchor_node(self, field):

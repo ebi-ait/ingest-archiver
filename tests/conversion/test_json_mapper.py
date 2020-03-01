@@ -118,3 +118,25 @@ class JsonMapperTest(TestCase):
         self.assertEqual('Catapang', resulting_json['middle_name'])
         self.assertEqual('de Guzman', resulting_json['last_name'])
         self.assertEqual(34, resulting_json['fake_age'])
+
+    def test_map_object_with_nested_spec(self):
+        # given:
+        json_object = json.loads('''{
+            "first_name": "Vanessa",
+            "last_name": "Doofenshmirtz"
+        }''')
+
+        # when:
+        profile_json = JsonMapper(json_object).map(using={
+            'profile': {
+                'first_name': ['first_name'],
+                'last_name': ['last_name']
+            }
+        })
+
+        # then:
+        profile = profile_json.get('profile')
+        self.assertIsNotNone(profile)
+        self.assertEqual('Vanessa', profile.get('first_name'))
+        self.assertEqual('Doofenshmirtz', profile.get('last_name'))
+
