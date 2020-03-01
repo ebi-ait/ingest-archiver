@@ -140,3 +140,28 @@ class JsonMapperTest(TestCase):
         self.assertEqual('Vanessa', profile.get('first_name'))
         self.assertEqual('Doofenshmirtz', profile.get('last_name'))
 
+    def test_map_list_of_objects(self):
+        # given:
+        json_object = json.loads('''{
+            "contacts": [
+                {
+                    "name": "James",
+                    "phone": "55556161"
+                },
+                {
+                    "name": "Ana",
+                    "phone": "55510103"
+                }
+            ]
+        }''')
+
+        # when:
+        people_json = JsonMapper(json_object).map(on='contacts', using={
+            'people': ['name']
+        })
+
+        # then:
+        names = people_json.get('people')
+        self.assertEqual(2, len(names))
+        self.assertTrue('Ana' in names)
+        self.assertTrue('James' in names)

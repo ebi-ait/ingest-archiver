@@ -27,19 +27,24 @@ class JsonMapper:
             # check if anchored_node is dict-like
             if isinstance(anchored_node, Mapping):
                 return DataNode(anchored_node)
+            # or if anchored_node is actually a list
+            elif isinstance(anchored_node, list):
+                return [DataNode(node) for node in anchored_node]
             else:
                 raise InvalidNode(field)
 
-    @staticmethod
-    def _do_map(node, spec):
-        source_field_name = spec[0]
-        field_value = node.get(source_field_name)
-        has_customisation = len(spec) > 1
-        if has_customisation:
-            operation = spec[1]
-            args = [field_value]
-            args.extend(spec[2:])
-            field_value = operation(*args)
+    def _do_map(self, node, spec):
+        if isinstance(node, list):
+            field_value = [self._do_map(item, spec) for item in node]
+        else:
+            source_field_name = spec[0]
+            field_value = node.get(source_field_name)
+            has_customisation = len(spec) > 1
+            if has_customisation:
+                operation = spec[1]
+                args = [field_value]
+                args.extend(spec[2:])
+                field_value = operation(*args)
         return field_value
 
 
