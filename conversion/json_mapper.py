@@ -13,16 +13,8 @@ class JsonMapper:
         spec = using
         result = DataNode()
         for field_name, spec in spec.items():
-            field_value = None
             if isinstance(spec, list):
-                source_field_name = spec[0]
-                field_value = node.get(source_field_name)
-                has_customisation = len(spec) > 1
-                if has_customisation:
-                    operation = spec[1]
-                    args = [field_value]
-                    args.extend(spec[2:])
-                    field_value = operation(*args)
+                field_value = self._do_map(node, spec)
             elif isinstance(spec, dict):
                 field_value = JsonMapper(node).map(using=spec)
             if field_value:
@@ -37,6 +29,18 @@ class JsonMapper:
                 return DataNode(anchored_node)
             else:
                 raise InvalidNode(field)
+
+    @staticmethod
+    def _do_map(node, spec):
+        source_field_name = spec[0]
+        field_value = node.get(source_field_name)
+        has_customisation = len(spec) > 1
+        if has_customisation:
+            operation = spec[1]
+            args = [field_value]
+            args.extend(spec[2:])
+            field_value = operation(*args)
+        return field_value
 
 
 class InvalidNode(Exception):
