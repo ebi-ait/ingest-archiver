@@ -72,6 +72,26 @@ class JsonMapperTest(TestCase):
         self.assertEqual('Cambridge', address_json['address_city'])
         self.assertEqual('UK', address_json['address_country'])
 
+    def test_map_object_using_spec_based_anchor(self):
+        # given:
+        json_object = json.loads('''{
+            "shipping_info": {
+                "recipient": "Kamado Tanjiro",
+                "address": "Tokyo, Japan"
+            }
+        }''')
+
+        # when:
+        delivery_json = JsonMapper(json_object).map({
+            '$on': 'shipping_info',
+            'name': ['recipient'],
+            'location': ['address']
+        })
+
+        # then:
+        self.assertEqual('Kamado Tanjiro', delivery_json.get('name'))
+        self.assertEqual('Tokyo, Japan', delivery_json.get('location'))
+
     def test_map_object_with_non_node_anchor(self):
         # given:
         json_object = json.loads('''{

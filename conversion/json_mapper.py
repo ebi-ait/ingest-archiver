@@ -2,15 +2,18 @@ from collections import Mapping
 
 from conversion.data_node import DataNode
 
+SPEC_ANCHOR = '$on'
+
 
 class JsonMapper:
 
     def __init__(self, source: dict):
         self.root_node = DataNode(source)
 
-    def map(self, on='', using={}):
-        node = self.root_node if not on else self._anchor_node(on)
+    def map(self, using={}, on=''):
         spec = using
+        anchor = self._determine_anchor(on, spec)
+        node = self.root_node if not anchor else self._anchor_node(anchor)
         result = DataNode()
         for field_name, spec in spec.items():
             if isinstance(spec, list):
@@ -20,6 +23,14 @@ class JsonMapper:
             if field_value:
                 result[field_name] = field_value
         return result.as_dict()
+
+    @staticmethod
+    def _determine_anchor(field, spec):
+        anchor = field
+        if SPEC_ANCHOR in spec:
+            anchor = spec[SPEC_ANCHOR]
+            del spec[SPEC_ANCHOR]
+        return anchor
 
     def _anchor_node(self, field):
         if field:
