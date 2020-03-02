@@ -265,6 +265,23 @@ class JsonMapperTest(TestCase):
         self.assertEqual('dela Cruz', person_json.get('lname'))
         self.assertTrue('mname' not in person_json)
 
+    def test_map_object_allow_empty_strings(self):
+        # given:
+        json_object = json.loads('''{
+            "pet_name": "Champ",
+            "favourite_food": ""
+        }''')
+
+        # when:
+        pet_json = JsonMapper(json_object).map({
+            'name': ['pet_name'],
+            'fav_food': ['favourite_food']
+        })
+
+        # then:
+        self.assertEqual('Champ', pet_json.get('name'))
+        self.assertEqual('', pet_json.get('fav_food'))
+
     def test_map_object_with_invalid_spec(self):
         # given:
         json_object = json.loads('''{

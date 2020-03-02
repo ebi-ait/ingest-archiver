@@ -47,11 +47,12 @@ class JsonMapper:
         result = DataNode()
         for field_name, field_spec in spec.items():
             self._check_if_readable(field_spec)
+            field_value = None
             if isinstance(field_spec, list):
                 field_value = self._apply_field_spec(node, field_spec)
             elif isinstance(field_spec, dict):
                 field_value = self.map(using=field_spec, on=anchor)
-            if field_value:
+            if field_value is not None:
                 result[field_name] = field_value
         return result.as_dict()
 

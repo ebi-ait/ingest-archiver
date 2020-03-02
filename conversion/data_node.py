@@ -33,7 +33,7 @@ class DataNode:
 
     def get(self, key: str, default=None):
         value = self[key]
-        return value if value else default
+        return value if value is not None else default
 
     def remove_field(self, field):
         del self.node[field]
