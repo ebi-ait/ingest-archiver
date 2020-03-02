@@ -4,6 +4,7 @@ import re
 from flatten_json import flatten
 
 from conversion.data_node import DataNode
+from conversion.json_mapper import JsonMapper
 from utils import protocols
 
 """
@@ -421,6 +422,48 @@ class ProjectConverter(Converter):
                                      '__contributors', '__publications',
                                      '__funders']
         self.remove_input_prefix = True
+
+    def convert(self, hca_data):
+        def parse_name(*args):
+            full_name = args[0]
+            position = args[1]
+            name_element = full_name.split(',', 2)[position]
+            return name_element[0] if name_element and position == 1 else name_element
+
+        def concatenate_list(*args):
+            items = args[0]
+            return ','.join(items)
+
+        mapped_json = JsonMapper(hca_data).map({
+            '$on': 'project.content',
+            'title': ['project_core.project_title'],
+            'description': ['project_core.project_description'],
+            'contacts': {
+                '$on': 'contributors',
+                'firstName': ['name', parse_name, 0],
+                'middleInitials': ['name', parse_name, 1],
+                'lastName': ['name', parse_name, 2],
+                'email': ['email'],
+                'affiliation': ['affiliation'],
+                'phone': ['phone'],
+                'address': ['address'],
+                'orcid': ['orcid']
+            },
+            'publications': {
+                '$on': 'publications',
+                'authors': ['authors', concatenate_list],
+                'doi': ['doi'],
+                'articleTitle': ['publication_title'],
+                'pubmedId': ['pmid']
+            },
+            'funders': {
+                '$on': 'funders',
+                'grantId': ['grant_id'],
+                'grantTitle': ['grant_title'],
+                'organization': ['organization']
+            }
+        })
+        return mapped_json
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
         # TODO BioStudies minimum length
