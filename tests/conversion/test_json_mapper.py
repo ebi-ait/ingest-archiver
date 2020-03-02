@@ -185,3 +185,26 @@ class JsonMapperTest(TestCase):
         self.assertEqual(2, len(names))
         self.assertTrue('Ana' in names)
         self.assertTrue('James' in names)
+
+    # TODO consider required field mode
+    def test_map_object_ignore_missing_fields(self):
+        # given:
+        json_object = json.loads('''{
+            "first_name": "Juan",
+            "last_name": "dela Cruz"
+        }''')
+
+        # when:
+        person_json = JsonMapper(json_object).map({
+            'fname': ['first_name'],
+            'mname': ['middle_name'],
+            'lname': ['last_name']
+        })
+
+        # then:
+        self.assertEqual('Juan', person_json.get('fname'))
+        self.assertEqual('dela Cruz', person_json.get('lname'))
+        self.assertTrue('mname' not in person_json)
+
+
+    # TODO raise exception if the spec provided is neither dict-like or collections.abc.Sequence

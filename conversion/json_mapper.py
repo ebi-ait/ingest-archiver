@@ -15,11 +15,11 @@ class JsonMapper:
         anchor = self._determine_anchor(on, spec)
         node = self.root_node if not anchor else self._anchor_node(anchor)
         result = DataNode()
-        for field_name, spec in spec.items():
-            if isinstance(spec, list):
-                field_value = self._do_map(node, spec)
-            elif isinstance(spec, dict):
-                field_value = self.map(using=spec)
+        for field_name, field_spec in spec.items():
+            if isinstance(field_spec, list):
+                field_value = self._do_map(node, field_spec)
+            elif isinstance(field_spec, dict):
+                field_value = self.map(using=field_spec)
             if field_value:
                 result[field_name] = field_value
         return result.as_dict()
