@@ -12,10 +12,12 @@ class JsonMapper:
 
     def map(self, using={}, on=''):
         spec = using
+        self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
         node = self.root_node if not anchor else self._anchor_node(anchor)
         result = DataNode()
         for field_name, field_spec in spec.items():
+            self._check_if_readable(field_spec)
             if isinstance(field_spec, list):
                 field_value = self._do_map(node, field_spec)
             elif isinstance(field_spec, dict):
@@ -23,6 +25,11 @@ class JsonMapper:
             if field_value:
                 result[field_name] = field_value
         return result.as_dict()
+
+    @staticmethod
+    def _check_if_readable(spec):
+        if not (isinstance(spec, list) or isinstance(spec, dict)):
+            raise UnreadableSpecification
 
     @staticmethod
     def _determine_anchor(field, spec):
@@ -64,3 +71,9 @@ class InvalidNode(Exception):
     def __init__(self, field):
         super(InvalidNode, self).__init__(f'Invalid node [{field}].')
         self.field = field
+
+
+class UnreadableSpecification(Exception):
+
+    def __init__(self):
+        super(UnreadableSpecification, self).__init__('Provided specification of unreadable type.')

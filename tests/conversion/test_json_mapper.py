@@ -1,7 +1,7 @@
 import json
 from unittest import TestCase
 
-from conversion.json_mapper import JsonMapper, InvalidNode
+from conversion.json_mapper import JsonMapper, InvalidNode, UnreadableSpecification
 
 
 class JsonMapperTest(TestCase):
@@ -206,5 +206,18 @@ class JsonMapperTest(TestCase):
         self.assertEqual('dela Cruz', person_json.get('lname'))
         self.assertTrue('mname' not in person_json)
 
+    def test_map_object_with_invalid_spec(self):
+        # given:
+        json_object = json.loads('''{
+            "description": "this is a test"
+        }''')
 
-    # TODO raise exception if the spec provided is neither dict-like or collections.abc.Sequence
+        # expect: main spec
+        with self.assertRaises(UnreadableSpecification) as exception:
+            JsonMapper(json_object).map('spec')
+
+        # and: field spec
+        with self.assertRaises(UnreadableSpecification) as exception:
+            JsonMapper(json_object).map({
+                'd': 'specification'
+            })
