@@ -199,15 +199,51 @@ class JsonMapperTest(TestCase):
         }''')
 
         # when:
-        people_json = JsonMapper(json_object).map(on='contacts', using={
-            'people': ['name']
+        people = JsonMapper(json_object).map(on='contacts', using={
+            'known_by': ['name']
         })
 
         # then:
-        names = people_json.get('people')
-        self.assertEqual(2, len(names))
+        self.assertEqual(2, len(people))
+        names = [person.get('known_by') for person in people]
         self.assertTrue('Ana' in names)
         self.assertTrue('James' in names)
+
+    def test_map_list_of_objects_with_nested_anchoring(self):
+        # given:
+        json_object = json.loads('''{
+            "social_network": {
+                "friends": [
+                    {
+                        "name": "Carl",
+                        "age": 24
+                    },
+                    {
+                        "name": "Tina",
+                        "age": 22
+                    },
+                    {
+                        "name": "Oscar",
+                        "age": 22
+                    }
+                ]
+            }
+        }''')
+
+        # when:
+        people_json = JsonMapper(json_object).map({
+            '$on': 'social_network',
+            'people': {
+                '$on': 'friends',
+                'person_name': ['name'],
+                'person_age': ['age']
+            }
+        })
+
+        # then:
+        people = people_json.get('people')
+        self.assertIsNotNone(people)
+        self.assertEqual(3, len(people))
 
     # TODO consider required field mode
     def test_map_object_ignore_missing_fields(self):
