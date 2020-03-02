@@ -434,6 +434,11 @@ class ProjectConverter(Converter):
             items = args[0]
             return ','.join(items)
 
+        def default_to(*args):
+            value = args[0]
+            default_value = args[1]
+            return default_value if value is None else value
+
         mapped_json = JsonMapper(hca_data).map({
             '$on': 'project.content',
             'title': ['project_core.project_title'],
@@ -443,24 +448,24 @@ class ProjectConverter(Converter):
                 'firstName': ['name', parse_name, 0],
                 'middleInitials': ['name', parse_name, 1],
                 'lastName': ['name', parse_name, 2],
-                'email': ['email'],
-                'affiliation': ['affiliation'],
-                'phone': ['phone'],
-                'address': ['address'],
-                'orcid': ['orcid']
+                'email': ['email', default_to, ''],
+                'affiliation': ['affiliation', default_to, ''],
+                'phone': ['phone', default_to, ''],
+                'address': ['address', default_to, ''],
+                'orcid': ['orcid', default_to, '']
             },
             'publications': {
                 '$on': 'publications',
                 'authors': ['authors', concatenate_list],
-                'doi': ['doi'],
-                'articleTitle': ['publication_title'],
-                'pubmedId': ['pmid']
+                'doi': ['doi', default_to, ''],
+                'articleTitle': ['publication_title', default_to, ''],
+                'pubmedId': ['pmid', default_to, '']
             },
             'funders': {
                 '$on': 'funders',
-                'grantId': ['grant_id'],
-                'grantTitle': ['grant_title'],
-                'organization': ['organization']
+                'grantId': ['grant_id', default_to, ''],
+                'grantTitle': ['grant_title', default_to, ''],
+                'organization': ['organization', default_to, '']
             }
         })
         return mapped_json
