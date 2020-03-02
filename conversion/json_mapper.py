@@ -21,7 +21,7 @@ class JsonMapper:
             if isinstance(field_spec, list):
                 field_value = self._do_map(node, field_spec)
             elif isinstance(field_spec, dict):
-                field_value = self.map(using=field_spec)
+                field_value = self.map(using=field_spec, on=anchor)
             if field_value:
                 result[field_name] = field_value
         return result.as_dict()
@@ -35,7 +35,7 @@ class JsonMapper:
     def _determine_anchor(field, spec):
         anchor = field
         if SPEC_ANCHOR in spec:
-            anchor = spec[SPEC_ANCHOR]
+            anchor = f'{anchor}.{spec[SPEC_ANCHOR]}' if anchor else spec[SPEC_ANCHOR]
             del spec[SPEC_ANCHOR]
         return anchor
 

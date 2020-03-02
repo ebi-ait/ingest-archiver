@@ -92,6 +92,29 @@ class JsonMapperTest(TestCase):
         self.assertEqual('Kamado Tanjiro', delivery_json.get('name'))
         self.assertEqual('Tokyo, Japan', delivery_json.get('location'))
 
+    def test_map_object_using_chained_spec_based_anchors(self):
+        # given:
+        json_object = json.loads('''{
+            "user": {
+                "profile": {
+                    "name": "Kamado Nezuko",
+                    "location": "hako no naka"
+                }
+            }
+        }''')
+
+        # when:
+        person_json = JsonMapper(json_object).map({
+            '$on': 'user',
+            'person': {
+                '$on': 'profile',
+                'known_by': ['name']
+            }
+        })
+
+        # then:
+        self.assertEqual('Kamado Nezuko', person_json.get('person', {}).get('known_by'))
+
     def test_map_object_with_non_node_anchor(self):
         # given:
         json_object = json.loads('''{
