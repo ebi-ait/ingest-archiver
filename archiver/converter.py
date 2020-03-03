@@ -453,6 +453,12 @@ class ProjectConverter(Converter):
             default_value = args[1]
             return default_value if value is None else value
 
+        def is_not_wrangler(*args):
+            project_role = args[0]
+            text = project_role.get('text')
+            is_wrangler = text is not None and 'wrangler' in text.lower()
+            return not is_wrangler
+
         mapper = JsonMapper(hca_data)
         mapped_json = mapper.map({
             '$on': 'project',
@@ -470,6 +476,7 @@ class ProjectConverter(Converter):
             'description': ['project_core.project_description'],
             'contacts': {
                 '$on': 'contributors',
+                '$filter': ['project_role', is_not_wrangler],
                 'firstName': ['name', parse_name, 0],
                 'middleInitials': ['name', parse_name, 1],
                 'lastName': ['name', parse_name, 2],
