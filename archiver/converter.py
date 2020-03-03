@@ -411,17 +411,7 @@ class ProjectConverter(Converter):
     def __init__(self, ontology_api):
         super(ProjectConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.field_mapping = {
-            "project__uuid__uuid": "alias",
-            "project__content__project_core__project_title": "title",
-            "project__content__project_core__project_description": "description",
-            "project__submissionDate": "releaseDate"
-        }
         self.alias_prefix = 'project_'
-        self.exclude_fields_match = ['__schema_type', '__describedBy',
-                                     '__contributors', '__publications',
-                                     '__funders']
-        self.remove_input_prefix = True
 
     def convert(self, hca_data):
         def prefix_with(*args):
@@ -502,74 +492,6 @@ class ProjectConverter(Converter):
         }))
 
         return mapped_json
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        # TODO BioStudies minimum length
-        title_len = len(extracted_data["title"])
-        MIN_LEN = 25
-        DELIM = ' , '
-        if title_len < MIN_LEN:
-            prefix = "HCA project: "
-            extracted_data["title"] = prefix + extracted_data["title"]
-
-        extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
-        contacts = []
-
-        hca_data_node = DataNode(hca_data)
-        contributors = hca_data_node.get('project.content.contributors', [])
-        for contributor_source in contributors:
-            contributor = DataNode(contributor_source)
-
-            project_role = contributor.get('project_role.text', '')
-            if "wrangler" in project_role or "curator" in project_role:
-                continue
-
-            contact_name = contributor.get("name", "")
-            names = contact_name.split(',', 2)
-
-            if len(names) == 3:
-                first = names[0]
-                middle = names[1][0] if names[1] else ''
-                last = names[2]
-            else:
-                raise ConversionError("HCA Contributor contact name, {contact_name}, couldn't be parsed.")
-
-            contact = {
-                "orcid": contributor.get("orcid", ""),
-                "firstName": first,
-                "middleInitials": middle,
-                "lastName": last,
-                "email": contributor.get("email", ""),
-                "address": contributor.get("address", ""),
-                "affiliation": contributor.get("institution", ""),
-                "phone": contributor.get("phone", "")
-            }
-            contacts.append(contact)
-        extracted_data["contacts"] = contacts
-
-        hca_publications = hca_data_node.get('project.content.publications', [])
-        publications = []
-        for hca_publication in hca_publications:
-            publication = {
-                "pubmedId": hca_publication.get("pmid", ""),
-                "doi": hca_publication.get("doi", ""),
-                "articleTitle": hca_publication.get("title", ""),
-                "authors": f"{DELIM}".join(hca_publication.get("authors", []))
-            }
-            publications.append(publication)
-        extracted_data["publications"] = publications
-
-        hca_funders = hca_data_node.get('project.content.funders', [])
-        funders = []
-        for hca_funder in hca_funders:
-            funder = {
-                "grantTitle": hca_funder.get("grant_title", ""),
-                "grantId": hca_funder.get("grant_id", ""),
-                "organization": hca_funder.get("organization", "")
-            }
-            funders.append(funder)
-        extracted_data["funders"] = funders
-        return extracted_data
 
 
 class StudyConverter(Converter):
