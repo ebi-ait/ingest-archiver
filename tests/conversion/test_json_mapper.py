@@ -1,4 +1,5 @@
 import json
+from string import Template
 from unittest import TestCase
 
 from conversion.json_mapper import JsonMapper, InvalidNode, UnreadableSpecification
@@ -297,3 +298,34 @@ class JsonMapperTest(TestCase):
             JsonMapper(json_object).map({
                 'd': 'specification'
             })
+
+    def test_map_object_with_filter(self):
+        # given:
+        json_template = Template('''{
+            "name": "$name",
+            "age": $age
+        }''')
+
+        # and:
+        filtered_out_json = json.loads(json_template.substitute({'name': 'Charlie', 'age': 10}))
+        passing_json = json.loads(json_template.substitute({'name': 'Mary', 'age': 27}))
+
+        # and:
+        def is_adult(*args):
+            age = args[0]
+            return age >= 18
+
+        # and:
+        filtered_spec = {
+            '$filter': ['age', is_adult],
+            'known_by': ['name']
+
+        }
+
+        # when:
+        under_age_result = JsonMapper(filtered_out_json).map(filtered_spec)
+        adult_result = JsonMapper(passing_json).map(filtered_spec)
+
+        # then:
+        self.assertEqual({}, under_age_result)
+        self.assertEqual({'known_by': 'Mary'}, adult_result)

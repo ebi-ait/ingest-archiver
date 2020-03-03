@@ -43,7 +43,12 @@ class JsonMapper:
             else:
                 raise InvalidNode(field)
 
-    def _apply_node_spec(self, node, anchor: str, spec: dict):
+    def _apply_node_spec(self, node: DataNode, anchor: str, spec: dict):
+        filter_spec = spec.get('$filter')
+        if filter_spec:
+            del spec['$filter']
+        if not self._passes(filter_spec, node):
+            return {}
         result = DataNode()
         for field_name, field_spec in spec.items():
             self._check_if_readable(field_spec)
@@ -55,6 +60,20 @@ class JsonMapper:
             if field_value is not None:
                 result[field_name] = field_value
         return result.as_dict()
+
+    @staticmethod
+    def _passes(filter_spec: list, node: DataNode):
+        if filter_spec is None:
+            return True
+        filter_field = filter_spec[0]
+        value = node.get(filter_field)
+        passing = True
+        if value is not None:
+            filter_args = [value]
+            filter_args.extend(filter_spec[2:])
+            do_filter = filter_spec[1]
+            passing = bool(do_filter(*filter_args))
+        return passing
 
     @staticmethod
     def _apply_field_spec(node: DataNode, spec: list):
