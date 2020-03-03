@@ -3,8 +3,8 @@ import re
 
 from flatten_json import flatten
 
-from conversion.data_node import DataNode
 from conversion.json_mapper import JsonMapper
+from conversion.post_process import prefix_with, format_date, concatenate_list, default_to
 from utils import protocols
 
 """
@@ -414,34 +414,15 @@ class ProjectConverter(Converter):
         self.alias_prefix = 'project_'
 
     def convert(self, hca_data):
-        def prefix_with(*args):
-            data = args[0]
-            prefix = args[1]
-            return f'{prefix}{data}'
-
         def dsp_attribute(*args):
             value = args[0]
             return [{'value': value}]
-
-        # TODO make this an all-purpose date processor
-        def format_date(*args):
-            date = args[0]
-            return date.split('T')[0]
 
         def parse_name(*args):
             full_name = args[0]
             position = args[1]
             name_element = full_name.split(',', 2)[position]
             return name_element[0] if name_element and position == 1 else name_element
-
-        def concatenate_list(*args):
-            items = args[0]
-            return ' , '.join(items)
-
-        def default_to(*args):
-            value = args[0]
-            default_value = args[1]
-            return default_value if value is None else value
 
         def is_not_wrangler(*args):
             project_role = args[0]
