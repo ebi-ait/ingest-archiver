@@ -334,12 +334,12 @@ class JsonMapperTest(TestCase):
         json_object = json.loads('''{
             "product_list": [
                 {
-                    "name": "milk",
-                    "price": 0.50
-                },
-                {
                     "name": "eggs",
                     "price": 1.25
+                },
+                {
+                    "name": "milk",
+                    "price": 0.50
                 },
                 {
                     "name": "loaf",

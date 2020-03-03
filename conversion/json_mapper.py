@@ -2,6 +2,8 @@ from collections import Mapping
 
 from conversion.data_node import DataNode
 
+KEYWORD_MARKER = '$'
+
 SPEC_ANCHOR = '$on'
 SPEC_FILTER = '$filter'
 
@@ -52,27 +54,22 @@ class JsonMapper:
                 raise InvalidNode(field)
 
     def _apply_node_spec(self, node: DataNode, anchor: str, spec: dict):
-        filter_spec = self._extract_filter(spec)
+        filter_spec = spec.get(SPEC_FILTER)
         if not self._passes(filter_spec, node):
             return {}
         result = DataNode()
         for field_name, field_spec in spec.items():
-            self._check_if_readable(field_spec)
-            field_value = None
-            if isinstance(field_spec, list):
-                field_value = self._apply_field_spec(node, field_spec)
-            elif isinstance(field_spec, dict):
-                field_value = self.map(using=field_spec, on=anchor)
-            if field_value is not None:
-                result[field_name] = field_value
+            # skip reserved field
+            if not field_name.startswith(KEYWORD_MARKER):
+                self._check_if_readable(field_spec)
+                field_value = None
+                if isinstance(field_spec, list):
+                    field_value = self._apply_field_spec(node, field_spec)
+                elif isinstance(field_spec, dict):
+                    field_value = self.map(using=field_spec, on=anchor)
+                if field_value is not None:
+                    result[field_name] = field_value
         return result.as_dict()
-
-    @staticmethod
-    def _extract_filter(spec):
-        filter_spec = spec.get(SPEC_FILTER)
-        if filter_spec is not None:
-            del spec[SPEC_FILTER]
-        return filter_spec
 
     @staticmethod
     def _passes(filter_spec: list, node: DataNode):
