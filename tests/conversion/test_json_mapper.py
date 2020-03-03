@@ -319,7 +319,6 @@ class JsonMapperTest(TestCase):
         filtered_spec = {
             '$filter': ['age', is_adult],
             'known_by': ['name']
-
         }
 
         # when:

@@ -3,6 +3,7 @@ from collections import Mapping
 from conversion.data_node import DataNode
 
 SPEC_ANCHOR = '$on'
+SPEC_FILTER = '$filter'
 
 
 class JsonMapper:
@@ -44,9 +45,7 @@ class JsonMapper:
                 raise InvalidNode(field)
 
     def _apply_node_spec(self, node: DataNode, anchor: str, spec: dict):
-        filter_spec = spec.get('$filter')
-        if filter_spec:
-            del spec['$filter']
+        filter_spec = self._extract_filter(spec)
         if not self._passes(filter_spec, node):
             return {}
         result = DataNode()
@@ -60,6 +59,13 @@ class JsonMapper:
             if field_value is not None:
                 result[field_name] = field_value
         return result.as_dict()
+
+    @staticmethod
+    def _extract_filter(spec):
+        filter_spec = spec.get(SPEC_FILTER)
+        if filter_spec is not None:
+            del spec[SPEC_FILTER]
+        return filter_spec
 
     @staticmethod
     def _passes(filter_spec: list, node: DataNode):
