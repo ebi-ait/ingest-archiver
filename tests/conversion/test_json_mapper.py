@@ -328,3 +328,39 @@ class JsonMapperTest(TestCase):
         # then:
         self.assertEqual({}, under_age_result)
         self.assertEqual({'known_by': 'Mary'}, adult_result)
+
+    def test_map_object_list_with_filter(self):
+        # given:
+        json_object = json.loads('''{
+            "product_list": [
+                {
+                    "name": "milk",
+                    "price": 0.50
+                },
+                {
+                    "name": "eggs",
+                    "price": 1.25
+                },
+                {
+                    "name": "loaf",
+                    "price": 2.25
+                }
+            ]
+        }''')
+
+        # and:
+        def price_filter(*args):
+            price = args[0]
+            return price >= 1
+
+        # when:
+        products = JsonMapper(json_object).map({
+            '$on': 'product_list',
+            '$filter': ['price', price_filter],
+            'item': ['name']
+        })
+
+        # then:
+        self.assertEqual(2, len(products))
+        item_names = [item.get('item') for item in products]
+        self.assertTrue('eggs' in item_names and 'loaf' in item_names)

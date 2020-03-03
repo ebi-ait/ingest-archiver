@@ -16,8 +16,15 @@ class JsonMapper:
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
         node = self.root_node if not anchor else self._anchor_node(anchor)
-        return self._apply_node_spec(node, anchor, spec) if not isinstance(node, list) \
-            else [self._apply_node_spec(item, anchor, spec) for item in node]
+        if isinstance(node, list):
+            result = []
+            for item in node:
+                mapping = self._apply_node_spec(item, anchor, spec)
+                if len(mapping) > 0:
+                    result.append(mapping)
+        else:
+            result = self._apply_node_spec(node, anchor, spec)
+        return result
 
     @staticmethod
     def _check_if_readable(spec):
