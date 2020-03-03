@@ -424,6 +424,20 @@ class ProjectConverter(Converter):
         self.remove_input_prefix = True
 
     def convert(self, hca_data):
+        def prefix_with(*args):
+            data = args[0]
+            prefix = args[1]
+            return f'{prefix}{data}'
+
+        def dsp_attribute(*args):
+            value = args[0]
+            return [{'value': value}]
+
+        # TODO make this an all-purpose date processor
+        def format_date(*args):
+            date = args[0]
+            return date.split('T')[0]
+
         def parse_name(*args):
             full_name = args[0]
             position = args[1]
@@ -432,15 +446,26 @@ class ProjectConverter(Converter):
 
         def concatenate_list(*args):
             items = args[0]
-            return ','.join(items)
+            return ' , '.join(items)
 
         def default_to(*args):
             value = args[0]
             default_value = args[1]
             return default_value if value is None else value
 
-        mapped_json = JsonMapper(hca_data).map({
+        mapper = JsonMapper(hca_data)
+        mapped_json = mapper.map({
+            '$on': 'project',
+            'alias': ['uuid.uuid', prefix_with, self.alias_prefix],
+            'attributes': {
+                'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
+                'HCA Project UUID': ['uuid.uuid', dsp_attribute]
+            },
+            'releaseDate': ['submissionDate', format_date]
+        })
+        mapped_json.update(mapper.map({
             '$on': 'project.content',
+            # TODO title probably needs padding? (len < 25)
             'title': ['project_core.project_title'],
             'description': ['project_core.project_description'],
             'contacts': {
@@ -449,7 +474,7 @@ class ProjectConverter(Converter):
                 'middleInitials': ['name', parse_name, 1],
                 'lastName': ['name', parse_name, 2],
                 'email': ['email', default_to, ''],
-                'affiliation': ['affiliation', default_to, ''],
+                'affiliation': ['institution', default_to, ''],
                 'phone': ['phone', default_to, ''],
                 'address': ['address', default_to, ''],
                 'orcid': ['orcid', default_to, '']
@@ -458,7 +483,7 @@ class ProjectConverter(Converter):
                 '$on': 'publications',
                 'authors': ['authors', concatenate_list],
                 'doi': ['doi', default_to, ''],
-                'articleTitle': ['publication_title', default_to, ''],
+                'articleTitle': ['title', default_to, ''],
                 'pubmedId': ['pmid', default_to, '']
             },
             'funders': {
@@ -467,7 +492,8 @@ class ProjectConverter(Converter):
                 'grantTitle': ['grant_title', default_to, ''],
                 'organization': ['organization', default_to, '']
             }
-        })
+        }))
+
         return mapped_json
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
