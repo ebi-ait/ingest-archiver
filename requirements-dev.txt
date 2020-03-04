@@ -1,4 +1,5 @@
 mock
 coverage
 pylint
+nose
 -r requirements.txt
