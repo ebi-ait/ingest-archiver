@@ -407,6 +407,7 @@ class SequencingRunConverter(Converter):
         extracted_data["assayRefs"] = {"alias": "{assayAlias.placeholder}"}
 
 
+# TODO keeping this for now to not break the IngestArchiver class
 class ProjectConverter(Converter):
 
     def __init__(self, ontology_api):
@@ -414,7 +415,7 @@ class ProjectConverter(Converter):
         self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_data):
-        return JsonMapper(hca_data).map(project.spec)
+        return project.convert(hca_data)
 
 
 class StudyConverter(Converter):

@@ -1,21 +1,22 @@
+from conversion.json_mapper import JsonMapper
 from conversion.post_process import *
 
 ALIAS_PREFIX = 'project_'
 
 
-def dsp_attribute(*args):
+def _dsp_attribute(*args):
     value = args[0]
     return [{'value': value}]
 
 
-def parse_name(*args):
+def _parse_name(*args):
     full_name = args[0]
     position = args[1]
     name_element = full_name.split(',', 2)[position]
     return name_element[0] if name_element and position == 1 else name_element
 
 
-def is_not_wrangler(*args):
+def _is_not_wrangler(*args):
     project_role = args[0]
     text = project_role.get('text')
     is_wrangler = text is not None and 'wrangler' in text.lower()
@@ -26,8 +27,8 @@ spec = {
     '$on': 'project',
     'alias': ['uuid.uuid', prefix_with, ALIAS_PREFIX],
     'attributes': {
-        'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
-        'HCA Project UUID': ['uuid.uuid', dsp_attribute]
+        'Project Core - Project Short Name': ['content.project_core.project_short_name', _dsp_attribute],
+        'HCA Project UUID': ['uuid.uuid', _dsp_attribute]
     },
     'releaseDate': ['submissionDate', format_date],
     # TODO title probably needs padding? (len < 25)
@@ -35,10 +36,10 @@ spec = {
     'description': ['content.project_core.project_description'],
     'contacts': {
         '$on': 'content.contributors',
-        '$filter': ['project_role', is_not_wrangler],
-        'firstName': ['name', parse_name, 0],
-        'middleInitials': ['name', parse_name, 1],
-        'lastName': ['name', parse_name, 2],
+        '$filter': ['project_role', _is_not_wrangler],
+        'firstName': ['name', _parse_name, 0],
+        'middleInitials': ['name', _parse_name, 1],
+        'lastName': ['name', _parse_name, 2],
         'email': ['email', default_to, ''],
         'affiliation': ['institution', default_to, ''],
         'phone': ['phone', default_to, ''],
@@ -60,3 +61,6 @@ spec = {
     }
 }
 
+
+def convert(hca_data: dict):
+    return JsonMapper(hca_data).map(spec)
