@@ -3,6 +3,7 @@ import re
 
 from flatten_json import flatten
 
+from archiver import project
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import prefix_with, format_date, concatenate_list, default_to
 from utils import protocols
@@ -411,68 +412,9 @@ class ProjectConverter(Converter):
     def __init__(self, ontology_api):
         super(ProjectConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.alias_prefix = 'project_'
 
     def convert(self, hca_data):
-        def dsp_attribute(*args):
-            value = args[0]
-            return [{'value': value}]
-
-        def parse_name(*args):
-            full_name = args[0]
-            position = args[1]
-            name_element = full_name.split(',', 2)[position]
-            return name_element[0] if name_element and position == 1 else name_element
-
-        def is_not_wrangler(*args):
-            project_role = args[0]
-            text = project_role.get('text')
-            is_wrangler = text is not None and 'wrangler' in text.lower()
-            return not is_wrangler
-
-        mapper = JsonMapper(hca_data)
-        mapped_json = mapper.map({
-            '$on': 'project',
-            'alias': ['uuid.uuid', prefix_with, self.alias_prefix],
-            'attributes': {
-                'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
-                'HCA Project UUID': ['uuid.uuid', dsp_attribute]
-            },
-            'releaseDate': ['submissionDate', format_date]
-        })
-        mapped_json.update(mapper.map({
-            '$on': 'project.content',
-            # TODO title probably needs padding? (len < 25)
-            'title': ['project_core.project_title'],
-            'description': ['project_core.project_description'],
-            'contacts': {
-                '$on': 'contributors',
-                '$filter': ['project_role', is_not_wrangler],
-                'firstName': ['name', parse_name, 0],
-                'middleInitials': ['name', parse_name, 1],
-                'lastName': ['name', parse_name, 2],
-                'email': ['email', default_to, ''],
-                'affiliation': ['institution', default_to, ''],
-                'phone': ['phone', default_to, ''],
-                'address': ['address', default_to, ''],
-                'orcid': ['orcid', default_to, '']
-            },
-            'publications': {
-                '$on': 'publications',
-                'authors': ['authors', concatenate_list],
-                'doi': ['doi', default_to, ''],
-                'articleTitle': ['title', default_to, ''],
-                'pubmedId': ['pmid', default_to, '']
-            },
-            'funders': {
-                '$on': 'funders',
-                'grantId': ['grant_id', default_to, ''],
-                'grantTitle': ['grant_title', default_to, ''],
-                'organization': ['organization', default_to, '']
-            }
-        }))
-
-        return mapped_json
+        return JsonMapper(hca_data).map(project.spec)
 
 
 class StudyConverter(Converter):
