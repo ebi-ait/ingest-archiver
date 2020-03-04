@@ -80,8 +80,55 @@ with the post-processor defined as:
         def is_adult(*args):
             age = args[0]
             return age >= 18
+            
+At the time of writing, there are a few built-in post-processors that can be applied to some common use-cases like
+defaulting values (`default_to`), concatenating lists (`concatenate_list`), etc. These can be found in 
+`post_process.py` module.
 
 ### Anchoring
+
+While the `JsonMapper` has support for field chaining, for complex JSON with several levels of nesting, 
+combined with long field names and field list, repetitively providing full field chain can be tedious. To be able
+to express this more concisely, anchoring can be used. Anchoring specifies the root of the JSON structure to 
+map to a new JSON format.
+
+#### The `on` Parameter
+
+The `map` function in the `JsonMapper` takes a parameter named `on` that can be used to specify the root of the
+JSON on which to start mapping. For example, given the following JSON,
+
+        {
+            "user": {
+                "settings": {
+                    "basic": {...},
+                    "advanced": {
+                        "security": {
+                            "javascript_enabled": true,
+                            "allow_trackers": false
+                        }
+                    }
+                }
+            }
+        }
+ 
+ the processing can be anchored on `user.settings.advanced.security` to translate the security settings. The
+ following specification,
+  
+        {
+            'javascript': ['javascript_enabled'],
+            'trackers': ['allow_trackers']
+        }
+
+applied to the JSON above using `map(specification, on='user.settings.advanced.security')`, will result in,
+
+        {
+            "javascript": true,
+            "trackers": false
+        }
+
+#### The `$on` Specification
+
+#### Chaining `on` and `$on`
         
 ### Nested Specification
 
