@@ -53,8 +53,36 @@ following specification to the JSON above,
         }
         
  To convert back to the original JSON in the example, just reverse the field specification, for example, 
- `'person_name': ['person.name']`.
+`'person_name': ['person.name']`. Field chaining can be done on multiple levels. However, at the time of writing, 
+`JsonMapper` does not support direct field chaining for JSON array types. Processing such fields can be expressed 
+through [anchoring](#anchoring) and [nesting](#nested-specification).
+ 
+#### Post-Processing Using Generic Functions
+
+The JSON mapper allows post processing of field values for more complex translation rules. This is done by 
+specifying a generic Python function that takes an arbitrary list of arguments (`*args`). The post-processing 
+function is specified after the original field name in the field specification:
+
+        <converted_field>: [<original_field>, <post_processor>{, <args>*}]
+        
+`JsonMapper` will pass the value of the specified field as the first argument to the post-processor. Taking the 
+same example in the previous section, a boolean field `adult` can be added using this feature. The following spec
+demonstrates how this can be done:
+            
+        {
+            'name': ['person_name'],
+            'age': ['person_age'],
+            'adult': ['person_age', is_adult]
+        }
+        
+with the post-processor defined as:
+
+        def is_adult(*args):
+            age = args[0]
+            return age >= 18
 
 ### Anchoring
         
 ### Nested Specification
+
+#### Filtering
