@@ -63,7 +63,7 @@ The JSON mapper allows post processing of field values for more complex translat
 specifying a generic Python function that takes an arbitrary list of arguments (`*args`). The post-processing 
 function is specified after the original field name in the field specification:
 
-        <converted_field>: [<original_field>, <post_processor>{, <args>*}]
+        <converted_field>: [<original_field>, <post_processor>{, <args>}*]
         
 `JsonMapper` will pass the value of the specified field as the first argument to the post-processor. Taking the 
 same example in the previous section, a boolean field `adult` can be added using this feature. The following spec
@@ -126,9 +126,38 @@ applied to the JSON above using `map(specification, on='user.settings.advanced.s
             "trackers": false
         }
 
+Without the anchor, it's necessary to always include `user.settings.advanced.security` in the field specification,
+so the `javascript` mapping would look like `'javascript': ['user.settings.advanced.security.javascript_enabled']`.
+
 #### The `$on` Specification
 
+Another way of specifying the anchoring field is by directly adding it to the specification using the `$on`
+keyword. Unlike field specifications, the `$on` keyword takes a plain string and *not* a list/vector. For 
+example, the previous sample specification can be alternatively expressed as,
+
+        {
+            '$on': 'user.settings.advanced.security',
+            "javascript": true,
+            "trackers": false
+        } 
+
+Using this specification, the mapping can be invoked without the `on` parameter. Keywords in specifications are, 
+at the time of writing, case-sensitive.
+
 #### Chaining `on` and `$on`
+
+The `on` parameter and the `$on` keyword do **not** override, but instead are chained together. The existence
+of both during a mapping call results in the `$on` field chain being concatenated to the value provided in 
+through the `on` parameter. For example, the following invocation is equivalent to the previous two above:
+
+        map({
+            '$on': 'advanced.security',
+            "javascript": true,
+            "trackers": false
+        }, on='user.settings')
+        
+The `user.settings` field supplied through `on` parameter will be treated as a prefix to the `advanced.security`
+field specified through the `$on` keyword.
         
 ### Nested Specification
 
