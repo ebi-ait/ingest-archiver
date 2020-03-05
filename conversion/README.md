@@ -245,7 +245,8 @@ To illustrate, the following JSON object,
             ]
         }
         
-can be translated using the following specification (assume `translate` and `convert` are defined),
+can be translated using the following specification (assume `translate` and `convert` are defined; see 
+[post-processing](#post-processing-using-generic-functions) for more information on this),
 
         {
             '$on': 'books',
@@ -267,3 +268,34 @@ is desired, the specification above can be nested instead:
         }
 
 #### Filtering
+
+When working on collections of data, it is sometimes required to only process some based on some criteria. For 
+`JsonMapper`, this is done by using filtering in the specification. Filters take the form of a field specification
+with the second argument being a boolean function, also called a predicate.
+
+        '$filter': [<original_field>, <predicate_function>{, args}*]
+        
+Just like in generic functions for [post-processing](#post-processing-using-generic-functions), `JsonMapper` will pass
+the value of found in the `original_field` as the first parameter along with the rest of `args` if they exist.
+
+For example, to process only books whose prices are above 10.00 from the sample books JSON above, the following spec 
+can be used:
+
+        {
+            'expensive_books': {
+                '$on': 'books',
+                '$filter': ['price', greater_than, 10],
+                'book_title': ['title'],
+                'book_price': ['price']
+            }
+        }
+        
+with the predicate `greater_than` defined as,
+
+        def greater_than(*args):
+            number = args[0]
+            other_number = args[1]
+            return number > other_number
+
+While filtering can be applied to single JSON nodes, the application can be limited. Any JSON object filtered out, will
+appear as an empty JSON object in the resulting document.
