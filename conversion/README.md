@@ -90,7 +90,7 @@ defaulting values (`default_to`), concatenating lists (`concatenate_list`), etc.
 While the `JsonMapper` has support for field chaining, for complex JSON with several levels of nesting, 
 combined with long field names and field list, repetitively providing full field chain can be tedious. To be able
 to express this more concisely, anchoring can be used. Anchoring specifies the root of the JSON structure to 
-map to a new JSON format.
+map to a new JSON format, relative to the actual root of the original JSON document.
 
 #### The `on` Parameter
 
@@ -137,12 +137,12 @@ example, the previous sample specification can be alternatively expressed as,
 
         {
             '$on': 'user.settings.advanced.security',
-            "javascript": true,
-            "trackers": false
+            "javascript": ['javascript_enabled'],
+            "trackers": ['allow_trackers']
         } 
 
 Using this specification, the mapping can be invoked without the `on` parameter. Keywords in specifications are, 
-at the time of writing, case-sensitive.
+at the time of writing, case-sensitive, so `$On`, `$ON`, etc. are *not* recognised.
 
 #### Chaining `on` and `$on`
 
@@ -160,5 +160,64 @@ The `user.settings` field supplied through `on` parameter will be treated as a p
 field specified through the `$on` keyword.
         
 ### Nested Specification
+
+Aside from field specifications, nested dictionary-like specification can be provided to any recognised fields in
+the root specification. Nesting is useful for expressing nesting on single objects, or for applying conversion
+to a list of JSON objects defined in an array.
+
+#### Single Object Nesting
+
+For single objects, nested specs can be defined to look like the resulting JSON object. Nesting specification this
+way is a more expressive alternative to [field chaining that was demonstrated above](#field-chaining). For example, 
+the following JSON, similar to the previous sections,
+
+        {
+            "person_name": "Jane Eyre",
+            "person_age": 30
+        }
+        
+can be mapped using nested specification defined with a nested `person` object:
+
+        {
+            'person': {
+                'name': ['person_name'],
+                'age': ['person_age']
+            }
+        }
+
+[Anchoring](#anchoring) in nested specifications is also supported. However, unlike anchors in the main specification
+that can be expressed through the `on` parameter, nested anchors can only be specified using the `$on` keyword. It is 
+also important to note that nested anchors are defined relative to the parent specification. For example, the following
+JSON,
+
+        {
+            "product_info" {
+                "manufacturing": {
+                    "location": "Cambridge, UK", 
+                    "manufacturing_date": "2020-03-05",
+                    "best_by_date": "2020-09-05"
+                }
+            }
+        }
+
+can be mapped using the following nested specification,
+
+        {
+            '$on': 'product_info',
+            'production': {
+                '$on': 'manufacturing',
+                'date': ['manufacturing_date']
+            }
+        }
+
+This mapping will result in the following JSON:
+
+        {
+            "production": {
+                "date": "2020-03-05"
+            }
+        }
+
+#### Applying Specification to JSON Array
 
 #### Filtering
