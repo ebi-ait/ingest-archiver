@@ -218,6 +218,52 @@ This mapping will result in the following JSON:
             }
         }
 
-#### Applying Specification to JSON Array
+### Applying Specification to JSON Arrays
+
+The JSON mapping utility can distinguish between JSON object nodes and JSON array, and applies specification 
+accordingly. When it determines that a field referred to by the specification is a collection of JSON objects, it
+applies the rules to each one of them iteratively. Note, however, that, as earlier mentioned in this document, using 
+field chaining to refer to nested JSON array is *not* supported at this time. To apply specifications to JSON arrays, 
+they need to be explicitly [anchored](#anchoring) if they are nested within the original JSON document.
+
+To illustrate, the following JSON object,
+
+        {
+            "books": [
+                {
+                    "title": "A Python Book",
+                    "price": 23.75
+                },
+                {
+                    "title": "A Novel",
+                    "price": 7.99
+                },
+                {
+                    "title": "Compilation of Fun Stuff",
+                    "price": 10.10
+                }
+            ]
+        }
+        
+can be translated using the following specification (assume `translate` and `convert` are defined),
+
+        {
+            '$on': 'books',
+            'titulo': ['title', translate, 'es'],
+            'precio': ['price', convert, 'eur']
+        }
+        
+Notice that, since the specification is anchored to the `books` node, only the list of field specifications are 
+defined. Specifications applied to multiple objects this way are expressed as if it applies to a single object. This 
+sample translation will return an array of JSON objects and *not* a JSON object containing an array. If a nested array 
+is desired, the specification above can be nested instead:
+
+        {
+            'libros': {
+                '$on': 'books',
+                'titulo': ['title', translate, 'es'],
+                'precio': ['price', convert, 'eur']
+            }
+        }
 
 #### Filtering
