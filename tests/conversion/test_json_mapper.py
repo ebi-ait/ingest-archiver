@@ -127,9 +127,31 @@ class JsonMapperTest(TestCase):
         with self.assertRaises(InvalidNode):
             mapper.map(on='name')
 
-        # and: raise exception if anchor can't be found
-        with self.assertRaises(InvalidNode):
-            mapper.map(on='non.existent.node')
+    def test_map_object_with_non_existent_anchor(self):
+        # given:
+        json_object = json.loads('''{
+            "description": "test"
+        }''')
+        mapper = JsonMapper(json_object)
+
+        # when:
+        flat_result = mapper.map({
+            '$on': 'non.existent.node',
+            'name': ['text']
+        })
+
+        # and:
+        nested_result = mapper.map({
+            'text': ['description'],
+            'optional': {
+                '$on': 'non.existent.node',
+                'field': ['field']
+            }
+        })
+
+        # then:
+        self.assertIsNone(flat_result)
+        self.assertEqual({'text': 'test'}, nested_result)
 
     def test_map_object_with_custom_processing(self):
         # given:

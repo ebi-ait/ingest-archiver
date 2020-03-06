@@ -18,7 +18,9 @@ class JsonMapper:
         self._check_if_readable(spec)
         anchor = self._determine_anchor(on, spec)
         node = self.root_node if not anchor else self._anchor_node(anchor)
-        if isinstance(node, list):
+        if node is None:
+            return node
+        elif isinstance(node, list):
             result = []
             for item in node:
                 mapping = self._apply_node_spec(item, anchor, spec)
@@ -43,9 +45,11 @@ class JsonMapper:
 
     def _anchor_node(self, field):
         if field:
-            anchored_node = self.root_node.get(field)
+            anchored_node = self.root_node.get(field, None)
             # check if anchored_node is dict-like
-            if isinstance(anchored_node, Mapping):
+            if anchored_node is None:
+                return anchored_node
+            elif isinstance(anchored_node, Mapping):
                 return DataNode(anchored_node)
             # or if anchored_node is actually a list
             elif isinstance(anchored_node, list):
