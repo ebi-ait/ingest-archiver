@@ -250,23 +250,23 @@ class TestConverter(unittest.TestCase):
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_study(self):
+        # given:
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())
-
         with open(config.JSON_DIR + 'dsp/study.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
+        # and:
         test_alias = 'hca' + str(randint(0, 1000))
-
         hca_data['uuid']['uuid'] = test_alias
         expected_json['alias'] = 'study_' + test_alias
         expected_json['attributes']['HCA Project UUID'] = [{'value': test_alias}]
 
-        input = {
-            'project': hca_data
-        }
-
+        # when:
         converter = StudyConverter(ontology_api=self.ontology_api)
-        actual_json = converter.convert(input)
+        actual_json = converter.convert({
+            'project': hca_data
+        })
 
+        # then:
         self.assertEqual(expected_json, actual_json)

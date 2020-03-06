@@ -1,12 +1,8 @@
+from archiver.dsp_post_process import dsp_attribute
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import *
 
 ALIAS_PREFIX = 'project_'
-
-
-def _dsp_attribute(*args):
-    value = args[0]
-    return [{'value': value}]
 
 
 def _parse_name(*args):
@@ -27,8 +23,8 @@ spec = {
     '$on': 'project',
     'alias': ['uuid.uuid', prefix_with, ALIAS_PREFIX],
     'attributes': {
-        'Project Core - Project Short Name': ['content.project_core.project_short_name', _dsp_attribute],
-        'HCA Project UUID': ['uuid.uuid', _dsp_attribute]
+        'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
+        'HCA Project UUID': ['uuid.uuid', dsp_attribute]
     },
     'releaseDate': ['submissionDate', format_date],
     # TODO title probably needs padding? (len < 25)
