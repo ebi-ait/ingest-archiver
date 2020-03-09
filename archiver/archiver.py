@@ -626,7 +626,7 @@ class IngestArchiver:
                     message["conversion"] = {}
                     message["conversion"]["output_name"] = f"{data['manifest_id']}.bam"
                     message["conversion"]["inputs"] = files
-                    message["files"] = [f"{data['manifest_id']}.bam"]
+                    message["files"] = [{"name": f"{data['manifest_id']}.bam"}]
 
                 messages.append(message)
 
