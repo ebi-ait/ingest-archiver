@@ -430,3 +430,18 @@ class JsonMapperTest(TestCase):
             json_mapper.map({
                 'field': ['$object']
             })
+
+    def test_map_with_array_literal(self):
+        # given:
+        json_mapper = JsonMapper({})
+
+        # when:
+        values = ['list', 'of', 'values']
+        result = json_mapper.map({
+            'metadata': ['$array', values],
+            'empty': ['$array', []]
+        })
+
+        # then:
+        self.assertEqual(values, result.get('metadata'))
+        self.assertTrue('empty' not in result.keys())

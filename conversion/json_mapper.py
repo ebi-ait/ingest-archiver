@@ -2,13 +2,15 @@ from collections import Mapping
 
 from conversion.data_node import DataNode
 
+
+
 KEYWORD_MARKER = '$'
 
 SPEC_ANCHOR = '$on'
 SPEC_FILTER = '$filter'
 
 SPEC_OBJECT_LITERAL = '$object'
-
+SPEC_ARRAY_LITERAL = '$array'
 
 class JsonMapper:
 
@@ -94,7 +96,7 @@ class JsonMapper:
     @staticmethod
     def _apply_field_spec(node: DataNode, spec: list):
         source_field_name = spec[0]
-        if source_field_name == SPEC_OBJECT_LITERAL:
+        if source_field_name in [SPEC_OBJECT_LITERAL, SPEC_ARRAY_LITERAL]:
             field_value = JsonMapper._get_object_literal(spec)
         else:
             field_value = node.get(source_field_name)
@@ -109,10 +111,12 @@ class JsonMapper:
     @staticmethod
     def _get_object_literal(spec):
         if len(spec) != 2:
-            raise UnreadableSpecification('Expecting exactly 1 object literal value.')
+            raise UnreadableSpecification('Expecting exactly 1 JSON literal value.')
         field_value = spec[1]
-        if not isinstance(field_value, Mapping):
-            raise UnreadableSpecification('JSON object literal should be a dict-like structure.')
+        if not (isinstance(field_value, Mapping) or isinstance(field_value, list)):
+            raise UnreadableSpecification('JSON literal should be a dict-like or list structure.')
+        if len(field_value) == 0:
+            field_value = None
         return field_value
 
 
