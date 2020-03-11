@@ -9,7 +9,8 @@
 
         },
         "instrument_manufacturer_model": {
-            "text": "Illumina HiSeq 2500"
+            "text": "Illumina HiSeq 2500",
+            "ontology_label": "Illumina HiSeq 2500"
         },
         "paired_end": true,
         "sequencing_approach": {
