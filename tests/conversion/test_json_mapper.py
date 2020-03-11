@@ -312,14 +312,24 @@ class JsonMapperTest(TestCase):
         }''')
 
         # expect: main spec
-        with self.assertRaises(UnreadableSpecification) as exception:
+        with self.assertRaises(UnreadableSpecification):
             JsonMapper(json_object).map('spec')
 
         # and: field spec
-        with self.assertRaises(UnreadableSpecification) as exception:
-            JsonMapper(json_object).map({
-                'd': 'specification'
-            })
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({'d': 'specification'})
+
+        # and: empty dict as spec
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({})
+
+        # and: empty field specification
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({'field': []})
+
+        # and: None field specification
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({'field': None})
 
     def test_map_object_with_filter(self):
         # given:

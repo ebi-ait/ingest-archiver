@@ -32,7 +32,7 @@ class JsonMapper:
 
     @staticmethod
     def _check_if_readable(spec):
-        if not (isinstance(spec, list) or isinstance(spec, dict)):
+        if not ((isinstance(spec, list) or isinstance(spec, dict)) and len(spec) > 0):
             raise UnreadableSpecification
 
     @staticmethod
