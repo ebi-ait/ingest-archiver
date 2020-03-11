@@ -396,3 +396,19 @@ class JsonMapperTest(TestCase):
         self.assertEqual(2, len(products))
         item_names = [item.get('item') for item in products]
         self.assertTrue('eggs' in item_names and 'loaf' in item_names)
+
+    def test_map_with_object_literal(self):
+        # given:
+        json_object = json.loads('''{
+            "description": "test"
+        }''')
+
+        # when:
+        metadata = {'authored_by': 'me'}
+        result = JsonMapper(json_object).map({
+            'text': ['description'],
+            'metadata': ['$object', metadata]
+        })
+
+        # then:
+        self.assertEqual(metadata, result.get('metadata'))

@@ -7,6 +7,8 @@ KEYWORD_MARKER = '$'
 SPEC_ANCHOR = '$on'
 SPEC_FILTER = '$filter'
 
+SPEC_OBJECT_LITERAL = '$object'
+
 
 class JsonMapper:
 
@@ -92,13 +94,16 @@ class JsonMapper:
     @staticmethod
     def _apply_field_spec(node: DataNode, spec: list):
         source_field_name = spec[0]
-        field_value = node.get(source_field_name)
-        has_customisation = len(spec) > 1
-        if has_customisation:
-            operation = spec[1]
-            args = [field_value]
-            args.extend(spec[2:])
-            field_value = operation(*args)
+        if source_field_name == SPEC_OBJECT_LITERAL:
+            field_value = spec[1]
+        else:
+            field_value = node.get(source_field_name)
+            has_customisation = len(spec) > 1
+            if has_customisation:
+                operation = spec[1]
+                args = [field_value]
+                args.extend(spec[2:])
+                field_value = operation(*args)
         return field_value
 
 
