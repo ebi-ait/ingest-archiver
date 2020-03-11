@@ -409,11 +409,13 @@ class JsonMapperTest(TestCase):
         metadata = {'authored_by': 'me'}
         result = JsonMapper(json_object).map({
             'text': ['description'],
-            'metadata': ['$object', metadata]
+            'metadata': ['$object', metadata],
+            'empty': ['$object', {}]
         })
 
         # then:
         self.assertEqual(metadata, result.get('metadata'))
+        self.assertFalse('empty' in result.keys())
 
     def test_map_with_invalid_object_literal(self):
         # given:
@@ -444,4 +446,4 @@ class JsonMapperTest(TestCase):
 
         # then:
         self.assertEqual(values, result.get('metadata'))
-        self.assertTrue('empty' not in result.keys())
+        self.assertFalse('empty' in result.keys())
