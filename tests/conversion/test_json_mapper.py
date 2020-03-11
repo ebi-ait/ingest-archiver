@@ -125,7 +125,9 @@ class JsonMapperTest(TestCase):
 
         # expect:
         with self.assertRaises(InvalidNode):
-            mapper.map(on='name')
+            mapper.map({
+                'known_as': ['name']
+            }, on='name')
 
     def test_map_object_with_non_existent_anchor(self):
         # given:
@@ -412,3 +414,19 @@ class JsonMapperTest(TestCase):
 
         # then:
         self.assertEqual(metadata, result.get('metadata'))
+
+    def test_map_with_invalid_object_literal(self):
+        # given:
+        json_mapper = JsonMapper({})
+
+        # expect: non dict as object literal
+        with self.assertRaises(UnreadableSpecification):
+            json_mapper.map({
+                'field': ['$object', 'testing!']
+            })
+
+        # and: no specified literal
+        with self.assertRaises(UnreadableSpecification):
+            json_mapper.map({
+                'field': ['$object']
+            })

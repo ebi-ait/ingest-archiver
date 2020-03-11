@@ -95,7 +95,7 @@ class JsonMapper:
     def _apply_field_spec(node: DataNode, spec: list):
         source_field_name = spec[0]
         if source_field_name == SPEC_OBJECT_LITERAL:
-            field_value = spec[1]
+            field_value = JsonMapper._get_object_literal(spec)
         else:
             field_value = node.get(source_field_name)
             has_customisation = len(spec) > 1
@@ -104,6 +104,15 @@ class JsonMapper:
                 args = [field_value]
                 args.extend(spec[2:])
                 field_value = operation(*args)
+        return field_value
+
+    @staticmethod
+    def _get_object_literal(spec):
+        if len(spec) != 2:
+            raise UnreadableSpecification('Expecting exactly 1 object literal value.')
+        field_value = spec[1]
+        if not isinstance(field_value, Mapping):
+            raise UnreadableSpecification('JSON object literal should be a dict-like structure.')
         return field_value
 
 
@@ -116,5 +125,5 @@ class InvalidNode(Exception):
 
 class UnreadableSpecification(Exception):
 
-    def __init__(self):
-        super(UnreadableSpecification, self).__init__('Provided specification of unreadable type.')
+    def __init__(self, details=''):
+        super(UnreadableSpecification, self).__init__(f'Provided specification is unreadable. {details}')
