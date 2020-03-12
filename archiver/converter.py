@@ -5,6 +5,7 @@ from flatten_json import flatten
 
 from archiver import project
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
+from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
 from conversion.post_process import prefix_with, default_to
 from utils import protocols
@@ -246,6 +247,10 @@ class SequencingExperimentConverter(Converter):
         def string_attribute(*args):
             return dsp_attribute(str(args[0]))
 
+        def instrument_model(*args):
+            hca_name = args[0]
+            return dsp_attribute(to_dsp_name(hca_name))
+
         # added these for easier typing
         sp = 'sequencing_protocol'
         lp = 'library_preparation_protocol'
@@ -290,7 +295,7 @@ class SequencingExperimentConverter(Converter):
                 'library_selection': [f'{lp}.content.primer', map_primer],
                 'library_layout': [f'{sp}.content.paired_end', library_layout_attribute],
                 'library_name': [f'{ib}.content.biomaterial_core.biomaterial_id', dsp_attribute],
-                'instrument_model': [f'{sp}.content.instrument_manufacturer_model.ontology_label', dsp_attribute],
+                'instrument_model': [f'{sp}.content.instrument_manufacturer_model.text', instrument_model],
                 'platform_type': ['', fixed_dsp_attribute, 'ILLUMINA'],
                 'design_description': ['', fixed_dsp_attribute, 'unspecified'],
                 'nominal_length': [f'{lp}.content.nominal_length', string_attribute],

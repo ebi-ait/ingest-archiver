@@ -1,14 +1,11 @@
-import unittest
 import json
+import unittest
+from random import randint
 
 from mock import MagicMock
 
 import config
-
-from random import randint
-
-from archiver import project
-from archiver.converter import Converter, SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
+from archiver.converter import SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
 
 
@@ -84,7 +81,7 @@ class TestConverter(unittest.TestCase):
         sequencing_protocol['uuid']['uuid'] = 'seqprotocol' + test_alias
         lib_prep_protocol['uuid']['uuid'] = 'libprepprotol' + test_alias
 
-        #and:
+        # and:
         with open(config.JSON_DIR + 'dsp/sequencing_experiment.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
         expected_json['attributes'][
@@ -110,63 +107,10 @@ class TestConverter(unittest.TestCase):
         self.assertEqual(expected_json, actual_json)
 
         # then:
-        instrument_model_text = "Illumina Hiseq 2500"
+        instrument_model_text = "illumina hiseq 2500"
         ena_instrument_model_text = "Illumina HiSeq 2500"
         sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
         expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
-        actual_json = converter.convert({
-            'input_biomaterial': input_biomaterial,
-            'process': process,
-            'sequencing_protocol': sequencing_protocol,
-            'library_preparation_protocol': lib_prep_protocol
-        })
-        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
-
-        # and:
-        ena_instrument_model_text = "HiSeq X Five"
-        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
-        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
-        actual_json = converter.convert({
-            'input_biomaterial': input_biomaterial,
-            'process': process,
-            'sequencing_protocol': sequencing_protocol,
-            'library_preparation_protocol': lib_prep_protocol
-        })
-        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
-
-        # and:
-        instrument_model_text = "hiseq X Five"
-        ena_instrument_model_text = "HiSeq X Five"
-        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
-        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
-        actual_json = converter.convert({
-            'input_biomaterial': input_biomaterial,
-            'process': process,
-            'sequencing_protocol': sequencing_protocol,
-            'library_preparation_protocol': lib_prep_protocol
-        })
-        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
-
-        # and:
-        instrument_model_text = "fsfa X Five"
-        ena_instrument_model_text = "unspecified"
-        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
-        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
-        expected_json['attributes']['platform_type'][0]['value'] = 'unspecified'
-        actual_json = converter.convert({
-            'input_biomaterial': input_biomaterial,
-            'process': process,
-            'sequencing_protocol': sequencing_protocol,
-            'library_preparation_protocol': lib_prep_protocol
-        })
-        self.assertEqual(expected_json, actual_json, 'Must match ENA enum values for instrument_model')
-
-        # and:
-        instrument_model_text = "Illumina Hiseq X 10"
-        ena_instrument_model_text = "HiSeq X Ten"
-        sequencing_protocol['content']['instrument_manufacturer_model']["text"] = instrument_model_text
-        expected_json['attributes']['instrument_model'][0]['value'] = ena_instrument_model_text
-        expected_json['attributes']['platform_type'][0]['value'] = 'ILLUMINA'
         actual_json = converter.convert({
             'input_biomaterial': input_biomaterial,
             'process': process,
