@@ -55,10 +55,10 @@
             "value": "Oligo-dT"
         }],
         "nominal_length": [{
-            "value": "0"
+            "value": "125"
         }],
         "nominal_sdev": [{
-            "value": "0"
+            "value": "37"
         }],
         "Process - Process Core - Process Id": [{
             "value": "sequence_process_file_1"

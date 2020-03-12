@@ -5,7 +5,7 @@ from flatten_json import flatten
 
 from archiver import project
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
-from conversion.json_mapper import JsonMapper
+from conversion.json_mapper import JsonMapper, json_array, json_object
 from conversion.post_process import prefix_with, default_to
 from utils import protocols
 
@@ -217,86 +217,6 @@ class SequencingExperimentConverter(Converter):
         self.logger = logging.getLogger(__name__)
         self.alias_prefix = 'sequencingExperiment_'
 
-        self.library_selection_mapping = {
-            "poly-dT": "Oligo-dT",
-            "random": "RANDOM",
-        }
-
-        self.instrument_model_map = {
-            "illumina genome analyzer": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina Genome Analyzer"
-            },
-            "illumina genome analyzer ii": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina Genome Analyzer II"
-            },
-            "illumina genome analyzer iix": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina Genome Analyzer IIx"
-            },
-            "illumina hiseq 2500": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 2500"
-            },
-            "illumina hiseq 2000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 2000"
-            },
-            "illumina hiseq 1500": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 1500"
-            },
-            "illumina hiseq 1000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 1000"
-            },
-            "illumina miseq": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina MiSeq"
-            },
-            "illumina hiscansq": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiScanSQ"
-            },
-            "hiseq x ten": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "HiSeq X Ten",
-                "synonymns": [
-                    "illumina hiseq x 10"
-                ]
-            },
-            "nextseq 500": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "NextSeq 500",
-                "synonymns": [
-                    "illumina nextseq 500"
-                ]
-            },
-            "hiseq x five": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "HiSeq X Five",
-            },
-            "illumina hiseq 3000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 3000"
-            },
-            "illumina hiseq 4000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 4000"
-            },
-            "nextseq 550": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "NextSeq 550",
-            }
-        }
-
-        self.field_mapping = {
-            "process__uuid__uuid": "alias",
-            "sequencing_protocol__content__protocol_core__protocol_name": "title",
-            "sequencing_protocol__content__protocol_core__protocol_description": "description"
-        }
-
     def convert(self, hca_data):
         primer_mapping = {
             'poly-dT': 'Oligo-dT',
@@ -323,6 +243,9 @@ class SequencingExperimentConverter(Converter):
                 'value': args[0]
             }]
 
+        def string_attribute(*args):
+            return dsp_attribute(str(args[0]))
+
         # added these for easier typing
         sp = 'sequencing_protocol'
         lp = 'library_preparation_protocol'
@@ -331,6 +254,14 @@ class SequencingExperimentConverter(Converter):
             'alias': [f'{sp}.content.protocol_core.protocol_id'],
             'title': [f'{sp}.content.protocol_core.protocol_name'],
             'description': [f'{sp}.content.protocol_core.protocol_description'],
+            'sampleUses': json_array(
+                {
+                    'sampleRef': {
+                        'alias': '{sampleAlias.placeholder}'
+                    }
+                }
+            ),
+            'studyRef': json_object({'alias': '{studyAlias.placeholder}'}),
             'attributes': {
                 'HCA Input Biomaterial UUID': [f'{ib}.uuid.uuid', dsp_attribute],
                 'HCA Library Preparation Protocol UUID': [f'{lp}.uuid.uuid', dsp_attribute],
@@ -361,61 +292,11 @@ class SequencingExperimentConverter(Converter):
                 'library_name': [f'{ib}.content.biomaterial_core.biomaterial_id', dsp_attribute],
                 'instrument_model': [f'{sp}.content.instrument_manufacturer_model.ontology_label', dsp_attribute],
                 'platform_type': ['', fixed_dsp_attribute, 'ILLUMINA'],
-                'design_description': ['', fixed_dsp_attribute, 'unspecified']
+                'design_description': ['', fixed_dsp_attribute, 'unspecified'],
+                'nominal_length': [f'{lp}.content.nominal_length', string_attribute],
+                'nominal_sdev': [f'{lp}.content.nominal_sdev', string_attribute]
             }
         })
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        extracted_data["studyRef"] = {}
-        extracted_data["sampleUses"] = []
-
-        if not extracted_data.get("attributes"):
-            extracted_data["attributes"] = {}
-        extracted_data["attributes"]["library_strategy"] = [dict(value="OTHER")]
-        extracted_data["attributes"]["library_source"] = [dict(value="TRANSCRIPTOMIC SINGLE CELL")]
-
-        primer = flattened_hca_data.get("library_preparation_protocol__content__primer")
-        if primer:
-            extracted_data["attributes"]["library_selection"] = [dict(value=self.library_selection_mapping.get(primer, "unspecified"))]
-
-        paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_end")
-        if paired_end:
-            extracted_data["attributes"]["library_layout"] = [dict(value="PAIRED")]
-
-            # TODO put 0 as default as we don't really capture this in HCA but there's no way to specify 'unspecified'
-            extracted_data["attributes"]["nominal_length"] = [dict(value="0")]
-            extracted_data["attributes"]["nominal_sdev"] = [dict(value="0")]
-        else:
-            extracted_data["attributes"]["library_layout"] = [dict(value="SINGLE")]
-
-        # must correctly match ENA enum values
-        instr_model_text = flattened_hca_data.get("sequencing_protocol__content__instrument_manufacturer_model__text")
-        instrument_model_obj = self.instrument_model_map.get(instr_model_text.lower(), {})
-        instrument_model = instrument_model_obj.get('intrument_model', 'unspecified')
-        platform_type = instrument_model_obj.get('platform_type', 'unspecified')
-
-        for key, obj in self.instrument_model_map.items():
-            synonyms = obj.get("synonymns")
-            if synonyms and instr_model_text.lower() in synonyms:
-                instrument_model = obj.get('intrument_model', 'unspecified')
-                platform_type = obj.get('platform_type', 'unspecified')
-
-        extracted_data["attributes"]["instrument_model"] = [dict(value=instrument_model)]
-        extracted_data["attributes"]["platform_type"] = [dict(value=platform_type)]
-
-
-        extracted_data["attributes"]["design_description"] = [dict(value="unspecified")]
-
-        library_name = flattened_hca_data.get("input_biomaterial__content__biomaterial_core__biomaterial_id", "")
-        if not library_name:
-            raise ConversionError("Sequencing Experiment Conversion Error",
-                                  "There is no id found for the input biomaterial.")
-
-        extracted_data["attributes"]["library_name"] = [dict(value=library_name)]
-
-        self._build_links(extracted_data, {})
-
-        return extracted_data
 
     # TODO implement
     def _build_links(self, extracted_data, links):
