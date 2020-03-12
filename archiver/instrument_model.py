@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 PLATFORM_TYPE_ILLUMINA = 'ILLUMINA'
 
 
@@ -16,71 +18,27 @@ def illumina(dsp_name: str) -> InstrumentModel:
     return InstrumentModel(dsp_name.lower(), PLATFORM_TYPE_ILLUMINA, dsp_name)
 
 
-instrument_model_map = {
-    "illumina genome analyzer": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina Genome Analyzer"
-    },
-    "illumina genome analyzer ii": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina Genome Analyzer II"
-    },
-    "illumina genome analyzer iix": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina Genome Analyzer IIx"
-    },
-    "illumina hiseq 2500": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiSeq 2500"
-    },
-    "illumina hiseq 2000": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiSeq 2000"
-    },
-    "illumina hiseq 1500": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiSeq 1500"
-    },
-    "illumina hiseq 1000": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiSeq 1000"
-    },
-    "illumina miseq": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina MiSeq"
-    },
-    "illumina hiscansq": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiScanSQ"
-    },
-    "hiseq x ten": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "HiSeq X Ten",
-        "synonymns": [
-            "illumina hiseq x 10"
-        ]
-    },
-    "nextseq 500": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "NextSeq 500",
-        "synonymns": [
-            "illumina nextseq 500"
-        ]
-    },
-    "hiseq x five": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "HiSeq X Five",
-    },
-    "illumina hiseq 3000": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiSeq 3000"
-    },
-    "illumina hiseq 4000": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "Illumina HiSeq 4000"
-    },
-    "nextseq 550": {
-        "platform_type": "ILLUMINA",
-        "intrument_model": "NextSeq 550",
-    }
-}
+Synonym = namedtuple('Synonym', ['main', 'alternate'])
+
+
+def _prepare_map():
+    model_names = ['Illumina Genome Analyzer', 'Illumina Genome Analyzer II', 'Illumina Genome Analyzer IIx',
+                   'Illumina HiSeq 2500', 'Illumina HiSeq 2000', 'Illumina HiSeq 1500', 'Illumina HiSeq 1000',
+                   'Illumina MiSeq', 'Illumina HiScanSQ', 'HiSeq X Ten', 'NextSeq 500', 'HiSeq X Five',
+                   'Illumina HiSeq 3000', 'Illumina HiSeq 4000', 'NextSeq 550']
+    instrument_models = [illumina(name) for name in model_names]
+    model_map = {model.hca_name: model for model in instrument_models}
+
+    synonyms = [Synonym('hiseq x ten', 'illumina hiseq x 10'), Synonym('nextseq 500', 'illumina nextseq 500')]
+    for synonym in synonyms:
+        model_map[synonym.alternate] = model_map[synonym.main].hca_synonym(synonym.alternate)
+
+    return model_map
+
+
+__instrument_model_map__ = _prepare_map()
+
+
+def to_dsp_name(hca_name: str):
+    instrument_model = __instrument_model_map__.get(hca_name)
+    return instrument_model.dsp_name if instrument_model else None
