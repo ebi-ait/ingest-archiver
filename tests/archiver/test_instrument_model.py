@@ -23,4 +23,6 @@ class InstrumentModelTest(TestCase):
         synonym = hiseq_x_ten.hca_synonym('illumina hiseq x 10')
 
         # then:
-        self.assertIsNotNone(synonym)
+        self.assertEqual('illumina hiseq x 10', synonym.hca_name)
+        self.assertEqual('HiSeq X Ten', synonym.dsp_name)
+        self.assertEqual('ILLUMINA', synonym.platform_type)

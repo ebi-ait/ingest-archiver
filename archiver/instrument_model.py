@@ -9,7 +9,7 @@ class InstrumentModel:
         self.dsp_name = dsp_name
 
     def hca_synonym(self, hca_name: str):
-        return InstrumentModel()
+        return InstrumentModel(hca_name, self.platform_type, self.dsp_name)
 
 
 def illumina(dsp_name: str) -> InstrumentModel:
