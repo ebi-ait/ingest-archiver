@@ -12,6 +12,15 @@ SPEC_FILTER = '$filter'
 SPEC_OBJECT_LITERAL = '$object'
 SPEC_ARRAY_LITERAL = '$array'
 
+
+def json_object(value: dict):
+    return [SPEC_OBJECT_LITERAL, value]
+
+
+def json_array(*values):
+    return [SPEC_ARRAY_LITERAL, list(values)]
+
+
 class JsonMapper:
 
     def __init__(self, source: dict):
