@@ -18,59 +18,69 @@ At the moment it consists of 3 stages.
 This component is currently invoked manually after an HCA submission.
 
 # How to run
-## Step 1 - Install the script requirements ##
-`sudo pip3 install -r requirements.txt`
-
-## Step 2 - Get project UUID ##
-Get the project UUID of the project you want to archive. For example rsatija dataset `5f256182-5dfc-4070-8404-f6fa71d37c73`
-
-## Step 3 - Set environment variables ##
+## Step 1: Docker Run Command
 ```
-# Required variables
-# The location from which to pull metadata for submission. This is currently always the ingest 
-# production environment.
-$ export INGEST_API_URL=http://api.ingest.data.humancellatlas.org/
+docker run -v $PWD:/output \
+--env INGEST_API_URL=http://api.ingest.archive.data.humancellatlas.org/ \
+--env DSP_API_URL=https://submission.ebi.ac.uk \
+--env AAP_API_URL=https://api.aai.ebi.ac.uk/auth \
+--env ONTOLOGY_API_URL=https://www.ebi.ac.uk/ols \
+--env AAP_API_DOMAIN=<aap_domain> \
+--env AAP_API_USER=<aap_user> \
+--env AAP_API_PASSWORD=<aap_password> \
+--env VALIDATION_POLL_FOREVER=False \
+--env SUBMISSION_POLL_FOREVER=False \
+quay.io/ebi-ait/ingest-archiver \
+--alias_prefix=HCA \
+--project_uuid=<project_uuid>
+```
+### Environment variables
+```
+INGEST_API_URL
+# The ingest environment to pull metadata for submission. 
+Production: INGEST_API_URL=http://api.ingest.archive.data.humancellatlas.org/
+Staging: INGEST_API_URL=http://api.ingest.staging.archive.data.humancellatlas.org/
 
-# The DSP service to use for the submission. Choose between test and production
-# TEST - https://submission-dev-ebi.ac.uk
-# PROD - https://submission.ebi.ac.uk
+DSP_API_URL
+# The DSP service on which to create the new submission to archives.
 # The old name of DSP USI_API_URL is also supported
-$ export DSP_API_URL=https://submission-dev.ebi.ac.uk
+Production: https://submission.ebi.ac.uk
+Test: https://submission-test.ebi.ac.uk
 
 # The DSP uses an EBI Authentication and Authorization Profile (AAP) account.
-# There are separate ones for test and production.
-# First we need to specify the AAP URL.
-# TEST - https://explore.api.aai.ebi.ac.uk/auth
-# PROD - https://api.aai.ebi.ac.uk/auth
-$ export AAP_API_URL=https://explore.api.aai.ebi.ac.uk/auth
+AAP_API_URL
+Production: https://api.aai.ebi.ac.uk/auth
+Test: https://explore.api.aai.ebi.ac.uk/auth
 
-# Second we need to specify different AAP domains for test and production
-# TEST - subs.test-team-21
-# PROD - subs.team-2
-$ export AAP_API_DOMAIN=subs.test-team-21
+AAP_API_DOMAIN
+Test: subs.test-team-21
+Production: subs.team-2
 
-# Lastly we need to specify the AAP account password. It will be different for test and 
-# production services.
-# If you don't know them then please ask an ingest dev or another EBI wrangler.
-$ export AAP_API_PASSWORD=password
+AAP_API_USER, AAP_API_PASSWORD
+# Specify the AAP user and password. Ether create your own in the group above or use the common AAP user if archiving on behalf of ingest.
+hca-ingest
 ```
 
-## Step 4 - Run the metadata archiver ##
-`./cli.py --alias_prefix=HCA_2019-01-07 --project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb`
-
-The --alias-prefix above is something the DSP uses to identify entities for linking purposes. It is not related to HCA data and will not appear in the submission itself. However it needs to be unique for each submission. In principle it could be anything but we suggest that you stick with something along the lines of `--alias_prefix=HCA_YYYY-MM-DD`, e.g. `--alias_prefix=HCA_2019-01-07`
-
+### Runtime Variables
+```
+--alias_prefix=HCA
+--project_uuid=2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb
+The --alias-prefix above is prefixed to every DSP entitiy created by the Archiver.
+The --project_uuid is used to download assay manifests from the Ingest API.
+```
+### Execution
 You should get output like:
 ```
-Processing 6 bundles:
-0d172fd7-f5af-4307-805b-3a421cdabd76
-9526f387-bb5a-4a1b-9fd1-8ff977c62ffd
-4d07290e-8bcc-4060-9b67-505133798ab0
-b6d096f4-239a-476d-9685-2a03c86dc06b
-985a9cb6-3665-4c04-9b93-8f41e56a2c71
-19f1a1f8-d563-43a8-9eb3-e93de1563555
+GETTING MANIFESTS FOR PROJECT: 2a0faf83-e342-4b1c-bb9b-cf1d1147f3bb
+Processing 6 manifests:
+https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/0d172fd7-f5af-4307-805b-3a421cdabd76
+https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/9526f387-bb5a-4a1b-9fd1-8ff977c62ffd
+https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/4d07290e-8bcc-4060-9b67-505133798ab0
+https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/b6d096f4-239a-476d-9685-2a03c86dc06b
+https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/985a9cb6-3665-4c04-9b93-8f41e56a2c71
+https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/19f1a1f8-d563-43a8-9eb3-e93de1563555
 
-* PROCESSING BUNDLE 1/6: 0d172fd7-f5af-4307-805b-3a421cdabd76
+* PROCESSING MANIFEST 1/6: https://api.ingest.staging.archive.data.humancellatlas.org/bundleManifests/0d172fd7-f5af-4307-805b-3a421cdabd76
 Finding project entities in bundle...
 1
 Finding study entities in bundle...
@@ -90,12 +100,12 @@ Entities to be converted: {
     "sequencingRun": 6
 }
 Saving Report file...
-Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/REPORT.json!
+Saved to /output/ARCHIVER_2019-01-04T115615/REPORT.json!
 ##################### FILE ARCHIVER NOTIFICATION
-Saved to /home/me/ingest-archiver/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.json!
+Saved to /output/ARCHIVER_2019-01-04T115615/FILE_UPLOAD_INFO.json!
 ```
 
-## Step 5 - Check REPORT.json ##
+## Step 2 - Check REPORT.json ##
 In your current directory, the MA will have generated a directory with the name `ARCHIVER_<timestamp>` containing two files, `REPORT.json` and `FILE_UPLOAD_INFO.json`. Inspect `REPORT.json` for errors. If there are any data files to upload you will always see FileReference dsp_validation_errors in the submission_errors field. These you can ignore - we will upload the files in the following steps. For example: 
 
 ```
@@ -138,7 +148,7 @@ If you see problems in the entities added to the submission with non-empty error
         },
 ```
 
-## Step 6 - Copy FILE_UPLOAD_INFO.json to cluster ###
+## Step 3 - Copy FILE_UPLOAD_INFO.json to cluster ###
 `FILE_UPLOAD_INFO.json` contains the instructions necessary for the file uploader to convert and upload submission data to the DSP. You need to copy this file to HCA NFS directory accessible by the cluster. However, you also need to give it a unique name so that it doesn't clash with any existing JSON files.
 
 Therefore, prepend something to the filename to make it unique. This can be anything but we suggest your username and the dataset. For example `mfreeberg_rsatija_FILE_UPLOAD_INFO.json`
@@ -147,11 +157,11 @@ You will copy the file using the secure copy (`scp`) command. This will need you
 
 ```scp FILE_UPLOAD_INFO.json ebi-cli.ebi.ac.uk:/nfs/production/hca/mfreeberg_rsatija_FILE_UPLOAD_INFO.json```
 
-## Step 7 - Login to cluster ##
+## Step 4 - Login to cluster ##
 Login to EBI CLI to access the cluster with your EBI password
 `ssh ebi-cli.ebi.ac.uk`
 
-## Step 8 - Run the file uploader ##
+## Step 5 - Run the file uploader ##
 Run the file uploader with the bsub command below. We will explain more about the components below.
 
 `bsub 'singularity run -B /nfs/production/hca:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/mfreeberg_rsatija_FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=<ebi-aap-password> -u=hca-ingest'`
@@ -187,7 +197,7 @@ Here are some further useful links about using the cluster and associated comman
 * https://sysinf.ebi.ac.uk/doku.php?id=ebi_cluster_good_computing_guide
 * https://sysinf.ebi.ac.uk/doku.php?id=introducing_singularity
 
-## Step 9 - Check the cluster job results e-mail
+## Step 6 - Check the cluster job results e-mail
 The e-mail you receive will have a title similar to `Job %JOB-ID%: <singularity run -B /nfs/production/hca/mfreeberg:/data docker://quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://explore.api.aai.ebi.ac.uk/auth -p=%PW% -u=hca-ingest> in cluster <EBI> Done`
 
 This will contain a whole load of detail about the job run. Scroll down to the bottom and you should see a bunch of INFO messages such as 
@@ -200,10 +210,31 @@ and
 
 If you see any `WARNING` or `ERROR` messages please re-run the singularity command from the previous step (it will retry the failed steps) and tell ingest development.
 
-## Step 10 - Validate submission and submit ##
-To do this you need to run the metadata archiver again on your local machine as you did earlier.
+## Alternate Step 3-6 Running the data uploader outside of singularity.
+For test purposes you can run the data uploader outside of singularity with the command
 
-`./cli.py --submission_url=https://submission-dev.ebi.ac.uk/api/submissions/<submission-uuid>`
+`docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
+
+
+## Step 7 - Validate submission and submit ##
+To do this you need to run the metadata archiver again:
+
+```
+docker run -v $PWD:/output \
+--env INGEST_API_URL=http://api.ingest.archive.data.humancellatlas.org/ \
+--env DSP_API_URL=https://submission.ebi.ac.uk \
+--env AAP_API_URL=https://api.aai.ebi.ac.uk/auth \
+--env ONTOLOGY_API_URL=https://www.ebi.ac.uk/ols \
+--env AAP_API_DOMAIN=<aap_domain> \
+--env AAP_API_USER=<aap_user> \
+--env AAP_API_PASSWORD=<aap_password>> \
+--env VALIDATION_POLL_FOREVER=False \
+--env SUBMISSION_POLL_FOREVER=False \
+quay.io/ebi-ait/ingest-archiver \
+--alias_prefix=HCA \
+--project_uuid=<project_uuid>
+--submission_url=https://submission.ebi.ac.uk/api/submissions/<submission-uuid>
+``` 
 
 You can get the submission UUID from either the output of the initial metadata archiver run, e.g.
 
@@ -215,10 +246,6 @@ or in the `REPORT.json` in the `submission-url` field (there will be several). F
 
 On success you will get the message `SUCCESSFULLY SUBMITTED`. You're done!
 
-## Running the data uploader outside of singularity.
-For test purposes you can run the data uploader outside of singularity with the command
-
-`docker run --rm -v $PWD:/data quay.io/humancellatlas/ingest-file-archiver -d=/data -f=/data/FILE_UPLOAD_INFO.json -l=https://api.aai.ebi.ac.uk/auth -p=<password> -u=hca-ingest`
 
 # How to run the tests
 
