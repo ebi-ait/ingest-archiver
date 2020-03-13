@@ -4,6 +4,7 @@ import logging
 import polling as polling
 
 import config
+from api import ontology
 
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
@@ -465,7 +466,7 @@ class ArchiveSubmission:
 
 
 class IngestArchiver:
-    def __init__(self, ingest_api, dsp_api, ontology_api, exclude_types=None, alias_prefix=None):
+    def __init__(self, ingest_api, dsp_api, ontology_api=ontology.__api__, exclude_types=None, alias_prefix=None):
         self.logger = logging.getLogger(__name__)
         self.ingest_api = ingest_api
         self.exclude_types = exclude_types if exclude_types else []

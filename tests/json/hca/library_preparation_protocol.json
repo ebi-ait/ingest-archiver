@@ -15,7 +15,9 @@
 		"nucleic_acid_source": "single cell",
 		"end_bias": "5 prime end bias",
 		"primer": "poly-dT",
-		"strand": "unstranded"
+		"strand": "unstranded",
+		"nominal_length": 125,
+		"nominal_sdev": 37
 	},
 	"submissionDate": "2018-09-12T21:00:26.886Z",
 	"updateDate": "2018-09-12T21:00:30.204Z",

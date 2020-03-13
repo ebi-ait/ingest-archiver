@@ -125,11 +125,35 @@ class JsonMapperTest(TestCase):
 
         # expect:
         with self.assertRaises(InvalidNode):
-            mapper.map(on='name')
+            mapper.map({
+                'known_as': ['name']
+            }, on='name')
 
-        # and: raise exception if anchor can't be found
-        with self.assertRaises(InvalidNode):
-            mapper.map(on='non.existent.node')
+    def test_map_object_with_non_existent_anchor(self):
+        # given:
+        json_object = json.loads('''{
+            "description": "test"
+        }''')
+        mapper = JsonMapper(json_object)
+
+        # when:
+        flat_result = mapper.map({
+            '$on': 'non.existent.node',
+            'name': ['text']
+        })
+
+        # and:
+        nested_result = mapper.map({
+            'text': ['description'],
+            'optional': {
+                '$on': 'non.existent.node',
+                'field': ['field']
+            }
+        })
+
+        # then:
+        self.assertIsNone(flat_result)
+        self.assertEqual({'text': 'test'}, nested_result)
 
     def test_map_object_with_custom_processing(self):
         # given:
@@ -290,14 +314,24 @@ class JsonMapperTest(TestCase):
         }''')
 
         # expect: main spec
-        with self.assertRaises(UnreadableSpecification) as exception:
+        with self.assertRaises(UnreadableSpecification):
             JsonMapper(json_object).map('spec')
 
         # and: field spec
-        with self.assertRaises(UnreadableSpecification) as exception:
-            JsonMapper(json_object).map({
-                'd': 'specification'
-            })
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({'d': 'specification'})
+
+        # and: empty dict as spec
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({})
+
+        # and: empty field specification
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({'field': []})
+
+        # and: None field specification
+        with self.assertRaises(UnreadableSpecification):
+            JsonMapper(json_object).map({'field': None})
 
     def test_map_object_with_filter(self):
         # given:
@@ -364,3 +398,52 @@ class JsonMapperTest(TestCase):
         self.assertEqual(2, len(products))
         item_names = [item.get('item') for item in products]
         self.assertTrue('eggs' in item_names and 'loaf' in item_names)
+
+    def test_map_with_object_literal(self):
+        # given:
+        json_object = json.loads('''{
+            "description": "test"
+        }''')
+
+        # when:
+        metadata = {'authored_by': 'me'}
+        result = JsonMapper(json_object).map({
+            'text': ['description'],
+            'metadata': ['$object', metadata],
+            'empty': ['$object', {}]
+        })
+
+        # then:
+        self.assertEqual(metadata, result.get('metadata'))
+        self.assertFalse('empty' in result.keys())
+
+    def test_map_with_invalid_object_literal(self):
+        # given:
+        json_mapper = JsonMapper({})
+
+        # expect: non dict as object literal
+        with self.assertRaises(UnreadableSpecification):
+            json_mapper.map({
+                'field': ['$object', 'testing!']
+            })
+
+        # and: no specified literal
+        with self.assertRaises(UnreadableSpecification):
+            json_mapper.map({
+                'field': ['$object']
+            })
+
+    def test_map_with_array_literal(self):
+        # given:
+        json_mapper = JsonMapper({})
+
+        # when:
+        values = ['list', 'of', 'values']
+        result = json_mapper.map({
+            'metadata': ['$array', values],
+            'empty': ['$array', []]
+        })
+
+        # then:
+        self.assertEqual(values, result.get('metadata'))
+        self.assertFalse('empty' in result.keys())
