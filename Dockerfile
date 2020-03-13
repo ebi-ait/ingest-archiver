@@ -4,6 +4,7 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY archiver ./archiver
+COPY conversion ./conversion
 COPY api ./api
 COPY utils ./utils
 COPY config.py cli.py requirements.txt ./
