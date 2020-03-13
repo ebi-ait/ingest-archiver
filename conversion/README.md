@@ -299,3 +299,70 @@ with the predicate `greater_than` defined as,
 
 While filtering can be applied to single JSON nodes, the application can be limited. Any JSON object filtered out, will
 appear as an empty JSON object in the resulting document.
+
+### JSON Literals
+
+There are situations when the resulting JSON need to contain fields and values outside the scope of the source JSON
+document. In such cases, it's possible to define a post-processor that plugs-in a pre-defined dictionary-like or list
+structure. However, `JsonMapper` also provides support for including literals in the specification.
+
+#### Using Keywords
+
+As mentioned above, there are 2 types of node that can be used for adding predefined values into the specification, 
+which are object, and array. To specify a JSON object literal as field value in the resulting JSON document, the
+`$json_object` keyword is used with a dictionary-like structure:
+
+        <field_name>: ['$json_object', <json_object_value>]
+
+For example:
+
+        'metadata': ['$json_object', {
+            'date_created': '2020-03-13',
+            'author': 'Jane Doe'
+        }]
+        
+For collections or list of JSON objects, the `'$json_array'` is used instead:
+
+        <field_name>: ['$json_array': <json_object_list>]
+        
+For example:
+
+        'authors': ['$json_array', [
+            {
+                'name': 'Peter Z',
+                'institution': 'Some University'
+            },
+            {
+                'name': 'Mary Q',
+                'institution': 'Some Research Institute'
+            }
+        ]]
+        
+ #### Convenience Methods
+ 
+For convenience, the `json_mapper` module makes available 2 helper methods that allow easy inclusion of JSON 
+predefined JSON nodes into the specification. These are `json_object` for JSON objects, and `json_array` for 
+JSON arrays. `json_object` expects a dictionary-like structure as an input. 
+
+For example, the previous example can be expressed as the following:
+
+        'metadata': json_object({
+            'date_created': '2020-03-13',
+            'author': 'Jane Doe'
+        })
+        
+The `json_array` method treats argument list as a list of JSON objects. For example:
+
+        'authors': json_array(
+            {
+                'name': 'Peter Z',
+                'institution': 'Some University'
+            },
+            {
+                'name': 'Mary Q',
+                'institution': 'Some Research Institute'
+            }
+        )
+        
+ Note that any list literal provided within the `json_array` method is treated as a single object. For instance, the
+ call `json_array([{'object_id': 123}, {'object_id': 456}])` has *one* item in the resulting list of list.
