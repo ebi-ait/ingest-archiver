@@ -13,7 +13,7 @@
     },
     "contacts": [
     {
-        "orcid": "",
+        "orcid": "orcid120",
         "firstName": "First",
         "middleInitials": "M",
         "lastName": "Last",
@@ -30,10 +30,10 @@
         "email": "dummy2@email.com",
         "address": "",
         "affiliation": "Fake Institution2",
-        "phone": ""
+        "phone": "5555123321"
     },
     {
-        "orcid": "",
+        "orcid": "orcid121",
         "firstName": "First3",
         "middleInitials": "",
         "lastName": "Last3",

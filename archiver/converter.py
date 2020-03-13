@@ -3,6 +3,11 @@ import re
 
 from flatten_json import flatten
 
+from archiver import project, ena_sequencing_experiment
+from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
+from archiver.instrument_model import to_dsp_name
+from conversion.json_mapper import JsonMapper, json_array, json_object
+from conversion.post_process import prefix_with, default_to
 from utils import protocols
 
 """
@@ -211,139 +216,9 @@ class SequencingExperimentConverter(Converter):
     def __init__(self, ontology_api):
         super(SequencingExperimentConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.alias_prefix = 'sequencingExperiment_'
 
-        self.library_selection_mapping = {
-            "poly-dT": "Oligo-dT",
-            "random": "RANDOM",
-        }
-
-        self.instrument_model_map = {
-            "illumina genome analyzer": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina Genome Analyzer"
-            },
-            "illumina genome analyzer ii": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina Genome Analyzer II"
-            },
-            "illumina genome analyzer iix": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina Genome Analyzer IIx"
-            },
-            "illumina hiseq 2500": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 2500"
-            },
-            "illumina hiseq 2000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 2000"
-            },
-            "illumina hiseq 1500": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 1500"
-            },
-            "illumina hiseq 1000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 1000"
-            },
-            "illumina miseq": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina MiSeq"
-            },
-            "illumina hiscansq": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiScanSQ"
-            },
-            "hiseq x ten": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "HiSeq X Ten",
-                "synonymns": [
-                    "illumina hiseq x 10"
-                ]
-            },
-            "nextseq 500": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "NextSeq 500",
-                "synonymns": [
-                    "illumina nextseq 500"
-                ]
-            },
-            "hiseq x five": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "HiSeq X Five",
-            },
-            "illumina hiseq 3000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 3000"
-            },
-            "illumina hiseq 4000": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "Illumina HiSeq 4000"
-            },
-            "nextseq 550": {
-                "platform_type": "ILLUMINA",
-                "intrument_model": "NextSeq 550",
-            }
-        }
-
-        self.field_mapping = {
-            "process__uuid__uuid": "alias",
-            "sequencing_protocol__content__protocol_core__protocol_name": "title",
-            "sequencing_protocol__content__protocol_core__protocol_description": "description"
-        }
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        extracted_data["studyRef"] = {}
-        extracted_data["sampleUses"] = []
-
-        if not extracted_data.get("attributes"):
-            extracted_data["attributes"] = {}
-        extracted_data["attributes"]["library_strategy"] = [dict(value="OTHER")]
-        extracted_data["attributes"]["library_source"] = [dict(value="TRANSCRIPTOMIC SINGLE CELL")]
-
-        primer = flattened_hca_data.get("library_preparation_protocol__content__primer")
-        if primer:
-            extracted_data["attributes"]["library_selection"] = [dict(value=self.library_selection_mapping.get(primer, "unspecified"))]
-
-        paired_end = flattened_hca_data.get("sequencing_protocol__content__paired_end")
-        if paired_end:
-            extracted_data["attributes"]["library_layout"] = [dict(value="PAIRED")]
-
-            # TODO put 0 as default as we don't really capture this in HCA but there's no way to specify 'unspecified'
-            extracted_data["attributes"]["nominal_length"] = [dict(value="0")]
-            extracted_data["attributes"]["nominal_sdev"] = [dict(value="0")]
-        else:
-            extracted_data["attributes"]["library_layout"] = [dict(value="SINGLE")]
-
-        # must correctly match ENA enum values
-        instr_model_text = flattened_hca_data.get("sequencing_protocol__content__instrument_manufacturer_model__text")
-        instrument_model_obj = self.instrument_model_map.get(instr_model_text.lower(), {})
-        instrument_model = instrument_model_obj.get('intrument_model', 'unspecified')
-        platform_type = instrument_model_obj.get('platform_type', 'unspecified')
-
-        for key, obj in self.instrument_model_map.items():
-            synonyms = obj.get("synonymns")
-            if synonyms and instr_model_text.lower() in synonyms:
-                instrument_model = obj.get('intrument_model', 'unspecified')
-                platform_type = obj.get('platform_type', 'unspecified')
-
-        extracted_data["attributes"]["instrument_model"] = [dict(value=instrument_model)]
-        extracted_data["attributes"]["platform_type"] = [dict(value=platform_type)]
-
-
-        extracted_data["attributes"]["design_description"] = [dict(value="unspecified")]
-
-        library_name = flattened_hca_data.get("input_biomaterial__content__biomaterial_core__biomaterial_id", "")
-        if not library_name:
-            raise ConversionError("Sequencing Experiment Conversion Error",
-                                  "There is no id found for the input biomaterial.")
-
-        extracted_data["attributes"]["library_name"] = [dict(value=library_name)]
-
-        self._build_links(extracted_data, {})
-
-        return extracted_data
+    def convert(self, hca_data):
+        return ena_sequencing_experiment.convert(hca_data)
 
     # TODO implement
     def _build_links(self, extracted_data, links):
@@ -402,89 +277,15 @@ class SequencingRunConverter(Converter):
         extracted_data["assayRefs"] = {"alias": "{assayAlias.placeholder}"}
 
 
+# TODO keeping this for now to not break the IngestArchiver class
 class ProjectConverter(Converter):
 
     def __init__(self, ontology_api):
         super(ProjectConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.field_mapping = {
-            "project__uuid__uuid": "alias",
-            "project__content__project_core__project_title": "title",
-            "project__content__project_core__project_description": "description",
-            "project__submissionDate": "releaseDate"
-        }
-        self.alias_prefix = 'project_'
-        self.exclude_fields_match = ['__schema_type', '__describedBy',
-                                     '__contributors', '__publications',
-                                     '__funders']
-        self.remove_input_prefix = True
 
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        # TODO BioStudies minimum length
-        title_len = len(extracted_data["title"])
-        MIN_LEN = 25
-        DELIM = ' , '
-        if title_len < MIN_LEN:
-            prefix = "HCA project: "
-            extracted_data["title"] = prefix + extracted_data["title"]
-
-        extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
-        contacts = []
-        contributors = hca_data['project']['content'].get('contributors', [])
-
-        for contributor in contributors:
-            project_role = contributor.get('project_role').get('text', '') if contributor.get('project_role') else ''
-
-            if "wrangler" in project_role or "curator" in project_role:
-                continue
-
-            contact_name = contributor.get("name", "")
-            names = contact_name.split(',', 2)
-
-            if len(names) == 3:
-                first = names[0]
-                middle = names[1][0] if names[1] else ''
-                last = names[2]
-            else:
-                raise ConversionError("HCA Contributor contact name, {contact_name}, couldn't be parsed.")
-
-            contact = {
-                "orcid": contributor.get("orcid_id", ""),
-                "firstName": first,
-                "middleInitials": middle,
-                "lastName": last,
-                "email": contributor.get("email", ""),
-                "address": contributor.get("address", ""),
-                "affiliation": contributor.get("institution", ""),
-                "phone": contributor.get("phone", ""),
-
-            }
-            contacts.append(contact)
-        extracted_data["contacts"] = contacts
-
-        hca_publications = hca_data['project']['content'].get('publications', [])
-        publications = []
-        for hca_publication in hca_publications:
-            publication = {
-                "pubmedId": hca_publication.get("pmid", ""),
-                "doi": hca_publication.get("doi", ""),
-                "articleTitle": hca_publication.get("title", ""),
-                "authors": f"{DELIM}".join(hca_publication.get("authors", []))
-            }
-            publications.append(publication)
-        extracted_data["publications"] = publications
-
-        hca_funders = hca_data['project']['content'].get('funders', [])
-        funders = []
-        for hca_funder in hca_funders:
-            funder = {
-                "grantTitle": hca_funder.get("grant_title", ""),
-                "grantId": hca_funder.get("grant_id", ""),
-                "organization": hca_funder.get("organization", "")
-            }
-            funders.append(funder)
-        extracted_data["funders"] = funders
-        return extracted_data
+    def convert(self, hca_data):
+        return project.convert(hca_data)
 
 
 class StudyConverter(Converter):
@@ -492,28 +293,25 @@ class StudyConverter(Converter):
     def __init__(self, ontology_api):
         super(StudyConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.field_mapping = {
-            "project__uuid__uuid": "alias",
-            "project__content__project_core__project_title": "title",
-            "project__content__project_core__project_description": "description"
-        }
-        self.alias_prefix = 'study_'
-        self.exclude_data = ['contributors', 'publications']
-        self.exclude_fields_match = ['__schema_type', '__describedBy', '__contributors', '__publications', '__funders']
-        self.remove_input_prefix = True
+        self.study_prefix = 'study_'
 
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        if not extracted_data.get("attributes"):
-            extracted_data["attributes"] = {}
-        extracted_data["attributes"]["study_type"] = [dict(value="Transcriptome Analysis")]
-        description = extracted_data['description']
-        extracted_data["attributes"]["study_abstract"] = [dict(value=description)]
-
-        self._build_links(extracted_data, {})
-        return extracted_data
-
-    def _build_links(self, extracted_data, links):
-        extracted_data["projectRef"] = {"alias": "{projectAlias.placeholder}"}
+    def convert(self, hca_data):
+        # TODO maybe extract this to a separate component
+        return JsonMapper(hca_data).map({
+            '$on': 'project',
+            'alias': ['uuid.uuid', prefix_with, self.study_prefix],
+            'attributes': {
+                'HCA Project UUID': ['uuid.uuid', dsp_attribute],
+                'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
+                'study_type': ['', fixed_dsp_attribute, 'Transcriptome Analysis'],
+                'study_abstract': ['content.project_core.project_description', dsp_attribute],
+            },
+            'title': ['content.project_core.project_title'],
+            'description': ['content.project_core.project_description'],
+            'projectRef': {
+                'alias': ['', default_to, '{projectAlias.placeholder}']
+            }
+        })
 
 
 class ConversionError(Exception):
