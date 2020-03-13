@@ -5,6 +5,7 @@ from random import randint
 from mock import MagicMock
 
 import config
+from api import ontology
 from archiver.converter import SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
 
@@ -69,7 +70,7 @@ class TestConverter(unittest.TestCase):
 
     def test_convert_sequencing_experiment(self):
         # given:
-        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
+        ontology.__api__.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         input_biomaterial = dict(self.hca_data.get('input_biomaterial'))
