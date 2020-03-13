@@ -1,10 +1,13 @@
-FROM python:3.6-slim
+FROM python:3.7-slim
 
 RUN mkdir /app
 WORKDIR /app
 
 COPY archiver ./archiver
-COPY config.py listener.py cli.py requirements.txt ./
+COPY conversion ./conversion
+COPY api ./api
+COPY utils ./utils
+COPY config.py cli.py requirements.txt ./
 
 RUN pip install -r requirements.txt
 

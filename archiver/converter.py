@@ -237,8 +237,6 @@ class SequencingRunConverter(Converter):
             "process__content__process_core__process_description": "description"
         }
 
-        self.ONTOLOGY_10x = "EFO:0009310"
-
         self.file_format = {
             'fastq.gz': 'fastq',
             'bam': 'bam',

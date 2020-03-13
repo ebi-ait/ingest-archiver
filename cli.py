@@ -12,7 +12,7 @@ import sys
 from optparse import OptionParser
 
 import config
-from archiver.archiver import IngestArchiver
+from archiver.archiver import IngestArchiver, ArchiveEntityMap
 from api.ingest import IngestAPI
 from api.ontology import OntologyAPI
 from api.dsp import DataSubmissionPortal
@@ -48,28 +48,32 @@ class ArchiveCLI:
         submission_uuid = submission_url.rsplit('/', 1)[-1]
         self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
 
-    def build_submission(self):
+    def build_map(self):
         logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
 
         entity_map = self.archiver.convert(self.manifests)
         summary = entity_map.get_conversion_summary()
-        logging.info(f'Entities to be converted: {json.dumps(summary, indent=4)}')
+        logging.info(f'Entities to be converted: {json.dumps(summary)}')
+
+        report = entity_map.generate_report()
+        logging.info("Saving Report file...")
+        self.save_dict_to_file("REPORT", report)
+        return entity_map
+
+    def validate_submission(self, entity_map: ArchiveEntityMap, submit):
         archive_submission = self.archiver.archive_metadata(entity_map)
         all_messages = self.archiver.notify_file_archiver(archive_submission)
 
+        report = archive_submission.generate_report()
+        logging.info("Updating Report file...")
+        self.save_dict_to_file("REPORT", report)
+
         logging.info("##################### FILE ARCHIVER NOTIFICATION")
         self.save_dict_to_file("FILE_UPLOAD_INFO", {"jobs": all_messages})
-        return archive_submission
-
-    def validate_submission(self, archive_submission, submit):
         if submit:
             archive_submission.validate_and_submit()
         else:
             archive_submission.validate()
-
-        report = archive_submission.generate_report()
-        logging.info("Saving Report file...")
-        self.save_dict_to_file("REPORT", report)
 
     def save_dict_to_file(self, file_name, json_content):
         if not self.output_dir:
@@ -80,9 +84,13 @@ class ArchiveCLI:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        with open(directory + "/" + file_name + ".json", "w") as new_file_path:
-            json.dump(json_content, new_file_path, indent=4)
-            new_file_path.close()
+        file = directory + "/" + file_name + ".json"
+        if os.path.exists(file):
+            os.remove(file)
+
+        with open(file, "w") as open_file:
+            json.dump(json_content, open_file, indent=4)
+            open_file.close()
 
         logging.info(f"Saved to {directory}/{file_name}.json!")
 
@@ -139,6 +147,6 @@ if __name__ == '__main__':
     if options.submission_url:
         cli.complete_submission(options.submission_url)
     else:
-        submission = cli.build_submission()
+        map = cli.build_map()
         if not options.no_validation:
-            cli.validate_submission(submission, options.submit)
+            cli.validate_submission(map, options.submit)

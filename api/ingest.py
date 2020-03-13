@@ -96,9 +96,12 @@ class IngestAPI:
     def get_manifest_by_id(self, manifest_id):
         return self.get_entity_by_id('bundleManifests', manifest_id)
 
+    def get_manifests_from_project(self, project_uuid, bundle_type ="PRIMARY"):
+        entity_url = f'{self.url}/projects/search/findBundleManifestsByProjectUuidAndBundleType?projectUuid={project_uuid}&bundleType={bundle_type}'
+        return self._get_all(entity_url, 'bundleManifests')
+
     def get_manifest_ids(self, project_uuid):
-        project = self.get_project_by_uuid(project_uuid)
-        manifests = self.get_related_entity(project, "bundleManifests", "bundleManifests")
+        manifests = self.get_manifests_from_project(project_uuid, "PRIMARY")
         manifest_ids = []
         for manifest in manifests:
             manifest_ids.append(self.get_entity_id(manifest, 'bundleManifests'))

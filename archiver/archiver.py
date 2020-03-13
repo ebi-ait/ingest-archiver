@@ -72,6 +72,25 @@ class ArchiveEntityMap:
                     summary[entity.archive_entity_type] = summary[entity.archive_entity_type] + 1
         return summary
 
+    def generate_report(self):
+        report = {}
+        entities = {}
+        entity: ArchiveEntity
+        for entity in self.get_entities():
+            entities[entity.id] = {}
+            entities[entity.id]['errors'] = entity.errors
+            entities[entity.id]['accession'] = entity.accession
+            entities[entity.id]['warnings'] = entity.warnings
+            entities[entity.id]['converted_data'] = entity.conversion
+
+            if entity.dsp_json:
+                entities[entity.id]['entity_url'] = entity.dsp_json['_links']['self']['href']
+
+        report['entities'] = entities
+        report['conversion_summary'] = self.get_conversion_summary()
+
+        return report
+
     def find_entity(self, alias):
         for entities_dict in self.entities_dict_type.values():
             if entities_dict.get(alias):
@@ -437,30 +456,17 @@ class ArchiveSubmission:
 
     def generate_report(self):
         report = {}
-        report['completed'] = self.is_completed
-        report['submission_errors'] = self.errors
-        report['file_upload_info'] = self.file_upload_info
+        map_report = self.entity_map.generate_report()
+        report['entities'] = map_report['entities']
+        report['conversion_summary'] = map_report['conversion_summary']
 
         if self.submission:
             report['submission_url'] = self.get_url()
 
-        entities = {}
-        entity: ArchiveEntity
-        for entity in self.entity_map.get_entities():
-            entities[entity.id] = {}
-            entities[entity.id]['errors'] = entity.errors
-            entities[entity.id]['accession'] = entity.accession
-            entities[entity.id]['warnings'] = entity.warnings
-            entities[entity.id]['converted_data'] = entity.conversion
-
-            if entity.dsp_json:
-                entities[entity.id]['entity_url'] = entity.dsp_json['_links']['self']['href']
-
-        report['entities'] = entities
         report['accessions'] = self.accession_map
-
-        if self.entity_map:
-            report['conversion_summary'] = self.entity_map.get_conversion_summary()
+        report['completed'] = self.is_completed
+        report['submission_errors'] = self.errors
+        report['file_upload_info'] = self.file_upload_info
 
         return report
 
@@ -621,7 +627,7 @@ class IngestArchiver:
                     message["conversion"] = {}
                     message["conversion"]["output_name"] = f"{data['manifest_id']}.bam"
                     message["conversion"]["inputs"] = files
-                    message["files"] = [f"{data['manifest_id']}.bam"]
+                    message["files"] = [{"name": f"{data['manifest_id']}.bam"}]
 
                 messages.append(message)
 
