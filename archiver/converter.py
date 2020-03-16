@@ -3,7 +3,8 @@ import re
 
 from flatten_json import flatten
 
-from archiver import biostudies, ena_sequencing_experiment, biosamples
+import archiver.ena
+from archiver import biostudies, ena, biosamples
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
@@ -168,7 +169,7 @@ class SequencingExperimentConverter(Converter):
         self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_data):
-        return ena_sequencing_experiment.convert(hca_data)
+        return ena.convert_sequencing_experiment(hca_data)
 
     # TODO implement
     def _build_links(self, extracted_data, links):
@@ -246,7 +247,7 @@ class StudyConverter(Converter):
         self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_data):
-        return biostudies.convert_study(hca_data)
+        return archiver.ena.convert_study(hca_data)
 
 
 class ConversionError(Exception):

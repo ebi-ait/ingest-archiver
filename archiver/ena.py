@@ -2,7 +2,9 @@ from api import ontology
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
+from conversion.post_process import prefix_with, default_to
 
+PREFIX_STUDY = 'study_'
 
 _ontology_api = ontology.__api__
 
@@ -93,5 +95,26 @@ spec = {
 }
 
 
-def convert(hca_data: dict):
+def convert_sequencing_experiment(hca_data: dict):
     return JsonMapper(hca_data).map(spec)
+
+
+study_spec = {
+    '$on': 'project',
+    'alias': ['uuid.uuid', prefix_with, (PREFIX_STUDY)],
+    'attributes': {
+        'HCA Project UUID': ['uuid.uuid', dsp_attribute],
+        'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
+        'study_type': ['', fixed_dsp_attribute, 'Transcriptome Analysis'],
+        'study_abstract': ['content.project_core.project_description', dsp_attribute],
+    },
+    'title': ['content.project_core.project_title'],
+    'description': ['content.project_core.project_description'],
+    'projectRef': {
+        'alias': ['', default_to, '{projectAlias.placeholder}']
+    }
+}
+
+
+def convert_study(hca_data: dict):
+    return JsonMapper(hca_data).map(study_spec)
