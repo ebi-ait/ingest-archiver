@@ -47,25 +47,27 @@ class TestConverter(unittest.TestCase):
         self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
 
     def test_convert_sample(self):
+        # given:
         biomaterial = self.hca_data.get('biomaterial')
-
         with open(config.JSON_DIR + 'dsp/sample.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
+        # and:
         test_alias = 'hca' + str(randint(0, 1000))
-
         biomaterial['uuid']['uuid'] = test_alias
         expected_json['alias'] = test_alias
         expected_json['attributes']['HCA Biomaterial UUID'] = [{'value': test_alias}]
 
-        input = {
-            'biomaterial': biomaterial
-        }
-
+        # and:
         converter = SampleConverter(ontology_api=self.ontology_api)
         converter.ingest_api = self.ingest_api
-        actual_json = converter.convert(input)
 
+        # when:
+        actual_json = converter.convert({
+            'biomaterial': biomaterial
+        })
+
+        # then:
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_sequencing_experiment(self):
