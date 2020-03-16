@@ -49,9 +49,6 @@
 			"value": "a7a93430-6bb1-44b5-81ea-cf6443073c8d"
 		}]
 	},
-	"assayRefs": {
-		"alias": "{assayAlias.placeholder}"
-	},
 	"files": [{
 		"name": "R1.fastq.gz",
 		"type": "fastq"
