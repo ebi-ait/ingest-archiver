@@ -3,7 +3,7 @@ import re
 
 from flatten_json import flatten
 
-from archiver import biostudies_project, ena_sequencing_experiment
+from archiver import biostudies_project, ena_sequencing_experiment, biosamples
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
@@ -151,101 +151,15 @@ class Converter:
         return converted_data
 
 
+# TODO keeping this to not cause trouble with the Archiver script.
 class SampleConverter(Converter):
 
     def __init__(self, ontology_api):
         super(SampleConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.field_mapping = {
-            "biomaterial__uuid__uuid": "alias",
-            "biomaterial__content__biomaterial_core__biomaterial_name": "title",
-            "biomaterial__content__biomaterial_core__biomaterial_description": "description",
-            "biomaterial__content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
-            "biomaterial__submissionDate": "releaseDate"
-        }
-
-        # TODO local mapping for now, ideally this should be an OLS lookup
-        # TODO what's taxon id for mouse
-        self.taxon_map = {
-            "9606": "Homo sapiens",
-            "10090": "Mus musculus"
-        }
-        self.exclude_data = ['genus_species']
-        self.exclude_fields_match = ['__schema_type', '__describedBy',
-                                     '__ontology_label',
-        # FIXME only donors contain this info but this is redundant with taxonId, removing this if it exists
-                                     'biomaterial__content__genus_species__0__ontology',
-                                     'biomaterial__content__genus_species__0__text']
-        self.remove_input_prefix = True
 
     def convert(self, hca_data):
-        def taxon(*args):
-            ontology_item = args[0]
-            genus_species = ontology_item[0]
-            return genus_species.get('ontology_label')
-
-        def taxon_id(*args):
-            taxon_ids = args[0]
-            return taxon_ids[0] if taxon_ids and len(taxon_ids) > 0 else None
-
-        def derive_concrete_type(*args):
-            schema_url = args[0]
-            concrete_type = schema_url.split('/')[-1]
-            return dsp_attribute(concrete_type)
-
-        return JsonMapper(hca_data).map({
-            '$on': 'biomaterial',
-            'alias': ['uuid.uuid'],
-            'attributes': {
-                'Biomaterial Core - Biomaterial Id': ['content.biomaterial_core.biomaterial_id', dsp_attribute],
-                'HCA Biomaterial Type': ['content.describedBy', derive_concrete_type],
-                'HCA Biomaterial UUID': ['uuid.uuid', dsp_attribute],
-                'Is Living': ['content.is_living', dsp_attribute],
-                'Medical History - Smoking History': ['content.medical_history.smoking_history', dsp_attribute],
-                'Sex': ['content.sex', dsp_attribute],
-                'project': ['', fixed_dsp_attribute, 'Human Cell Atlas']
-            },
-            'description': ['content.biomaterial_core.biomaterial_description'],
-            'releaseDate': ['submissionDate', format_date],
-            # this is to work around this being constantly empty
-            'sampleRelationships': ['sampleRelationships', default_to, []],
-            'taxon': ['content.genus_species', taxon],
-            'taxonId': ['content.biomaterial_core.ncbi_taxon_id', taxon_id],
-            'title': ['content.biomaterial_core.biomaterial_name']
-        })
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data):
-        extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
-        extracted_data["sampleRelationships"] = []
-        taxon_id = str(extracted_data.get("taxonId", ''))
-        extracted_data["taxon"] = self.taxon_map.get(taxon_id)
-
-        if not extracted_data["taxon"]:
-            raise ConversionError("Sample Conversion Error",
-                                  f"Sample Converter find the taxon text from taxon id, {taxon_id}",
-                                  details={'taxon_id': taxon_id})
-
-        # non required fields
-        if "title" in extracted_data:
-            extracted_data["title"] = extracted_data["title"]
-
-        if not extracted_data.get("attributes"):
-            extracted_data["attributes"] = {}
-
-        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
-
-        if not extracted_data["taxon"]:
-            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
-
-        concrete_type = self._get_concrete_type(hca_data.get('biomaterial'))
-        extracted_data["attributes"]["HCA Biomaterial Type"] = [dict(value=concrete_type)]
-        extracted_data["attributes"]["project"] = [dict(value="Human Cell Atlas")]
-
-        return extracted_data
-
-    def _get_concrete_type(self, entity):
-        concrete_type = self.ingest_api.get_concrete_entity_type(entity)
-        return concrete_type
+        return biosamples.convert(hca_data)
 
 
 class SequencingExperimentConverter(Converter):
