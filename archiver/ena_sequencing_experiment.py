@@ -1,5 +1,5 @@
 from api import ontology
-from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
+from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
 
@@ -12,21 +12,16 @@ _primer_mapping = {
 }
 
 
-def map_primer(*args):
+def _map_primer(*args):
     primer = str(args[0])
     mapping = _primer_mapping.get(primer)
     return dsp_attribute(mapping)
 
 
-def library_layout_attribute(*args):
+def _library_layout_attribute(*args):
     paired_end = args[0]
     value = 'PAIRED' if paired_end else 'SINGLE'
     return dsp_attribute(value)
-
-
-def taxon_id_attribute(*args):
-    ids: list = args[0]
-    return dsp_attribute(ids[0])
 
 
 def ontology_term(*args):
@@ -86,8 +81,8 @@ spec = {
         'Sequencing Protocol - Sequencing Approach': [f'{sp}.content.sequencing_approach.text', ontology_term],
         'library_strategy': ['', fixed_dsp_attribute, 'OTHER'],
         'library_source': ['', fixed_dsp_attribute, 'TRANSCRIPTOMIC SINGLE CELL'],
-        'library_selection': [f'{lp}.content.primer', map_primer],
-        'library_layout': [f'{sp}.content.paired_end', library_layout_attribute],
+        'library_selection': [f'{lp}.content.primer', _map_primer],
+        'library_layout': [f'{sp}.content.paired_end', _library_layout_attribute],
         'library_name': [f'{ib}.content.biomaterial_core.biomaterial_id', dsp_attribute],
         'instrument_model': [f'{sp}.content.instrument_manufacturer_model.text', instrument_model],
         'platform_type': ['', fixed_dsp_attribute, 'ILLUMINA'],

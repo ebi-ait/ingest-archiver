@@ -1,4 +1,4 @@
-from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
+from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import format_date, default_to
 
@@ -7,11 +7,6 @@ def _taxon(*args):
     ontology_item = args[0]
     genus_species = ontology_item[0]
     return genus_species.get('ontology_label')
-
-
-def _taxon_id(*args):
-    taxon_ids = args[0]
-    return taxon_ids[0] if taxon_ids and len(taxon_ids) > 0 else None
 
 
 def derive_concrete_type(*args):
@@ -37,7 +32,7 @@ spec = {
     # this is to work around this being constantly empty
     'sampleRelationships': ['sampleRelationships', default_to, []],
     'taxon': ['content.genus_species', _taxon],
-    'taxonId': ['content.biomaterial_core.ncbi_taxon_id', _taxon_id],
+    'taxonId': ['content.biomaterial_core.ncbi_taxon_id', taxon_id],
     'title': ['content.biomaterial_core.biomaterial_name']
 }
 
