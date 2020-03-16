@@ -3,7 +3,7 @@ import re
 
 from flatten_json import flatten
 
-from archiver import biostudies_project, ena_sequencing_experiment, biosamples
+from archiver import biostudies, ena_sequencing_experiment, biosamples
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
@@ -235,33 +235,18 @@ class ProjectConverter(Converter):
         self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_data):
-        return biostudies_project.convert(hca_data)
+        return biostudies.convert_project(hca_data)
 
 
+# TODO keeping this for now to not break the Archiver
 class StudyConverter(Converter):
 
     def __init__(self, ontology_api):
         super(StudyConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.study_prefix = 'study_'
 
     def convert(self, hca_data):
-        # TODO maybe extract this to a separate component
-        return JsonMapper(hca_data).map({
-            '$on': 'project',
-            'alias': ['uuid.uuid', prefix_with, self.study_prefix],
-            'attributes': {
-                'HCA Project UUID': ['uuid.uuid', dsp_attribute],
-                'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
-                'study_type': ['', fixed_dsp_attribute, 'Transcriptome Analysis'],
-                'study_abstract': ['content.project_core.project_description', dsp_attribute],
-            },
-            'title': ['content.project_core.project_title'],
-            'description': ['content.project_core.project_description'],
-            'projectRef': {
-                'alias': ['', default_to, '{projectAlias.placeholder}']
-            }
-        })
+        return biostudies.convert_study(hca_data)
 
 
 class ConversionError(Exception):
