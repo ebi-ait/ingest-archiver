@@ -19,7 +19,7 @@ from api.dsp import DataSubmissionPortal
 
 
 class ArchiveCLI:
-    def __init__(self, alias_prefix, output_dir, exclude_types):
+    def __init__(self, alias_prefix, output_dir, exclude_types, no_validation):
         self.manifests = []
         self.ingest_api = IngestAPI(config.INGEST_API_URL)
 
@@ -28,7 +28,8 @@ class ArchiveCLI:
         self.archiver = IngestArchiver(ingest_api=self.ingest_api,
                                        dsp_api=DataSubmissionPortal(config.DSP_API_URL),
                                        exclude_types=self.split_exclude_types(exclude_types),
-                                       alias_prefix=alias_prefix)
+                                       alias_prefix=alias_prefix,
+                                       dsp_validation=not no_validation)
 
     def get_manifests_from_project(self, project_uuid):
         logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
