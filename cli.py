@@ -52,7 +52,7 @@ class ArchiveCLI:
     def build_map(self):
         logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
 
-        entity_map = self.archiver.convert(self.manifests)
+        entity_map: ArchiveEntityMap = self.archiver.convert(self.manifests)
         summary = entity_map.get_conversion_summary()
         logging.info(f'Entities to be converted: {json.dumps(summary)}')
 
@@ -60,6 +60,16 @@ class ArchiveCLI:
         logging.info("Saving Report file...")
         self.save_dict_to_file("REPORT", report)
         return entity_map
+
+    def load_map(self, load_path):
+        logging.info(f'Loading Entity Map: {load_path}')
+        file_content: dict = self.load_dict_from_file(load_path)
+        if file_content.get('entities'):
+            report_entity_map = ArchiveEntityMap()
+            report_entity_map.add_report_entities(file_content['entities'])
+            return report_entity_map
+        logging.error(f"--load_path files does not have an entities object: {file_content}")
+        exit(2)
 
     def validate_submission(self, entity_map: ArchiveEntityMap, submit):
         archive_submission = self.archiver.archive_metadata(entity_map)
@@ -96,6 +106,17 @@ class ArchiveCLI:
         logging.info(f"Saved to {directory}/{file_name}.json!")
 
     @staticmethod
+    def load_dict_from_file(file_path):
+        path = os.path.abspath(file_path)
+        if os.path.exists(path) and os.path.isfile(path):
+            with open(path, 'r') as open_file:
+                content = open_file.read()
+            return json.loads(content)
+        else:
+            logging.error(f"--load_path does not exist or is not a file: {file_path}")
+            exit(2)
+
+    @staticmethod
     def split_exclude_types(exclude_types):
         if exclude_types:
             exclude_types = [x.strip() for x in options.exclude_types.split(',')]
@@ -109,8 +130,14 @@ if __name__ == '__main__':
 
     parser = OptionParser()
 
-    # required
+    # required (1 of possible 3)
     parser.add_option("-p", "--project_uuid", help="Project UUID")
+
+    parser.add_option("-f", "--manifest_list_file",
+                      help="Specify a path to a file containing list of manifest id's to be archived."
+                           "If project uuid is already specified then this parameter will be ignored.")
+
+    parser.add_option("-l", "--load_path", help="Specify the path to load a REPORT.json to send  to DSP, will skip loading and converting from ingest.")
 
     # submit only
     parser.add_option("-u", "--submission_url",
@@ -120,9 +147,6 @@ if __name__ == '__main__':
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
     parser.add_option("-x", "--exclude_types",
                       help="e.g. \"project,study,sample,sequencingExperiment,sequencingRun\"")
-    parser.add_option("-f", "--manifest_list_file",
-                      help="Specify a path to a file containing list of manifest id's to be archived."
-                           "If project uuid is already specified then this parameter will be ignored.")
 
     # preferences
     parser.add_option("-s", "--submit",
@@ -135,19 +159,23 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not options.submission_url and not (options.project_uuid or options.manifest_list_file):
-        logging.error("You must supply a project UUID or a file with list of manifest IDs")
+    if not (options.project_uuid or options.manifest_list_file or options.submission_url or options.load_path):
+        logging.error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a submission url (4) a file of entities")
         exit(2)
 
-    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types)
-    if options.project_uuid:
-        cli.get_manifests_from_project(options.project_uuid)
-    elif options.manifest_list_file:
-        cli.get_manifests_from_list(options.manifest_list_file)
+    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation)
+    if not options.load_path:
+        if options.project_uuid:
+            cli.get_manifests_from_project(options.project_uuid)
+        elif options.manifest_list_file:
+            cli.get_manifests_from_list(options.manifest_list_file)
 
-    if options.submission_url:
-        cli.complete_submission(options.submission_url)
-    else:
-        map = cli.build_map()
+    if not options.submission_url:
+        if options.load_path:
+            entity_map: ArchiveEntityMap = cli.load_map(options.load_path)
+        else:
+            entity_map:ArchiveEntityMap  = cli.build_map()
         if not options.no_validation:
-            cli.validate_submission(map, options.submit)
+            cli.validate_submission(entity_map, options.submit)
+    else:
+        cli.complete_submission(options.submission_url)

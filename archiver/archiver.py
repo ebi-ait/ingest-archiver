@@ -37,6 +37,17 @@ class ArchiveEntity:
     def __str__(self):
         return str(vars(self))
 
+    @staticmethod
+    def map_from_report(report_id, report_entity):
+        entity = ArchiveEntity()
+        entity.id = report_id
+        entity.archive_entity_type = report_entity['type']
+        entity.conversion = report_entity['converted_data']
+        entity.accession = report_entity['accession']
+        entity.errors = report_entity['errors']
+        entity.warnings = report_entity['warnings']
+        return entity
+
 
 class ArchiveEntityMap:
     def __init__(self):
@@ -45,6 +56,10 @@ class ArchiveEntityMap:
     def add_entities(self, entities):
         for entity in entities:
             self.add_entity(entity)
+
+    def add_report_entities(self, report_entities):
+        for id, entity in report_entities.items():
+            self.add_entity(ArchiveEntity.map_from_report(id, entity))
 
     def add_entity(self, entity: ArchiveEntity):
         if not self.entities_dict_type.get(entity.archive_entity_type):
@@ -78,6 +93,7 @@ class ArchiveEntityMap:
         entity: ArchiveEntity
         for entity in self.get_entities():
             entities[entity.id] = {}
+            entities[entity.id]['type'] = entity.archive_entity_type
             entities[entity.id]['errors'] = entity.errors
             entities[entity.id]['accession'] = entity.accession
             entities[entity.id]['warnings'] = entity.warnings
