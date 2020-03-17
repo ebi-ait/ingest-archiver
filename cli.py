@@ -65,9 +65,7 @@ class ArchiveCLI:
         logging.info(f'Loading Entity Map: {load_path}')
         file_content: dict = self.load_dict_from_file(load_path)
         if file_content.get('entities'):
-            report_entity_map = ArchiveEntityMap()
-            report_entity_map.add_report_entities(file_content['entities'])
-            return report_entity_map
+            return ArchiveEntityMap.map_from_report(file_content['entities'])
         logging.error(f"--load_path files does not have an entities object: {file_content}")
         exit(2)
 

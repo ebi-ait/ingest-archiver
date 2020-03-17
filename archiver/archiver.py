@@ -57,10 +57,6 @@ class ArchiveEntityMap:
         for entity in entities:
             self.add_entity(entity)
 
-    def add_report_entities(self, report_entities):
-        for id, entity in report_entities.items():
-            self.add_entity(ArchiveEntity.map_from_report(id, entity))
-
     def add_entity(self, entity: ArchiveEntity):
         if not self.entities_dict_type.get(entity.archive_entity_type):
             self.entities_dict_type[entity.archive_entity_type] = {}
@@ -126,6 +122,13 @@ class ArchiveEntityMap:
         if not self.entities_dict_type.get(entity_type):
             self.entities_dict_type[entity_type] = {}
         self.entities_dict_type[entity_type].update(entities)
+
+    @staticmethod
+    def map_from_report(report):
+        entity_map = ArchiveEntityMap()
+        for key, entity in report.items():
+            entity_map.add_entity(ArchiveEntity.map_from_report(key, entity))
+        return entity_map
 
 
 class Manifest:
