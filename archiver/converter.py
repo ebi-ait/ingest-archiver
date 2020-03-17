@@ -7,7 +7,7 @@ from archiver import project, ena_sequencing_experiment
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import prefix_with, default_to
-from utils import protocols
+from utils.protocols import is_10x
 
 """
 HCA to DSP JSON Mapping
@@ -247,7 +247,7 @@ class SequencingRunConverter(Converter):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
 
         files = []
-        if protocols.is_10x(hca_data.get("library_preparation_protocol")):
+        if is_10x(hca_data.get("library_preparation_protocol")):
             files = [{
                 'name': f"{hca_data['manifest_id']}.bam",
                 'type': 'bam'
