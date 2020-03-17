@@ -5,8 +5,7 @@ from flatten_json import flatten
 
 from archiver import project, ena_sequencing_experiment
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
-from archiver.instrument_model import to_dsp_name
-from conversion.json_mapper import JsonMapper, json_array, json_object
+from conversion.json_mapper import JsonMapper
 from conversion.post_process import prefix_with, default_to
 from utils import protocols
 
@@ -264,7 +263,6 @@ class SequencingRunConverter(Converter):
         converted_data['files'] = files
 
         return converted_data
-
 
 
 # TODO keeping this for now to not break the IngestArchiver class
