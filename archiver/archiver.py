@@ -765,7 +765,7 @@ class ArchiveEntityAggregator:
                 # archive_entity.data.update(biomaterial.derived_with_protocols)
 
                 derived_from_alias = self.generate_archive_entity_id('sample', biomaterial.derived_from)
-                derived_from_graph.add_edge(archive_entity.id, derived_from_alias)
+                derived_from_graph.add_edge(derived_from_alias, archive_entity.id)
                 links = {'sampleRelationships': [
                     {
                         'alias': derived_from_alias,
