@@ -34,10 +34,9 @@ class Graph:
         stack.insert(0, vertex)
 
     def topological_sort(self):
-        vertex_count = len(self.visited.keys())
         stack = []
 
-        for vertex in range(vertex_count):
+        for vertex in self.visited.keys():
             if not self.visited[vertex]:
                 self._topological_sort(vertex, stack)
 
