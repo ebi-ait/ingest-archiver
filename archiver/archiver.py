@@ -761,6 +761,7 @@ class ArchiveEntityAggregator:
             archive_entity.data = {'biomaterial': biomaterial.data}
 
             if biomaterial.derived_by_process:
+                # TODO protocols will be needed for samples conversion
                 # archive_entity.data.update(biomaterial.derived_with_protocols)
 
                 derived_from_alias = self.generate_archive_entity_id('sample', biomaterial.derived_from)
