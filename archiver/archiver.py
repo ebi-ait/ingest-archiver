@@ -132,6 +132,49 @@ class ArchiveEntityMap:
         return entity_map
 
 
+class Biomaterial:
+    def __init__(self, data, derived_by_process, derived_with_protocols, derived_from):
+        self.data = data
+        self.derived_by_process = derived_by_process
+        self.derived_with_protocols = derived_with_protocols
+        self.derived_from = derived_from
+
+    @classmethod
+    def from_uuid(cls, ingest_api, biomaterial_uuid):
+        data = ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+
+        derived_by_processes = ingest_api.get_related_entity(data, 'derivedByProcesses', 'processes')
+
+        if derived_by_processes:
+            # A biomaterial derived from multiple processes is not even supported in the Spreadsheet Importer
+            if len(derived_by_processes) > 1:
+                raise ArchiverError('A biomaterial derived from multiple processes is not supported yet for conversion.')
+
+            derived_by_process = derived_by_processes[0]
+
+            protocols = ingest_api.get_related_entity(derived_by_process, 'protocols', 'protocols')
+
+            derived_with_protocols = {}
+            for protocol in protocols:
+                protocol_type = ingest_api.get_concrete_entity_type(protocol)
+                if derived_with_protocols.get(protocol_type):
+                    derived_with_protocols[protocol_type] = []
+                derived_with_protocols[protocol_type].append(protocol)
+
+            input_biomaterials = ingest_api.get_related_entity(derived_by_process, 'inputBiomaterials', 'biomaterials')
+
+            if not input_biomaterials:
+                raise ArchiverError('A biomaterial has been derived by a process with no input biomaterial')
+
+            if len(input_biomaterials) > 1:
+                raise ArchiverError('A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
+
+            derived_from = input_biomaterials[0]
+            return cls(data, derived_by_process, derived_with_protocols, derived_from)
+        else:
+            return cls(data)
+
+
 class Manifest:
     def __init__(self, ingest_api, manifest_id):
         self.ingest_api = ingest_api
@@ -190,7 +233,7 @@ class Manifest:
 
     def _init_biomaterials(self):
         for biomaterial_uuid in list(self.manifest['fileBiomaterialMap']):
-            yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+            yield Biomaterial.from_uuid(self.ingest_api, biomaterial_uuid)
 
     def _init_assay_process(self):
         file_uuid = list(self.manifest['fileFilesMap'])[0]
@@ -674,7 +717,6 @@ class ArchiveEntityAggregator:
         self.manifest = manifest
         self.alias_prefix = alias_prefix
         self.ingest_api = ingest_api
-        self.samples_derivation_graph = Graph()
 
     def _get_projects(self):
         project = self.manifest.get_project()
@@ -706,8 +748,8 @@ class ArchiveEntityAggregator:
         return [archive_entity]
 
     def _get_samples(self):
-        samples = []
         samples_map = {}
+        derived_from_graph = Graph()
 
         for biomaterial in self.manifest.get_biomaterials():
             archive_entity = ArchiveEntity()
@@ -716,57 +758,28 @@ class ArchiveEntityAggregator:
             archive_entity.archive_entity_type = archive_type
             archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial)
 
-            archive_entity.data = {'biomaterial': biomaterial}
+            archive_entity.data = {'biomaterial': biomaterial.data}
 
-            derived_by_processes = self.ingest_api.get_related_entity(biomaterial, 'derivedByProcesses', 'processes')
+            if biomaterial.derived_by_process:
+                # archive_entity.data.update(biomaterial.derived_with_protocols)
 
-            # A biomaterial derived from multiple processes is not even supported in the Spreadsheet Importer
-            if derived_by_processes and len(derived_by_processes) > 1:
-                raise ArchiverError('A biomaterial derived from multiple processes is not supported yet for conversion.');
-
-            if len(derived_by_processes) > 0:
-                process = derived_by_processes[0]
-                # TODO Protocol info must be passed to Samples converter
-                # protocols_by_concrete_type = self._get_protocols_by_type(process)
-                # archive_entity.data.update(protocols_by_concrete_type)
-
-                input_biomaterials = self.ingest_api.get_related_entity(process, 'inputBiomaterials', 'biomaterials')
-
-                if input_biomaterials and len(input_biomaterials) > 0:
-                    if len(input_biomaterials) > 1:
-                        raise ArchiverError('A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
-                    input_biomaterial_alias = self.generate_archive_entity_id('sample', input_biomaterials[0])
-                    self.samples_derivation_graph.add_edge(archive_entity.id, input_biomaterial_alias)
-                    links = {'sampleRelationships': [
-                        {
-                            'alias': input_biomaterial_alias,
-                            'relationshipNature': 'derived from'
-                        }
-                    ]}
-                    archive_entity.links = links
+                derived_from_alias = self.generate_archive_entity_id('sample', biomaterial.derived_from)
+                derived_from_graph.add_edge(archive_entity.id, derived_from_alias)
+                links = {'sampleRelationships': [
+                    {
+                        'alias': derived_from_alias,
+                        'relationshipNature': 'derived from'
+                    }
+                ]}
+                archive_entity.links = links
 
             samples_map[archive_entity.id] = archive_entity
 
-        sorted_samples = self.samples_derivation_graph.topological_sort()
+        sorted_samples = derived_from_graph.topological_sort()
+        priority_samples = [sample for sample in sorted_samples if samples_map.get(sample)]
+        orphan_samples = [sample for sample in samples_map.keys() if sample not in priority_samples]
 
-        for sample in sorted_samples:
-            if samples_map.get(sample):  # only return samples from the same manifest
-                samples.append(samples_map[sample])
-
-        return samples
-
-
-    def _get_protocols_by_type(self, process):
-        protocols = self.ingest_api.get_related_entity(process, 'protocols', 'protocols')
-        protocols_by_concrete_type = {}
-        for protocol in protocols:
-            protocol_type = self.ingest_api.get_concrete_entity_type(protocol)
-
-            if protocols_by_concrete_type.get(protocol_type):
-                protocols_by_concrete_type[protocol_type] = []
-
-            protocols_by_concrete_type[protocol_type].append(protocol)
-        return protocols_by_concrete_type
+        return [priority_samples, orphan_samples]
 
     def _get_sequencing_experiments(self):
         process = self.manifest.get_assay_process()
