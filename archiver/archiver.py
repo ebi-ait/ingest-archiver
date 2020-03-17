@@ -726,6 +726,9 @@ class ArchiveEntityAggregator:
 
             if len(derived_by_processes) > 0:
                 process = derived_by_processes[0]
+                # TODO Protocol info must be passed to Samples converter
+                # protocols_by_concrete_type = self._get_protocols_by_type(process)
+                # archive_entity.data.update(protocols_by_concrete_type)
 
                 input_biomaterials = self.ingest_api.get_related_entity(process, 'inputBiomaterials', 'biomaterials')
 
@@ -751,6 +754,19 @@ class ArchiveEntityAggregator:
                 samples.append(samples_map[sample])
 
         return samples
+
+
+    def _get_protocols_by_type(self, process):
+        protocols = self.ingest_api.get_related_entity(process, 'protocols', 'protocols')
+        protocols_by_concrete_type = {}
+        for protocol in protocols:
+            protocol_type = self.ingest_api.get_concrete_entity_type(protocol)
+
+            if protocols_by_concrete_type.get(protocol_type):
+                protocols_by_concrete_type[protocol_type] = []
+
+            protocols_by_concrete_type[protocol_type].append(protocol)
+        return protocols_by_concrete_type
 
     def _get_sequencing_experiments(self):
         process = self.manifest.get_assay_process()
