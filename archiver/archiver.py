@@ -10,6 +10,7 @@ from api.ingest import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
 from utils import protocols
+from utils.graph import Graph
 
 
 def _print_same_line(string):
@@ -673,6 +674,7 @@ class ArchiveEntityAggregator:
         self.manifest = manifest
         self.alias_prefix = alias_prefix
         self.ingest_api = ingest_api
+        self.samples_derivation_graph = Graph()
 
     def _get_projects(self):
         project = self.manifest.get_project()
@@ -705,7 +707,8 @@ class ArchiveEntityAggregator:
 
     def _get_samples(self):
         samples = []
-        samples_by_hca_type = {}
+        samples_map = {}
+
         for biomaterial in self.manifest.get_biomaterials():
             archive_entity = ArchiveEntity()
             archive_entity.manifest_id = self.manifest.manifest_id
@@ -717,38 +720,20 @@ class ArchiveEntityAggregator:
 
             derived_by_processes = self.ingest_api.get_related_entity(biomaterial, 'derivedByProcesses', 'processes')
 
-            # alegria: For simplicity, only support a biomaterial which is derived from one process
-            # I believe the case where a biomaterial is derived from multiple processes is rare and implementing to
-            # handle it is not worth it,
-            # That is not even supported in the Ingest Spreadsheet Importer
-            # Just raise an error if this scenario is encountered
+            # A biomaterial derived from multiple processes is not even supported in the Spreadsheet Importer
             if derived_by_processes and len(derived_by_processes) > 1:
-                raise ArchiverError(
-                    'A biomaterial derived from multiple processes is not supported yet for conversion.');
+                raise ArchiverError('A biomaterial derived from multiple processes is not supported yet for conversion.');
 
             if len(derived_by_processes) > 0:
                 process = derived_by_processes[0]
-                protocols = self.ingest_api.get_related_entity(process, 'protocols', 'protocols')
-
-                protocols_by_concrete_type = {}
-                for protocol in protocols:
-                    protocol_type = self.ingest_api.get_concrete_entity_type(protocol)
-
-                    if protocols_by_concrete_type.get(protocol_type):
-                        protocols_by_concrete_type[protocol_type] = []
-
-                    protocols_by_concrete_type[protocol_type].append(protocol)
-
-                archive_entity.data.update(protocols_by_concrete_type)
 
                 input_biomaterials = self.ingest_api.get_related_entity(process, 'inputBiomaterials', 'biomaterials')
 
                 if input_biomaterials and len(input_biomaterials) > 0:
                     if len(input_biomaterials) > 1:
-                        raise ArchiverError(
-                            'A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
+                        raise ArchiverError('A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
                     input_biomaterial_alias = self.generate_archive_entity_id('sample', input_biomaterials[0])
-
+                    self.samples_derivation_graph.add_edge(archive_entity.id, input_biomaterial_alias)
                     links = {'sampleRelationships': [
                         {
                             'alias': input_biomaterial_alias,
@@ -756,7 +741,14 @@ class ArchiveEntityAggregator:
                         }
                     ]}
                     archive_entity.links = links
-            samples.append(archive_entity)
+
+            samples_map[archive_entity.id] = archive_entity
+
+        sorted_samples = self.samples_derivation_graph.topological_sort()
+
+        for sample in sorted_samples:
+            if samples_map.get(sample):  # only return samples from the same manifest
+                samples.append(samples_map[sample])
 
         return samples
 
