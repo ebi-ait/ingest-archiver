@@ -37,6 +37,17 @@ class ArchiveEntity:
     def __str__(self):
         return str(vars(self))
 
+    @staticmethod
+    def map_from_report(report_id, report_entity):
+        entity = ArchiveEntity()
+        entity.id = report_id
+        entity.archive_entity_type = report_entity['type']
+        entity.conversion = report_entity['converted_data']
+        entity.accession = report_entity['accession']
+        entity.errors = report_entity['errors']
+        entity.warnings = report_entity['warnings']
+        return entity
+
 
 class ArchiveEntityMap:
     def __init__(self):
@@ -78,6 +89,7 @@ class ArchiveEntityMap:
         entity: ArchiveEntity
         for entity in self.get_entities():
             entities[entity.id] = {}
+            entities[entity.id]['type'] = entity.archive_entity_type
             entities[entity.id]['errors'] = entity.errors
             entities[entity.id]['accession'] = entity.accession
             entities[entity.id]['warnings'] = entity.warnings
@@ -110,6 +122,13 @@ class ArchiveEntityMap:
         if not self.entities_dict_type.get(entity_type):
             self.entities_dict_type[entity_type] = {}
         self.entities_dict_type[entity_type].update(entities)
+
+    @staticmethod
+    def map_from_report(report):
+        entity_map = ArchiveEntityMap()
+        for key, entity in report.items():
+            entity_map.add_entity(ArchiveEntity.map_from_report(key, entity))
+        return entity_map
 
 
 class Manifest:
@@ -472,13 +491,14 @@ class ArchiveSubmission:
 
 
 class IngestArchiver:
-    def __init__(self, ingest_api, dsp_api, ontology_api=ontology.__api__, exclude_types=None, alias_prefix=None):
+    def __init__(self, ingest_api, dsp_api, ontology_api=ontology.__api__, exclude_types=None, alias_prefix=None, dsp_validation=True):
         self.logger = logging.getLogger(__name__)
         self.ingest_api = ingest_api
         self.exclude_types = exclude_types if exclude_types else []
         self.alias_prefix = f"{alias_prefix}_" if alias_prefix else ""
         self.ontology_api = ontology_api
         self.dsp_api = dsp_api
+        self.dsp_validation = dsp_validation
 
         self.converter = {
             "project": ProjectConverter(ontology_api=ontology_api),
@@ -556,30 +576,31 @@ class IngestArchiver:
                 _print_same_line(str(progress_ctr))
 
                 converter = self.converter[archive_entity_type]
-
-                current_version = self.dsp_api.get_current_version(archive_entity.archive_entity_type,
+                if self.dsp_validation:
+                    current_version = self.dsp_api.get_current_version(archive_entity.archive_entity_type,
                                                                    archive_entity.id)
-                if current_version and current_version.get('accession'):
-                    archive_entity.accession = current_version.get('accession')
-                    archive_entity.errors.append({
-                        "error_message": f"This alias has already been submitted to DSP, accession: {archive_entity.accession}.",
-                        "details": {
-                            "current_version": current_version["_links"]["self"]["href"]
-                        }
-                    })
-                elif current_version and not current_version.get('accession'):
-                    archive_entity.errors.append({
-                        "error_message": f'This alias has already been submitted to DSP, but still has no accession.',
-                        "details": {
-                            "current_version": current_version["_links"]["self"]["href"]
-                        }
-                    })
+                    if current_version and current_version.get('accession'):
+                        archive_entity.accession = current_version.get('accession')
+                        archive_entity.errors.append({
+                            "error_message": f"This alias has already been submitted to DSP, accession: {archive_entity.accession}.",
+                            "details": {
+                                "current_version": current_version["_links"]["self"]["href"]
+                            }
+                        })
+                    elif current_version and not current_version.get('accession'):
+                        archive_entity.errors.append({
+                            "error_message": f'This alias has already been submitted to DSP, but still has no accession.',
+                            "details": {
+                                "current_version": current_version["_links"]["self"]["href"]
+                            }
+                        })
 
-                elif IngestArchiver.is_metadata_accessioned(archive_entity):
-                    archive_entity.errors.append({
-                        "error_message": 'Metadata already have an accession'
-                    })
-                else:
+                    elif IngestArchiver.is_metadata_accessioned(archive_entity):
+                        archive_entity.errors.append({
+                            "error_message": 'Metadata already have an accession'
+                        })
+
+                if not archive_entity.errors:
                     try:
                         archive_entity.conversion = converter.convert(archive_entity.data)
                         archive_entity.conversion['alias'] = archive_entity.id

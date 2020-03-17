@@ -70,7 +70,11 @@ class TestConverter(unittest.TestCase):
 
     def test_convert_sequencing_experiment(self):
         # given:
-        ontology.__api__.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
+        def expand_curie(term):
+            return 'http://purl.obolibrary.org/obo/UO_0000015' if term else ''
+        ontology.__api__.expand_curie = expand_curie
+
+        # and:
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         input_biomaterial = dict(self.hca_data.get('input_biomaterial'))
