@@ -30,9 +30,10 @@ def taxon_id_attribute(*args):
 
 
 def ontology_term(*args):
+    term = args[0]
     return [{
-        'terms': [{'url': _ontology_api.expand_curie()}],
-        'value': args[0]
+        'terms': [{'url': _ontology_api.expand_curie(term)}],
+        'value': term
     }]
 
 
