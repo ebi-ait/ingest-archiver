@@ -3,7 +3,7 @@ import datetime
 import json
 import unittest
 
-from mock import MagicMock
+from mock import MagicMock, patch
 
 import config
 from archiver.archiver import IngestArchiver, Manifest, ArchiveSubmission, Biomaterial
@@ -71,7 +71,8 @@ class TestIngestArchiver(unittest.TestCase):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
-    def test_get_archivable_entities(self):
+    @patch('api.ontology.OntologyAPI.expand_curie')
+    def test_get_archivable_entities(self, expand_curie):
         mock_manifest = self._mock_manifest(self.base_manifest)
 
         archiver = IngestArchiver(
@@ -103,7 +104,8 @@ class TestIngestArchiver(unittest.TestCase):
         for entity in archive_submission.entity_map.get_entities():
             self.assertTrue(archive_submission.accession_map.get(entity.id), f"{entity.id} has no accession.")
 
-    def test_notify_file_archiver(self):
+    @patch('api.ontology.OntologyAPI.expand_curie')
+    def test_notify_file_archiver(self, expand_curie):
         archive_submission = MagicMock(ArchiveSubmission)
         archive_submission.get_url = MagicMock(return_value='url')
 
@@ -128,15 +130,17 @@ class TestIngestArchiver(unittest.TestCase):
             "dsp_api_url": 'dsp_url',
             'ingest_api_url': 'ingest_url',
             'submission_url': 'url',
-            'files': ['dummy_manifest_id.bam'],
+            'files': [{'name': 'dummy_manifest_id.bam'}],
             'conversion': {
                 'output_name': 'dummy_manifest_id.bam',
                 'inputs': [
                     {'name': 'R1.fastq.gz',
-                     'read_index': 'read1'
+                     'read_index': 'read1',
+                     'cloud_url': 's3://org-humancellatlas-upload-dev/8cd91cfd-0374-454f-ac83-8db6581d2706/R1.fastq.gz'
                      },
                     {'name': 'R2.fastq.gz',
-                     'read_index': 'read1'
+                     'read_index': 'read1',
+                     'cloud_url': 's3://org-humancellatlas-upload-dev/8cd91cfd-0374-454f-ac83-8db6581d2706/R1.fastq.gz'
                      }
                 ]
             },
