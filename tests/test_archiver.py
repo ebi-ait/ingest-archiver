@@ -6,7 +6,7 @@ import unittest
 from mock import MagicMock
 
 import config
-from archiver.archiver import IngestArchiver, Manifest, ArchiveSubmission
+from archiver.archiver import IngestArchiver, Manifest, ArchiveSubmission, Biomaterial
 
 
 # TODO use mocks for integration tests
@@ -45,16 +45,18 @@ class TestIngestArchiver(unittest.TestCase):
             sequencing_file = json.loads(data_file.read())
             sequencing_file['uuid']['uuid'] = self._generate_fake_id(prefix='sequencing_file_')
 
+        biomaterial_objects = []
         for biomaterial in biomaterials:
             # TODO decide what to use for alias, assign random no for now
             biomaterial['uuid']['uuid'] = self._generate_fake_id(prefix='biomaterial_')
+            biomaterial_objects.append(Biomaterial(biomaterial))
 
         with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             library_preparation_protocol_10x = json.loads(data_file.read())
             library_preparation_protocol_10x['uuid']['uuid'] = self._generate_fake_id(prefix='library_preparation_protocol_10x_')
 
         self.base_manifest = {
-            'biomaterials': biomaterials,
+            'biomaterials': biomaterial_objects,
             'project': project,
             'files': [sequencing_file],
             'assay': assay,
@@ -71,6 +73,7 @@ class TestIngestArchiver(unittest.TestCase):
 
     def test_get_archivable_entities(self):
         mock_manifest = self._mock_manifest(self.base_manifest)
+
         archiver = IngestArchiver(
             ontology_api=self.ontology_api,
             ingest_api=self.ingest_api,

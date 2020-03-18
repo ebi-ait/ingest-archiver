@@ -133,7 +133,7 @@ class ArchiveEntityMap:
 
 
 class Biomaterial:
-    def __init__(self, data, derived_by_process, derived_with_protocols, derived_from):
+    def __init__(self, data, derived_by_process=None, derived_with_protocols=None, derived_from=None):
         self.data = data
         self.derived_by_process = derived_by_process
         self.derived_with_protocols = derived_with_protocols
@@ -603,7 +603,7 @@ class IngestArchiver:
         return entity_map
 
     def _convert(self, manifest: Manifest):
-        aggregator = ArchiveEntityAggregator(manifest, alias_prefix=self.alias_prefix)
+        aggregator = ArchiveEntityAggregator(manifest, self.ingest_api, alias_prefix=self.alias_prefix)
 
         entities = []
         for archive_entity_type in ["project", "study", "sample", "sequencingExperiment", "sequencingRun"]:
@@ -653,7 +653,7 @@ class IngestArchiver:
                     except ConversionError as e:
                         archive_entity.errors.append({
                             "error_message": f'An error occured converting data to a {archive_entity_type}: {str(e)}.',
-                            "details": {"data": json.loads(archive_entity.data)}
+                            "details": {"data": json.dumps(archive_entity.data)}
                         })
 
                 entities.append(archive_entity)
@@ -756,7 +756,7 @@ class ArchiveEntityAggregator:
             archive_entity.manifest_id = self.manifest.manifest_id
             archive_type = "sample"
             archive_entity.archive_entity_type = archive_type
-            archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial)
+            archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial.data)
 
             archive_entity.data = {'biomaterial': biomaterial.data}
 
@@ -777,10 +777,10 @@ class ArchiveEntityAggregator:
             samples_map[archive_entity.id] = archive_entity
 
         sorted_samples = derived_from_graph.topological_sort()
-        priority_samples = [sample for sample in sorted_samples if samples_map.get(sample)]
-        orphan_samples = [sample for sample in samples_map.keys() if sample not in priority_samples]
+        priority_samples = [samples_map.get(sample) for sample in sorted_samples if samples_map.get(sample)]
+        orphan_samples = [samples_map.get(sample) for sample in samples_map.keys() if sample not in priority_samples]
 
-        return [priority_samples, orphan_samples]
+        return priority_samples + orphan_samples
 
     def _get_sequencing_experiments(self):
         process = self.manifest.get_assay_process()
