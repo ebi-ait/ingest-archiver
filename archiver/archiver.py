@@ -552,7 +552,8 @@ class IngestArchiver:
 
     def convert(self, manifests):
         entity_map = ArchiveEntityMap()
-        for idx, manifest_id in enumerate(manifests):
+        for idx, manifest_url in enumerate(manifests):
+            manifest_id = manifest_url.rsplit('/', 1)[-1]
             print(f'\n* PROCESSING MANIFEST {idx + 1}/{len(manifests)}: {manifest_id}')
             manifest = self.get_manifest(manifest_id)
             entities = self._convert(manifest)
