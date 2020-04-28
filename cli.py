@@ -117,7 +117,7 @@ class ArchiveCLI:
     @staticmethod
     def split_exclude_types(exclude_types):
         if exclude_types:
-            exclude_types = [x.strip() for x in options.exclude_types.split(',')]
+            exclude_types = [x.strip() for x in exclude_types.split(',')]
             logging.warning(f"Excluding {', '.join(exclude_types)}")
         return exclude_types
 
