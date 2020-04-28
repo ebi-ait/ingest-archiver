@@ -644,6 +644,9 @@ class IngestArchiver:
                     "files": files,
                     "manifest_id": entity.manifest_id
                 }
+                manifest = self.ingest_api.get_manifest_by_id(entity.manifest_id)
+                if manifest['bundleUuid']:
+                    message["dcp_bundle_uuid"] = manifest['bundleUuid']
 
                 if protocols.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
