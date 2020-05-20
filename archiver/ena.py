@@ -101,7 +101,7 @@ def convert_sequencing_experiment(hca_data: dict):
 
 study_spec = {
     '$on': 'project',
-    'alias': ['uuid.uuid', prefix_with, (PREFIX_STUDY)],
+    'alias': ['uuid.uuid', prefix_with, PREFIX_STUDY],
     'attributes': {
         'HCA Project UUID': ['uuid.uuid', dsp_attribute],
         'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
