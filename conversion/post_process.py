@@ -1,4 +1,3 @@
-
 def prefix_with(*args):
     data = args[0]
     prefix = args[1]
@@ -8,11 +7,15 @@ def prefix_with(*args):
 # TODO make this an all-purpose date processor
 def format_date(*args):
     date = args[0]
+    if not date:
+        return None
     return date.split('T')[0]
 
 
 def concatenate_list(*args):
     items = args[0]
+    if not items:
+        return None
     return ' , '.join(items)
 
 

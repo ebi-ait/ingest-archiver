@@ -3,7 +3,6 @@ from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
 
-
 _ontology_api = ontology.__api__
 
 _primer_mapping = {
@@ -31,6 +30,10 @@ def taxon_id_attribute(*args):
 
 def ontology_term(*args):
     term = args[0]
+
+    if not term:
+        return None
+
     return [{
         'terms': [{'url': _ontology_api.expand_curie(term)}],
         'value': term
@@ -73,7 +76,7 @@ spec = {
             [f'{ib}.content.biomaterial_core.ncbi_taxon_id', taxon_id_attribute],
         'Library Preparation Protocol - End Bias': [f'{lp}.content.end_bias', dsp_attribute],
         'Library Preparation Protocol - Library Construction Method':
-            [f'{lp}.content.library_construction_method.text', ontology_term],
+            [f'{lp}.content.library_construction_method.ontology_label', ontology_term],
         'Library Preparation Protocol - Nucleic Acid Source':
             [f'{lp}.content.nucleic_acid_source', dsp_attribute],
         'Library Preparation Protocol - Primer': [f'{lp}.content.primer', dsp_attribute],
