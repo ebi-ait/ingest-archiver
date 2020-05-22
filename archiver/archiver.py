@@ -157,7 +157,7 @@ class Biomaterial:
             derived_with_protocols = {}
             for protocol in protocols:
                 protocol_type = ingest_api.get_concrete_entity_type(protocol)
-                if derived_with_protocols.get(protocol_type):
+                if not derived_with_protocols.get(protocol_type):
                     derived_with_protocols[protocol_type] = []
                 derived_with_protocols[protocol_type].append(protocol)
 
