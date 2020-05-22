@@ -73,6 +73,13 @@ class IngestAPI:
             self._cache_entity(entity_url, entity_json)
         return entity_json
 
+    def patch_entity_by_id(self, entity_type, entity_id, entity_patch):
+        entity_url = f'{self.url}/{entity_type}/{entity_id}'
+        response = self.session.patch(entity_url,entity_patch)
+        entity_json = self._handle_response(response)
+        self._cache_entity(entity_url, entity_json)
+        return entity_json
+
     def _get_cached_entity(self, url):
         if self.cache_enabled and self.entity_cache.get(url):
             return self.entity_cache.get(url)
@@ -110,8 +117,14 @@ class IngestAPI:
     def get_entity_id(self, entity, entity_type):
         entity_base = f'{self.url}/{entity_type}/'
         entity_uri = self._get_link(entity, 'self')
-        entity_id = str.strip(entity_uri.replace(entity_base, ''), '/')
+        entity_id = str.replace(entity_uri, entity_base, '').strip('/')
         return entity_id
+
+    def entity_info_from_url(self, url):
+        location = str.replace(url, self.url, '').strip('/')
+        entity_type = location.split('/')[0]
+        entity_id = location.split('/')[1]
+        return entity_type, entity_id
 
     @staticmethod
     def _handle_response(response):

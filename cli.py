@@ -42,9 +42,9 @@ class ArchiveCLI:
         parsed_manifest_list = [x.strip() for x in content]
         self.manifests = parsed_manifest_list
 
-    def complete_submission(self, submission_url):
+    def complete_submission(self, submission_url, entity_map: ArchiveEntityMap):
         logging.info(f'##################### COMPLETING DSP SUBMISSION {submission_url}')
-        archive_submission = self.archiver.complete_submission(submission_url)
+        archive_submission = self.archiver.complete_submission(submission_url, entity_map)
         report = archive_submission.generate_report()
         submission_uuid = submission_url.rsplit('/', 1)[-1]
         self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
@@ -157,23 +157,25 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not (options.project_uuid or options.manifest_list_file or options.submission_url or options.load_path):
-        logging.error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a submission url (4) a file of entities")
+    if not (options.project_uuid or options.manifest_list_file or options.load_path):
+        logging.error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a file of entities")
+        exit(2)
+    if options.submission_url and options.load_path:
+        logging.warning("When loading entities from disk, accessions won't be saved to ingest")
         exit(2)
 
-    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation)
-    if not options.load_path:
+    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation or options.submission_url)
+    entity_map: ArchiveEntityMap
+    if options.load_path:
+        entity_map = cli.load_map(options.load_path)
+    else:
         if options.project_uuid:
             cli.get_manifests_from_project(options.project_uuid)
         elif options.manifest_list_file:
             cli.get_manifests_from_list(options.manifest_list_file)
+        entity_map = cli.build_map()
 
-    if not options.submission_url:
-        if options.load_path:
-            entity_map: ArchiveEntityMap = cli.load_map(options.load_path)
-        else:
-            entity_map:ArchiveEntityMap  = cli.build_map()
-        if not options.no_validation:
-            cli.validate_submission(entity_map, options.submit)
-    else:
-        cli.complete_submission(options.submission_url)
+    if options.submission_url:
+        cli.complete_submission(options.submission_url, entity_map)
+    elif entity_map and not options.no_validation:
+        cli.validate_submission(entity_map, options.submit)

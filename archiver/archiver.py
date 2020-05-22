@@ -1,7 +1,9 @@
 import json
 import logging
+from typing import List
 
 import polling as polling
+from requests import HTTPError
 
 import config
 from api import ontology
@@ -129,6 +131,22 @@ class ArchiveEntityMap:
         for key, entity in report.items():
             entity_map.add_entity(ArchiveEntity.map_from_report(key, entity))
         return entity_map
+
+
+class IngestAccession:
+    def __init__(self, ingest_type, ingest_url, accession):
+        self.ingest_type = ingest_type
+        self.ingest_url = ingest_url
+        self.accession_id = accession
+
+    @staticmethod
+    def from_entity(ingest_type, entity: ArchiveEntity):
+        return IngestAccession.from_ingest_entity(ingest_type, entity.data[ingest_type], entity.accession)
+
+    @staticmethod
+    def from_ingest_entity(ingest_type, ingest_entity, accession):
+        return IngestAccession(ingest_type, ingest_entity['_links']['self']['href'], accession)
+
 
 
 class Manifest:
@@ -369,6 +387,9 @@ class ArchiveSubmission:
                 alias = result['alias']
                 accession = result['accession']
                 accession_map[alias] = accession
+                entity = self.entity_map.find_entity(alias)
+                if entity:
+                    entity.accession = accession
             elif result['status'] == 'Error':
                 self.errors.append(f"There was an error submitting a "
                                    f"{result.get('submittableType', '')} with alias {result.get('alias', '')} to "
@@ -536,16 +557,48 @@ class IngestArchiver:
 
         return archive_submission
 
-    def complete_submission(self, dsp_submission_url):
+    def complete_submission(self, dsp_submission_url, entity_map: ArchiveEntityMap = None):
         archive_submission = ArchiveSubmission(dsp_api=self.dsp_api, dsp_submission_url=dsp_submission_url)
+        if entity_map:
+            archive_submission.entity_map = entity_map
+            archive_submission.converted_entities = list(archive_submission.entity_map.get_converted_entities())
 
         if archive_submission.status == 'Draft':
             archive_submission.validate_and_submit()
         elif archive_submission.status == 'Completed':
             archive_submission.is_completed = True
             archive_submission.process_result()
+            self.send_accessions(self.accessions_from_map(archive_submission.entity_map))
 
         return archive_submission
+
+    def send_accessions(self, accessions: List[IngestAccession]):
+        if accessions:
+            self.ingest_api.entity_cache = {}
+            for accession in accessions:
+                entity_type, entity_id = self.ingest_api.entity_info_from_url(accession.ingest_url)
+                ingest_entity = self.ingest_api.get_entity_by_id(entity_type, entity_id)
+                entity_patch = IngestArchiver.generate_patch(accession.ingest_type, ingest_entity, accession.accession_id)
+                try:
+                    self.ingest_api.patch_entity_by_id(entity_type, entity_id, entity_patch)
+                except HTTPError:
+                    logging.error("Failed to send to ingest", HTTPError)
+
+    @staticmethod
+    def generate_patch(ingest_type, ingest_entity, accession_id):
+        entity_patch = {'content': ingest_entity['content']}
+        # todo: what about studies?
+        if ingest_type == 'project':
+            entity_patch['content']['biostudies_accessions'] = accession_id
+            entity_patch['content']['insdc_project_accessions'] = accession_id
+            # patch['content']['insdc_study_accessions'] = accession.accession
+        elif ingest_type == 'biomaterial':
+            entity_patch['content']['biomaterial_core']['biosamples_accession'] = accession_id
+        elif ingest_type == 'process':
+            entity_patch['content']['insdc_experiment'] = accession_id
+        elif ingest_type == 'file':
+            entity_patch['content']['insdc_run_accessions'] = accession_id
+        return entity_patch
 
     def get_manifest(self, manifest_id):
         return Manifest(ingest_api=self.ingest_api, manifest_id=manifest_id)
@@ -617,6 +670,32 @@ class IngestArchiver:
             print("")
 
         return entities
+
+    @staticmethod
+    def accessions_from_map(entity_map: ArchiveEntityMap) -> List[IngestAccession]:
+        accessions: List[IngestAccession] = []
+        for entities_dict in entity_map.entities_dict_type.values():
+            entity: ArchiveEntity
+            for entity in entities_dict.values():
+                if entity.accession:
+                    accessions.extend(IngestArchiver.accessions_from_entity(entity))
+        return accessions
+
+    @staticmethod
+    def accessions_from_entity(entity: ArchiveEntity) -> List[IngestAccession]:
+        accessions: List[IngestAccession] = []
+        if entity.accession:
+            # ToDo: What about studies?
+            if entity.archive_entity_type == 'project':
+                accessions.append(IngestAccession.from_entity('project', entity))
+            elif entity.archive_entity_type == 'sample':
+                accessions.append(IngestAccession.from_entity('biomaterial', entity))
+            elif entity.archive_entity_type == 'sequencingExperiment':
+                accessions.append(IngestAccession.from_entity('process', entity))
+            elif entity.archive_entity_type == 'sequencingRun':
+                for file in entity.data['files']:
+                    accessions.append(IngestAccession.from_ingest_entity('file', file, entity.accession))
+        return accessions
 
     # TODO save notification to file for now, should be sending to rabbit mq in the future
     def notify_file_archiver(self, archive_submission: ArchiveSubmission):
