@@ -42,6 +42,11 @@ INGEST_API_URL
 Production: INGEST_API_URL=http://api.ingest.archive.data.humancellatlas.org/
 Staging: INGEST_API_URL=http://api.ingest.staging.archive.data.humancellatlas.org/
 
+INGEST_API_GCP (OPTIONAL)
+# The service account token to use when connecting to the ingest api.
+This is required when completing submissions, to post accessions back to ingest, but is otherwise optional.
+Search the aws secrets manager for gcp-credentials.json
+
 DSP_API_URL
 # The DSP service on which to create the new submission to archives.
 # The old name of DSP USI_API_URL is also supported

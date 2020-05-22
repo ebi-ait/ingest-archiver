@@ -1,4 +1,5 @@
 import logging
+import os
 
 import requests
 from requests import adapters
@@ -33,9 +34,12 @@ class IngestAPI:
         adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
         self.session.mount('https://', adapter)
 
-        token_client = S2STokenClient()
-        token_client.setup_from_env_var('INGEST_API_GCP')
-        self.token_manager = TokenManager(token_client)
+        if os.environ.get('INGEST_API_GCP'):
+            token_client = S2STokenClient()
+            token_client.setup_from_env_var('INGEST_API_GCP')
+            self.token_manager = TokenManager(token_client)
+        else:
+            self.token_manager = False
 
     def set_token(self, token):
         self.token = token
