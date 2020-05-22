@@ -595,7 +595,8 @@ class IngestArchiver:
 
     def convert(self, manifests):
         entity_map = ArchiveEntityMap()
-        for idx, manifest_id in enumerate(manifests):
+        for idx, manifest_url in enumerate(manifests):
+            manifest_id = manifest_url.rsplit('/', 1)[-1]
             print(f'\n* PROCESSING MANIFEST {idx + 1}/{len(manifests)}: {manifest_id}')
             manifest = self.get_manifest(manifest_id)
             entities = self._convert(manifest)
@@ -687,6 +688,9 @@ class IngestArchiver:
                     "files": files,
                     "manifest_id": entity.manifest_id
                 }
+                manifest = self.ingest_api.get_manifest_by_id(entity.manifest_id)
+                if manifest['bundleUuid']:
+                    message["dcp_bundle_uuid"] = manifest['bundleUuid']
 
                 if protocols.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
