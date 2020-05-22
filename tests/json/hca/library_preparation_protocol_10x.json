@@ -10,7 +10,8 @@
 		},
 		"library_construction_method": {
 			"text": "10X v2 sequencing",
-			"ontology": "EFO:0009310"
+			"ontology": "EFO:0009310",
+			"ontology_label": "Smart-seq2"
 		},
 		"nucleic_acid_source": "single cell",
 		"end_bias": "5 prime end bias",
