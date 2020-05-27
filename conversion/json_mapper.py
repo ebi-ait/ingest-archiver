@@ -2,8 +2,6 @@ from collections import Mapping
 
 from conversion.data_node import DataNode
 
-
-
 KEYWORD_MARKER = '$'
 
 SPEC_ANCHOR = '$on'
