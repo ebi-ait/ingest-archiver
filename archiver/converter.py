@@ -198,7 +198,18 @@ class SequencingRunConverter(Converter):
         self.exclude_data = ['manifest_id', 'library_preparation_protocol']
 
     def convert(self, hca_data):
-        converted_data = super(SequencingRunConverter, self).convert(hca_data)
+        alias_prefix = 'sequencingRun_'
+
+        def as_assay_ref(*args):
+            return [{'alias': prefix_with(args[0], alias_prefix)}]
+
+        converted_data = JsonMapper(hca_data).map({
+            '$on': 'process',
+            'alias': ['uuid.uuid', prefix_with, alias_prefix],
+            'title': ['content.process_core.process_name', default_to, ''],
+            'description': ['content.process_core.process_description', default_to, ''],
+            'assayRefs': ['uuid.uuid', as_assay_ref]
+        })
 
         files = []
         if protocols.is_10x(hca_data.get("library_preparation_protocol")):

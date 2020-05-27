@@ -124,39 +124,27 @@ class TestConverter(unittest.TestCase):
 
     def test_convert_sequencing_run(self):
         self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
-        process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
         file = dict(self.hca_data.get('sequencing_file'))
 
+        uuid = 'process' + str(randint(0, 1000))
+        test_alias = f'sequencingRun_{uuid}'
         with open(config.JSON_DIR + 'dsp/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
+            expected_json['alias'] = test_alias
+            expected_json['assayRefs'] = [{'alias': test_alias}]
 
-        test_alias = 'process' + str(randint(0, 1000))
+        process = dict(self.hca_data.get('process'))
+        process['uuid']['uuid'] = uuid
 
-        process['uuid']['uuid'] = test_alias
-
-        hca_data = {
+        converter = SequencingRunConverter(ontology_api=self.ontology_api)
+        actual_json = converter.convert({
             'library_preparation_protocol': lib_prep_protocol,
             'sequencing_protocol': sequencing_protocol,
             'process': process,
             'files': [file]
-        }
-
-        expected_json['alias'] = 'sequencingRun_' + test_alias
-
-        expected_json['attributes'][
-            'HCA Library Preparation Protocol UUID'] = [{'value': lib_prep_protocol['uuid']['uuid']}]
-        expected_json['attributes'][
-            'HCA Sequencing Protocol UUID'] = [{'value': sequencing_protocol['uuid']['uuid']}]
-        expected_json['attributes'][
-            'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
-        expected_json['attributes'][
-            "HCA Files UUID's"] = [
-            {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
-
-        converter = SequencingRunConverter(ontology_api=self.ontology_api)
-        actual_json = converter.convert(hca_data)
+        })
 
         self.assertEqual(expected_json, actual_json)
 
