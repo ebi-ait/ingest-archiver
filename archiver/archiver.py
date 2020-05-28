@@ -465,8 +465,25 @@ class ArchiveSubmission:
                 validation_result_details = self.dsp_api.get_validation_result_details(details_url)
                 if validation_result_details.get('errorMessages'):
                     errors.append(validation_result_details.get('errorMessages'))
-
         return errors
+
+    def get_validation_error_report(self):
+        get_validation_results_url = self.submission['_links']['validationResults']['href']
+        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
+
+        report = {}
+        for validation_result in validation_results:
+            if validation_result['validationStatus'] == "Complete":
+                details_url = validation_result['_links']['validationResult']['href']
+                details_url = details_url.split('{')[0]
+                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
+                submittable_href = validation_result_details['_links']['submittable']['href']
+                if submittable_href and validation_result_details.get('errorMessages'):
+                    if not report.get(submittable_href):
+                        report[submittable_href] = []
+                    report[submittable_href].append(validation_result_details.get('errorMessages'))
+
+        return report
 
     def is_submittable(self):
         get_status_url = self.submission['_links']['submissionStatus']['href']
