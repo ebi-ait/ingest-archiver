@@ -2,7 +2,7 @@ import json
 import unittest
 from random import randint
 
-from mock import MagicMock
+from mock import MagicMock, patch
 
 import config
 from api import ontology
@@ -68,12 +68,10 @@ class TestConverter(unittest.TestCase):
 
         self.assertEqual(expected_json, actual_json)
 
-    def test_convert_sequencing_experiment(self):
+    @patch('api.ontology.OntologyAPI.expand_curie')
+    def test_convert_sequencing_experiment(self, expand_curie):
         # given:
-        def expand_curie(term):
-            return 'http://purl.obolibrary.org/obo/UO_0000015' if term else ''
-        ontology.__api__.expand_curie = expand_curie
-
+        expand_curie.return_value='http://purl.obolibrary.org/obo/UO_0000015'
         # and:
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
@@ -205,7 +203,8 @@ class TestConverter(unittest.TestCase):
 
         self.assertEqual(expected_json, actual_json)
 
-    def test_convert_project(self):
+    @patch('api.ontology.OntologyAPI.expand_curie')
+    def test_convert_project(self, expand_curie):
         # given: read from files
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())

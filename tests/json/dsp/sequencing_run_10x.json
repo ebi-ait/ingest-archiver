@@ -16,11 +16,11 @@
 			"value": true
 		}],
 		"Sequencing Protocol - Sequencing Approach": [{
-            "terms": [{
-                "url": "http://purl.obolibrary.org/obo/UO_0000015"
-            }],
-           "value": "full length single cell RNA sequencing"
-        }],
+			"terms": [{
+				"url": "http://purl.obolibrary.org/obo/UO_0000015"
+			}],
+			"value": "full length single cell RNA sequencing"
+		}],
 		"Process - Process Core - Process Id": [{
 			"value": "sequence_process_file_1"
 		}],
