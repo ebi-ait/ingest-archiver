@@ -5,9 +5,10 @@ from flatten_json import flatten
 
 from archiver import project, ena_sequencing_experiment
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
-from conversion.json_mapper import JsonMapper
+from archiver.instrument_model import to_dsp_name
+from conversion.json_mapper import JsonMapper, json_array, json_object
 from conversion.post_process import prefix_with, default_to
-from utils.protocols import is_10x
+from utils import protocols
 
 """
 HCA to DSP JSON Mapping
@@ -24,11 +25,12 @@ class Converter:
             "submissionDate": "releaseDate"
         }
         self.alias_prefix = ''
-        self.exclude_fields_match = ['.*__schema_type$', '.*__describedBy$']
+        self.exclude_data = []
+        self.exclude_fields_match = ['__schema_type', '__describedBy', '__ontology_label']
         self.ingest_api = None
         self.ontology_api = ontology_api
+        self.remove_input_prefix = False
         self.to_lowercase_attributes = False
-        self.remove_input_prefix = {}
 
     def convert(self, hca_data):
         try:
@@ -46,25 +48,26 @@ class Converter:
                                   details={'data': hca_data})
         return converted_data
 
-    def exclude_keys(self, patterns_to_exclude, data):
-        copy = dict(data)
-        delete_keys = {}
-
-        for key in copy.keys():
-            for keyword in patterns_to_exclude:
-                if re.search(keyword, key):
-                    delete_keys[key] = True
-
-        for key in delete_keys.keys():
-            if key in copy:
-                del copy[key]
-
-        return copy
-
     def _flatten(self, hca_data):
         input_data = dict(hca_data)
+
+        for key in self.exclude_data:
+            if key in input_data:
+                del input_data[key]
+
         flattened = flatten(input_data, '__')
-        return self.exclude_keys(self.exclude_fields_match, flattened)
+
+        delete_keys = {}
+        if self.exclude_fields_match:
+            for key in flattened.keys():
+                for keyword in self.exclude_fields_match:
+                    if keyword in key:
+                        delete_keys[key] = True
+
+        for key in delete_keys.keys():
+            del flattened[key]
+
+        return flattened
 
     def _extract_fields(self, flattened_hca_data, hca_data):
         extracted_data = {}
@@ -79,8 +82,7 @@ class Converter:
 
         for input_key, entity in hca_data.items():
             if isinstance(entity, dict):
-                extracted_data["attributes"][f"HCA {input_key.replace('_', ' ').title()} UUID"] = [
-                    dict(value=entity["uuid"]["uuid"])]
+                extracted_data["attributes"][f"HCA {input_key.replace('_', ' ').title()} UUID"] = [dict(value=entity["uuid"]["uuid"])]
             elif isinstance(entity, list):
                 uuid_list = [e["uuid"]["uuid"] for e in entity]
                 extracted_data["attributes"][
@@ -115,7 +117,7 @@ class Converter:
                 else:
                     field = key.replace(prefix, '')
                     attr = {
-                        "name": field,
+                        "name" : field,
                         "value": value,
                         "terms": []
                     }
@@ -133,9 +135,8 @@ class Converter:
         for field, value in attributes.items():
             if '__' in field:
                 new_field = field
-                split_fields = field.split('__', 1)
-                input_field = split_fields[0] if split_fields else field
-                if self.remove_input_prefix and self.remove_input_prefix.get(input_field):
+                if self.remove_input_prefix:
+                    split_fields = field.split('__', 1)
                     new_field = split_fields[-1] if split_fields else field
 
                 new_field = new_field.replace('__', ' - ')
@@ -160,7 +161,6 @@ class SampleConverter(Converter):
             "biomaterial__content__biomaterial_core__biomaterial_name": "title",
             "biomaterial__content__biomaterial_core__biomaterial_description": "description",
             "biomaterial__content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
-            "biomaterial__content__genus_species__0__ontology_label": "taxon",
             "biomaterial__submissionDate": "releaseDate"
         }
 
@@ -170,20 +170,19 @@ class SampleConverter(Converter):
             "9606": "Homo sapiens",
             "10090": "Mus musculus"
         }
+        self.exclude_data = ['genus_species']
         self.exclude_fields_match = ['__schema_type', '__describedBy',
-                                     # FIXME only donors contain this info but this is redundant with taxonId,
-                                     #  removing this if it exists
-                                     'biomaterial__content__genus_species__0__text',
-                                     'biomaterial__content__genus_species__0__ontology$']
-
-        self.remove_input_prefix = {
-            'biomaterial': True
-        }
+                                     '__ontology_label',
+        # FIXME only donors contain this info but this is redundant with taxonId, removing this if it exists
+                                     'biomaterial__content__genus_species__0__ontology',
+                                     'biomaterial__content__genus_species__0__text']
+        self.remove_input_prefix = True
 
     def _build_output(self, extracted_data, flattened_hca_data, hca_data):
         extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
-
+        extracted_data["sampleRelationships"] = []
         taxon_id = str(extracted_data.get("taxonId", ''))
+        extracted_data["taxon"] = self.taxon_map.get(taxon_id)
 
         if not extracted_data["taxon"]:
             raise ConversionError("Sample Conversion Error",
@@ -196,6 +195,8 @@ class SampleConverter(Converter):
 
         if not extracted_data.get("attributes"):
             extracted_data["attributes"] = {}
+
+        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
 
         if not extracted_data["taxon"]:
             raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
@@ -219,6 +220,11 @@ class SequencingExperimentConverter(Converter):
     def convert(self, hca_data):
         return ena_sequencing_experiment.convert(hca_data)
 
+    # TODO implement
+    def _build_links(self, extracted_data, links):
+        extracted_data["studyRef"] = {"alias": "{studyAlias.placeholder}"}
+        extracted_data["sampleUses"] = [{"sampleRef": {"alias": "{sampleAlias.placeholder}"}}]
+
 
 class SequencingRunConverter(Converter):
     def __init__(self, ontology_api):
@@ -231,8 +237,6 @@ class SequencingRunConverter(Converter):
             "process__content__process_core__process_description": "description"
         }
 
-        self.ONTOLOGY_10x = "EFO:0009310"
-
         self.file_format = {
             'fastq.gz': 'fastq',
             'bam': 'bam',
@@ -240,14 +244,13 @@ class SequencingRunConverter(Converter):
         }
 
         self.alias_prefix = 'sequencingRun_'
-        self.exclude_fields_match = ['.*__schema_type', '.*__describedBy', '.*__manifest_id.*',
-                                     'library_preparation_protocol.*', '__ontology_label$']
+        self.exclude_data = ['manifest_id', 'library_preparation_protocol']
 
     def convert(self, hca_data):
         converted_data = super(SequencingRunConverter, self).convert(hca_data)
 
         files = []
-        if is_10x(hca_data.get("library_preparation_protocol")):
+        if protocols.is_10x(hca_data.get("library_preparation_protocol")):
             files = [{
                 'name': f"{hca_data['manifest_id']}.bam",
                 'type': 'bam'
@@ -263,6 +266,15 @@ class SequencingRunConverter(Converter):
         converted_data['files'] = files
 
         return converted_data
+
+    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
+        self._build_links(extracted_data, {})
+
+        return extracted_data
+
+    # TODO implement
+    def _build_links(self, extracted_data, links):
+        extracted_data["assayRefs"] = {"alias": "{assayAlias.placeholder}"}
 
 
 # TODO keeping this for now to not break the IngestArchiver class

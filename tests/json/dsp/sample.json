@@ -1,31 +1,32 @@
 {
-  "alias": "hca339",
-  "description": "Description",
-  "attributes": {
-    "HCA Biomaterial Type":[{
-          "value": "donor_organism"
-    }],
-    "HCA Biomaterial UUID":[{
-          "value": ""
-    }],
-    "Biomaterial Core - Biomaterial Id": [{
-        "value": "Q4_DEMO-donor_MGH30"
-    }],
-    "Is Living": [{
-        "value": "no"
-    }],
-    "Medical History - Smoking History": [{
-        "value": "yes"
-    }],
-    "Sex": [{
-        "value": "unknown"
-    }],
-    "project": [{
-      "value": "Human Cell Atlas"
-    }]
-  },
-  "releaseDate": "2018-09-12",
-  "taxonId": 9606,
-  "taxon": "Homo sapiens",
-  "title": "Q4 DEMO donor MGH30"
+	"alias": "hca339",
+	"description": "Description",
+	"attributes": {
+		"HCA Biomaterial Type": [{
+			"value": "donor_organism"
+		}],
+		"HCA Biomaterial UUID": [{
+			"value": ""
+		}],
+		"Biomaterial Core - Biomaterial Id": [{
+			"value": "Q4_DEMO-donor_MGH30"
+		}],
+		"Is Living": [{
+			"value": "no"
+		}],
+		"Medical History - Smoking History": [{
+			"value": "yes"
+		}],
+		"Sex": [{
+			"value": "unknown"
+		}],
+		"project": [{
+			"value": "Human Cell Atlas"
+		}]
+	},
+	"releaseDate": "2018-09-12",
+	"sampleRelationships": [],
+	"taxonId": 9606,
+	"taxon": "Homo sapiens",
+	"title": "Q4 DEMO donor MGH30"
 }
