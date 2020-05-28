@@ -130,7 +130,7 @@ def exit_error(message: str):
     exit(2)
 
 
-def exit_success(message: str):
+def exit_success(message: str = None):
     if message:
         logging.info(message)
     exit(0)
