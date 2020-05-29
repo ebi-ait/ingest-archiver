@@ -43,7 +43,7 @@ def ontology_term(*args):
 def nominal_value(*args):
     value = args[0]
     if value:
-        str(args[0])
+        value = str(args[0])
     else:
         value = "0"
     return dsp_attribute(value)
