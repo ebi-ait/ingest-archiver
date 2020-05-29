@@ -3,6 +3,7 @@ from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
 from conversion.post_process import prefix_with, default_to
+from utils import protocols
 
 PREFIX_STUDY = 'study_'
 
@@ -118,3 +119,68 @@ study_spec = {
 
 def convert_study(hca_data: dict):
     return JsonMapper(hca_data).map(study_spec)
+
+
+_sqrun_alias_prefix = 'sequencingRun_'
+
+
+_file_format_mapping = {
+    'fastq.gz': 'fastq',
+    'bam': 'bam',
+    'cram': 'cram',
+}
+
+
+def _sqrun_assay_ref(*args):
+    return [{'alias': prefix_with(args[0], _sqrun_alias_prefix)}]
+
+
+def convert_sequencing_run(hca_data: dict):
+    mapper = JsonMapper(hca_data)
+    converted_data = mapper.map({
+        '$on': 'process',
+        'alias': ['uuid.uuid', prefix_with, _sqrun_alias_prefix],
+        'title': ['content.process_core.process_name', default_to, ''],
+        'description': ['content.process_core.process_description', default_to, ''],
+        'assayRefs': ['uuid.uuid', _sqrun_assay_ref]
+    })
+
+    converted_files = mapper.map({
+        '$on': 'files',
+        'name': ['content.file_core.file_name'],
+        'format': ['content.file_core.format'],
+        'uuid': ['uuid.uuid'],
+        'lane_index': ['content.lane_index'],
+        'read_index': ['content.read_index']
+    })
+
+    converted_data['attributes'] = _sqrun_file_attributes(converted_files)
+    converted_data['files'] = _sqrun_files(converted_files, hca_data)
+    return converted_data
+
+
+def _sqrun_file_attributes(converted_files):
+    file_attributes = {}
+    for index, file in enumerate(converted_files):
+        file_attributes.update({
+            f'Files - {index} - File Core - File Name': dsp_attribute(file.get('name')),
+            f'Files - {index} - File Core - Format': dsp_attribute(file.get('format')),
+            f'Files - {index} - HCA File UUID': dsp_attribute(file.get('uuid')),
+            f'Files - {index} - Read Index': dsp_attribute(file.get('read_index')),
+            f'Files - {index} - Lane Index': dsp_attribute(file.get('lane_index'))
+        })
+    return file_attributes
+
+
+def _sqrun_files(converted_files, hca_data):
+    if protocols.is_10x(hca_data.get("library_preparation_protocol")):
+        files = [{
+            'name': f"{hca_data['manifest_id']}.bam",
+            'type': 'bam'
+        }]
+    else:
+        files = [{
+            'name': file.get('name'),
+            'type': _file_format_mapping.get(file.get('format'))
+        } for file in converted_files]
+    return files

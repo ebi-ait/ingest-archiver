@@ -177,82 +177,14 @@ class SequencingExperimentConverter(Converter):
         extracted_data["sampleUses"] = [{"sampleRef": {"alias": "{sampleAlias.placeholder}"}}]
 
 
+# TODO keeping this to not cause trouble with the Archiver script.
 class SequencingRunConverter(Converter):
     def __init__(self, ontology_api):
         super(SequencingRunConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
 
-        self.field_mapping = {
-            "process__uuid__uuid": "alias",
-            "process__content__process_core__process_name": "title",
-            "process__content__process_core__process_description": "description"
-        }
-
-        self.file_format = {
-            'fastq.gz': 'fastq',
-            'bam': 'bam',
-            'cram': 'cram',
-        }
-
-        self.alias_prefix = 'sequencingRun_'
-        self.exclude_data = ['manifest_id', 'library_preparation_protocol']
-
     def convert(self, hca_data):
-        alias_prefix = 'sequencingRun_'
-
-        def assay_ref(*args):
-            return [{'alias': prefix_with(args[0], alias_prefix)}]
-
-        mapper = JsonMapper(hca_data)
-        converted_data = mapper.map({
-            '$on': 'process',
-            'alias': ['uuid.uuid', prefix_with, alias_prefix],
-            'title': ['content.process_core.process_name', default_to, ''],
-            'description': ['content.process_core.process_description', default_to, ''],
-            'assayRefs': ['uuid.uuid', assay_ref]
-        })
-
-        converted_files = mapper.map({
-            '$on': 'files',
-            'name': ['content.file_core.file_name'],
-            'format': ['content.file_core.format'],
-            'uuid': ['uuid.uuid'],
-            'lane_index': ['content.lane_index'],
-            'read_index': ['content.read_index']
-        })
-
-        file_attributes = {}
-        for index, file in enumerate(converted_files):
-            file_attributes.update({
-                f'Files - {index} - File Core - File Name': dsp_attribute(file.get('name')),
-                f'Files - {index} - File Core - Format': dsp_attribute(file.get('format')),
-                f'Files - {index} - HCA File UUID': dsp_attribute(file.get('uuid')),
-                f'Files - {index} - Read Index': dsp_attribute(file.get('read_index')),
-                f'Files - {index} - Lane Index': dsp_attribute(file.get('lane_index'))
-            })
-        converted_data['attributes'] = file_attributes
-
-        if protocols.is_10x(hca_data.get("library_preparation_protocol")):
-            files = [{
-                'name': f"{hca_data['manifest_id']}.bam",
-                'type': 'bam'
-            }]
-        else:
-            files = [{
-                'name': file.get('name'),
-                'type': self.file_format.get(file.get('format'))
-            } for file in converted_files]
-        converted_data['files'] = files
-        return converted_data
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        self._build_links(extracted_data, {})
-
-        return extracted_data
-
-    # TODO implement
-    def _build_links(self, extracted_data, links):
-        extracted_data["assayRefs"] = {"alias": "{assayAlias.placeholder}"}
+        return ena.convert_sequencing_run(hca_data)
 
 
 # TODO keeping this for now to not break the IngestArchiver class
