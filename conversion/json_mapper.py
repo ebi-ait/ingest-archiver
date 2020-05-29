@@ -51,7 +51,6 @@ class JsonMapper:
         anchor = field
         if SPEC_ANCHOR in spec:
             anchor = f'{anchor}.{spec[SPEC_ANCHOR]}' if anchor else spec[SPEC_ANCHOR]
-            del spec[SPEC_ANCHOR]
         return anchor
 
     def _anchor_node(self, field):
