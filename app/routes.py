@@ -41,8 +41,17 @@ def archive():
     return jsonify(entity_map.get_conversion_summary())
 
 
-@app.route("/archiveEntities")
+@app.route('/archiveEntities')
 def archive_entities():
     submission_id = request.args.get('submission_id')
-    entities = ArchiveEntity.query.filter_by(submission_id=submission_id).all()
-    return jsonify(entities)
+    page = request.args.get('page', 1)
+    per_page = 20
+    if submission_id:
+        query = ArchiveEntity.query.filter_by(submission_id=submission_id)
+    else:
+        query = ArchiveEntity.query
+
+    paged_entities = query.paginate(int(page), per_page, False)
+    return jsonify({'archive_entities': paged_entities.items,
+                    'next': paged_entities.next_num,
+                    'previous': paged_entities.prev_num})
