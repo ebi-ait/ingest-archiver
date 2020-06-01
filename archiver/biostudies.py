@@ -8,6 +8,10 @@ PREFIX_PROJECT = 'project_'
 def _parse_name(*args):
     full_name = args[0]
     position = args[1]
+
+    if not full_name:
+        return None
+
     name_element = full_name.split(',', 2)[position]
     return name_element[0] if name_element and position == 1 else name_element
 

@@ -4,12 +4,13 @@ import logging
 import polling as polling
 
 import config
-from api import ontology
 
+from api import ontology
+from api.ingest import IngestAPI
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
-
 from utils import protocols
+from utils.graph import Graph
 
 
 def _print_same_line(string):
@@ -36,6 +37,17 @@ class ArchiveEntity:
 
     def __str__(self):
         return str(vars(self))
+
+    @staticmethod
+    def map_from_report(report_id, report_entity):
+        entity = ArchiveEntity()
+        entity.id = report_id
+        entity.archive_entity_type = report_entity['type']
+        entity.conversion = report_entity['converted_data']
+        entity.accession = report_entity['accession']
+        entity.errors = report_entity['errors']
+        entity.warnings = report_entity['warnings']
+        return entity
 
 
 class ArchiveEntityMap:
@@ -78,6 +90,7 @@ class ArchiveEntityMap:
         entity: ArchiveEntity
         for entity in self.get_entities():
             entities[entity.id] = {}
+            entities[entity.id]['type'] = entity.archive_entity_type
             entities[entity.id]['errors'] = entity.errors
             entities[entity.id]['accession'] = entity.accession
             entities[entity.id]['warnings'] = entity.warnings
@@ -111,6 +124,56 @@ class ArchiveEntityMap:
             self.entities_dict_type[entity_type] = {}
         self.entities_dict_type[entity_type].update(entities)
 
+    @staticmethod
+    def map_from_report(report):
+        entity_map = ArchiveEntityMap()
+        for key, entity in report.items():
+            entity_map.add_entity(ArchiveEntity.map_from_report(key, entity))
+        return entity_map
+
+
+class Biomaterial:
+    def __init__(self, data, derived_by_process=None, derived_with_protocols=None, derived_from=None):
+        self.data = data
+        self.derived_by_process = derived_by_process
+        self.derived_with_protocols = derived_with_protocols
+        self.derived_from = derived_from
+
+    @classmethod
+    def from_uuid(cls, ingest_api, biomaterial_uuid):
+        data = ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+
+        derived_by_processes = ingest_api.get_related_entity(data, 'derivedByProcesses', 'processes')
+
+        if derived_by_processes:
+            # A biomaterial derived from multiple processes is not even supported in the Spreadsheet Importer
+            if len(derived_by_processes) > 1:
+                raise ArchiverError('A biomaterial derived from multiple processes is not supported yet for conversion.')
+
+            derived_by_process = derived_by_processes[0]
+
+            protocols = ingest_api.get_related_entity(derived_by_process, 'protocols', 'protocols')
+
+            derived_with_protocols = {}
+            for protocol in protocols:
+                protocol_type = ingest_api.get_concrete_entity_type(protocol)
+                if not derived_with_protocols.get(protocol_type):
+                    derived_with_protocols[protocol_type] = []
+                derived_with_protocols[protocol_type].append(protocol)
+
+            input_biomaterials = ingest_api.get_related_entity(derived_by_process, 'inputBiomaterials', 'biomaterials')
+
+            if not input_biomaterials:
+                raise ArchiverError('A biomaterial has been derived by a process with no input biomaterial')
+
+            if len(input_biomaterials) > 1:
+                raise ArchiverError('A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
+
+            derived_from = input_biomaterials[0]
+            return cls(data, derived_by_process, derived_with_protocols, derived_from)
+        else:
+            return cls(data)
+
 
 class Manifest:
     def __init__(self, ingest_api, manifest_id):
@@ -137,7 +200,6 @@ class Manifest:
     def get_biomaterials(self):
         if not self.biomaterials:
             self.biomaterials = self._init_biomaterials()
-
         return self.biomaterials
 
     def get_assay_process(self):
@@ -171,7 +233,7 @@ class Manifest:
 
     def _init_biomaterials(self):
         for biomaterial_uuid in list(self.manifest['fileBiomaterialMap']):
-            yield self.ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
+            yield Biomaterial.from_uuid(self.ingest_api, biomaterial_uuid)
 
     def _init_assay_process(self):
         file_uuid = list(self.manifest['fileFilesMap'])[0]
@@ -403,8 +465,25 @@ class ArchiveSubmission:
                 validation_result_details = self.dsp_api.get_validation_result_details(details_url)
                 if validation_result_details.get('errorMessages'):
                     errors.append(validation_result_details.get('errorMessages'))
-
         return errors
+
+    def get_validation_error_report(self):
+        get_validation_results_url = self.submission['_links']['validationResults']['href']
+        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
+
+        report = {}
+        for validation_result in validation_results:
+            if validation_result['validationStatus'] == "Complete":
+                details_url = validation_result['_links']['validationResult']['href']
+                details_url = details_url.split('{')[0]
+                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
+                submittable_href = validation_result_details['_links']['submittable']['href']
+                if submittable_href and validation_result_details.get('errorMessages'):
+                    if not report.get(submittable_href):
+                        report[submittable_href] = []
+                    report[submittable_href].append(validation_result_details.get('errorMessages'))
+
+        return report
 
     def is_submittable(self):
         get_status_url = self.submission['_links']['submissionStatus']['href']
@@ -472,13 +551,14 @@ class ArchiveSubmission:
 
 
 class IngestArchiver:
-    def __init__(self, ingest_api, dsp_api, ontology_api=ontology.__api__, exclude_types=None, alias_prefix=None):
+    def __init__(self, ingest_api, dsp_api, ontology_api=ontology.__api__, exclude_types=None, alias_prefix=None, dsp_validation=True):
         self.logger = logging.getLogger(__name__)
         self.ingest_api = ingest_api
         self.exclude_types = exclude_types if exclude_types else []
         self.alias_prefix = f"{alias_prefix}_" if alias_prefix else ""
         self.ontology_api = ontology_api
         self.dsp_api = dsp_api
+        self.dsp_validation = dsp_validation
 
         self.converter = {
             "project": ProjectConverter(ontology_api=ontology_api),
@@ -532,7 +612,8 @@ class IngestArchiver:
 
     def convert(self, manifests):
         entity_map = ArchiveEntityMap()
-        for idx, manifest_id in enumerate(manifests):
+        for idx, manifest_url in enumerate(manifests):
+            manifest_id = manifest_url.rsplit('/', 1)[-1]
             print(f'\n* PROCESSING MANIFEST {idx + 1}/{len(manifests)}: {manifest_id}')
             manifest = self.get_manifest(manifest_id)
             entities = self._convert(manifest)
@@ -540,7 +621,7 @@ class IngestArchiver:
         return entity_map
 
     def _convert(self, manifest: Manifest):
-        aggregator = ArchiveEntityAggregator(manifest, alias_prefix=self.alias_prefix)
+        aggregator = ArchiveEntityAggregator(manifest, self.ingest_api, alias_prefix=self.alias_prefix)
 
         entities = []
         for archive_entity_type in ["project", "study", "sample", "sequencingExperiment", "sequencingRun"]:
@@ -557,29 +638,31 @@ class IngestArchiver:
 
                 converter = self.converter[archive_entity_type]
 
-                current_version = self.dsp_api.get_current_version(archive_entity.archive_entity_type,
+                if self.dsp_validation:
+                    current_version = self.dsp_api.get_current_version(archive_entity.archive_entity_type,
                                                                    archive_entity.id)
-                if current_version and current_version.get('accession'):
-                    archive_entity.accession = current_version.get('accession')
-                    archive_entity.errors.append({
-                        "error_message": f"This alias has already been submitted to DSP, accession: {archive_entity.accession}.",
-                        "details": {
-                            "current_version": current_version["_links"]["self"]["href"]
-                        }
-                    })
-                elif current_version and not current_version.get('accession'):
-                    archive_entity.errors.append({
-                        "error_message": f'This alias has already been submitted to DSP, but still has no accession.',
-                        "details": {
-                            "current_version": current_version["_links"]["self"]["href"]
-                        }
-                    })
+                    if current_version and current_version.get('accession'):
+                        archive_entity.accession = current_version.get('accession')
+                        archive_entity.errors.append({
+                            "error_message": f"This alias has already been submitted to DSP, accession: {archive_entity.accession}.",
+                            "details": {
+                                "current_version": current_version["_links"]["self"]["href"]
+                            }
+                        })
+                    elif current_version and not current_version.get('accession'):
+                        archive_entity.errors.append({
+                            "error_message": f'This alias has already been submitted to DSP, but still has no accession.',
+                            "details": {
+                                "current_version": current_version["_links"]["self"]["href"]
+                            }
+                        })
 
-                elif IngestArchiver.is_metadata_accessioned(archive_entity):
-                    archive_entity.errors.append({
-                        "error_message": 'Metadata already have an accession'
-                    })
-                else:
+                    elif IngestArchiver.is_metadata_accessioned(archive_entity):
+                        archive_entity.errors.append({
+                            "error_message": 'Metadata already have an accession'
+                        })
+
+                if not archive_entity.errors:
                     try:
                         archive_entity.conversion = converter.convert(archive_entity.data)
                         archive_entity.conversion['alias'] = archive_entity.id
@@ -588,7 +671,7 @@ class IngestArchiver:
                     except ConversionError as e:
                         archive_entity.errors.append({
                             "error_message": f'An error occured converting data to a {archive_entity_type}: {str(e)}.',
-                            "details": {"data": json.loads(archive_entity.data)}
+                            "details": {"data": json.dumps(archive_entity.data)}
                         })
 
                 entities.append(archive_entity)
@@ -622,6 +705,7 @@ class IngestArchiver:
                     "files": files,
                     "manifest_id": entity.manifest_id
                 }
+                manifest = self.ingest_api.get_manifest_by_id(entity.manifest_id)
 
                 if protocols.is_10x(data.get("library_preparation_protocol")):
                     message["conversion"] = {}
@@ -641,15 +725,17 @@ class IngestArchiver:
 
         sample = entity.data.get("biomaterial")
         if sample:
-            return ("biomaterial_core" in sample["content"]) and ("biosd_biomaterial" in sample["content"]["biomaterial_core"])
+            return ("biomaterial_core" in sample["content"]) and (
+                "biosd_biomaterial" in sample["content"]["biomaterial_core"])
 
         return False
 
 
 class ArchiveEntityAggregator:
-    def __init__(self, manifest: Manifest, alias_prefix):
+    def __init__(self, manifest: Manifest, ingest_api: IngestAPI, alias_prefix: str):
         self.manifest = manifest
         self.alias_prefix = alias_prefix
+        self.ingest_api = ingest_api
 
     def _get_projects(self):
         project = self.manifest.get_project()
@@ -681,16 +767,39 @@ class ArchiveEntityAggregator:
         return [archive_entity]
 
     def _get_samples(self):
-        samples = []
+        samples_map = {}
+        derived_from_graph = Graph()
+
         for biomaterial in self.manifest.get_biomaterials():
             archive_entity = ArchiveEntity()
             archive_entity.manifest_id = self.manifest.manifest_id
             archive_type = "sample"
             archive_entity.archive_entity_type = archive_type
-            archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial)
-            archive_entity.data = {"biomaterial": biomaterial}
-            samples.append(archive_entity)
-        return samples
+            archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial.data)
+
+            archive_entity.data = {'biomaterial': biomaterial.data}
+
+            if biomaterial.derived_by_process:
+                # TODO protocols will be needed for samples conversion
+                # archive_entity.data.update(biomaterial.derived_with_protocols)
+
+                derived_from_alias = self.generate_archive_entity_id('sample', biomaterial.derived_from)
+                derived_from_graph.add_edge(derived_from_alias, archive_entity.id)
+                links = {'sampleRelationships': [
+                    {
+                        'alias': derived_from_alias,
+                        'relationshipNature': 'derived from'
+                    }
+                ]}
+                archive_entity.links = links
+
+            samples_map[archive_entity.id] = archive_entity
+
+        sorted_samples = derived_from_graph.topological_sort()
+        priority_samples = [samples_map.get(sample) for sample in sorted_samples if samples_map.get(sample)]
+        orphan_samples = [samples_map.get(sample) for sample in samples_map.keys() if sample not in priority_samples]
+
+        return priority_samples + orphan_samples
 
     def _get_sequencing_experiments(self):
         process = self.manifest.get_assay_process()

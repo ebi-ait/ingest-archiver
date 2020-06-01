@@ -23,13 +23,19 @@ class OntologyAPI:
 
         raise Error(f'Could not retrieve IRI for {term}')
 
-    def search(self, term, exact=True, obsolete=False, group=True, query_fields='obo_id'):
+    def search(self, term, exact=True, obsolete=False, group=True, query_fields=None):
+        if not term:
+            raise Error(f'Search term must be supplied.')
+
         exact = 'true' if exact else 'false'
         obsolete = 'true' if obsolete else 'false'
         group = 'true' if group else 'false'
 
-        params = f'q={quote(term)}&exact={exact}&obsoletes={obsolete}&groupField={group}&queryFields={query_fields}'
+        params = f'q={quote(term)}&exact={exact}&obsoletes={obsolete}&groupField={group}'
+        if query_fields:
+            params += f'&queryFields={query_fields}'
         query_url = f'{self.url}/api/search?{params}'
+
         r = requests.get(query_url)
         r.raise_for_status()
         body = r.json()

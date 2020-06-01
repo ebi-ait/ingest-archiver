@@ -5,8 +5,9 @@ from conversion.post_process import format_date, default_to
 
 def _taxon(*args):
     ontology_item = args[0]
-    genus_species = ontology_item[0]
-    return genus_species.get('ontology_label')
+    if ontology_item:
+        genus_species = ontology_item[0]
+        return genus_species.get('ontology_label')
 
 
 def derive_concrete_type(*args):

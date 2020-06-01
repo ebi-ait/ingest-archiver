@@ -28,14 +28,24 @@ def _library_layout_attribute(*args):
 
 
 def ontology_term(*args):
+    term = args[0]
+
+    if not term:
+        return None
+
     return [{
-        'terms': [{'url': _ontology_api.expand_curie()}],
-        'value': args[0]
+        'terms': [{'url': _ontology_api.expand_curie(term)}],
+        'value': term
     }]
 
 
-def string_attribute(*args):
-    return dsp_attribute(str(args[0]))
+def nominal_value(*args):
+    value = args[0]
+    if value:
+        value = str(args[0])
+    else:
+        value = "0"
+    return dsp_attribute(value)
 
 
 def instrument_model(*args):
@@ -47,7 +57,7 @@ def instrument_model(*args):
 sp = 'sequencing_protocol'
 lp = 'library_preparation_protocol'
 ib = 'input_biomaterial'
-spec = {
+sq_experiment_spec = {
     'alias': [f'{sp}.content.protocol_core.protocol_id'],
     'title': [f'{sp}.content.protocol_core.protocol_name'],
     'description': [f'{sp}.content.protocol_core.protocol_description'],
@@ -70,7 +80,7 @@ spec = {
             [f'{ib}.content.biomaterial_core.ncbi_taxon_id', taxon_id_attribute],
         'Library Preparation Protocol - End Bias': [f'{lp}.content.end_bias', dsp_attribute],
         'Library Preparation Protocol - Library Construction Method':
-            [f'{lp}.content.library_construction_method.text', ontology_term],
+            [f'{lp}.content.library_construction_method.ontology_label', ontology_term],
         'Library Preparation Protocol - Nucleic Acid Source':
             [f'{lp}.content.nucleic_acid_source', dsp_attribute],
         'Library Preparation Protocol - Primer': [f'{lp}.content.primer', dsp_attribute],
@@ -90,14 +100,15 @@ spec = {
         'instrument_model': [f'{sp}.content.instrument_manufacturer_model.text', instrument_model],
         'platform_type': ['', fixed_dsp_attribute, 'ILLUMINA'],
         'design_description': ['', fixed_dsp_attribute, 'unspecified'],
-        'nominal_length': [f'{lp}.content.nominal_length', string_attribute],
-        'nominal_sdev': [f'{lp}.content.nominal_sdev', string_attribute]
+        # TODO if library_layout is SINGLE, this is "0"
+        'nominal_length': [f'{lp}.content.nominal_length', nominal_value],
+        'nominal_sdev': [f'{lp}.content.nominal_sdev', nominal_value]
     }
 }
 
 
 def convert_sequencing_experiment(hca_data: dict):
-    return JsonMapper(hca_data).map(spec)
+    return JsonMapper(hca_data).map(sq_experiment_spec)
 
 
 study_spec = {
@@ -121,7 +132,7 @@ def convert_study(hca_data: dict):
     return JsonMapper(hca_data).map(study_spec)
 
 
-_sqrun_alias_prefix = 'sequencingRun_'
+_sq_run_alias_prefix = 'sequencingRun_'
 
 
 _file_format_mapping = {
@@ -131,18 +142,18 @@ _file_format_mapping = {
 }
 
 
-def _sqrun_assay_ref(*args):
-    return [{'alias': prefix_with(args[0], _sqrun_alias_prefix)}]
+def _sq_run_assay_ref(*args):
+    return [{'alias': prefix_with(args[0], _sq_run_alias_prefix)}]
 
 
 def convert_sequencing_run(hca_data: dict):
     mapper = JsonMapper(hca_data)
     converted_data = mapper.map({
         '$on': 'process',
-        'alias': ['uuid.uuid', prefix_with, _sqrun_alias_prefix],
+        'alias': ['uuid.uuid', prefix_with, _sq_run_alias_prefix],
         'title': ['content.process_core.process_name', default_to, ''],
         'description': ['content.process_core.process_description', default_to, ''],
-        'assayRefs': ['uuid.uuid', _sqrun_assay_ref]
+        'assayRefs': ['uuid.uuid', _sq_run_assay_ref]
     })
 
     converted_files = mapper.map({
@@ -154,12 +165,12 @@ def convert_sequencing_run(hca_data: dict):
         'read_index': ['content.read_index']
     })
 
-    converted_data['attributes'] = _sqrun_file_attributes(converted_files)
-    converted_data['files'] = _sqrun_files(converted_files, hca_data)
+    converted_data['attributes'] = _sq_run_file_attributes(converted_files)
+    converted_data['files'] = _sq_run_files(converted_files, hca_data)
     return converted_data
 
 
-def _sqrun_file_attributes(converted_files):
+def _sq_run_file_attributes(converted_files):
     file_attributes = {}
     for index, file in enumerate(converted_files):
         file_attributes.update({
@@ -172,7 +183,7 @@ def _sqrun_file_attributes(converted_files):
     return file_attributes
 
 
-def _sqrun_files(converted_files, hca_data):
+def _sq_run_files(converted_files, hca_data):
     if protocols.is_10x(hca_data.get("library_preparation_protocol")):
         files = [{
             'name': f"{hca_data['manifest_id']}.bam",
