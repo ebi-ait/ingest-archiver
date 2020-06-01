@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import List
 
 import polling as polling
 
@@ -110,7 +111,7 @@ class ArchiveEntityMap:
                 return entities_dict.get(alias)
         return None
 
-    def get_entities(self):
+    def get_entities(self) -> List["ArchiveEntity"]:
         entities = []
         for entity_type, entities_dict in self.entities_dict_type.items():
             if not entities_dict:

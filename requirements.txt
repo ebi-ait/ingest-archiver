@@ -1,6 +1,8 @@
+flask
 urllib3
 flatten_json
 requests
 pika
 polling
 six #flatten_json undeclared dependancy
+sqlalchemy
