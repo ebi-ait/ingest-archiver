@@ -1,6 +1,6 @@
 def dsp_attribute(*args):
     value = args[0]
-    if value:
+    if value is not None:
         return [{'value': value}]
 
 
