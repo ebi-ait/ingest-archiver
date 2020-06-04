@@ -96,7 +96,7 @@ class IngestAPI:
     def get_manifest_by_id(self, manifest_id):
         return self.get_entity_by_id('bundleManifests', manifest_id)
 
-    def get_manifests_from_project(self, project_uuid, bundle_type ="PRIMARY"):
+    def get_manifests_from_project(self, project_uuid, bundle_type="PRIMARY"):
         entity_url = f'{self.url}/projects/search/findBundleManifestsByProjectUuidAndBundleType?projectUuid={project_uuid}&bundleType={bundle_type}'
         return self._get_all(entity_url, 'bundleManifests')
 
@@ -106,6 +106,10 @@ class IngestAPI:
         for manifest in manifests:
             manifest_ids.append(self.get_entity_id(manifest, 'bundleManifests'))
         return manifest_ids
+
+    def get_manifests_from_submission(self, submission_uuid):
+        entity_url = f'{self.url}/bundleManifests/search/findByEnvelopeUuid?uuid={submission_uuid}'
+        return self._get_all(entity_url, 'bundleManifests')
 
     def get_entity_id(self, entity, entity_type):
         entity_base = f'{self.url}/{entity_type}/'
@@ -133,3 +137,16 @@ class IngestAPI:
                 r = self.session.get(r.json()["_links"]["next"]["href"], headers=self.headers)
                 for entity in r.json()["_embedded"][entity_type]:
                     yield entity
+
+    def create_archive_submission(self, archive_submission):
+        url = f'{self.url}/archiveSubmissions/'
+        return self._post(url, archive_submission)
+
+    def create_archive_entity(self, archive_submission_url, archive_entity):
+        url = f'{archive_submission_url}/archiveEntities'
+        return self._post(url, archive_entity)
+
+    def _post(self, url, content):
+        r = self.session.post(url, json=content, headers=self.headers)
+        r.raise_for_status()
+        return r.json()
