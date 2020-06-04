@@ -11,5 +11,5 @@ COPY config.py cli.py requirements.txt ./
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python", "cli.py"]
+ENTRYPOINT ["python", "app.py"]
 
