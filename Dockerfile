@@ -7,7 +7,7 @@ COPY archiver ./archiver
 COPY conversion ./conversion
 COPY api ./api
 COPY utils ./utils
-COPY config.py cli.py requirements.txt ./
+COPY config.py app.py requirements.txt ./
 
 RUN pip install -r requirements.txt
 
