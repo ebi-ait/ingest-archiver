@@ -453,8 +453,6 @@ class ArchiveSubmission:
                 self.validation_result = errors
                 print("####################### VALIDATION ERRORS")
                 print(json.dumps(errors, indent=4))
-                print("####################### SUBMISSION REPORT")
-                print(json.dumps(self.generate_report(), indent=4))
 
         return False
 
