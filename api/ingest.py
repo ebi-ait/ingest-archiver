@@ -1,6 +1,6 @@
 import logging
 import os
-
+import json
 import requests
 from requests import adapters
 from urllib3.util import retry
@@ -99,7 +99,8 @@ class IngestAPI:
 
     def patch_entity_by_id(self, entity_type, entity_id, entity_patch):
         entity_url = f'{self.url}/{entity_type}/{entity_id}'
-        response = self.session.patch(entity_url,entity_patch)
+        patch = json.dumps(entity_patch)
+        response = self.session.patch(entity_url, patch, headers=self.get_headers())
         entity_json = self._handle_response(response)
         self._cache_entity(entity_url, entity_json)
         return entity_json
