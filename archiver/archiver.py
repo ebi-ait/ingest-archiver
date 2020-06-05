@@ -496,12 +496,15 @@ class ArchiveSubmission:
                 details_url = validation_result['_links']['validationResult']['href']
                 details_url = details_url.split('{')[0]
                 validation_result_details = self.dsp_api.get_validation_result_details(details_url)
-                submittable_href = validation_result_details['_links']['submittable']['href']
-                if submittable_href and validation_result_details.get('errorMessages'):
-                    if not report.get(submittable_href):
-                        report[submittable_href] = []
-                    report[submittable_href].append(validation_result_details.get('errorMessages'))
-
+                if validation_result_details.get('errorMessages'):
+                    try:
+                        submittable_href = validation_result_details['_links']['submittable']['href']
+                    except KeyError:
+                        submittable_href = False
+                    report_key = submittable_href if submittable_href else 'NoSubmittable'
+                    if not report.get(report_key):
+                        report[report_key] = []
+                        report[report_key].append(validation_result_details.get('errorMessages'))
         return report
 
     def is_submittable(self):
