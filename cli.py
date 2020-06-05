@@ -12,10 +12,9 @@ import sys
 from optparse import OptionParser
 
 import config
-from archiver.archiver import IngestArchiver, ArchiveEntityMap
-from api.ingest import IngestAPI
-from api.ontology import OntologyAPI
 from api.dsp import DataSubmissionPortal
+from api.ingest import IngestAPI
+from archiver.archiver import IngestArchiver, ArchiveEntityMap, ArchiveSubmission
 
 
 class ArchiveCLI:
@@ -84,6 +83,10 @@ class ArchiveCLI:
         else:
             archive_submission.validate()
 
+    def generate_validation_error_report(self, dsp_submission_url):
+        submission = ArchiveSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
+        self.save_dict_to_file("VALIDATION_ERROR_REPORT", submission.get_validation_error_report())
+
     def save_dict_to_file(self, file_name, json_content):
         if not self.output_dir:
             return
@@ -122,6 +125,17 @@ class ArchiveCLI:
         return exclude_types
 
 
+def exit_error(message: str):
+    logging.error(message)
+    exit(2)
+
+
+def exit_success(message: str = None):
+    if message:
+        logging.info(message)
+    exit(0)
+
+
 if __name__ == '__main__':
     logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(format=logging_format, stream=sys.stdout, level=logging.INFO)
@@ -135,11 +149,18 @@ if __name__ == '__main__':
                       help="Specify a path to a file containing list of manifest id's to be archived."
                            "If project uuid is already specified then this parameter will be ignored.")
 
-    parser.add_option("-l", "--load_path", help="Specify the path to load a REPORT.json to send  to DSP, will skip loading and converting from ingest.")
+    parser.add_option("-l", "--load_path",
+                      help="Specify the path to load a REPORT.json to send  to DSP, will skip loading and converting "
+                           "from ingest.")
 
     # submit only
     parser.add_option("-u", "--submission_url",
                       help="DSP Submission url to complete")
+
+    # validate only
+    parser.add_option("-e", "--validation_errors",
+                      action="store_true",
+                      help="Generate validation errors report.")
 
     # options helpful for testing
     parser.add_option("-a", "--alias_prefix", help="Custom prefix to alias")
@@ -150,21 +171,32 @@ if __name__ == '__main__':
     parser.add_option("-s", "--submit",
                       help="Add this flag to wait for entities submit to archives once valid",
                       action="store_true", default=False)
-    parser.add_option("-v", "--no_validation",
-                      help="Add this flag to not send submission to DSP for validation, will override submit flag to false.",
+    parser.add_option("-n", "--no_validation",
+                      help="Add this flag to not send submission to DSP for validation, will override submit flag to "
+                           "false.",
                       action="store_true", default=False)
     parser.add_option("-o", "--output_dir", help="Customise output directory name")
 
     (options, args) = parser.parse_args()
 
-    if not (options.project_uuid or options.manifest_list_file or options.load_path):
-        logging.error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a file of entities")
-        exit(2)
+    if not (options.project_uuid or options.manifest_list_file or options.load_path or options.submission_url):
+        exit_error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a file of entities (4) a submission url")
+
+    if options.validation_errors and options.no_validation:
+        exit_error("--validation_errors and --no_validation are mutually exclusive")
+
+    if options.validation_errors and not options.submission_url:
+        exit_error("--validation_errors requires --submission_url")
+
     if options.submission_url and options.load_path:
         logging.warning("When loading entities from disk, accessions won't be saved to ingest")
-        exit(2)
 
     cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation or options.submission_url)
+
+    if options.validation_errors and options.submission_url:
+        cli.generate_validation_error_report(options.submission_url)
+        exit_success()
+
     entity_map: ArchiveEntityMap
     if options.load_path:
         entity_map = cli.load_map(options.load_path)
@@ -179,3 +211,5 @@ if __name__ == '__main__':
         cli.complete_submission(options.submission_url, entity_map)
     elif entity_map and not options.no_validation:
         cli.validate_submission(entity_map, options.submit)
+
+    exit_success()
