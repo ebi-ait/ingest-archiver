@@ -22,6 +22,7 @@ This component is currently invoked manually after an HCA submission.
 ```
 docker run -v $PWD:/output \
 --env INGEST_API_URL=http://api.ingest.archive.data.humancellatlas.org/ \
+--env INGEST_API_GCP={ "type": "service_account", "project_id": "...", "private_key_id": "...", "private_key": "...", "client_email": "...", "client_id": "...", "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token", "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", "client_x509_cert_url": "..." } \
 --env DSP_API_URL=https://submission.ebi.ac.uk \
 --env AAP_API_URL=https://api.aai.ebi.ac.uk/auth \
 --env ONTOLOGY_API_URL=https://www.ebi.ac.uk/ols \
@@ -40,6 +41,11 @@ INGEST_API_URL
 # The ingest environment to pull metadata for submission. 
 Production: INGEST_API_URL=http://api.ingest.archive.data.humancellatlas.org/
 Staging: INGEST_API_URL=http://api.ingest.staging.archive.data.humancellatlas.org/
+
+INGEST_API_GCP (OPTIONAL)
+# The service account token to use when connecting to the ingest api.
+This is required when completing submissions, to post accessions back to ingest, but is otherwise optional.
+Search the aws secrets manager for gcp-credentials.json
 
 DSP_API_URL
 # The DSP service on which to create the new submission to archives.

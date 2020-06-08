@@ -41,9 +41,9 @@ class ArchiveCLI:
         parsed_manifest_list = [x.strip() for x in content]
         self.manifests = parsed_manifest_list
 
-    def complete_submission(self, submission_url):
+    def complete_submission(self, submission_url, entity_map: ArchiveEntityMap):
         logging.info(f'##################### COMPLETING DSP SUBMISSION {submission_url}')
-        archive_submission = self.archiver.complete_submission(submission_url)
+        archive_submission = self.archiver.complete_submission(submission_url, entity_map)
         report = archive_submission.generate_report()
         submission_uuid = submission_url.rsplit('/', 1)[-1]
         self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
@@ -179,35 +179,37 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not (options.project_uuid or options.manifest_list_file or options.submission_url or options.load_path):
-        exit_error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a "
-                   "submission url (4) a file of entities")
+    if not (options.project_uuid or options.manifest_list_file or options.load_path or options.submission_url):
+        exit_error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a file of entities (4) a submission url")
 
-    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation)
+    if options.validation_errors and options.no_validation:
+        exit_error("--validation_errors and --no_validation are mutually exclusive")
 
     if options.validation_errors and not options.submission_url:
-        exit_error("You must supply param --submission_url")
+        exit_error("--validation_errors requires --submission_url")
+
+    if options.submission_url and options.load_path:
+        logging.warning("When loading entities from disk, accessions won't be saved to ingest")
+
+    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation or options.submission_url)
 
     if options.validation_errors and options.submission_url:
         cli.generate_validation_error_report(options.submission_url)
         exit_success()
 
+    entity_map: ArchiveEntityMap
+    if options.load_path:
+        entity_map = cli.load_map(options.load_path)
+    else:
+        if options.project_uuid:
+            cli.get_manifests_from_project(options.project_uuid)
+        elif options.manifest_list_file:
+            cli.get_manifests_from_list(options.manifest_list_file)
+        entity_map = cli.build_map()
+
     if options.submission_url:
-        cli.complete_submission(options.submission_url)
-        exit_success()
-
-    if options.project_uuid:
-        cli.get_manifests_from_project(options.project_uuid)
-        entity_map: ArchiveEntityMap = cli.build_map()
-
-    elif options.manifest_list_file:
-        cli.get_manifests_from_list(options.manifest_list_file)
-        entity_map: ArchiveEntityMap = cli.build_map()
-
-    elif options.load_path:
-        entity_map: ArchiveEntityMap = cli.load_map(options.load_path)
-
-    if not options.no_validation:
+        cli.complete_submission(options.submission_url, entity_map)
+    elif entity_map and not options.no_validation:
         cli.validate_submission(entity_map, options.submit)
 
     exit_success()

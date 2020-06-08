@@ -1,7 +1,11 @@
+import json
 import logging
+import os
 from typing import Iterator, List
 
 import requests
+from ingest.utils.s2s_token_client import S2STokenClient
+from ingest.utils.token_manager import TokenManager
 from requests import adapters
 from urllib3.util import retry
 
@@ -33,6 +37,28 @@ class IngestAPI:
         adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
         self.session.mount('https://', adapter)
 
+        if os.environ.get('INGEST_API_GCP'):
+            token_client = S2STokenClient()
+            token_client.setup_from_env_var('INGEST_API_GCP')
+            self.token_manager = TokenManager(token_client)
+        else:
+            self.token_manager = False
+
+    def set_token(self, token):
+        self.token = token
+        self.headers['Authorization'] = self.token
+        self.logger.debug(f'Token set!')
+
+        return self.headers
+
+    def get_headers(self):
+        # refresh token
+        if self.token_manager:
+            self.set_token(f'Bearer {self.token_manager.get_token()}')
+            self.logger.debug(f'Token refreshed!')
+
+        return self.headers
+
     def get_related_entity(self, entity, relation, related_entity_type) -> Iterator['dict']:
         related_entity_uri = self._get_link(entity, relation)
         related_entities = self._get_all(related_entity_uri, related_entity_type)
@@ -50,7 +76,7 @@ class IngestAPI:
     def get_submission_by_id(self, submission_id):
         get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
 
-        response = self.session.get(get_submission_url, headers=self.headers)
+        response = self.session.get(get_submission_url, headers=self.get_headers())
 
         submission = None
 
@@ -62,7 +88,7 @@ class IngestAPI:
     def get_concrete_entity_type(self, entity):
         content = entity.get('content')
         schema_url = content.get('describedBy')
-        response = self.session.get(schema_url, headers=self.headers)
+        response = self.session.get(schema_url, headers=self.get_headers())
         schema = self._handle_response(response)
 
         return schema.get('name')
@@ -78,9 +104,17 @@ class IngestAPI:
     def get_entity(self, entity_url):
         entity_json = self._get_cached_entity(entity_url)
         if not entity_json:
-            response = self.session.get(entity_url, headers=self.headers)
+            response = self.session.get(entity_url, headers=self.get_headers())
             entity_json = self._handle_response(response)
             self._cache_entity(entity_url, entity_json)
+        return entity_json
+
+    def patch_entity_by_id(self, entity_type, entity_id, entity_patch):
+        entity_url = f'{self.url}/{entity_type}/{entity_id}'
+        patch = json.dumps(entity_patch)
+        response = self.session.patch(entity_url, patch, headers=self.get_headers())
+        entity_json = self._handle_response(response)
+        self._cache_entity(entity_url, entity_json)
         return entity_json
 
     def _get_cached_entity(self, url):
@@ -107,7 +141,8 @@ class IngestAPI:
         return self.get_entity_by_id('bundleManifests', manifest_id)
 
     def get_manifests_from_project(self, project_uuid, bundle_type="PRIMARY"):
-        entity_url = f'{self.url}/projects/search/findBundleManifestsByProjectUuidAndBundleType?projectUuid={project_uuid}&bundleType={bundle_type}'
+        entity_url = f'{self.url}/projects/search/findBundleManifestsByProjectUuidAndBundleType' + \
+                     f'?projectUuid={project_uuid}&bundleType={bundle_type}'
         return self._get_all(entity_url, 'bundleManifests')
 
     def get_manifest_ids_from_project(self, project_uuid):
@@ -128,8 +163,14 @@ class IngestAPI:
     def get_entity_id(self, entity, entity_type):
         entity_base = f'{self.url}/{entity_type}/'
         entity_uri = self._get_link(entity, 'self')
-        entity_id = str.strip(entity_uri.replace(entity_base, ''), '/')
+        entity_id = str.replace(entity_uri, entity_base, '').strip('/')
         return entity_id
+
+    def entity_info_from_url(self, url):
+        location = str.replace(url, self.url, '').strip('/')
+        entity_type = location.split('/')[0]
+        entity_id = location.split('/')[1]
+        return entity_type, entity_id
 
     @staticmethod
     def _handle_response(response):
@@ -142,13 +183,13 @@ class IngestAPI:
         return link['href'].rsplit("{")[0] if link else ''
 
     def _get_all(self, url, entity_type):
-        r = self.session.get(url, headers=self.headers)
+        r = self.session.get(url, headers=self.get_headers())
         r.raise_for_status()
         if "_embedded" in r.json():
             for entity in r.json()["_embedded"][entity_type]:
                 yield entity
             while "next" in r.json()["_links"]:
-                r = self.session.get(r.json()["_links"]["next"]["href"], headers=self.headers)
+                r = self.session.get(r.json()["_links"]["next"]["href"], headers=self.get_headers())
                 for entity in r.json()["_embedded"][entity_type]:
                     yield entity
 
@@ -164,7 +205,7 @@ class IngestAPI:
         url = f'{self.url}/archiveSubmissions/search/findByDspUuid?dspUuid={dsp_uuid}'
         return self.get(url)
 
-    def get(self, url,  **kwargs):
+    def get(self, url, **kwargs):
         r = self.session.get(url, headers=self.headers, **kwargs)
         r.raise_for_status()
         return r.json()
