@@ -338,7 +338,7 @@ For example:
             }
         ]]
         
- #### Convenience Methods
+#### Convenience Methods
  
 For convenience, the `json_mapper` module makes available 2 helper methods that allow easy inclusion of JSON 
 predefined JSON nodes into the specification. These are `json_object` for JSON objects, and `json_array` for 

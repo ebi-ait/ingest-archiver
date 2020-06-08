@@ -47,25 +47,27 @@ class TestConverter(unittest.TestCase):
         self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
 
     def test_convert_sample(self):
+        # given:
         biomaterial = self.hca_data.get('biomaterial')
-
         with open(config.JSON_DIR + 'dsp/sample.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
+        # and:
         test_alias = 'hca' + str(randint(0, 1000))
-
         biomaterial['uuid']['uuid'] = test_alias
         expected_json['alias'] = test_alias
         expected_json['attributes']['HCA Biomaterial UUID'] = [{'value': test_alias}]
 
-        input = {
-            'biomaterial': biomaterial
-        }
-
+        # and:
         converter = SampleConverter(ontology_api=self.ontology_api)
         converter.ingest_api = self.ingest_api
-        actual_json = converter.convert(input)
 
+        # when:
+        actual_json = converter.convert({
+            'biomaterial': biomaterial
+        })
+
+        # then:
         self.assertEqual(expected_json, actual_json)
 
     @patch('api.ontology.OntologyAPI.expand_curie')
@@ -124,59 +126,40 @@ class TestConverter(unittest.TestCase):
 
     def test_convert_sequencing_run(self):
         self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
-        process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
         file = dict(self.hca_data.get('sequencing_file'))
 
+        uuid = 'process' + str(randint(0, 1000))
+        test_alias = f'sequencingRun_{uuid}'
         with open(config.JSON_DIR + 'dsp/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
+            expected_json['alias'] = test_alias
+            expected_json['assayRefs'] = [{'alias': test_alias}]
 
-        test_alias = 'process' + str(randint(0, 1000))
+        process = dict(self.hca_data.get('process'))
+        process['uuid']['uuid'] = uuid
 
-        process['uuid']['uuid'] = test_alias
-
-        hca_data = {
+        converter = SequencingRunConverter(ontology_api=self.ontology_api)
+        actual_json = converter.convert({
             'library_preparation_protocol': lib_prep_protocol,
             'sequencing_protocol': sequencing_protocol,
             'process': process,
             'files': [file]
-        }
-
-        expected_json['alias'] = 'sequencingRun_' + test_alias
-
-        expected_json['attributes'][
-            'HCA Library Preparation Protocol UUID'] = [{'value': lib_prep_protocol['uuid']['uuid']}]
-        expected_json['attributes'][
-            'HCA Sequencing Protocol UUID'] = [{'value': sequencing_protocol['uuid']['uuid']}]
-        expected_json['attributes'][
-            'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
-        expected_json['attributes'][
-            "HCA Files UUID's"] = [
-            {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
-
-        converter = SequencingRunConverter(ontology_api=self.ontology_api)
-        actual_json = converter.convert(hca_data)
+        })
 
         self.assertEqual(expected_json, actual_json)
 
     def test_convert_sequencing_run_10x(self):
         self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
-
-        process = dict(self.hca_data.get('process'))
-        sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
-        file = dict(self.hca_data.get('sequencing_file'))
-
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
+        with open(f'{config.JSON_DIR}hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             lib_prep_protocol = json.loads(data_file.read())
 
-        with open(config.JSON_DIR + 'dsp/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
-            expected_json = json.loads(data_file.read())
-
-        test_alias = 'process' + str(randint(0, 1000))
-
-        process['uuid']['uuid'] = test_alias
-
+        uuid = f'process{str(randint(0, 1000))}'
+        process = dict(self.hca_data.get('process'))
+        process['uuid']['uuid'] = uuid
+        sequencing_protocol = dict(self.hca_data.get('sequencing_protocol'))
+        file = dict(self.hca_data.get('sequencing_file'))
         hca_data = {
             'library_preparation_protocol': lib_prep_protocol,
             'sequencing_protocol': sequencing_protocol,
@@ -185,22 +168,14 @@ class TestConverter(unittest.TestCase):
             'manifest_id': 'dummy_manifest_id'
         }
 
-        expected_json['alias'] = 'sequencingRun_' + test_alias
-        expected_json['attributes'][
-            'HCA Library Preparation Protocol UUID'] = [
-            {'value': lib_prep_protocol['uuid']['uuid']}]
-        expected_json['attributes'][
-            'HCA Sequencing Protocol UUID'] = [
-            {'value': sequencing_protocol['uuid']['uuid']}]
-        expected_json['attributes'][
-            'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
-        expected_json['attributes'][
-            "HCA Files UUID's"] = [
-            {'value': ', '.join([e["uuid"]["uuid"] for e in [file]])}]
+        test_alias = f'sequencingRun_{uuid}'
+        with open(config.JSON_DIR + 'dsp/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
+            expected_json = json.loads(data_file.read())
+            expected_json['alias'] = test_alias
+            expected_json['assayRefs'] = [{'alias': test_alias}]
 
         converter = SequencingRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)
-
         self.assertEqual(expected_json, actual_json)
 
     @patch('api.ontology.OntologyAPI.expand_curie')
