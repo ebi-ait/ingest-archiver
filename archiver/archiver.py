@@ -178,18 +178,25 @@ class Biomaterial:
 
 
 class IngestAccession:
-    def __init__(self, ingest_type, ingest_url, accession):
+    def __init__(self, ingest_type, ingest_url, accession_id, accession_type=None):
         self.ingest_type = ingest_type
         self.ingest_url = ingest_url
-        self.accession_id = accession
+        self.accession_id = accession_id
+        if not accession_type:
+            accession_type = ingest_type
+        self.accession_type = accession_type
 
     @staticmethod
-    def from_entity(ingest_type, entity: ArchiveEntity):
-        return IngestAccession.from_ingest_entity(ingest_type, entity.data[ingest_type], entity.accession)
+    def from_entity(entity_type, entity: ArchiveEntity):
+        accession_type = None
+        if entity_type == 'study':
+            entity_type = 'project'
+            accession_type = 'study'
+        return IngestAccession.from_ingest_entity(entity_type, entity.data[entity_type], entity.accession, accession_type)
 
     @staticmethod
-    def from_ingest_entity(ingest_type, ingest_entity, accession):
-        return IngestAccession(ingest_type, ingest_entity['_links']['self']['href'], accession)
+    def from_ingest_entity(ingest_type, ingest_entity, accession_id, accession_type = None):
+        return IngestAccession(ingest_type, ingest_entity['_links']['self']['href'], accession_id, accession_type)
 
 
 
@@ -639,26 +646,28 @@ class IngestArchiver:
             for accession in accessions:
                 entity_type, entity_id = self.ingest_api.entity_info_from_url(accession.ingest_url)
                 ingest_entity = self.ingest_api.get_entity_by_id(entity_type, entity_id)
-                entity_patch = IngestArchiver.generate_patch(accession.ingest_type, ingest_entity, accession.accession_id)
+                entity_patch = IngestArchiver.generate_patch(accession, ingest_entity)
                 try:
                     self.ingest_api.patch_entity_by_id(entity_type, entity_id, entity_patch)
                 except HTTPError:
                     logging.error("Failed to send to ingest", HTTPError)
 
     @staticmethod
-    def generate_patch(ingest_type, ingest_entity, accession_id):
+    def generate_patch(accession: IngestAccession, ingest_entity):
         entity_patch = {'content': ingest_entity['content']}
-        # todo: what about studies?
-        if ingest_type == 'project':
-            entity_patch['content']['biostudies_accessions'] = accession_id
-            entity_patch['content']['insdc_project_accessions'] = accession_id
-            # patch['content']['insdc_study_accessions'] = accession.accession
-        elif ingest_type == 'biomaterial':
-            entity_patch['content']['biomaterial_core']['biosamples_accession'] = accession_id
-        elif ingest_type == 'process':
-            entity_patch['content']['insdc_experiment'] = accession_id
-        elif ingest_type == 'file':
-            entity_patch['content']['insdc_run_accessions'] = accession_id
+        if accession.accession_type == 'project':
+            entity_patch['content']['biostudies_accessions'] = accession.accession_id
+        elif accession.accession_type == 'study':
+            entity_patch['content']['insdc_project_accessions'] = accession.accession_id
+            # DSP returns study_accessions, but an error in HCA metadata requires we store them as project_accessions
+            # Once this error is fixed we should also retrieve the project accession from ENA using the study accession
+            # entity_patch['content']['insdc_study_accessions'] = accession.accession_id
+        elif accession.accession_type == 'biomaterial':
+            entity_patch['content']['biomaterial_core']['biosamples_accession'] = accession.accession_id
+        elif accession.accession_type == 'process':
+            entity_patch['content']['insdc_experiment'] = accession.accession_id
+        elif accession.accession_type == 'file':
+            entity_patch['content']['insdc_run_accessions'] = accession.accession_id
         return entity_patch
 
     def get_manifest(self, manifest_id):
@@ -747,9 +756,10 @@ class IngestArchiver:
     def accessions_from_entity(entity: ArchiveEntity) -> List[IngestAccession]:
         accessions: List[IngestAccession] = []
         if entity.accession:
-            # ToDo: What about studies?
             if entity.archive_entity_type == 'project':
                 accessions.append(IngestAccession.from_entity('project', entity))
+            elif entity.archive_entity_type == 'study':
+                accessions.append(IngestAccession.from_entity('study', entity))
             elif entity.archive_entity_type == 'sample':
                 accessions.append(IngestAccession.from_entity('biomaterial', entity))
             elif entity.archive_entity_type == 'sequencingExperiment':
