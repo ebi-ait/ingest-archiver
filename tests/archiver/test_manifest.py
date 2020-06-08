@@ -28,7 +28,7 @@ class ManifestTest(TestCase):
         ingest_api_mock.get_manifest_by_id = MagicMock(return_value={'fileFilesMap': ['f1']})
         ingest_api_mock.get_file_by_uuid = MagicMock()
         related_entity_map = {
-            'derivedByProcesses': ['p1']
+            'derivedByProcesses': iter('p1')
         }
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
         manifest = Manifest(ingest_api_mock, 'manifest_id')
@@ -40,7 +40,7 @@ class ManifestTest(TestCase):
         ingest_api_mock.get_manifest_by_id = MagicMock(return_value={'fileFilesMap': ['f1']})
         ingest_api_mock.get_file_by_uuid = MagicMock()
         related_entity_map = {
-            'derivedByProcesses': ['p1', 'p2']
+            'derivedByProcesses': iter(['p1', 'p2'])
         }
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
         manifest = Manifest(ingest_api_mock, 'manifest_id')
@@ -52,7 +52,7 @@ class ManifestTest(TestCase):
         ingest_api_mock = MagicMock(name='ingest_api')
         ingest_api_mock.get_file_by_uuid = MagicMock()
         related_entity_map = {
-            'protocols': ['p1', 'p2']
+            'protocols': iter(['p1', 'p2'])
         }
         protocol_map = {
             'p1': 'library_preparation_protocol',
@@ -110,7 +110,7 @@ class ManifestTest(TestCase):
         ingest_api_mock = MagicMock(name='ingest_api')
         ingest_api_mock.get_file_by_uuid = MagicMock()
         related_entity_map = {
-            'protocols': ['p1', 'p2']
+            'protocols': iter(['p1', 'p2'])
         }
         protocol_map = {
             'p1': 'library_preparation_protocol',
@@ -126,7 +126,7 @@ class ManifestTest(TestCase):
     def test_get_files(self):
         ingest_api_mock = MagicMock(name='ingest_api')
         related_entity_map = {
-            'derivedFiles': ['f1', 'f2']
+            'derivedFiles': iter(['f1', 'f2'])
         }
         ingest_api_mock.get_assay_process = MagicMock()
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
@@ -138,7 +138,7 @@ class ManifestTest(TestCase):
     def test_get_input_biomaterial(self):
         ingest_api_mock = MagicMock(name='ingest_api')
         related_entity_map = {
-            'inputBiomaterials': ['b1']
+            'inputBiomaterials': iter(['b1'])
         }
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
         manifest = Manifest(ingest_api_mock, 'manifest_id')

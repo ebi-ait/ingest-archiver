@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import List, Iterator
+from typing import List, Iterator, Tuple
 
 import polling as polling
 
@@ -149,15 +149,16 @@ class Biomaterial:
     def from_uuid(cls, ingest_api, biomaterial_uuid):
         data = ingest_api.get_biomaterial_by_uuid(biomaterial_uuid)
 
-        derived_by_processes = ingest_api.get_related_entity(data, 'derivedByProcesses', 'processes')
+        derived_by_processes_count = ingest_api.get_related_entity_count(data, 'derivedByProcesses', 'processes')
 
-        if derived_by_processes:
+        if derived_by_processes_count:
+            derived_by_processes = ingest_api.get_related_entity(data, 'derivedByProcesses', 'processes')
             # A biomaterial derived from multiple processes is not even supported in the Spreadsheet Importer
-            if len(derived_by_processes) > 1:
+            if derived_by_processes_count > 1:
                 raise ArchiverError(
                     'A biomaterial derived from multiple processes is not supported yet for conversion.')
 
-            derived_by_process = derived_by_processes[0]
+            derived_by_process = next(derived_by_processes)
 
             protocols = ingest_api.get_related_entity(derived_by_process, 'protocols', 'protocols')
 
@@ -168,23 +169,26 @@ class Biomaterial:
                     derived_with_protocols[protocol_type] = []
                 derived_with_protocols[protocol_type].append(protocol)
 
-            input_biomaterials = ingest_api.get_related_entity(derived_by_process, 'inputBiomaterials', 'biomaterials')
+            input_biomaterials_count = ingest_api.get_related_entity_count(derived_by_process, 'inputBiomaterials',
+                                                                           'biomaterials')
 
-            if not input_biomaterials:
+            if not input_biomaterials_count:
                 raise ArchiverError('A biomaterial has been derived by a process with no input biomaterial')
 
-            if len(input_biomaterials) > 1:
+            input_biomaterials = ingest_api.get_related_entity(derived_by_process, 'inputBiomaterials', 'biomaterials')
+
+            if input_biomaterials_count > 1:
                 raise ArchiverError(
                     'A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
 
-            derived_from = input_biomaterials[0]
+            derived_from = next(input_biomaterials)
             return cls(data, derived_by_process, derived_with_protocols, derived_from)
         else:
             return cls(data)
 
 
 class Manifest:
-    def __init__(self, ingest_api, manifest_id):
+    def __init__(self, ingest_api: IngestAPI, manifest_id: str):
         self.ingest_api = ingest_api
 
         self.manifest_id = manifest_id
@@ -246,11 +250,13 @@ class Manifest:
     def _init_assay_process(self):
         file_uuid = list(self.manifest['fileFilesMap'])[0]
         file = self.ingest_api.get_file_by_uuid(file_uuid)
-        derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
-        if derived_by_processes:
-            if len(derived_by_processes) > 1:
+
+        derived_by_processes_count = self.ingest_api.get_related_entity_count(file, 'derivedByProcesses', 'processes')
+        if derived_by_processes_count:
+            if derived_by_processes_count > 1:
                 raise ArchiverError(f'Manifest {self.manifest_id} has many assay processes.')
-            return derived_by_processes[0]
+            derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
+            return next(derived_by_processes)
         return None
 
     def _init_protocols(self):
@@ -261,7 +267,6 @@ class Manifest:
             concrete_entity_type = self.ingest_api.get_concrete_entity_type(protocol)
             if not protocol_by_type.get(concrete_entity_type):
                 protocol_by_type[concrete_entity_type] = []
-
             protocol_by_type[concrete_entity_type].append(protocol)
 
         library_preparation_protocols = protocol_by_type.get('library_preparation_protocol', [])
@@ -278,13 +283,16 @@ class Manifest:
 
     def _init_input_biomaterial(self):
         assay = self.get_assay_process()
-        input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
 
-        if not input_biomaterials:
+        input_biomaterials_count = self.ingest_api.get_related_entity_count(assay, 'inputBiomaterials', 'biomaterials')
+
+        if not input_biomaterials_count:
             raise ArchiverError('No input biomaterial found to the assay process.')
 
+        input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
         # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
-        return input_biomaterials[0]
+
+        return next(input_biomaterials)
 
 
 class ArchiveSubmission:
@@ -549,6 +557,9 @@ class ArchiveSubmission:
 
         return None
 
+    def get_blockers(self):
+        return self.dsp_api.get_submission_blockers_summary(self.submission)
+
     def generate_report(self):
         report = {}
         map_report = self.entity_map.generate_report()
@@ -564,6 +575,72 @@ class ArchiveSubmission:
         report['file_upload_info'] = self.file_upload_info
 
         return report
+
+
+class IngestArchiveSubmission:
+    def __init__(self, ingest_api: IngestAPI):
+        self.ingest_api = ingest_api
+        self.submission_url = None
+        self.entity_url_map = {}
+        self.types = {
+            'sample': 'Sample',
+            'project': 'Project',
+            'study': 'Study',
+            'sequencingExperiment': 'SequencingExperiment',
+            'sequencingRun': 'SequencingRun'
+        }
+
+    def create(self, archive_submission: ArchiveSubmission) -> dict:
+        data = self._map_archive_submission(archive_submission)
+
+        ingest_archive_submission = self.ingest_api.create_archive_submission(data)
+        self.submission_url = ingest_archive_submission['_links']['self']['href']
+        return ingest_archive_submission
+
+    def update(self, archive_submission: ArchiveSubmission) -> dict:
+        data = self._map_archive_submission(archive_submission)
+
+        ingest_archive_submission = self.ingest_api.patch(self.submission_url, data)
+        self.submission_url = ingest_archive_submission['_links']['self']['href']
+        return ingest_archive_submission
+
+    def update_attributes(self, attr_map: dict) -> dict:
+        update = attr_map
+        ingest_archive_submission = self.ingest_api.patch(self.submission_url, update)
+        self.submission_url = ingest_archive_submission['_links']['self']['href']
+        return ingest_archive_submission
+
+    def add_entity(self, entity: ArchiveEntity) -> dict:
+        data = self._map_archive_entity(entity)
+        ingest_entity = self.ingest_api.create_archive_entity(self.submission_url, data)
+        ingest_url = ingest_entity['_links']['self']['href']
+        self.entity_url_map[entity.dsp_uuid] = ingest_url
+        return ingest_entity
+
+    def update_entity(self, entity: ArchiveEntity) -> dict:
+        data = self._map_archive_entity(entity)
+        ingest_entity_url = self.entity_url_map[entity.dsp_uuid]
+        ingest_entity = self.ingest_api.patch(ingest_entity_url, data)
+        return ingest_entity
+
+    def _map_archive_submission(self, archive_submission: ArchiveSubmission):
+        data = {
+            'dspUuid': archive_submission.dsp_uuid,
+            'dspUrl': archive_submission.dsp_url,
+            'fileUploadPlan': archive_submission.file_upload_info
+        }
+        return data
+
+    def _map_archive_entity(self, entity):
+        data = {
+            'type': self.types[entity.archive_entity_type],
+            'dspUuid': entity.dsp_uuid,
+            'dspUrl': entity.dsp_url,
+            'accession': entity.accession,
+            'conversion': entity.conversion,
+            'metadataUuids': entity.metadata_uuids
+        }
+        return data
 
 
 class IngestArchiver:
@@ -591,12 +668,12 @@ class IngestArchiver:
         self.converter['sample'].ingest_api = self.ingest_api
 
     def archive(self, entity_map: ArchiveEntityMap):
-        archive_submission = self.archive_metadata(entity_map)
+        archive_submission, _ = self.archive_metadata(entity_map)
         self.notify_file_archiver(archive_submission)
         archive_submission.validate_and_submit()
         return archive_submission
 
-    def archive_metadata(self, entity_map: ArchiveEntityMap) -> ArchiveSubmission:
+    def archive_metadata(self, entity_map: ArchiveEntityMap) -> Tuple[ArchiveSubmission, IngestArchiveSubmission]:
         archive_submission = ArchiveSubmission(dsp_api=self.dsp_api)
         archive_submission.entity_map = entity_map
 
@@ -612,17 +689,18 @@ class IngestArchiver:
             ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
             ingest_archive_submission.create(archive_submission)
 
-            for entity in archive_submission.converted_entities:
+            for entity in converted_entities:
                 archive_submission.add_entity(entity)
                 ingest_archive_submission.add_entity(entity)
+
         else:
             archive_submission.is_completed = True
             archive_submission.errors.append({
                 "error_message": "No entities found to submit."
             })
-            return archive_submission
+            return archive_submission, None
 
-        return archive_submission
+        return archive_submission, ingest_archive_submission
 
     def complete_submission(self, dsp_submission_url):
         archive_submission = ArchiveSubmission(dsp_api=self.dsp_api, dsp_submission_url=dsp_submission_url)
@@ -640,9 +718,11 @@ class IngestArchiver:
 
     def convert(self, manifests) -> ArchiveEntityMap:
         entity_map = ArchiveEntityMap()
-        for idx, manifest_url in enumerate(manifests):
+        idx = 0
+        for manifest_url in manifests:
+            idx = idx + 1
             manifest_id = manifest_url.rsplit('/', 1)[-1]
-            print(f'\n* PROCESSING MANIFEST {idx + 1}/{len(manifests)}: {manifest_id}')
+            print(f'\n* PROCESSING MANIFEST {idx}/{len(manifests)}: {manifest_id}')
             manifest = self.get_manifest(manifest_id)
             entities = self._convert(manifest)
             entity_map.add_entities(entities)
@@ -711,7 +791,6 @@ class IngestArchiver:
 
     # TODO save notification to file for now, should be sending to rabbit mq in the future
     def notify_file_archiver(self, archive_submission: ArchiveSubmission) -> []:
-
         messages = []
         # TODO a bit redundant with converter, refactor this
         for entity in archive_submission.converted_entities:
@@ -759,45 +838,6 @@ class IngestArchiver:
                 "biosd_biomaterial" in sample["content"]["biomaterial_core"])
 
         return False
-
-
-class IngestArchiveSubmission:
-    def __init__(self, ingest_api: IngestAPI):
-        self.ingest_api = ingest_api
-        self.ingest_url = None
-        self.types = {
-            'sample': 'Sample',
-            'project': 'Project',
-            'study': 'Study',
-            'sequencingExperiment': 'SequencingExperiment',
-            'sequencingRun': 'SequencingRun'
-        }
-
-    def create(self, archiveSubmission: ArchiveSubmission) -> dict:
-        data = {
-            'dspUuid': archiveSubmission.dsp_uuid,
-            'dspUrl': archiveSubmission.dsp_url
-        }
-
-        ingest_archive_submission = self.ingest_api.create_archive_submission(data)
-        self.ingest_url = ingest_archive_submission['_links']['self']['href']
-        return ingest_archive_submission
-
-    def add_entities(self, entity_map: ArchiveEntityMap):
-        for entity in entity_map.get_entities():
-            self.add_entity(entity)
-
-    def add_entity(self, entity: ArchiveEntity) -> dict:
-        data = {
-            'type': self.types[entity.archive_entity_type],
-            'dspUuid': entity.dsp_uuid,
-            'dspUrl': entity.dsp_url,
-            'accession': entity.accession,
-            'conversion': entity.conversion,
-            'metadataUuids': entity.metadata_uuids
-        }
-
-        return self.ingest_api.create_archive_entity(self.ingest_url, data)
 
 
 class ArchiveEntityAggregator:
@@ -932,7 +972,7 @@ class ArchiveEntityAggregator:
         archive_entity.data = {
             'library_preparation_protocol': lib_prep_protocol,
             'process': process,
-            'files': files,
+            'files': list(files),
             'manifest_id': archive_entity.manifest_id
         }
 

@@ -32,7 +32,7 @@ class ArchiveCLI:
 
     def get_manifests_from_project(self, project_uuid):
         logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
-        self.manifests = self.ingest_api.get_manifest_ids(project_uuid=project_uuid)
+        self.manifests = self.ingest_api.get_manifest_ids_from_project(project_uuid=project_uuid)
 
     def get_manifests_from_list(self, manifest_list_file):
         logging.info(f'GETTING MANIFESTS FROM FILE: {manifest_list_file}')
@@ -69,7 +69,7 @@ class ArchiveCLI:
         exit(2)
 
     def validate_submission(self, entity_map: ArchiveEntityMap, submit):
-        archive_submission = self.archiver.archive_metadata(entity_map)
+        archive_submission, _ = self.archiver.archive_metadata(entity_map)
         all_messages = self.archiver.notify_file_archiver(archive_submission)
 
         report = archive_submission.generate_report()

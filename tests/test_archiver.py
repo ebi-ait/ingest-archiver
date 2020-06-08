@@ -159,7 +159,7 @@ class TestIngestArchiver(unittest.TestCase):
             exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
-        archive_submission = archiver.archive_metadata(entity_map)
+        archive_submission, _ = archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
         archive_submission = archiver.complete_submission(dsp_submission_url=url)

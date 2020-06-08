@@ -1,4 +1,5 @@
 import logging
+from typing import Iterator, List
 
 import requests
 from requests import adapters
@@ -32,10 +33,19 @@ class IngestAPI:
         adapter = requests.adapters.HTTPAdapter(max_retries=retry_policy)
         self.session.mount('https://', adapter)
 
-    def get_related_entity(self, entity, relation, related_entity_type):
+    def get_related_entity(self, entity, relation, related_entity_type) -> Iterator['dict']:
         related_entity_uri = self._get_link(entity, relation)
-        related_entities = list(self._get_all(related_entity_uri, related_entity_type))
+        related_entities = self._get_all(related_entity_uri, related_entity_type)
         return related_entities
+
+    def get_related_entity_count(self, entity, relation, entity_type) -> int:
+        if relation in entity["_links"]:
+            entity_uri = entity["_links"][relation]["href"]
+            result = self.get(entity_uri)
+            page = result.get('page')
+            if page:
+                return page.get('totalElements')
+            return len(result["_embedded"][entity_type])
 
     def get_submission_by_id(self, submission_id):
         get_submission_url = self.url + '/submissionEnvelopes/' + submission_id
@@ -100,12 +110,16 @@ class IngestAPI:
         entity_url = f'{self.url}/projects/search/findBundleManifestsByProjectUuidAndBundleType?projectUuid={project_uuid}&bundleType={bundle_type}'
         return self._get_all(entity_url, 'bundleManifests')
 
-    def get_manifest_ids(self, project_uuid):
+    def get_manifest_ids_from_project(self, project_uuid):
         manifests = self.get_manifests_from_project(project_uuid, "PRIMARY")
-        manifest_ids = []
-        for manifest in manifests:
-            manifest_ids.append(self.get_entity_id(manifest, 'bundleManifests'))
-        return manifest_ids
+        return self.get_manifest_ids(manifests)
+
+    def get_manifest_ids_from_submission(self, submission_uuid):
+        manifests = self.get_manifests_from_submission(submission_uuid)
+        return self.get_manifest_ids(manifests)
+
+    def get_manifest_ids(self, manifests: List['dict']):
+        return [self.get_entity_id(manifest, 'bundleManifests') for manifest in manifests]
 
     def get_manifests_from_submission(self, submission_uuid):
         entity_url = f'{self.url}/bundleManifests/search/findByEnvelopeUuid?uuid={submission_uuid}'
@@ -140,13 +154,27 @@ class IngestAPI:
 
     def create_archive_submission(self, archive_submission):
         url = f'{self.url}/archiveSubmissions/'
-        return self._post(url, archive_submission)
+        return self.post(url, archive_submission)
 
     def create_archive_entity(self, archive_submission_url, archive_entity):
-        url = f'{archive_submission_url}/archiveEntities'
-        return self._post(url, archive_entity)
+        url = f'{archive_submission_url}/entities'
+        return self.post(url, archive_entity)
 
-    def _post(self, url, content):
+    def get_archive_entity_by_dsp_uuid(self, dsp_uuid):
+        url = f'{self.url}/archiveSubmissions/search/findByDspUuid?dspUuid={dsp_uuid}'
+        return self.get(url)
+
+    def get(self, url,  **kwargs):
+        r = self.session.get(url, headers=self.headers, **kwargs)
+        r.raise_for_status()
+        return r.json()
+
+    def post(self, url, content):
         r = self.session.post(url, json=content, headers=self.headers)
+        r.raise_for_status()
+        return r.json()
+
+    def patch(self, url, patch):
+        r = self.session.patch(url, json=patch, headers=self.headers)
         r.raise_for_status()
         return r.json()

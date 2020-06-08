@@ -124,6 +124,10 @@ class DataSubmissionPortal:
         get_results_url = dsp_submission['_links']['processingStatuses']['href']
         return self._get_all(get_results_url, 'processingStatuses')
 
+    def get_submission_blockers_summary(self, dsp_submission):
+        blockers_summary_url = dsp_submission['_links']['submissionBlockersSummary']['href']
+        return self._get(blockers_summary_url)
+
     def get_current_version(self, entity_type, alias):
         entity_link = DSP_ENTITY_CURR_VERSION_LINK[entity_type]
         url = f'{self.url}/api/{entity_link}/search/current-version?teamName={self.aap_api_domain}&alias={alias}'
