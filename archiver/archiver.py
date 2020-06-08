@@ -656,9 +656,9 @@ class IngestArchiver:
     def generate_patch(accession: IngestAccession, ingest_entity):
         entity_patch = {'content': ingest_entity['content']}
         if accession.accession_type == 'project':
-            entity_patch['content']['biostudies_accessions'] = accession.accession_id
+            entity_patch['content']['biostudies_accessions'] = [accession.accession_id]
         elif accession.accession_type == 'study':
-            entity_patch['content']['insdc_project_accessions'] = accession.accession_id
+            entity_patch['content']['insdc_project_accessions'] = [accession.accession_id]
             # DSP returns study_accessions, but an error in HCA metadata requires we store them as project_accessions
             # Once this error is fixed we should also retrieve the project accession from ENA using the study accession
             # entity_patch['content']['insdc_study_accessions'] = accession.accession_id
