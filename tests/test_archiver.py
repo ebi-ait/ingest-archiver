@@ -35,7 +35,8 @@ class TestIngestArchiver(unittest.TestCase):
 
         with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
             library_preparation_protocol = json.loads(data_file.read())
-            library_preparation_protocol['uuid']['uuid'] = self._generate_fake_id(prefix='library_preparation_protocol_')
+            library_preparation_protocol['uuid']['uuid'] = self._generate_fake_id(
+                prefix='library_preparation_protocol_')
 
         with open(config.JSON_DIR + 'hca/sequencing_protocol.json', encoding=config.ENCODING) as data_file:
             sequencing_protocol = json.loads(data_file.read())
@@ -53,7 +54,8 @@ class TestIngestArchiver(unittest.TestCase):
 
         with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             library_preparation_protocol_10x = json.loads(data_file.read())
-            library_preparation_protocol_10x['uuid']['uuid'] = self._generate_fake_id(prefix='library_preparation_protocol_10x_')
+            library_preparation_protocol_10x['uuid']['uuid'] = self._generate_fake_id(
+                prefix='library_preparation_protocol_10x_')
 
         self.base_manifest = {
             'biomaterials': biomaterial_objects,
@@ -118,6 +120,54 @@ class TestIngestArchiver(unittest.TestCase):
         seq_file['content']['file_core']['file_name'] = "R2.fastq.gz"
         seq_files.append(seq_file)
         mock_manifest.get_files = MagicMock(return_value=seq_files)
+        self.ingest_api.get_manifest_by_id = MagicMock(return_value={'bundleUuid': 'dcp-bundle-uuid'})
+        archiver = IngestArchiver(ingest_api=self.ingest_api, dsp_api=self.dsp_api, ontology_api=self.ontology_api)
+        archiver.get_manifest = MagicMock(return_value=mock_manifest)
+        entity_map = archiver.convert(['bundle_uuid'])
+        archive_submission.converted_entities = list(entity_map.get_converted_entities())
+        archive_submission.entity_map = entity_map
+
+        messages = archiver.notify_file_archiver(archive_submission)
+
+        expected = {
+            "dsp_api_url": 'dsp_url',
+            'dcp_bundle_uuid': 'dcp-bundle-uuid',
+            'ingest_api_url': 'ingest_url',
+            'submission_url': 'url',
+            'files': [{'name': 'dummy_manifest_id.bam'}],
+            'conversion': {
+                'output_name': 'dummy_manifest_id.bam',
+                'inputs': [
+                    {'name': 'R1.fastq.gz',
+                     'read_index': 'read1',
+                     'cloud_url': 's3://org-humancellatlas-upload-dev/8cd91cfd-0374-454f-ac83-8db6581d2706/R1.fastq.gz'
+                     },
+                    {'name': 'R2.fastq.gz',
+                     'read_index': 'read1',
+                     'cloud_url': 's3://org-humancellatlas-upload-dev/8cd91cfd-0374-454f-ac83-8db6581d2706/R1.fastq.gz'
+                     }
+                ]
+            },
+            'manifest_id': 'dummy_manifest_id'
+        }
+        self.assertTrue(messages)
+        self.assertEqual(expected, messages[0])
+
+    @patch('api.ontology.OntologyAPI.expand_curie')
+    def test_notify_file_archiver_manifest_has_no_bundle_uuid(self, expand_curie):
+        archive_submission = MagicMock(ArchiveSubmission)
+        archive_submission.get_url = MagicMock(return_value='url')
+
+        mock_manifest = self._mock_manifest(self.base_manifest)
+        mock_manifest.get_library_preparation_protocol = MagicMock(
+            return_value=self.base_manifest.get('library_preparation_protocol_10x'))
+
+        seq_files = self.base_manifest.get('files')
+        seq_file = copy.deepcopy(seq_files[0])
+        seq_file['content']['file_core']['file_name'] = "R2.fastq.gz"
+        seq_files.append(seq_file)
+        mock_manifest.get_files = MagicMock(return_value=seq_files)
+        self.ingest_api.get_manifest_by_id = MagicMock(return_value={})
         archiver = IngestArchiver(ingest_api=self.ingest_api, dsp_api=self.dsp_api, ontology_api=self.ontology_api)
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
