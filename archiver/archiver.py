@@ -665,9 +665,11 @@ class IngestArchiver:
         elif accession.accession_type == 'biomaterial':
             entity_patch['content']['biomaterial_core']['biosamples_accession'] = accession.accession_id
         elif accession.accession_type == 'process':
-            entity_patch['content']['insdc_experiment'] = accession.accession_id
+            entity_patch['content']['insdc_experiment'] = {
+                'insdc_experiment_accession': accession.accession_id
+            }
         elif accession.accession_type == 'file':
-            entity_patch['content']['insdc_run_accessions'] = accession.accession_id
+            entity_patch['content']['insdc_run_accessions'] = [accession.accession_id]
         return entity_patch
 
     def get_manifest(self, manifest_id):
