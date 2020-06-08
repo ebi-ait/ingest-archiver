@@ -3,11 +3,12 @@ import re
 
 from flatten_json import flatten
 
-from archiver import project, ena_sequencing_experiment
+import archiver.ena
+from archiver import biostudies, ena, biosamples
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
-from conversion.post_process import prefix_with, default_to
+from conversion.post_process import prefix_with, default_to, format_date
 from utils import protocols
 
 """
@@ -151,65 +152,15 @@ class Converter:
         return converted_data
 
 
+# TODO keeping this to not cause trouble with the Archiver script.
 class SampleConverter(Converter):
 
     def __init__(self, ontology_api):
         super(SampleConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.field_mapping = {
-            "biomaterial__uuid__uuid": "alias",
-            "biomaterial__content__biomaterial_core__biomaterial_name": "title",
-            "biomaterial__content__biomaterial_core__biomaterial_description": "description",
-            "biomaterial__content__biomaterial_core__ncbi_taxon_id__0": "taxonId",
-            "biomaterial__submissionDate": "releaseDate"
-        }
 
-        # TODO local mapping for now, ideally this should be an OLS lookup
-        # TODO what's taxon id for mouse
-        self.taxon_map = {
-            "9606": "Homo sapiens",
-            "10090": "Mus musculus"
-        }
-        self.exclude_data = ['genus_species']
-        self.exclude_fields_match = ['__schema_type', '__describedBy',
-                                     '__ontology_label',
-        # FIXME only donors contain this info but this is redundant with taxonId, removing this if it exists
-                                     'biomaterial__content__genus_species__0__ontology',
-                                     'biomaterial__content__genus_species__0__text']
-        self.remove_input_prefix = True
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data):
-        extracted_data["releaseDate"] = extracted_data["releaseDate"].split('T')[0]
-        extracted_data["sampleRelationships"] = []
-        taxon_id = str(extracted_data.get("taxonId", ''))
-        extracted_data["taxon"] = self.taxon_map.get(taxon_id)
-
-        if not extracted_data["taxon"]:
-            raise ConversionError("Sample Conversion Error",
-                                  f"Sample Converter find the taxon text from taxon id, {taxon_id}",
-                                  details={'taxon_id': taxon_id})
-
-        # non required fields
-        if "title" in extracted_data:
-            extracted_data["title"] = extracted_data["title"]
-
-        if not extracted_data.get("attributes"):
-            extracted_data["attributes"] = {}
-
-        extracted_data["taxon"] = self.taxon_map.get(str(extracted_data["taxonId"]))
-
-        if not extracted_data["taxon"]:
-            raise ConversionError("Sample Conversion Error", "Sample Converter find the taxon text from taxonId.")
-
-        concrete_type = self._get_concrete_type(hca_data.get('biomaterial'))
-        extracted_data["attributes"]["HCA Biomaterial Type"] = [dict(value=concrete_type)]
-        extracted_data["attributes"]["project"] = [dict(value="Human Cell Atlas")]
-
-        return extracted_data
-
-    def _get_concrete_type(self, entity):
-        concrete_type = self.ingest_api.get_concrete_entity_type(entity)
-        return concrete_type
+    def convert(self, hca_data):
+        return biosamples.convert(hca_data)
 
 
 class SequencingExperimentConverter(Converter):
@@ -218,7 +169,7 @@ class SequencingExperimentConverter(Converter):
         self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_data):
-        return ena_sequencing_experiment.convert(hca_data)
+        return ena.convert_sequencing_experiment(hca_data)
 
     # TODO implement
     def _build_links(self, extracted_data, links):
@@ -226,55 +177,14 @@ class SequencingExperimentConverter(Converter):
         extracted_data["sampleUses"] = [{"sampleRef": {"alias": "{sampleAlias.placeholder}"}}]
 
 
+# TODO keeping this to not cause trouble with the Archiver script.
 class SequencingRunConverter(Converter):
     def __init__(self, ontology_api):
         super(SequencingRunConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
 
-        self.field_mapping = {
-            "process__uuid__uuid": "alias",
-            "process__content__process_core__process_name": "title",
-            "process__content__process_core__process_description": "description"
-        }
-
-        self.file_format = {
-            'fastq.gz': 'fastq',
-            'bam': 'bam',
-            'cram': 'cram',
-        }
-
-        self.alias_prefix = 'sequencingRun_'
-        self.exclude_data = ['manifest_id', 'library_preparation_protocol']
-
     def convert(self, hca_data):
-        converted_data = super(SequencingRunConverter, self).convert(hca_data)
-
-        files = []
-        if protocols.is_10x(hca_data.get("library_preparation_protocol")):
-            files = [{
-                'name': f"{hca_data['manifest_id']}.bam",
-                'type': 'bam'
-            }]
-        else:
-            for file in hca_data['files']:
-                flattened_file = self._flatten(file)
-                files.append({
-                    'name': flattened_file.get('content__file_core__file_name'),
-                    'type': self.file_format[flattened_file.get('content__file_core__format')]
-                })
-
-        converted_data['files'] = files
-
-        return converted_data
-
-    def _build_output(self, extracted_data, flattened_hca_data, hca_data=None):
-        self._build_links(extracted_data, {})
-
-        return extracted_data
-
-    # TODO implement
-    def _build_links(self, extracted_data, links):
-        extracted_data["assayRefs"] = {"alias": "{assayAlias.placeholder}"}
+        return ena.convert_sequencing_run(hca_data)
 
 
 # TODO keeping this for now to not break the IngestArchiver class
@@ -285,33 +195,18 @@ class ProjectConverter(Converter):
         self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_data):
-        return project.convert(hca_data)
+        return biostudies.convert_project(hca_data)
 
 
+# TODO keeping this for now to not break the Archiver
 class StudyConverter(Converter):
 
     def __init__(self, ontology_api):
         super(StudyConverter, self).__init__(ontology_api)
         self.logger = logging.getLogger(__name__)
-        self.study_prefix = 'study_'
 
     def convert(self, hca_data):
-        # TODO maybe extract this to a separate component
-        return JsonMapper(hca_data).map({
-            '$on': 'project',
-            'alias': ['uuid.uuid', prefix_with, self.study_prefix],
-            'attributes': {
-                'HCA Project UUID': ['uuid.uuid', dsp_attribute],
-                'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
-                'study_type': ['', fixed_dsp_attribute, 'Transcriptome Analysis'],
-                'study_abstract': ['content.project_core.project_description', dsp_attribute],
-            },
-            'title': ['content.project_core.project_title'],
-            'description': ['content.project_core.project_description'],
-            'projectRef': {
-                'alias': ['', default_to, '{projectAlias.placeholder}']
-            }
-        })
+        return archiver.ena.convert_study(hca_data)
 
 
 class ConversionError(Exception):

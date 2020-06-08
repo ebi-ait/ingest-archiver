@@ -95,7 +95,7 @@ class DataSubmissionPortal:
 
     def create_samples(self, create_sample_url, samples):
         for sample in samples:
-            converted_sample = self.converter.convert(sample)
+            converted_sample = self.converter.convert_project(sample)
             self.create_entity(create_sample_url, converted_sample)
 
     def get_available_statuses(self, get_available_statuses_url):

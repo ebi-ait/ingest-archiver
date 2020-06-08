@@ -3,27 +3,6 @@
 	"title": "",
 	"description": "",
 	"attributes": {
-		"Sequencing Protocol - Protocol Core - Protocol Id": [{
-			"value": "assay_1"
-		}],
-		"Sequencing Protocol - Protocol Core - Protocol Name": [{
-			"value": "assay name"
-		}],
-		"Sequencing Protocol - Protocol Core - Protocol Description": [{
-			"value": "assay description"
-		}],
-		"Sequencing Protocol - Paired End": [{
-			"value": true
-		}],
-		"Sequencing Protocol - Sequencing Approach": [{
-			"terms": [{
-				"url": "http://purl.obolibrary.org/obo/UO_0000015"
-			}],
-			"value": "full length single cell RNA sequencing"
-		}],
-		"Process - Process Core - Process Id": [{
-			"value": "sequence_process_file_1"
-		}],
 		"Files - 0 - File Core - File Name": [{
 			"value": "R1.fastq.gz"
 		}],
@@ -36,22 +15,12 @@
 		"Files - 0 - Lane Index": [{
 			"value": 1
 		}],
-		"HCA Library Preparation Protocol UUID": [{
-			"value": "e5e709f8-7a14-449b-bae0-03e135e0b21b"
-		}],
-		"HCA Sequencing Protocol UUID": [{
-			"value": "3159d750-036b-44ec-aaef-4c751e27f635"
-		}],
-		"HCA Process UUID": [{
-			"value": "process149"
-		}],
-		"HCA Files UUID's": [{
+		"Files - 0 - HCA File UUID": [{
 			"value": "a7a93430-6bb1-44b5-81ea-cf6443073c8d"
 		}]
 	},
-	"assayRefs": {
-		"alias": "{assayAlias.placeholder}"
-	},
+	"assayRefs": [{"alias": "{assayAlias.placeholder}"}
+	],
 	"files": [{
 		"name": "R1.fastq.gz",
 		"type": "fastq"
