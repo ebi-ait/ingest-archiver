@@ -864,6 +864,7 @@ class ArchiveEntityAggregator:
         samples_map = {}
         derived_from_graph = Graph()
 
+        project = self.manifest.get_project()
         for biomaterial in self.manifest.get_biomaterials():
             archive_entity = ArchiveEntity()
             archive_entity.manifest_id = self.manifest.manifest_id
@@ -871,7 +872,10 @@ class ArchiveEntityAggregator:
             archive_entity.archive_entity_type = archive_type
             archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial.data)
 
-            archive_entity.data = {'biomaterial': biomaterial.data}
+            archive_entity.data = {
+                'biomaterial': biomaterial.data,
+                'project': project
+            }
 
             if biomaterial.derived_by_process:
                 # TODO protocols will be needed for samples conversion
