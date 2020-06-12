@@ -17,24 +17,23 @@ def derive_concrete_type(*args):
 
 
 spec = {
-    '$on': 'biomaterial',
-    'alias': ['uuid.uuid'],
+    'alias': ['biomaterial.uuid.uuid'],
     'attributes': {
-        'Biomaterial Core - Biomaterial Id': ['content.biomaterial_core.biomaterial_id', dsp_attribute],
-        'HCA Biomaterial Type': ['content.describedBy', derive_concrete_type],
-        'HCA Biomaterial UUID': ['uuid.uuid', dsp_attribute],
-        'Is Living': ['content.is_living', dsp_attribute],
-        'Medical History - Smoking History': ['content.medical_history.smoking_history', dsp_attribute],
-        'Sex': ['content.sex', dsp_attribute],
+        'Biomaterial Core - Biomaterial Id': ['biomaterial.content.biomaterial_core.biomaterial_id', dsp_attribute],
+        'HCA Biomaterial Type': ['biomaterial.content.describedBy', derive_concrete_type],
+        'HCA Biomaterial UUID': ['biomaterial.uuid.uuid', dsp_attribute],
+        'Is Living': ['biomaterial.content.is_living', dsp_attribute],
+        'Medical History - Smoking History': ['biomaterial.content.medical_history.smoking_history', dsp_attribute],
+        'Sex': ['biomaterial.content.sex', dsp_attribute],
         'project': ['', fixed_dsp_attribute, 'Human Cell Atlas']
     },
-    'description': ['content.biomaterial_core.biomaterial_description'],
-    'releaseDate': ['submissionDate', format_date],
+    'description': ['biomaterial.content.biomaterial_core.biomaterial_description'],
+    'releaseDate': ['project.releaseDate', format_date],
     # this is to work around this being constantly empty
-    'sampleRelationships': ['sampleRelationships', default_to, []],
-    'taxon': ['content.genus_species', _taxon],
-    'taxonId': ['content.biomaterial_core.ncbi_taxon_id', taxon_id],
-    'title': ['content.biomaterial_core.biomaterial_name']
+    'sampleRelationships': ['biomaterial.sampleRelationships', default_to, []],
+    'taxon': ['biomaterial.content.genus_species', _taxon],
+    'taxonId': ['biomaterial.content.biomaterial_core.ncbi_taxon_id', taxon_id],
+    'title': ['biomaterial.content.biomaterial_core.biomaterial_name']
 }
 
 

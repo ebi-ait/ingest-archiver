@@ -64,7 +64,10 @@ class TestConverter(unittest.TestCase):
 
         # when:
         actual_json = converter.convert({
-            'biomaterial': biomaterial
+            'biomaterial': biomaterial,
+            'project': {
+                'releaseDate': '2018-10-11T14:33:22.111Z'
+            }
         })
 
         # then:
