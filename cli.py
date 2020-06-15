@@ -34,6 +34,10 @@ class ArchiveCLI:
         logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
         self.manifests = self.ingest_api.get_manifest_ids_from_project(project_uuid=project_uuid)
 
+    def get_manifests_from_submission(self, submission_uuid):
+        logging.info(f'GETTING MANIFESTS FOR SUBMISSION: {submission_uuid}')
+        self.manifests = self.ingest_api.get_manifest_ids_from_submission(submission_uuid)
+
     def get_manifests_from_list(self, manifest_list_file):
         logging.info(f'GETTING MANIFESTS FROM FILE: {manifest_list_file}')
         with open(manifest_list_file) as f:
@@ -68,10 +72,13 @@ class ArchiveCLI:
         logging.error(f"--load_path files does not have an entities object: {file_content}")
         exit(2)
 
-    def validate_submission(self, entity_map: ArchiveEntityMap, submit):
-        archive_submission, _ = self.archiver.archive_metadata(entity_map)
+    def validate_submission(self, entity_map: ArchiveEntityMap, submit, ingest_submission_uuid=None):
+        archive_submission, ingest_archive_submission = self.archiver.archive_metadata(entity_map)
         all_messages = self.archiver.notify_file_archiver(archive_submission)
-
+        ingest_archive_submission.update_attributes({
+            'submissionUuid': ingest_submission_uuid,
+            'fileUploadPlan': archive_submission.file_upload_info
+        })
         report = archive_submission.generate_report()
         logging.info("Updating Report file...")
         self.save_dict_to_file("REPORT", report)
@@ -145,6 +152,8 @@ if __name__ == '__main__':
     # required (1 of possible 3)
     parser.add_option("-p", "--project_uuid", help="Project UUID")
 
+    parser.add_option("-i", "--ingest_submission_uuid", help="Ingest Submission UUID")
+
     parser.add_option("-f", "--manifest_list_file",
                       help="Specify a path to a file containing list of manifest id's to be archived."
                            "If project uuid is already specified then this parameter will be ignored.")
@@ -179,8 +188,12 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    if not (options.project_uuid or options.manifest_list_file or options.load_path or options.submission_url):
-        exit_error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a file of entities (4) a submission url")
+    if not (options.project_uuid or options.ingest_submission_uuid or options.manifest_list_file or options.load_path or options.submission_url):
+        exit_error("You must supply one of the following "
+                   "(1) a project UUID "
+                   "(2) ingest submission uuid "
+                   "(3) a file with list of manifest IDs "
+                   "(4) a file of entities (4) a DSP submission url")
 
     if options.validation_errors and options.no_validation:
         exit_error("--validation_errors and --no_validation are mutually exclusive")
@@ -203,6 +216,8 @@ if __name__ == '__main__':
     else:
         if options.project_uuid:
             cli.get_manifests_from_project(options.project_uuid)
+        elif options.ingest_submission_uuid:
+            cli.get_manifests_from_submission(options.ingest_submission_uuid)
         elif options.manifest_list_file:
             cli.get_manifests_from_list(options.manifest_list_file)
         entity_map = cli.build_map()
@@ -210,6 +225,6 @@ if __name__ == '__main__':
     if options.submission_url:
         cli.complete_submission(options.submission_url, entity_map)
     elif entity_map and not options.no_validation:
-        cli.validate_submission(entity_map, options.submit)
+        cli.validate_submission(entity_map, options.submit, ingest_submission_uuid=options.ingest_submission_uuid)
 
     exit_success()
