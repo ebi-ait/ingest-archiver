@@ -1,5 +1,8 @@
 FROM python:3.7-slim
 
+RUN apt-get update && \
+    apt-get install -y git
+
 RUN mkdir /app
 WORKDIR /app
 
