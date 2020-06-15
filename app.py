@@ -140,12 +140,10 @@ def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uu
     entity_map: ArchiveEntityMap = archiver.convert(manifests)
     dsp_submission, ingest_archive_submission = archiver.archive_metadata(entity_map)
     archiver.notify_file_archiver(dsp_submission)
-
-    if ingest_archive_submission:
-        ingest_archive_submission.update_attributes({
-            'submissionUuid': submission_uuid,
-            'fileUploadPlan': dsp_submission.file_upload_info
-        })
+    ingest_archive_submission.update_attributes({
+        'submissionUuid': submission_uuid,
+        'fileUploadPlan': dsp_submission.file_upload_info
+    })
     end = time.time()
     print(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
 

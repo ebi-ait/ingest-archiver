@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from mock import MagicMock
 
-from archiver.archiver import Manifest, Biomaterial, ArchiverError
+from archiver.archiver import Manifest, Biomaterial, ArchiverException
 
 
 class ManifestTest(TestCase):
@@ -45,7 +45,7 @@ class ManifestTest(TestCase):
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
         manifest = Manifest(ingest_api_mock, 'manifest_id')
 
-        with self.assertRaises(ArchiverError):
+        with self.assertRaises(ArchiverException):
             manifest.get_assay_process()
 
     def test_get_library_preparation_protocol(self):
@@ -83,7 +83,7 @@ class ManifestTest(TestCase):
         manifest = Manifest(ingest_api_mock, 'manifest_id')
         manifest.get_assay_process = MagicMock()
 
-        with self.assertRaises(ArchiverError):
+        with self.assertRaises(ArchiverException):
             manifest.get_library_preparation_protocol()
 
     def test_get_sequencing_protocol_multiple_found_error(self):
@@ -103,7 +103,7 @@ class ManifestTest(TestCase):
         manifest = Manifest(ingest_api_mock, 'manifest_id')
         manifest.get_assay_process = MagicMock()
 
-        with self.assertRaises(ArchiverError):
+        with self.assertRaises(ArchiverException):
             manifest.get_sequencing_protocol()
 
     def test_get_sequencing_protocol(self):

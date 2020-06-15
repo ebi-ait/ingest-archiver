@@ -19,7 +19,7 @@ def _print_same_line(string):
     print(f'\r{string}', end='')
 
 
-class ArchiverError(Exception):
+class ArchiverException(Exception):
     """Base-class for all exceptions raised by this module."""
 
 
@@ -28,7 +28,7 @@ class ArchiveEntity:
         self.data = {}
         self.metadata_uuids = []
         self.conversion = {}
-        self.errors = []
+        self.errors: List['Error'] = []
         self.warnings = []
         self.id = None
         self.archive_entity_type = None
@@ -53,6 +53,9 @@ class ArchiveEntity:
         entity.errors = report_entity['errors']
         entity.warnings = report_entity['warnings']
         return entity
+
+    def add_error(self, error_code, message, details=None):
+        self.errors.append(Error(error_code, message, details))
 
 
 class ArchiveEntityMap:
@@ -98,7 +101,7 @@ class ArchiveEntityMap:
         for entity in self.get_entities():
             entities[entity.id] = {}
             entities[entity.id]['type'] = entity.archive_entity_type
-            entities[entity.id]['errors'] = entity.errors
+            entities[entity.id]['errors'] = [error.__dict__ for error in entity.errors]
             entities[entity.id]['accession'] = entity.accession
             entities[entity.id]['warnings'] = entity.warnings
             entities[entity.id]['converted_data'] = entity.conversion
@@ -156,7 +159,7 @@ class Biomaterial:
             derived_by_processes = ingest_api.get_related_entity(data, 'derivedByProcesses', 'processes')
             # A biomaterial derived from multiple processes is not even supported in the Spreadsheet Importer
             if derived_by_processes_count > 1:
-                raise ArchiverError(
+                raise ArchiverException(
                     'A biomaterial derived from multiple processes is not supported yet for conversion.')
 
             derived_by_process = next(derived_by_processes)
@@ -174,12 +177,12 @@ class Biomaterial:
                                                                            'biomaterials')
 
             if not input_biomaterials_count:
-                raise ArchiverError('A biomaterial has been derived by a process with no input biomaterial')
+                raise ArchiverException('A biomaterial has been derived by a process with no input biomaterial')
 
             input_biomaterials = ingest_api.get_related_entity(derived_by_process, 'inputBiomaterials', 'biomaterials')
 
             if input_biomaterials_count > 1:
-                raise ArchiverError(
+                raise ArchiverException(
                     'A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
 
             derived_from = next(input_biomaterials)
@@ -278,7 +281,7 @@ class Manifest:
         derived_by_processes_count = self.ingest_api.get_related_entity_count(file, 'derivedByProcesses', 'processes')
         if derived_by_processes_count:
             if derived_by_processes_count > 1:
-                raise ArchiverError(f'Manifest {self.manifest_id} has many assay processes.')
+                raise ArchiverException(f'Manifest {self.manifest_id} has many assay processes.')
             derived_by_processes = self.ingest_api.get_related_entity(file, 'derivedByProcesses', 'processes')
             return next(derived_by_processes)
         return None
@@ -297,10 +300,10 @@ class Manifest:
         sequencing_protocols = protocol_by_type.get('sequencing_protocol', [])
 
         if len(library_preparation_protocols) != 1:
-            raise ArchiverError('There should be 1 library preparation protocol for the assay process.')
+            raise ArchiverException('There should be 1 library preparation protocol for the assay process.')
 
         if len(sequencing_protocols) != 1:
-            raise ArchiverError('There should be 1 sequencing_protocol for the assay process.')
+            raise ArchiverException('There should be 1 sequencing_protocol for the assay process.')
 
         self.library_preparation_protocol = library_preparation_protocols[0]
         self.sequencing_protocol = sequencing_protocols[0]
@@ -311,7 +314,7 @@ class Manifest:
         input_biomaterials_count = self.ingest_api.get_related_entity_count(assay, 'inputBiomaterials', 'biomaterials')
 
         if not input_biomaterials_count:
-            raise ArchiverError('No input biomaterial found to the assay process.')
+            raise ArchiverException('No input biomaterial found to the assay process.')
 
         input_biomaterials = self.ingest_api.get_related_entity(assay, 'inputBiomaterials', 'biomaterials')
         # TODO get first for now, clarify if it's possible to have multiple and how to specify the links
@@ -319,10 +322,17 @@ class Manifest:
         return next(input_biomaterials)
 
 
+class Error:
+    def __init__(self, error_code: str, message: str, details: dict):
+        self.error_code = error_code
+        self.message = message
+        self.details = details
+
+
 class ArchiveSubmission:
     def __init__(self, dsp_api, dsp_submission_url=None):
         self.submission = {}
-        self.errors = list()
+        self.errors: List['Error'] = list()
         self.processing_result = list()
         self.validation_result = list()
         self.is_completed = False
@@ -367,6 +377,9 @@ class ArchiveSubmission:
         for entity in converted_entities:
             self.add_entity(entity)
 
+    def add_error(self, error_code, message, details=None):
+        self.errors.append(Error(error_code, message, details))
+
     def validate(self):
         if not self.submission:
             return self
@@ -380,18 +393,16 @@ class ArchiveSubmission:
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
         except polling.TimeoutException as te:
-            self.errors.append({
-                "error_message": "DSP validation takes too long to complete.",
-            })
+            self.add_error('archive_submission.validate.timed_out',
+                           'DSP validation takes too long to complete.')
 
         if is_validated and self.get_all_validation_errors():
             validation_summary = self.get_all_validation_result_details()
-            self.errors.append({
-                "error_message": "Failed in DSP validation.",
-                "details": {
-                    "dsp_validation_errors": self.get_all_validation_errors()
-                }
-            })
+            self.add_error('archive_submission.validate.dsp_validation_errors',
+                           'Failed in DSP validation.',
+                           {
+                               'dsp_validation_errors': self.get_all_validation_errors()
+                           })
             self.validation_result = validation_summary
             return self
 
@@ -412,19 +423,17 @@ class ArchiveSubmission:
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
         except polling.TimeoutException as te:
-            self.errors.append({
-                "error_message": "DSP validation takes too long to complete.",
-            })
+            self.add_error('archive_submission.validate_and_submit.timed_out',
+                           'DSP validation takes too long to complete.')
 
         if is_validated and self.get_all_validation_errors():
             validation_summary = self.get_all_validation_result_details()
             self.validation_result = validation_summary
-            self.errors.append({
-                "error_message": "Failed in DSP validation.",
-                "details": {
-                    "dsp_validation_errors": self.get_all_validation_errors()
-                }
-            })
+            self.add_error('archive_submission.validate_and_submit.dsp_validation_errors',
+                           'Failed in DSP validation.',
+                           {
+                               'dsp_validation_errors': self.get_all_validation_errors()
+                           })
             self.invalid = True
 
         if self.is_submittable():
@@ -448,9 +457,8 @@ class ArchiveSubmission:
             self.process_result()
 
         except polling.TimeoutException:
-            self.errors.append({
-                "error_message": "DSP submission takes too long to complete.",
-            })
+            self.add_error('archive_submission.submit.timed_out',
+                           'DSP submission takes too long to complete.')
 
     def process_result(self):
         self.processing_result = self.get_processing_results()
@@ -464,9 +472,10 @@ class ArchiveSubmission:
                 if entity:
                     entity.accession = accession
             elif result['status'] == 'Error':
-                self.errors.append(f"There was an error submitting a "
-                                   f"{result.get('submittableType', '')} with alias {result.get('alias', '')} to "
-                                   f"{result.get('archive', '')}.")
+                self.add_error('archive_submission.submit.error',
+                               f"There was an error submitting a " +
+                               f"{result.get('submittableType', '')} with alias {result.get('alias', '')} to " +
+                               f"{result.get('archive', '')}.")
         self.accession_map = accession_map
 
         return self
@@ -599,7 +608,7 @@ class ArchiveSubmission:
 
         report['accessions'] = self.accession_map
         report['completed'] = self.is_completed
-        report['submission_errors'] = self.errors
+        report['submission_errors'] = [error.__dict__ for error in self.errors]
         report['file_upload_info'] = self.file_upload_info
 
         return report
@@ -655,9 +664,17 @@ class IngestArchiveSubmission:
         data = {
             'dspUuid': archive_submission.dsp_uuid,
             'dspUrl': archive_submission.dsp_url,
-            'fileUploadPlan': archive_submission.file_upload_info
+            'fileUploadPlan': archive_submission.file_upload_info,
+            'errors': self._map_errors(archive_submission.errors)
         }
         return data
+
+    def _map_errors(self, errors: List['Error']):
+        return [{
+            'errorCode': error.error_code,
+            'message': error.message,
+            'details': error.details
+        } for error in errors]
 
     def _map_archive_entity(self, entity):
         data = {
@@ -666,7 +683,8 @@ class IngestArchiveSubmission:
             'dspUrl': entity.dsp_url,
             'accession': entity.accession,
             'conversion': entity.conversion,
-            'metadataUuids': entity.metadata_uuids
+            'metadataUuids': entity.metadata_uuids,
+            'errors': self._map_errors(entity.errors)
         }
         return data
 
@@ -723,10 +741,10 @@ class IngestArchiver:
 
         else:
             archive_submission.is_completed = True
-            archive_submission.errors.append({
-                "error_message": "No entities found to submit."
-            })
-            return archive_submission, None
+            archive_submission.add_error('ingest_archiver.archive_metadata.no_entities', 'No entities found to submit.')
+            ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
+            ingest_archive_submission.create(archive_submission)
+            return archive_submission, ingest_archive_submission
 
         return archive_submission, ingest_archive_submission
 
@@ -816,24 +834,18 @@ class IngestArchiver:
                     if current_version and current_version.get('accession'):
                         archive_entity.accession = current_version.get('accession')
                         msg = f'This alias has already been submitted to DSP, accession: {archive_entity.accession}.'
-                        archive_entity.errors.append({
-                            "error_message": msg,
-                            "details": {
-                                "current_version": current_version["_links"]["self"]["href"]
-                            }
+                        archive_entity.add_error('ingest_archiver.convert.entity_already_in_dsp_and_has_accession', msg, {
+                            "current_version": current_version["_links"]["self"]["href"]
                         })
                     elif current_version and not current_version.get('accession'):
-                        archive_entity.errors.append({
-                            "error_message": f'This alias has already been submitted to DSP, but still has no '
-                            f'accession.',
-                            "details": {
-                                "current_version": current_version["_links"]["self"]["href"]
-                            }
+                        msg = f'This alias has already been submitted to DSP, but still has no accession.'
+                        archive_entity.add_error('ingest_archiver.convert.entity_already_in_dsp', msg, {
+                            "current_version": current_version["_links"]["self"]["href"]
                         })
-
                     elif IngestArchiver.is_metadata_accessioned(archive_entity):
-                        archive_entity.errors.append({
-                            "error_message": 'Metadata already have an accession'
+                        msg = f'Metadata already have an accession'
+                        archive_entity.add_error('ingest_archiver.convert.entity_has_accession', msg, {
+                            "current_version": current_version["_links"]["self"]["href"]
                         })
 
                 if not archive_entity.errors:
@@ -843,11 +855,11 @@ class IngestArchiver:
                         archive_entity.conversion.update(archive_entity.links)
 
                     except ConversionError as e:
-                        archive_entity.errors.append({
-                            "error_message": f'An error occured converting data to a {archive_entity_type}: {str(e)}.',
-                            "details": {"data": json.dumps(archive_entity.data)}
+                        msg = f'An error occured converting data to a {archive_entity_type}: {str(e)}.'
+                        archive_entity.add_error('ingest_archiver.convert.error', msg, {
+                            'data': json.dumps(archive_entity.data),
+                            'error': str(e)
                         })
-
                 entities.append(archive_entity)
             print("")
 
