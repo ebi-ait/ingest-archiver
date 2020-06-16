@@ -801,10 +801,11 @@ class IngestArchiver:
                 if manifest['bundleUuid']:
                     message["dcp_bundle_uuid"] = manifest['bundleUuid']
 
-                if protocols.is_10x(data.get("library_preparation_protocol")):
+                if protocols.is_10x(self.ontology_api, data.get("library_preparation_protocol")):
                     message["conversion"] = {}
                     message["conversion"]["output_name"] = f"{data['manifest_id']}.bam"
                     message["conversion"]["inputs"] = files
+                    message["conversion"]["schema"] = protocols.map_10x_bam_schema(self.ontology_api, data.get("library_preparation_protocol"))
                     message["files"] = [{"name": f"{data['manifest_id']}.bam"}]
 
                 messages.append(message)
