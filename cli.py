@@ -162,7 +162,7 @@ if __name__ == '__main__':
                       help="Specify the path to load a REPORT.json to send  to DSP, will skip loading and converting "
                            "from ingest.")
 
-    # submit only
+    # complete only
     parser.add_option("-u", "--submission_url",
                       help="DSP Submission url to complete")
 
@@ -178,10 +178,10 @@ if __name__ == '__main__':
 
     # preferences
     parser.add_option("-s", "--submit",
-                      help="Add this flag to wait for entities submit to archives once valid",
+                      help="Add this flag to wait for entities complete to archives once valid",
                       action="store_true", default=False)
     parser.add_option("-n", "--no_validation",
-                      help="Add this flag to not send submission to DSP for validation, will override submit flag to "
+                      help="Add this flag to not send submission to DSP for validation, will override complete flag to "
                            "false.",
                       action="store_true", default=False)
     parser.add_option("-o", "--output_dir", help="Customise output directory name")

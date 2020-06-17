@@ -201,8 +201,16 @@ class IngestAPI:
         url = f'{archive_submission_url}/entities'
         return self.post(url, archive_entity)
 
-    def get_archive_entity_by_dsp_uuid(self, dsp_uuid):
+    def get_archive_submission_by_dsp_uuid(self, dsp_uuid):
         url = f'{self.url}/archiveSubmissions/search/findByDspUuid?dspUuid={dsp_uuid}'
+        return self.get(url)
+
+    def get_archive_entity_by_dsp_uuid(self, dsp_uuid):
+        url = f'{self.url}/archiveEntities/search/findByDspUuid?dspUuid={dsp_uuid}'
+        return self.get(url)
+
+    def get_archive_entity_by_alias(self, alias):
+        url = f'{self.url}/archiveEntities/search/findByAlias?alias={alias}'
         return self.get(url)
 
     def get(self, url, **kwargs):

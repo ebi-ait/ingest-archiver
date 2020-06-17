@@ -64,7 +64,7 @@ def archive():
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
 def get_submission(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
-    ingest_archive_submission = ingest_api.get_archive_entity_by_dsp_uuid(dsp_submission_uuid)
+    ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     del ingest_archive_submission['_links']
     return jsonify(ingest_archive_submission)
 
@@ -72,7 +72,7 @@ def get_submission(dsp_submission_uuid: str):
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/entities')
 def get_submission_entities(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
-    ingest_archive_submission = ingest_api.get_archive_entity_by_dsp_uuid(dsp_submission_uuid)
+    ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     entities_url = ingest_archive_submission['_links']['entities']['href']
     params = request.args
     response_body = ingest_api.get(entities_url, params=params)
@@ -131,6 +131,21 @@ def submit(archive_submission_uuid: str):
         f' Please make sure that the validation is passing and there are no submission blockers'
     }
     return response_json(HTTPStatus.BAD_REQUEST, data=data)
+
+
+@app.route('/archiveSubmissions/<dsp_submission_uuid>/complete', methods=['POST'])
+def complete(dsp_submission_uuid: str):
+    dsp_api = DataSubmissionPortal(config.DSP_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
+    ingest_entities = ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
+    entity_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
+    dsp_submission_url = dsp_api.get_submission_url(dsp_submission_uuid)
+    archiver = IngestArchiver(ingest_api=ingest_api,
+                              dsp_api=dsp_api)
+    archive_submission = archiver.complete_submission(dsp_submission_url, entity_map)
+    data = archive_submission.generate_report()
+    return response_json(HTTPStatus.ACCEPTED, data=data)
 
 
 def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):

@@ -1,16 +1,15 @@
 import json
 import logging
-from typing import List, Iterator, Tuple
+from typing import Iterator, Tuple
 
-import polling as polling
-from requests import HTTPError
-
-import config
 from api import ontology
 from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
+from archiver.accessioner import Accessioner
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
+from archiver.ingest_archive_submission import IngestArchiveSubmission
+from archiver.submission import ArchiveEntityMap, ArchiveEntity, ArchiveSubmission
 from utils import protocols
 from utils.graph import Graph
 
@@ -21,125 +20,6 @@ def _print_same_line(string):
 
 class ArchiverException(Exception):
     """Base-class for all exceptions raised by this module."""
-
-
-class ArchiveEntity:
-    def __init__(self):
-        self.data = {}
-        self.metadata_uuids = []
-        self.conversion = {}
-        self.errors: List['Error'] = []
-        self.warnings = []
-        self.id = None
-        self.archive_entity_type = None
-        self.accession = None
-        self.dsp_json = None
-        self.dsp_url = None
-        self.dsp_uuid = None
-        self.dsp_current_version = None
-        self.links = {}
-        self.manifest_id = None
-
-    def __str__(self):
-        return str(vars(self))
-
-    @staticmethod
-    def map_from_report(report_id, report_entity):
-        entity = ArchiveEntity()
-        entity.id = report_id
-        entity.archive_entity_type = report_entity['type']
-        entity.conversion = report_entity['converted_data']
-        entity.accession = report_entity['accession']
-        entity.errors = report_entity['errors']
-        entity.warnings = report_entity['warnings']
-        return entity
-
-    def add_error(self, error_code, message, details=None):
-        self.errors.append(Error(error_code, message, details))
-
-
-class ArchiveEntityMap:
-    def __init__(self):
-        self.entities_dict_type = {}
-
-    def add_entities(self, entities):
-        for entity in entities:
-            self.add_entity(entity)
-
-    def add_entity(self, entity: ArchiveEntity):
-        if not self.entities_dict_type.get(entity.archive_entity_type):
-            self.entities_dict_type[entity.archive_entity_type] = {}
-        self.entities_dict_type[entity.archive_entity_type][entity.id] = entity
-
-    def get_entity(self, entity_type, archive_entity_id):
-        if self.entities_dict_type.get(entity_type):
-            return self.entities_dict_type[entity_type].get(archive_entity_id)
-        return None
-
-    def get_converted_entities(self):
-        entities = []
-        for entities_dict in self.entities_dict_type.values():
-            for entity in entities_dict.values():
-                if entity.conversion and not entity.errors:
-                    entities.append(entity)
-        return entities
-
-    def get_conversion_summary(self):
-        summary = {}
-        for entities_dict in self.entities_dict_type.values():
-            for entity in entities_dict.values():
-                if entity.conversion and not entity.errors:
-                    if not summary.get(entity.archive_entity_type):
-                        summary[entity.archive_entity_type] = 0
-                    summary[entity.archive_entity_type] = summary[entity.archive_entity_type] + 1
-        return summary
-
-    def generate_report(self):
-        report = {}
-        entities = {}
-        entity: ArchiveEntity
-        for entity in self.get_entities():
-            entities[entity.id] = {}
-            entities[entity.id]['type'] = entity.archive_entity_type
-            entities[entity.id]['errors'] = [error.__dict__ for error in entity.errors]
-            entities[entity.id]['accession'] = entity.accession
-            entities[entity.id]['warnings'] = entity.warnings
-            entities[entity.id]['converted_data'] = entity.conversion
-
-            if entity.dsp_json:
-                entities[entity.id]['entity_url'] = entity.dsp_json['_links']['self']['href']
-
-        report['entities'] = entities
-        report['conversion_summary'] = self.get_conversion_summary()
-
-        return report
-
-    def find_entity(self, alias):
-        for entities_dict in self.entities_dict_type.values():
-            if entities_dict.get(alias):
-                return entities_dict.get(alias)
-        return None
-
-    def get_entities(self) -> List["ArchiveEntity"]:
-        entities = []
-        for entity_type, entities_dict in self.entities_dict_type.items():
-            if not entities_dict:
-                continue
-            for alias, entity in entities_dict.items():
-                entities.append(entity)
-        return entities
-
-    def update(self, entity_type, entities: dict):
-        if not self.entities_dict_type.get(entity_type):
-            self.entities_dict_type[entity_type] = {}
-        self.entities_dict_type[entity_type].update(entities)
-
-    @staticmethod
-    def map_from_report(report):
-        entity_map = ArchiveEntityMap()
-        for key, entity in report.items():
-            entity_map.add_entity(ArchiveEntity.map_from_report(key, entity))
-        return entity_map
 
 
 class Biomaterial:
@@ -189,29 +69,6 @@ class Biomaterial:
             return cls(data, derived_by_process, derived_with_protocols, derived_from)
         else:
             return cls(data)
-
-
-class IngestAccession:
-    def __init__(self, ingest_type, ingest_url, accession_id, accession_type=None):
-        self.ingest_type = ingest_type
-        self.ingest_url = ingest_url
-        self.accession_id = accession_id
-        if not accession_type:
-            accession_type = ingest_type
-        self.accession_type = accession_type
-
-    @staticmethod
-    def from_entity(entity_type, entity: ArchiveEntity):
-        accession_type = None
-        if entity_type == 'study':
-            entity_type = 'project'
-            accession_type = 'study'
-        return IngestAccession.from_ingest_entity(entity_type, entity.data[entity_type], entity.accession,
-                                                  accession_type)
-
-    @staticmethod
-    def from_ingest_entity(ingest_type, ingest_entity, accession_id, accession_type=None):
-        return IngestAccession(ingest_type, ingest_entity['_links']['self']['href'], accession_id, accession_type)
 
 
 class Manifest:
@@ -322,373 +179,6 @@ class Manifest:
         return next(input_biomaterials)
 
 
-class Error:
-    def __init__(self, error_code: str, message: str, details: dict):
-        self.error_code = error_code
-        self.message = message
-        self.details = details
-
-
-class ArchiveSubmission:
-    def __init__(self, dsp_api, dsp_submission_url=None):
-        self.submission = {}
-        self.errors: List['Error'] = list()
-        self.processing_result = list()
-        self.validation_result = list()
-        self.is_completed = False
-        self.converted_entities = list()
-        self.entity_map = ArchiveEntityMap()
-        self.dsp_api = dsp_api
-        self.file_upload_info = list()
-        self.accession_map = None
-        self.invalid = False
-        self.status = None
-        self.dsp_url = None
-        self.dsp_submission_url = dsp_submission_url
-        self.dsp_uuid = None
-
-        if dsp_submission_url:
-            self.submission = self.dsp_api.get_submission(dsp_submission_url)
-            self.status = self.get_status()
-            self.dsp_uuid = dsp_submission_url.rsplit('/', 1)[-1]
-
-    def get_status(self):
-        get_status_url = self.submission['_links']['submissionStatus']['href']
-        submission_status = self.dsp_api.get_submission_status(get_status_url)
-        state = submission_status.get('status')
-        return state
-
-    def __str__(self):
-        return str(vars(self))
-
-    def add_entity(self, entity: ArchiveEntity):
-        get_contents_url = self.submission['_links']['contents']['href']
-        contents = self.dsp_api.get_contents(get_contents_url)
-
-        entity_link = self.dsp_api.get_entity_url(entity.archive_entity_type)
-        create_entity_url = contents['_links'][f'{entity_link}:create']['href']
-
-        created_entity = self.dsp_api.create_entity(create_entity_url, entity.conversion)
-        entity.dsp_json = created_entity
-        entity.dsp_url = created_entity['_links']['self']['href']
-        entity.dsp_uuid = entity.dsp_url.rsplit('/', 1)[-1]
-
-    def add_entities(self, converted_entities: List['ArchiveEntity']):
-        for entity in converted_entities:
-            self.add_entity(entity)
-
-    def add_error(self, error_code, message, details=None):
-        self.errors.append(Error(error_code, message, details))
-
-    def validate(self):
-        if not self.submission:
-            return self
-
-        is_validated = False
-        try:
-            is_validated = polling.poll(
-                lambda: self.is_validated(),
-                step=config.VALIDATION_POLLING_STEP,
-                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
-                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
-            )
-        except polling.TimeoutException as te:
-            self.add_error('archive_submission.validate.timed_out',
-                           'DSP validation takes too long to complete.')
-
-        if is_validated and self.get_all_validation_errors():
-            validation_summary = self.get_all_validation_result_details()
-            self.add_error('archive_submission.validate.dsp_validation_errors',
-                           'Failed in DSP validation.',
-                           {
-                               'dsp_validation_errors': self.get_all_validation_errors()
-                           })
-            self.validation_result = validation_summary
-            return self
-
-        return self
-
-    def validate_and_submit(self):
-        if not self.submission:
-            return self
-
-        print("Waiting for the submission to be validated in DSP...")
-
-        is_validated = False
-        try:
-            is_validated = polling.poll(
-                lambda: self.is_ready_to_submit(),
-                step=config.VALIDATION_POLLING_STEP,
-                timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
-                poll_forever=True if config.VALIDATION_POLL_FOREVER else False
-            )
-        except polling.TimeoutException as te:
-            self.add_error('archive_submission.validate_and_submit.timed_out',
-                           'DSP validation takes too long to complete.')
-
-        if is_validated and self.get_all_validation_errors():
-            validation_summary = self.get_all_validation_result_details()
-            self.validation_result = validation_summary
-            self.add_error('archive_submission.validate_and_submit.dsp_validation_errors',
-                           'Failed in DSP validation.',
-                           {
-                               'dsp_validation_errors': self.get_all_validation_errors()
-                           })
-            self.invalid = True
-
-        if self.is_submittable():
-            self.submit()
-
-        return self
-
-    def submit(self):
-        self.dsp_api.update_submission_status(self.submission, 'Submitted')
-
-        print("DSP Submission is submitted! Waiting for the submission result. Please do not submit again.")
-
-        try:
-            self.is_completed = polling.poll(
-                lambda: self.is_processing_complete(),
-                step=config.SUBMISSION_POLLING_STEP,
-                timeout=config.SUBMISSION_POLLING_TIMEOUT if not config.SUBMISSION_POLL_FOREVER else None,
-                poll_forever=True if config.SUBMISSION_POLL_FOREVER else False
-            )
-
-            self.process_result()
-
-        except polling.TimeoutException:
-            self.add_error('archive_submission.submit.timed_out',
-                           'DSP submission takes too long to complete.')
-
-    def process_result(self):
-        self.processing_result = self.get_processing_results()
-        accession_map = {}
-        for result in self.processing_result:
-            if result['status'] == 'Completed':
-                alias = result['alias']
-                accession = result['accession']
-                accession_map[alias] = accession
-                entity = self.entity_map.find_entity(alias)
-                if entity:
-                    entity.accession = accession
-            elif result['status'] == 'Error':
-                self.add_error('archive_submission.submit.error',
-                               f"There was an error submitting a " +
-                               f"{result.get('submittableType', '')} with alias {result.get('alias', '')} to " +
-                               f"{result.get('archive', '')}.")
-        self.accession_map = accession_map
-
-        return self
-
-    def is_ready_to_submit(self):
-        is_validated = self.is_validated()
-
-        if is_validated:
-            is_submittable = self.is_submittable()
-            if is_submittable:
-                return True
-            else:
-                errors = self.get_all_validation_errors()
-                self.validation_result = errors
-                print("####################### VALIDATION ERRORS")
-                print(json.dumps(errors, indent=4))
-
-        return False
-
-    def get_all_validation_result_details(self):
-        get_validation_results_url = self.submission['_links']['validationResults']['href']
-        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
-
-        summary = []
-        for validation_result in validation_results:
-            if validation_result['validationStatus'] == "Complete":
-                details_url = validation_result['_links']['validationResult']['href']
-                # TODO fix how what to put as projection param, check dsp documentation, removing any params for now
-                details_url = details_url.split('{')[0]
-                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
-                summary.append(validation_result_details)
-
-        return summary
-
-    def get_all_validation_errors(self):
-        get_validation_results_url = self.submission['_links']['validationResults']['href']
-        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
-
-        errors = []
-        for validation_result in validation_results:
-            if validation_result['validationStatus'] == "Complete":
-                details_url = validation_result['_links']['validationResult']['href']
-                # TODO fix how what to put as projection param, check dsp documentation, removing any params for now
-                details_url = details_url.split('{')[0]
-                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
-                if validation_result_details.get('errorMessages'):
-                    errors.append(validation_result_details.get('errorMessages'))
-        return errors
-
-    def get_validation_error_report(self):
-        get_validation_results_url = self.submission['_links']['validationResults']['href']
-        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
-
-        report = {}
-        for validation_result in validation_results:
-            if validation_result['validationStatus'] == "Complete":
-                details_url = validation_result['_links']['validationResult']['href']
-                details_url = details_url.split('{')[0]
-                validation_result_details = self.dsp_api.get_validation_result_details(details_url)
-                if validation_result_details.get('errorMessages'):
-                    try:
-                        submittable_href = validation_result_details['_links']['submittable']['href']
-                    except KeyError:
-                        submittable_href = False
-                    report_key = submittable_href if submittable_href else 'NoSubmittable'
-                    if not report.get(report_key):
-                        report[report_key] = []
-                        report[report_key].append(validation_result_details.get('errorMessages'))
-        return report
-
-    def is_submittable(self):
-        get_status_url = self.submission['_links']['submissionStatus']['href']
-        submission_status = self.dsp_api.get_submission_status(get_status_url)
-
-        get_available_statuses_url = submission_status['_links']['availableStatuses']['href']
-        available_statuses = self.dsp_api.get_available_statuses(get_available_statuses_url)
-
-        for status in available_statuses:
-            if status['statusName'] == 'Submitted':
-                return True
-
-        return False
-
-    def is_validated(self):
-        get_validation_results_url = self.submission['_links']['validationResults']['href']
-        validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
-
-        for validation_result in validation_results:
-            if validation_result['validationStatus'] != "Complete":
-                return False
-
-        return True
-
-    def is_validated_and_submittable(self):
-        return self.is_validated(self.submission) and self.is_submittable(self.submission)
-
-    def is_processing_complete(self):
-        results = self.dsp_api.get_processing_results(self.submission)
-        for result in results:
-            if result['status'] != "Completed" and result['status'] != "Error":
-                return False
-
-        return True
-
-    def delete_submission(self):
-        delete_url = self.submission['_links']['self:delete']['href']
-        return self.dsp_api.delete_submission(delete_url)
-
-    def get_processing_results(self):
-        return self.dsp_api.get_processing_results(self.submission)
-
-    def get_url(self):
-        # TODO remove projection placeholder
-        if self.submission:
-            return self.submission['_links']['self']['href'].split('{')[0]
-
-        return None
-
-    def get_blockers(self):
-        return self.dsp_api.get_submission_blockers_summary(self.submission)
-
-    def generate_report(self):
-        report = {}
-        map_report = self.entity_map.generate_report()
-        report['entities'] = map_report['entities']
-        report['conversion_summary'] = map_report['conversion_summary']
-
-        if self.submission:
-            report['submission_url'] = self.get_url()
-
-        report['accessions'] = self.accession_map
-        report['completed'] = self.is_completed
-        report['submission_errors'] = [error.__dict__ for error in self.errors]
-        report['file_upload_info'] = self.file_upload_info
-
-        return report
-
-
-class IngestArchiveSubmission:
-    def __init__(self, ingest_api: IngestAPI):
-        self.ingest_api = ingest_api
-        self.submission_url = None
-        self.entity_url_map = {}
-        self.types = {
-            'sample': 'Sample',
-            'project': 'Project',
-            'study': 'Study',
-            'sequencingExperiment': 'SequencingExperiment',
-            'sequencingRun': 'SequencingRun'
-        }
-
-    def create(self, archive_submission: ArchiveSubmission) -> dict:
-        data = self._map_archive_submission(archive_submission)
-
-        ingest_archive_submission = self.ingest_api.create_archive_submission(data)
-        self.submission_url = ingest_archive_submission['_links']['self']['href']
-        return ingest_archive_submission
-
-    def update(self, archive_submission: ArchiveSubmission) -> dict:
-        data = self._map_archive_submission(archive_submission)
-
-        ingest_archive_submission = self.ingest_api.patch(self.submission_url, data)
-        self.submission_url = ingest_archive_submission['_links']['self']['href']
-        return ingest_archive_submission
-
-    def update_attributes(self, attr_map: dict) -> dict:
-        update = attr_map
-        ingest_archive_submission = self.ingest_api.patch(self.submission_url, update)
-        self.submission_url = ingest_archive_submission['_links']['self']['href']
-        return ingest_archive_submission
-
-    def add_entity(self, entity: ArchiveEntity) -> dict:
-        data = self._map_archive_entity(entity)
-        ingest_entity = self.ingest_api.create_archive_entity(self.submission_url, data)
-        ingest_url = ingest_entity['_links']['self']['href']
-        self.entity_url_map[entity.dsp_uuid] = ingest_url
-        return ingest_entity
-
-    def update_entity(self, entity: ArchiveEntity) -> dict:
-        data = self._map_archive_entity(entity)
-        ingest_entity_url = self.entity_url_map[entity.dsp_uuid]
-        ingest_entity = self.ingest_api.patch(ingest_entity_url, data)
-        return ingest_entity
-
-    def _map_archive_submission(self, archive_submission: ArchiveSubmission):
-        data = {
-            'dspUuid': archive_submission.dsp_uuid,
-            'dspUrl': archive_submission.dsp_url,
-            'fileUploadPlan': archive_submission.file_upload_info,
-            'errors': self._map_errors(archive_submission.errors)
-        }
-        return data
-
-    def _map_errors(self, errors: List['Error']):
-        return [{
-            'errorCode': error.error_code,
-            'message': error.message,
-            'details': error.details
-        } for error in errors]
-
-    def _map_archive_entity(self, entity):
-        data = {
-            'type': self.types[entity.archive_entity_type],
-            'dspUuid': entity.dsp_uuid,
-            'dspUrl': entity.dsp_url,
-            'accession': entity.accession,
-            'conversion': entity.conversion,
-            'metadataUuids': entity.metadata_uuids,
-            'errors': self._map_errors(entity.errors)
-        }
-        return data
-
-
 class IngestArchiver:
     def __init__(self, ingest_api: IngestAPI,
                  dsp_api: DataSubmissionPortal,
@@ -702,6 +192,7 @@ class IngestArchiver:
         self.ontology_api = ontology_api
         self.dsp_api = dsp_api
         self.dsp_validation = dsp_validation
+        self.accessioner = Accessioner(self.ingest_api)
 
         self.converter = {
             "project": ProjectConverter(ontology_api=ontology_api),
@@ -741,7 +232,8 @@ class IngestArchiver:
 
         else:
             archive_submission.is_completed = True
-            archive_submission.add_error('ingest_archiver.archive_metadata.no_entities', 'No entities found to submit.')
+            archive_submission.add_error('ingest_archiver.archive_metadata.no_entities',
+                                         'No entities found to complete.')
             ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
             ingest_archive_submission.create(archive_submission)
             return archive_submission, ingest_archive_submission
@@ -759,41 +251,15 @@ class IngestArchiver:
         elif archive_submission.status == 'Completed':
             archive_submission.is_completed = True
             archive_submission.process_result()
-            self.send_accessions(self.accessions_from_map(archive_submission.entity_map))
+            self.update_ingest_archive_entities(entity_map)
+            self.accessioner.accession_entities(archive_submission.entity_map)
 
         return archive_submission
 
-    def send_accessions(self, accessions: List[IngestAccession]):
-        if accessions:
-            self.ingest_api.entity_cache = {}
-            for accession in accessions:
-                entity_type, entity_id = self.ingest_api.entity_info_from_url(accession.ingest_url)
-                ingest_entity = self.ingest_api.get_entity_by_id(entity_type, entity_id)
-                entity_patch = IngestArchiver.generate_patch(accession, ingest_entity)
-                try:
-                    self.ingest_api.patch_entity_by_id(entity_type, entity_id, entity_patch)
-                except HTTPError:
-                    logging.error("Failed to send to ingest", HTTPError)
-
-    @staticmethod
-    def generate_patch(accession: IngestAccession, ingest_entity):
-        entity_patch = {'content': ingest_entity['content']}
-        if accession.accession_type == 'project':
-            entity_patch['content']['biostudies_accessions'] = [accession.accession_id]
-        elif accession.accession_type == 'study':
-            entity_patch['content']['insdc_project_accessions'] = [accession.accession_id]
-            # DSP returns study_accessions, but an error in HCA metadata requires we store them as project_accessions
-            # Once this error is fixed we should also retrieve the project accession from ENA using the study accession
-            # entity_patch['content']['insdc_study_accessions'] = accession.accession_id
-        elif accession.accession_type == 'biomaterial':
-            entity_patch['content']['biomaterial_core']['biosamples_accession'] = accession.accession_id
-        elif accession.accession_type == 'process':
-            entity_patch['content']['insdc_experiment'] = {
-                'insdc_experiment_accession': accession.accession_id
-            }
-        elif accession.accession_type == 'file':
-            entity_patch['content']['insdc_run_accessions'] = [accession.accession_id]
-        return entity_patch
+    def update_ingest_archive_entities(self, entity_map: ArchiveEntityMap = None):
+        ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
+        for entity in entity_map.get_entities():
+            ingest_archive_submission.update_entity(entity)
 
     def get_manifest(self, manifest_id):
         return Manifest(ingest_api=self.ingest_api, manifest_id=manifest_id)
@@ -834,15 +300,16 @@ class IngestArchiver:
                     if current_version and current_version.get('accession'):
                         archive_entity.accession = current_version.get('accession')
                         msg = f'This alias has already been submitted to DSP, accession: {archive_entity.accession}.'
-                        archive_entity.add_error('ingest_archiver.convert.entity_already_in_dsp_and_has_accession', msg, {
-                            "current_version": current_version["_links"]["self"]["href"]
-                        })
+                        archive_entity.add_error('ingest_archiver.convert.entity_already_in_dsp_and_has_accession', msg,
+                                                 {
+                                                     "current_version": current_version["_links"]["self"]["href"]
+                                                 })
                     elif current_version and not current_version.get('accession'):
                         msg = f'This alias has already been submitted to DSP, but still has no accession.'
                         archive_entity.add_error('ingest_archiver.convert.entity_already_in_dsp', msg, {
                             "current_version": current_version["_links"]["self"]["href"]
                         })
-                    elif IngestArchiver.is_metadata_accessioned(archive_entity):
+                    elif Accessioner.is_metadata_accessioned(archive_entity):
                         msg = f'Metadata already have an accession'
                         archive_entity.add_error('ingest_archiver.convert.entity_has_accession', msg, {
                             "current_version": current_version["_links"]["self"]["href"]
@@ -864,33 +331,6 @@ class IngestArchiver:
             print("")
 
         return entities
-
-    @staticmethod
-    def accessions_from_map(entity_map: ArchiveEntityMap) -> List[IngestAccession]:
-        accessions: List[IngestAccession] = []
-        for entities_dict in entity_map.entities_dict_type.values():
-            entity: ArchiveEntity
-            for entity in entities_dict.values():
-                if entity.accession:
-                    accessions.extend(IngestArchiver.accessions_from_entity(entity))
-        return accessions
-
-    @staticmethod
-    def accessions_from_entity(entity: ArchiveEntity) -> List[IngestAccession]:
-        accessions: List[IngestAccession] = []
-        if entity.accession:
-            if entity.archive_entity_type == 'project':
-                accessions.append(IngestAccession.from_entity('project', entity))
-            elif entity.archive_entity_type == 'study':
-                accessions.append(IngestAccession.from_entity('study', entity))
-            elif entity.archive_entity_type == 'sample':
-                accessions.append(IngestAccession.from_entity('biomaterial', entity))
-            elif entity.archive_entity_type == 'sequencingExperiment':
-                accessions.append(IngestAccession.from_entity('process', entity))
-            elif entity.archive_entity_type == 'sequencingRun':
-                for file in entity.data['files']:
-                    accessions.append(IngestAccession.from_ingest_entity('file', file, entity.accession))
-        return accessions
 
     # TODO save notification to file for now, should be sending to rabbit mq in the future
     def notify_file_archiver(self, archive_submission: ArchiveSubmission) -> []:
@@ -932,18 +372,6 @@ class IngestArchiver:
         archive_submission.file_upload_info = messages
         return messages
 
-    @staticmethod
-    def is_metadata_accessioned(entity: ArchiveEntity):
-        if entity.archive_entity_type != "sample":
-            return False
-
-        sample = entity.data.get("biomaterial")
-        if sample:
-            return ("biomaterial_core" in sample["content"]) and (
-                "biosd_biomaterial" in sample["content"]["biomaterial_core"])
-
-        return False
-
 
 class ArchiveEntityAggregator:
     def __init__(self, manifest: Manifest, ingest_api: IngestAPI, alias_prefix: str):
@@ -961,6 +389,7 @@ class ArchiveEntityAggregator:
         archive_entity.id = self.generate_archive_entity_id(archive_type, project)
         archive_entity.data = {"project": project}
         archive_entity.metadata_uuids = [project['uuid']['uuid']]
+        archive_entity.accessioned_metadata_uuids = [project['uuid']['uuid']]
         archive_entity.manifest_id = self.manifest.manifest_id
         return [archive_entity]
 
@@ -975,6 +404,7 @@ class ArchiveEntityAggregator:
         archive_entity.id = self.generate_archive_entity_id(archive_type, project)
         archive_entity.data = {"project": project}
         archive_entity.metadata_uuids = [project['uuid']['uuid']]
+        archive_entity.accessioned_metadata_uuids = [project['uuid']['uuid']]
         archive_entity.links = {
             "projectRef": {
                 "alias": self.generate_archive_entity_id('project', project)
@@ -995,6 +425,7 @@ class ArchiveEntityAggregator:
 
             archive_entity.data = {'biomaterial': biomaterial.data}
             archive_entity.metadata_uuids = [biomaterial.data['uuid']['uuid']]
+            archive_entity.accessioned_metadata_uuids = [biomaterial.data['uuid']['uuid']]
 
             if biomaterial.derived_by_process:
                 # TODO protocols will be needed for samples conversion
@@ -1047,6 +478,8 @@ class ArchiveEntityAggregator:
             process['uuid']['uuid'],
         ]
 
+        archive_entity.accessioned_metadata_uuids = [process['uuid']['uuid']]
+
         links = {}
         links['studyRef'] = {
             "alias": self.generate_archive_entity_id('study', self.manifest.get_project())
@@ -1086,9 +519,13 @@ class ArchiveEntityAggregator:
             process['uuid']['uuid']
         ]
 
-        metadata_uuids.extend([f['uuid']['uuid'] for f in files])
+        file_uuids = [f['uuid']['uuid'] for f in files]
+
+        metadata_uuids.extend(file_uuids)
 
         archive_entity.metadata_uuids = metadata_uuids
+
+        archive_entity.accessioned_metadata_uuids = file_uuids
 
         archive_entity.links = {
             'assayRefs': [{
