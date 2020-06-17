@@ -118,7 +118,10 @@ class TestIngestArchiver(unittest.TestCase):
         seq_file['content']['file_core']['file_name'] = "R2.fastq.gz"
         seq_files.append(seq_file)
         mock_manifest.get_files = MagicMock(return_value=seq_files)
-        archiver = IngestArchiver(ingest_api=self.ingest_api, dsp_api=self.dsp_api, ontology_api=self.ontology_api)
+
+        ingest_api = copy.deepcopy(self.ingest_api)
+        ingest_api.get_manifest_by_id = MagicMock(return_value={'bundleUuid': 'dcp_uuid'})
+        archiver = IngestArchiver(ingest_api=ingest_api, dsp_api=self.dsp_api, ontology_api=self.ontology_api)
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission.converted_entities = list(entity_map.get_converted_entities())
@@ -128,11 +131,13 @@ class TestIngestArchiver(unittest.TestCase):
 
         expected = {
             "dsp_api_url": 'dsp_url',
+            "dcp_bundle_uuid": 'dcp_uuid',
             'ingest_api_url': 'ingest_url',
             'submission_url': 'url',
             'files': [{'name': 'dummy_manifest_id.bam'}],
             'conversion': {
                 'output_name': 'dummy_manifest_id.bam',
+                'schema': '10xV2',
                 'inputs': [
                     {'name': 'R1.fastq.gz',
                      'read_index': 'read1',
