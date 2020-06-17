@@ -126,7 +126,8 @@ class IngestAPI:
             self.entity_cache[url] = entity_json
 
     def get_submission_by_uuid(self, submission_uuid):
-        return self.get_entity_by_uuid('submissionEnvelopes', submission_uuid)
+        entity_url = f'{self.url}/submissionEnvelopes/search/findByUuidUuid?uuid={submission_uuid}'
+        return self.get_entity(entity_url)
 
     def get_biomaterial_by_uuid(self, biomaterial_uuid):
         return self.get_entity_by_uuid('biomaterials', biomaterial_uuid)
@@ -225,5 +226,10 @@ class IngestAPI:
 
     def patch(self, url, patch):
         r = self.session.patch(url, json=patch, headers=self.headers)
+        r.raise_for_status()
+        return r.json()
+
+    def put(self, url):
+        r = self.session.put(url, headers=self.headers)
         r.raise_for_status()
         return r.json()

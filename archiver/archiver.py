@@ -8,7 +8,7 @@ from api.ingest import IngestAPI
 from archiver.accessioner import Accessioner
 from archiver.converter import ConversionError, SampleConverter, ProjectConverter, \
     SequencingExperimentConverter, SequencingRunConverter, StudyConverter
-from archiver.ingest_archive_submission import IngestArchiveSubmission
+from archiver.ingest_tracker import IngestTracker
 from archiver.submission import ArchiveEntityMap, ArchiveEntity, ArchiveSubmission
 from utils import protocols
 from utils.graph import Graph
@@ -193,6 +193,7 @@ class IngestArchiver:
         self.dsp_api = dsp_api
         self.dsp_validation = dsp_validation
         self.accessioner = Accessioner(self.ingest_api)
+        self.ingest_tracker = IngestTracker(ingest_api=self.ingest_api)
 
         self.converter = {
             "project": ProjectConverter(ontology_api=ontology_api),
@@ -210,7 +211,7 @@ class IngestArchiver:
         archive_submission.validate_and_submit()
         return archive_submission
 
-    def archive_metadata(self, entity_map: ArchiveEntityMap) -> Tuple[ArchiveSubmission, IngestArchiveSubmission]:
+    def archive_metadata(self, entity_map: ArchiveEntityMap) -> Tuple[ArchiveSubmission, IngestTracker]:
         archive_submission = ArchiveSubmission(dsp_api=self.dsp_api)
         archive_submission.entity_map = entity_map
 
@@ -223,25 +224,26 @@ class IngestArchiver:
             archive_submission.dsp_url = dsp_submission_url
             archive_submission.dsp_uuid = dsp_submission_url.rsplit('/', 1)[-1]
             print(f"DSP SUBMISSION: {dsp_submission_url}")
-            ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
-            ingest_archive_submission.create(archive_submission)
+            ingest_tracker = self.ingest_tracker
+            ingest_tracker.create_archive_submission(archive_submission)
 
             for entity in converted_entities:
                 archive_submission.add_entity(entity)
-                ingest_archive_submission.add_entity(entity)
+                ingest_tracker.add_entity(entity)
 
         else:
             archive_submission.is_completed = True
             archive_submission.add_error('ingest_archiver.archive_metadata.no_entities',
-                                         'No entities found to complete.')
-            ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
-            ingest_archive_submission.create(archive_submission)
-            return archive_submission, ingest_archive_submission
+                                         'No entities found to convert.')
+            ingest_tracker = IngestTracker(ingest_api=self.ingest_api)
+            ingest_tracker.create_archive_submission(archive_submission)
+            return archive_submission, ingest_tracker
 
-        return archive_submission, ingest_archive_submission
+        return archive_submission, ingest_tracker
 
     def complete_submission(self, dsp_submission_url, entity_map: ArchiveEntityMap = None):
         archive_submission = ArchiveSubmission(dsp_api=self.dsp_api, dsp_submission_url=dsp_submission_url)
+
         if entity_map:
             archive_submission.entity_map = entity_map
             archive_submission.converted_entities = list(archive_submission.entity_map.get_converted_entities())
@@ -250,16 +252,13 @@ class IngestArchiver:
             archive_submission.validate_and_submit()
         elif archive_submission.status == 'Completed':
             archive_submission.is_completed = True
-            archive_submission.process_result()
-            self.update_ingest_archive_entities(entity_map)
-            self.accessioner.accession_entities(archive_submission.entity_map)
+
+        archive_submission.process_result()
+        self.ingest_tracker.update_entities(entity_map)
+        self.accessioner.accession_entities(archive_submission.entity_map)
+        self.ingest_tracker.set_submission_as_archived(archive_submission)
 
         return archive_submission
-
-    def update_ingest_archive_entities(self, entity_map: ArchiveEntityMap = None):
-        ingest_archive_submission = IngestArchiveSubmission(ingest_api=self.ingest_api)
-        for entity in entity_map.get_entities():
-            ingest_archive_submission.update_entity(entity)
 
     def get_manifest(self, manifest_id):
         return Manifest(ingest_api=self.ingest_api, manifest_id=manifest_id)

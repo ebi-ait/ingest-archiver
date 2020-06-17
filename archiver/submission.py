@@ -139,7 +139,7 @@ class ArchiveEntityMap:
     def update(self, entity_type, entities: dict):
         if not self.entities_dict_type.get(entity_type):
             self.entities_dict_type[entity_type] = {}
-        self.entities_dict_type[entity_type].update(entities)
+        self.entities_dict_type[entity_type].update_archive_submission(entities)
 
     @staticmethod
     def map_from_report(report):

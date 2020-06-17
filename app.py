@@ -61,6 +61,21 @@ def archive():
     return jsonify(response)
 
 
+def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
+    print('Starting...')
+    start = time.time()
+    manifests = ingest_api.get_manifest_ids_from_submission(submission_uuid)
+    entity_map: ArchiveEntityMap = archiver.convert(manifests)
+    dsp_submission, ingest_tracker = archiver.archive_metadata(entity_map)
+    archiver.notify_file_archiver(dsp_submission)
+    ingest_tracker.patch_archive_submission({
+        'submissionUuid': submission_uuid,
+        'fileUploadPlan': dsp_submission.file_upload_info
+    })
+    end = time.time()
+    print(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
+
+
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
 def get_submission(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
@@ -137,6 +152,20 @@ def submit(archive_submission_uuid: str):
 def complete(dsp_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     ingest_api = IngestAPI(config.INGEST_API_URL)
+
+    thread = threading.Thread(target=async_complete,
+                              args=(dsp_api, dsp_submission_uuid, ingest_api))
+    thread.start()
+
+    response = {
+        'message': 'successfully triggered!'
+    }
+    return response_json(HTTPStatus.ACCEPTED, data=response)
+
+
+def async_complete(dsp_api, dsp_submission_uuid, ingest_api):
+    print('Starting...')
+    start = time.time()
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     ingest_entities = ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
     entity_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
@@ -144,23 +173,9 @@ def complete(dsp_submission_uuid: str):
     archiver = IngestArchiver(ingest_api=ingest_api,
                               dsp_api=dsp_api)
     archive_submission = archiver.complete_submission(dsp_submission_url, entity_map)
-    data = archive_submission.generate_report()
-    return response_json(HTTPStatus.ACCEPTED, data=data)
-
-
-def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
-    print('Starting...')
-    start = time.time()
-    manifests = ingest_api.get_manifest_ids_from_submission(submission_uuid)
-    entity_map: ArchiveEntityMap = archiver.convert(manifests)
-    dsp_submission, ingest_archive_submission = archiver.archive_metadata(entity_map)
-    archiver.notify_file_archiver(dsp_submission)
-    ingest_archive_submission.update_attributes({
-        'submissionUuid': submission_uuid,
-        'fileUploadPlan': dsp_submission.file_upload_info
-    })
     end = time.time()
-    print(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
+    print(f'Completed DSP submission for {dsp_submission_uuid} in {end - start}s')
+    return archive_submission
 
 
 def response_json(status_code, data):

@@ -21,11 +21,11 @@ class ArchiveCLI:
     def __init__(self, alias_prefix, output_dir, exclude_types, no_validation):
         self.manifests = []
         self.ingest_api = IngestAPI(config.INGEST_API_URL)
-
+        self.dsp_api = DataSubmissionPortal(config.DSP_API_URL)
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
         self.archiver = IngestArchiver(ingest_api=self.ingest_api,
-                                       dsp_api=DataSubmissionPortal(config.DSP_API_URL),
+                                       dsp_api=self.dsp_api,
                                        exclude_types=self.split_exclude_types(exclude_types),
                                        alias_prefix=alias_prefix,
                                        dsp_validation=not no_validation)
@@ -45,12 +45,15 @@ class ArchiveCLI:
         parsed_manifest_list = [x.strip() for x in content]
         self.manifests = parsed_manifest_list
 
-    def complete_submission(self, submission_url, entity_map: ArchiveEntityMap):
-        logging.info(f'##################### COMPLETING DSP SUBMISSION {submission_url}')
-        archive_submission = self.archiver.complete_submission(submission_url, entity_map)
+    def complete_submission(self, dsp_submission_url):
+        logging.info(f'##################### COMPLETING DSP SUBMISSION {dsp_submission_url}')
+        archive_submission = ArchiveSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
+        ingest_archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(archive_submission.dsp_uuid)
+        ingest_entities = self.ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
+        entity_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
+        archive_submission = self.archiver.complete_submission(dsp_submission_url, entity_map)
         report = archive_submission.generate_report()
-        submission_uuid = submission_url.rsplit('/', 1)[-1]
-        self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
+        self.save_dict_to_file(f'COMPLETE_SUBMISSION_{archive_submission.dsp_uuid}', report)
 
     def build_map(self):
         logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
@@ -75,7 +78,7 @@ class ArchiveCLI:
     def validate_submission(self, entity_map: ArchiveEntityMap, submit, ingest_submission_uuid=None):
         archive_submission, ingest_archive_submission = self.archiver.archive_metadata(entity_map)
         all_messages = self.archiver.notify_file_archiver(archive_submission)
-        ingest_archive_submission.update_attributes({
+        ingest_archive_submission.patch_archive_submission({
             'submissionUuid': ingest_submission_uuid,
             'fileUploadPlan': archive_submission.file_upload_info
         })

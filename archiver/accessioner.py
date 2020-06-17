@@ -74,6 +74,9 @@ class Accessioner:
             }
         elif accession.accession_type == 'file':
             entity_patch['content']['insdc_run_accessions'] = [accession.accession_id]
+
+        entity_patch['validationState'] = 'Draft'
+
         return entity_patch
 
     def accession_entities(self, entity_map: ArchiveEntityMap):
