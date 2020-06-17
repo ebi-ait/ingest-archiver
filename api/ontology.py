@@ -59,7 +59,8 @@ class OntologyAPI:
         return False
 
     def get_descendants(self, ontology_name, iri):
-        query_url = f'{self.url}/api/ontologies/{ontology_name}/terms/{quote(iri)}/descendants'
+        safe_iri = quote(quote(iri, safe=''))
+        query_url = f'{self.url}/api/ontologies/{ontology_name}/terms/{safe_iri}/descendants'
         return self.get_all(query_url, 'terms')
 
     def get_all(self, query_url, result_type):
