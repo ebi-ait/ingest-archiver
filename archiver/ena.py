@@ -184,7 +184,7 @@ def _sq_run_file_attributes(converted_files):
 
 
 def _sq_run_files(converted_files, hca_data):
-    if protocols.is_10x(hca_data.get("library_preparation_protocol")):
+    if protocols.is_10x(_ontology_api, hca_data.get("library_preparation_protocol")):
         files = [{
             'name': f"{hca_data['manifest_id']}.bam",
             'type': 'bam'

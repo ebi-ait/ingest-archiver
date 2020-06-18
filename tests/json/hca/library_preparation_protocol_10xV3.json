@@ -1,0 +1,52 @@
+{
+  "content": {
+    "describedBy": "https://schema.humancellatlas.org/type/protocol/sequencing/6.2.0/library_preparation_protocol",
+    "schema_type": "protocol",
+    "protocol_core": {
+      "protocol_id": "10x_library_prep_protocol",
+      "protocol_name": "10x sequencing v3",
+      "protocol_description": "ChromiumTM Single Cell 3' Library & Gel Bead Kit v3"
+    },
+    "cell_barcode": {
+      "barcode_read": "Read 1",
+      "barcode_offset": 0,
+      "barcode_length": 16
+    },
+    "input_nucleic_acid_molecule": {
+      "text": "polyA RNA",
+      "ontology": "OBI:0000869",
+      "ontology_label": "polyA RNA"
+    },
+    "nucleic_acid_source": "single cell",
+    "library_construction_method": {
+      "text": "10X 3' v3 sequencing",
+      "ontology": "EFO:0009922",
+      "ontology_label": "10x 3' v3 sequencing"
+    },
+    "library_construction_kit": {
+      "retail_name": "ChromiumTM Single Cell 3' Library & Gel Bead Kit v3"
+    },
+    "end_bias": "3 prime tag",
+    "primer": "poly-dT",
+    "strand": "first",
+    "umi_barcode": {
+      "barcode_read": "Read 1",
+      "barcode_offset": 16,
+      "barcode_length": 10
+    }
+  },
+  "submissionDate": "2020-06-15T10:16:45.355Z",
+  "updateDate": "2020-06-15T10:16:52.449Z",
+  "user": null,
+  "lastModifiedUser": "anonymousUser",
+  "type": "Protocol",
+  "uuid": {
+    "uuid": "12f9a241-0c7b-4e2b-a925-480202924372"
+  },
+  "events": [],
+  "dcpVersion": "2020-06-15T10:16:45.355Z",
+  "accession": null,
+  "validationState": "Valid",
+  "validationErrors": [],
+  "isUpdate": false
+}
