@@ -46,15 +46,19 @@ class OntologyAPI:
             doc = docs[0] if docs else None
         return doc
 
-    def is_child_of(self, root_obo_id, child_obo_id):
-        root_doc = self.search(root_obo_id, exact=True)
-        if not root_doc:
-            raise Error(f'Could not find {root_obo_id}')
-        root_ontology_name = root_doc.get('ontology_name')
-        root_iri = root_doc.get('iri')
-        for descendant in self.get_descendants(root_ontology_name, root_iri):
-            descendant_obo_id = descendant.get('obo_id', '')
-            if child_obo_id == descendant_obo_id:
+    def is_equal_or_descendant(self, reference_obo_id, test_obo_id):
+        if reference_obo_id == test_obo_id:
+            return True
+        return self.is_descendant(reference_obo_id, test_obo_id)
+
+    def is_descendant(self, reference_obo_id, test_obo_id):
+        reference_doc = self.search(reference_obo_id, exact=True)
+        if not reference_doc:
+            raise Error(f'Could not find {reference_obo_id}')
+        ontology_name = reference_doc.get('ontology_name')
+        iri = reference_doc.get('iri')
+        for descendant in self.get_descendants(ontology_name, iri):
+            if test_obo_id == descendant.get('obo_id', ''):
                 return True
         return False
 
