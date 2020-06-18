@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import format_date, default_to
@@ -36,6 +38,11 @@ spec = {
     'title': ['biomaterial.content.biomaterial_core.biomaterial_name']
 }
 
+no_release_date_spec = deepcopy(spec)
+no_release_date_spec['releaseDate'] = ['biomaterial.submissionDate', format_date]
+
 
 def convert(hca_data: dict):
-    return JsonMapper(hca_data).map(spec)
+    project = hca_data.get('project')
+    use_spec = spec if project and 'releaseDate' in project else no_release_date_spec
+    return JsonMapper(hca_data).map(use_spec)
