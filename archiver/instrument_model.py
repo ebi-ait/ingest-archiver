@@ -41,4 +41,4 @@ __instrument_model_map__ = _prepare_map()
 
 def to_dsp_name(hca_name: str):
     instrument_model = __instrument_model_map__.get(hca_name.lower())
-    return instrument_model.dsp_name if instrument_model else None
+    return instrument_model.dsp_name if instrument_model else 'unspecified'
