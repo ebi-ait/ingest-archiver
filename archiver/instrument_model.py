@@ -25,7 +25,7 @@ def _prepare_map():
     model_names = ['Illumina Genome Analyzer', 'Illumina Genome Analyzer II', 'Illumina Genome Analyzer IIx',
                    'Illumina HiSeq 2500', 'Illumina HiSeq 2000', 'Illumina HiSeq 1500', 'Illumina HiSeq 1000',
                    'Illumina MiSeq', 'Illumina HiScanSQ', 'HiSeq X Ten', 'NextSeq 500', 'HiSeq X Five',
-                   'Illumina HiSeq 3000', 'Illumina HiSeq 4000', 'NextSeq 550']
+                   'Illumina HiSeq 3000', 'Illumina HiSeq 4000', 'NextSeq 550', 'Illumina NovaSeq 6000']
     instrument_models = [illumina(name) for name in model_names]
     model_map = {model.hca_name: model for model in instrument_models}
 
