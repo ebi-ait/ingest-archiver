@@ -44,5 +44,5 @@ no_release_date_spec['releaseDate'] = ['biomaterial.submissionDate', format_date
 
 def convert(hca_data: dict):
     project = hca_data.get('project')
-    use_spec = spec if project and 'releaseDate' in project else no_release_date_spec
+    use_spec = spec if project and project.get('releaseDate') else no_release_date_spec
     return JsonMapper(hca_data).map(use_spec)
