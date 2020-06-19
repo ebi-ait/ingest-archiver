@@ -150,10 +150,10 @@ def convert_sequencing_run(hca_data: dict):
     mapper = JsonMapper(hca_data)
     converted_data = mapper.map({
         '$on': 'process',
-        'alias': ['uuid.uuid', prefix_with, _sq_run_alias_prefix],
+        #being overwritten 'alias': ['uuid.uuid', prefix_with, _sq_run_alias_prefix],
         'title': ['content.process_core.process_name', default_to, ''],
         'description': ['content.process_core.process_description', default_to, ''],
-        'assayRefs': ['uuid.uuid', _sq_run_assay_ref]
+        #being overwritten 'assayRefs': ['uuid.uuid', _sq_run_assay_ref]
     })
 
     converted_files = mapper.map({
@@ -185,8 +185,11 @@ def _sq_run_file_attributes(converted_files):
 
 def _sq_run_files(converted_files, hca_data):
     if protocols.is_10x(_ontology_api, hca_data.get("library_preparation_protocol")):
+        file_name = hca_data['manifest_id']
+        if 'lane_index' in hca_data:
+            file_name = f"{file_name}_{hca_data.get('lane_index')}"
         files = [{
-            'name': f"{hca_data['manifest_id']}.bam",
+            'name': f'{file_name}.bam',
             'type': 'bam'
         }]
     else:
