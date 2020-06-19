@@ -78,7 +78,9 @@ class TestConverter(unittest.TestCase):
         # and:
         converted_no_release_date = converter.convert({
             'biomaterial': biomaterial,
-            'project': {}
+            'project': {
+                'releaseDate': ''
+            }
         })
 
         # then:
