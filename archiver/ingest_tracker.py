@@ -67,8 +67,7 @@ class IngestTracker:
         archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(dsp_uuid)
         ingest_submission_uuid = archive_submission['submissionUuid']
         ingest_submission = self.ingest_api.get_submission_by_uuid(ingest_submission_uuid)
-        set_archived_link = ingest_submission['_links']['commitArchived']['href']
-        # set_archived_link = ingest_submission['_links']['archived']['href']
+        set_archived_link = ingest_submission['_links']['archived']['href']
         self.ingest_api.put(set_archived_link)
 
     def _map_archive_submission(self, archive_submission: ArchiveSubmission):
