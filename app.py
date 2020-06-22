@@ -20,6 +20,11 @@ format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format=format)
 
+
+logging.getLogger('archiver').setLevel(logging.INFO)
+logging.getLogger('api').setLevel(logging.INFO)
+logging.getLogger('archiver.archiver.IngestArchiver').setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 
@@ -206,13 +211,8 @@ def response_json(status_code, data):
 
 
 if __name__ == "__main__":
-    logging.getLogger('archiver').setLevel(logging.INFO)
-    logging.getLogger('archiver.archiver.IngestArchiver').setLevel(logging.INFO)
-
     format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
              '%(lineno)s %(funcName)s(): %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.WARNING,
                         format=format)
-
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     app.run(host='0.0.0.0')
