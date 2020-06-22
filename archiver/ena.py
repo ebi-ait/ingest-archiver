@@ -2,7 +2,7 @@ from api import ontology
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id_attribute
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
-from conversion.post_process import prefix_with, default_to
+from conversion.post_process import prefix_with, default_to, format_date
 from utils import protocols
 
 PREFIX_STUDY = 'study_'
@@ -122,6 +122,7 @@ study_spec = {
     },
     'title': ['content.project_core.project_title'],
     'description': ['content.project_core.project_description'],
+    'releaseDate': ['releaseDate', format_date],
     'projectRef': {
         'alias': ['', default_to, '{projectAlias.placeholder}']
     }

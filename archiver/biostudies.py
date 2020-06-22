@@ -30,7 +30,7 @@ project_spec = {
         'Project Core - Project Short Name': ['content.project_core.project_short_name', dsp_attribute],
         'HCA Project UUID': ['uuid.uuid', dsp_attribute]
     },
-    'releaseDate': ['submissionDate', format_date],
+    'releaseDate': ['releaseDate', format_date],
     # TODO title probably needs padding? (len < 25)
     'title': ['content.project_core.project_title'],
     'description': ['content.project_core.project_description'],
