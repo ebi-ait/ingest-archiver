@@ -6,7 +6,7 @@ import threading
 import time
 from http import HTTPStatus
 
-from flask import Flask
+from flask import Flask, Response
 from flask import jsonify
 from flask import request
 
@@ -82,6 +82,17 @@ def get_submission(dsp_submission_uuid: str):
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     del ingest_archive_submission['_links']
     return jsonify(ingest_archive_submission)
+
+
+@app.route('/archiveSubmissions/<dsp_submission_uuid>/fileUploadPlan', methods=['GET'])
+def sendFile(dsp_submission_uuid: str):
+    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
+    content = json.dumps(ingest_archive_submission.get('fileUploadPlan'), indent=4)
+    filename = f'FILE_UPLOAD_PLAN_{dsp_submission_uuid}.json'
+    return Response(content,
+                    mimetype='application/json',
+                    headers={'Content-Disposition': f'attachment;filename={filename}'})
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/entities')

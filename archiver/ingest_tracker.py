@@ -75,7 +75,7 @@ class IngestTracker:
         data = {
             'dspUuid': archive_submission.dsp_uuid,
             'dspUrl': archive_submission.dsp_url,
-            'fileUploadPlan': archive_submission.file_upload_info,
+            'fileUploadPlan': {"jobs": archive_submission.file_upload_info},
             'errors': self._map_errors(archive_submission.errors)
         }
         return self._clean_data(data)
