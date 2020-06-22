@@ -15,6 +15,13 @@ from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
 from archiver.archiver import IngestArchiver, ArchiveSubmission, ArchiveEntityMap
 
+format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
+         '%(lineno)s %(funcName)s(): %(message)s'
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                    format=format)
+
+logger = logging.getLogger(__name__)
+
 
 def create_app():
     """Construct the core application."""
@@ -62,7 +69,7 @@ def archive():
 
 
 def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
-    print('Starting...')
+    logger.info('Starting...')
     start = time.time()
     manifests = ingest_api.get_manifest_ids_from_submission(submission_uuid)
     entity_map: ArchiveEntityMap = archiver.convert(manifests)
@@ -73,7 +80,7 @@ def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uu
         'fileUploadPlan': dsp_submission.file_upload_info
     })
     end = time.time()
-    print(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
+    logger.info(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
@@ -175,7 +182,7 @@ def complete(dsp_submission_uuid: str):
 
 
 def async_complete(dsp_api, dsp_submission_uuid, ingest_api):
-    print('Starting...')
+    logging.info('Starting...')
     start = time.time()
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     ingest_entities = ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
@@ -185,7 +192,7 @@ def async_complete(dsp_api, dsp_submission_uuid, ingest_api):
                               dsp_api=dsp_api)
     archive_submission = archiver.complete_submission(dsp_submission_url, entity_map)
     end = time.time()
-    print(f'Completed DSP submission for {dsp_submission_uuid} in {end - start}s')
+    logger.info(f'Completed DSP submission for {dsp_submission_uuid} in {end - start}s')
     return archive_submission
 
 
@@ -198,16 +205,14 @@ def response_json(status_code, data):
     return response
 
 
-logging.getLogger('archiver').setLevel(logging.INFO)
-logging.getLogger('archiver.archiver.IngestArchiver').setLevel(logging.INFO)
-
-format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
-         '%(lineno)s %(funcName)s(): %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=format)
-
-logger = logging.getLogger(__name__)
-
 if __name__ == "__main__":
+    logging.getLogger('archiver').setLevel(logging.INFO)
+    logging.getLogger('archiver.archiver.IngestArchiver').setLevel(logging.INFO)
+
+    format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
+             '%(lineno)s %(funcName)s(): %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.WARNING,
+                        format=format)
+
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     app.run(host='0.0.0.0')
