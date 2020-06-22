@@ -1,6 +1,5 @@
 import json
-from typing import List, Iterator
-
+from typing import Iterator
 from typing import List
 
 import polling
@@ -357,21 +356,33 @@ class ArchiveSubmission:
         get_validation_results_url = self.submission['_links']['validationResults']['href']
         validation_results = self.dsp_api.get_validation_results(get_validation_results_url)
 
-        report = {}
+        report = {
+            'errors': {},
+            'pending': []
+        }
+
         for validation_result in validation_results:
-            if validation_result['validationStatus'] == "Complete":
+            validation_result_details = None
+            if validation_result['validationStatus'] in ["Complete", "Pending"]:
                 details_url = validation_result['_links']['validationResult']['href']
                 details_url = details_url.split('{')[0]
                 validation_result_details = self.dsp_api.get_validation_result_details(details_url)
-                if validation_result_details.get('errorMessages'):
-                    try:
-                        submittable_href = validation_result_details['_links']['submittable']['href']
-                    except KeyError:
-                        submittable_href = False
-                    report_key = submittable_href if submittable_href else 'NoSubmittable'
-                    if not report.get(report_key):
-                        report[report_key] = []
-                        report[report_key].append(validation_result_details.get('errorMessages'))
+
+            if validation_result_details and validation_result_details.get('errorMessages'):
+                try:
+                    submittable_href = validation_result_details['_links']['submittable']['href']
+                except KeyError:
+                    submittable_href = False
+                report_key = submittable_href if submittable_href else 'NoSubmittable'
+                if not report['errors'].get(report_key):
+                    report['errors'][report_key] = []
+                    report['errors'][report_key].append(validation_result_details.get('errorMessages'))
+
+            if validation_result[
+                'validationStatus'] == "Pending" and validation_result_details and validation_result_details.get(
+                'expectedResults'):
+                report['pending'].append(validation_result_details)
+
         return report
 
     def is_submittable(self):
