@@ -20,8 +20,8 @@ format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format=format)
 
-
 logging.getLogger('archiver').setLevel(logging.INFO)
+logging.getLogger('app').setLevel(logging.INFO)
 logging.getLogger('api').setLevel(logging.INFO)
 logging.getLogger('archiver.archiver.IngestArchiver').setLevel(logging.INFO)
 
