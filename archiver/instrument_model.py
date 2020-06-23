@@ -25,7 +25,7 @@ def _prepare_map():
     model_names = ['Illumina Genome Analyzer', 'Illumina Genome Analyzer II', 'Illumina Genome Analyzer IIx',
                    'Illumina HiSeq 2500', 'Illumina HiSeq 2000', 'Illumina HiSeq 1500', 'Illumina HiSeq 1000',
                    'Illumina MiSeq', 'Illumina HiScanSQ', 'HiSeq X Ten', 'NextSeq 500', 'HiSeq X Five',
-                   'Illumina HiSeq 3000', 'Illumina HiSeq 4000', 'NextSeq 550']
+                   'Illumina HiSeq 3000', 'Illumina HiSeq 4000', 'NextSeq 550', 'Illumina NovaSeq 6000']
     instrument_models = [illumina(name) for name in model_names]
     model_map = {model.hca_name: model for model in instrument_models}
 
@@ -41,4 +41,4 @@ __instrument_model_map__ = _prepare_map()
 
 def to_dsp_name(hca_name: str):
     instrument_model = __instrument_model_map__.get(hca_name.lower())
-    return instrument_model.dsp_name if instrument_model else None
+    return instrument_model.dsp_name if instrument_model else 'unspecified'

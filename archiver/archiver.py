@@ -802,11 +802,15 @@ class IngestArchiver:
                     message["dcp_bundle_uuid"] = manifest['bundleUuid']
 
                 if protocols.is_10x(self.ontology_api, data.get("library_preparation_protocol")):
+                    file_name = data['manifest_id']
+                    if "lane_index" in entity.data:
+                        file_name = f"{file_name}_{entity.data.get('lane_index')}"
+                    file_name = f"{file_name}.bam"
                     message["conversion"] = {}
-                    message["conversion"]["output_name"] = f"{data['manifest_id']}.bam"
+                    message["conversion"]["output_name"] = file_name
                     message["conversion"]["inputs"] = files
                     message["conversion"]["schema"] = protocols.map_10x_bam_schema(self.ontology_api, data.get("library_preparation_protocol"))
-                    message["files"] = [{"name": f"{data['manifest_id']}.bam"}]
+                    message["files"] = [{"name": file_name}]
 
                 messages.append(message)
 
@@ -936,23 +940,40 @@ class ArchiveEntityAggregator:
 
     def _get_sequencing_runs(self):
         process = self.manifest.get_assay_process()
-        archive_entity = ArchiveEntity()
-        archive_entity.manifest_id = self.manifest.manifest_id
-        archive_type = "sequencingRun"
-        archive_entity.archive_entity_type = archive_type
-        archive_entity.id = self.generate_archive_entity_id(archive_type, process)
-        archive_entity.data = {
-            'library_preparation_protocol': self.manifest.get_library_preparation_protocol(),
-            'process': self.manifest.get_assay_process(),
-            'files': self.manifest.get_files(),
-            'manifest_id': archive_entity.manifest_id
-        }
-        archive_entity.links = {
-            'assayRefs': [{
-                "alias": self.generate_archive_entity_id('sequencingExperiment', process)
-            }]
-        }
-        return [archive_entity]
+        files = self.manifest.get_files()
+        lanes = {}
+        # Index files by lane index
+        for file in files:
+            lane_index = file.get('content').get('lane_index',1)
+            if lane_index not in lanes:
+                lanes[lane_index] = []
+            lanes[lane_index].append(file)
+
+        archive_entities = []
+        for lane_index in lanes.keys():
+            lane_files = lanes.get(lane_index)
+
+            archive_entity = ArchiveEntity()
+            archive_entity.manifest_id = self.manifest.manifest_id
+            archive_type = "sequencingRun"
+            archive_entity.archive_entity_type = archive_type
+            archive_entity.id = self.generate_archive_entity_id(archive_type, process)
+            archive_entity.data = {
+                'library_preparation_protocol': self.manifest.get_library_preparation_protocol(),
+                'process': self.manifest.get_assay_process(),
+                'files': lane_files,
+                'manifest_id': archive_entity.manifest_id
+            }
+            archive_entity.links = {
+                'assayRefs': [{
+                    "alias": self.generate_archive_entity_id('sequencingExperiment', process)
+                }]
+            }
+            if len(lanes) > 1:
+                archive_entity.data['lane_index'] = lane_index
+                archive_entity.id = f'{archive_entity.id}_{lane_index}'
+            archive_entities.append(archive_entity)
+        return archive_entities
 
     def get_archive_entities(self, archive_entity_type):
         entities = []
