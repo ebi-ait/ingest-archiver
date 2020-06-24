@@ -21,11 +21,11 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format=format)
 
 logging.getLogger('archiver').setLevel(logging.INFO)
-logging.getLogger('app').setLevel(logging.INFO)
 logging.getLogger('api').setLevel(logging.INFO)
-logging.getLogger('archiver.archiver.IngestArchiver').setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 
 def create_app():
@@ -187,7 +187,7 @@ def complete(dsp_submission_uuid: str):
 
 
 def async_complete(dsp_api, dsp_submission_uuid, ingest_api):
-    logging.info('Starting...')
+    logger.info('Starting...')
     start = time.time()
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     ingest_entities = ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
