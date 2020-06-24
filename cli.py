@@ -21,18 +21,22 @@ class ArchiveCLI:
     def __init__(self, alias_prefix, output_dir, exclude_types, no_validation):
         self.manifests = []
         self.ingest_api = IngestAPI(config.INGEST_API_URL)
-
+        self.dsp_api = DataSubmissionPortal(config.DSP_API_URL)
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
         self.archiver = IngestArchiver(ingest_api=self.ingest_api,
-                                       dsp_api=DataSubmissionPortal(config.DSP_API_URL),
+                                       dsp_api=self.dsp_api,
                                        exclude_types=self.split_exclude_types(exclude_types),
                                        alias_prefix=alias_prefix,
                                        dsp_validation=not no_validation)
 
     def get_manifests_from_project(self, project_uuid):
         logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
-        self.manifests = self.ingest_api.get_manifest_ids(project_uuid=project_uuid)
+        self.manifests = self.ingest_api.get_manifest_ids_from_project(project_uuid=project_uuid)
+
+    def get_manifests_from_submission(self, submission_uuid):
+        logging.info(f'GETTING MANIFESTS FOR SUBMISSION: {submission_uuid}')
+        self.manifests = self.ingest_api.get_manifest_ids_from_submission(submission_uuid)
 
     def get_manifests_from_list(self, manifest_list_file):
         logging.info(f'GETTING MANIFESTS FROM FILE: {manifest_list_file}')
@@ -41,12 +45,15 @@ class ArchiveCLI:
         parsed_manifest_list = [x.strip() for x in content]
         self.manifests = parsed_manifest_list
 
-    def complete_submission(self, submission_url, entity_map: ArchiveEntityMap):
-        logging.info(f'##################### COMPLETING DSP SUBMISSION {submission_url}')
-        archive_submission = self.archiver.complete_submission(submission_url, entity_map)
+    def complete_submission(self, dsp_submission_url):
+        logging.info(f'##################### COMPLETING DSP SUBMISSION {dsp_submission_url}')
+        archive_submission = ArchiveSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
+        ingest_archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(archive_submission.dsp_uuid)
+        ingest_entities = self.ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
+        entity_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
+        archive_submission = self.archiver.complete_submission(dsp_submission_url, entity_map)
         report = archive_submission.generate_report()
-        submission_uuid = submission_url.rsplit('/', 1)[-1]
-        self.save_dict_to_file(f'COMPLETE_SUBMISSION_{submission_uuid}', report)
+        self.save_dict_to_file(f'COMPLETE_SUBMISSION_{archive_submission.dsp_uuid}', report)
 
     def build_map(self):
         logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
@@ -68,10 +75,13 @@ class ArchiveCLI:
         logging.error(f"--load_path files does not have an entities object: {file_content}")
         exit(2)
 
-    def validate_submission(self, entity_map: ArchiveEntityMap, submit):
-        archive_submission = self.archiver.archive_metadata(entity_map)
+    def validate_submission(self, entity_map: ArchiveEntityMap, submit, ingest_submission_uuid=None):
+        archive_submission, ingest_archive_submission = self.archiver.archive_metadata(entity_map)
         all_messages = self.archiver.notify_file_archiver(archive_submission)
-
+        ingest_archive_submission.patch_archive_submission({
+            'submissionUuid': ingest_submission_uuid,
+            'fileUploadPlan': archive_submission.file_upload_info
+        })
         report = archive_submission.generate_report()
         logging.info("Updating Report file...")
         self.save_dict_to_file("REPORT", report)
@@ -145,6 +155,8 @@ if __name__ == '__main__':
     # required (1 of possible 3)
     parser.add_option("-p", "--project_uuid", help="Project UUID")
 
+    parser.add_option("-i", "--ingest_submission_uuid", help="Ingest Submission UUID")
+
     parser.add_option("-f", "--manifest_list_file",
                       help="Specify a path to a file containing list of manifest id's to be archived."
                            "If project uuid is already specified then this parameter will be ignored.")
@@ -153,7 +165,7 @@ if __name__ == '__main__':
                       help="Specify the path to load a REPORT.json to send  to DSP, will skip loading and converting "
                            "from ingest.")
 
-    # submit only
+    # complete only
     parser.add_option("-u", "--submission_url",
                       help="DSP Submission url to complete")
 
@@ -169,18 +181,22 @@ if __name__ == '__main__':
 
     # preferences
     parser.add_option("-s", "--submit",
-                      help="Add this flag to wait for entities submit to archives once valid",
+                      help="Add this flag to wait for entities complete to archives once valid",
                       action="store_true", default=False)
     parser.add_option("-n", "--no_validation",
-                      help="Add this flag to not send submission to DSP for validation, will override submit flag to "
+                      help="Add this flag to not send submission to DSP for validation, will override complete flag to "
                            "false.",
                       action="store_true", default=False)
     parser.add_option("-o", "--output_dir", help="Customise output directory name")
 
     (options, args) = parser.parse_args()
 
-    if not (options.project_uuid or options.manifest_list_file or options.load_path or options.submission_url):
-        exit_error("You must supply one of the following (1) a project UUID (2) a file with list of manifest IDs (3) a file of entities (4) a submission url")
+    if not (options.project_uuid or options.ingest_submission_uuid or options.manifest_list_file or options.load_path or options.submission_url):
+        exit_error("You must supply one of the following "
+                   "(1) a project UUID "
+                   "(2) ingest submission uuid "
+                   "(3) a file with list of manifest IDs "
+                   "(4) a file of entities (4) a DSP submission url")
 
     if options.validation_errors and options.no_validation:
         exit_error("--validation_errors and --no_validation are mutually exclusive")
@@ -203,6 +219,8 @@ if __name__ == '__main__':
     else:
         if options.project_uuid:
             cli.get_manifests_from_project(options.project_uuid)
+        elif options.ingest_submission_uuid:
+            cli.get_manifests_from_submission(options.ingest_submission_uuid)
         elif options.manifest_list_file:
             cli.get_manifests_from_list(options.manifest_list_file)
         entity_map = cli.build_map()
@@ -210,6 +228,6 @@ if __name__ == '__main__':
     if options.submission_url:
         cli.complete_submission(options.submission_url, entity_map)
     elif entity_map and not options.no_validation:
-        cli.validate_submission(entity_map, options.submit)
+        cli.validate_submission(entity_map, options.submit, ingest_submission_uuid=options.ingest_submission_uuid)
 
     exit_success()

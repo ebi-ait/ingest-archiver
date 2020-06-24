@@ -6,7 +6,6 @@ from random import randint
 from mock import MagicMock, patch
 
 import config
-from api import ontology
 from archiver.converter import SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
 
@@ -90,7 +89,7 @@ class TestConverter(unittest.TestCase):
     @patch('api.ontology.OntologyAPI.expand_curie')
     def test_convert_sequencing_experiment(self, expand_curie):
         # given:
-        expand_curie.return_value='http://purl.obolibrary.org/obo/UO_0000015'
+        expand_curie.return_value = 'http://purl.obolibrary.org/obo/UO_0000015'
         # and:
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
@@ -151,8 +150,6 @@ class TestConverter(unittest.TestCase):
         test_alias = f'sequencingRun_{uuid}'
         with open(config.JSON_DIR + 'dsp/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
-            expected_json['alias'] = test_alias
-            expected_json['assayRefs'] = [{'alias': test_alias}]
 
         process = dict(self.hca_data.get('process'))
         process['uuid']['uuid'] = uuid
@@ -188,8 +185,6 @@ class TestConverter(unittest.TestCase):
         test_alias = f'sequencingRun_{uuid}'
         with open(config.JSON_DIR + 'dsp/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
-            expected_json['alias'] = test_alias
-            expected_json['assayRefs'] = [{'alias': test_alias}]
 
         converter = SequencingRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)

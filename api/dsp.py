@@ -1,11 +1,11 @@
 import json
 import logging
-import config
 
 import requests
 from requests import adapters
 from urllib3.util import retry
 
+import config
 from utils.token_manager import TokenManager
 
 
@@ -84,6 +84,9 @@ class DataSubmissionPortal:
     def get_entity_url(self, entity_type):
         return DSP_ENTITY_LINK[entity_type]
 
+    def get_submission_url(self, submission_uuid):
+        return f'{self.url}/api/submissions/{submission_uuid}'
+
     def get_submission_status(self, get_submission_status_url):
         return self._get(get_submission_status_url)
 
@@ -120,6 +123,10 @@ class DataSubmissionPortal:
     def get_processing_results(self, dsp_submission):
         get_results_url = dsp_submission['_links']['processingStatuses']['href']
         return self._get_all(get_results_url, 'processingStatuses')
+
+    def get_submission_blockers_summary(self, dsp_submission):
+        blockers_summary_url = dsp_submission['_links']['submissionBlockersSummary']['href']
+        return self._get(blockers_summary_url)
 
     def get_current_version(self, entity_type, alias):
         entity_link = DSP_ENTITY_CURR_VERSION_LINK[entity_type]
