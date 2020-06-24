@@ -1,27 +1,37 @@
 {
-	"alias": "sequencingRun_process352",
-	"title": "",
-	"description": "",
-	"attributes": {
-		"Files - 0 - File Core - File Name": [{
-			"value": "R1.fastq.gz"
-		}],
-		"Files - 0 - File Core - Format": [{
-			"value": "fastq.gz"
-		}],
-		"Files - 0 - Read Index": [{
-			"value": "read1"
-		}],
-		"Files - 0 - Lane Index": [{
-			"value": 1
-		}],
-		"Files - 0 - HCA File UUID": [{
-			"value": "a7a93430-6bb1-44b5-81ea-cf6443073c8d"
-		}]
-	},
-	"assayRefs": [{"alias": "{assayAlias.placeholder}"}],
-	"files": [{
-		"name": "dummy_manifest_id.bam",
-		"type": "bam"
-	}]
+  "title": "",
+  "description": "",
+  "attributes": {
+    "Files - 0 - File Core - File Name": [
+      {
+        "value": "R1.fastq.gz"
+      }
+    ],
+    "Files - 0 - File Core - Format": [
+      {
+        "value": "fastq.gz"
+      }
+    ],
+    "Files - 0 - Read Index": [
+      {
+        "value": "read1"
+      }
+    ],
+    "Files - 0 - Lane Index": [
+      {
+        "value": 1
+      }
+    ],
+    "Files - 0 - HCA File UUID": [
+      {
+        "value": "a7a93430-6bb1-44b5-81ea-cf6443073c8d"
+      }
+    ]
+  },
+  "files": [
+    {
+      "name": "dummy_manifest_id.bam",
+      "type": "bam"
+    }
+  ]
 }

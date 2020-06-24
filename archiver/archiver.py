@@ -360,11 +360,17 @@ class IngestArchiver:
                 if manifest.get('bundleUuid'):
                     message["dcp_bundle_uuid"] = manifest['bundleUuid']
 
-                if protocols.is_10x(data.get("library_preparation_protocol")):
+                if protocols.is_10x(self.ontology_api, data.get("library_preparation_protocol")):
+                    file_name = data['manifest_id']
+                    if "lane_index" in entity.data:
+                        file_name = f"{file_name}_{entity.data.get('lane_index')}"
+                    file_name = f"{file_name}.bam"
                     message["conversion"] = {}
-                    message["conversion"]["output_name"] = f"{data['manifest_id']}.bam"
+                    message["conversion"]["output_name"] = file_name
                     message["conversion"]["inputs"] = files
-                    message["files"] = [{"name": f"{data['manifest_id']}.bam"}]
+                    message["conversion"]["schema"] = protocols.map_10x_bam_schema(self.ontology_api, data.get(
+                        "library_preparation_protocol"))
+                    message["files"] = [{"name": file_name}]
 
                 messages.append(message)
 
@@ -415,6 +421,7 @@ class ArchiveEntityAggregator:
         samples_map = {}
         derived_from_graph = Graph()
 
+        project = self.manifest.get_project()
         for biomaterial in self.manifest.get_biomaterials():
             archive_entity = ArchiveEntity()
             archive_entity.manifest_id = self.manifest.manifest_id
@@ -422,8 +429,12 @@ class ArchiveEntityAggregator:
             archive_entity.archive_entity_type = archive_type
             archive_entity.id = self.generate_archive_entity_id(archive_type, biomaterial.data)
 
-            archive_entity.data = {'biomaterial': biomaterial.data}
-            archive_entity.metadata_uuids = [biomaterial.data['uuid']['uuid']]
+            archive_entity.data = {
+                'biomaterial': biomaterial.data,
+                'project': project
+            }
+
+            archive_entity.metadata_uuids = [biomaterial.data['uuid']['uuid'], project['uuid']['uuid']]
             archive_entity.accessioned_metadata_uuids = [biomaterial.data['uuid']['uuid']]
 
             if biomaterial.derived_by_process:
@@ -497,41 +508,57 @@ class ArchiveEntityAggregator:
 
     def _get_sequencing_runs(self):
         process = self.manifest.get_assay_process()
-        archive_entity = ArchiveEntity()
-        archive_entity.manifest_id = self.manifest.manifest_id
-        archive_type = "sequencingRun"
-        archive_entity.archive_entity_type = archive_type
-        archive_entity.id = self.generate_archive_entity_id(archive_type, process)
-
         lib_prep_protocol = self.manifest.get_library_preparation_protocol()
         files = self.manifest.get_files()
 
-        archive_entity.data = {
-            'library_preparation_protocol': lib_prep_protocol,
-            'process': process,
-            'files': list(files),
-            'manifest_id': archive_entity.manifest_id
-        }
+        lanes = {}
+        # Index files by lane index
+        for file in files:
+            lane_index = file.get('content').get('lane_index', 1)
+            if lane_index not in lanes:
+                lanes[lane_index] = []
+            lanes[lane_index].append(file)
 
-        metadata_uuids = [
-            lib_prep_protocol['uuid']['uuid'],
-            process['uuid']['uuid']
-        ]
+        archive_entities = []
 
-        file_uuids = [f['uuid']['uuid'] for f in files]
+        for lane_index in lanes.keys():
+            lane_files = lanes.get(lane_index)
 
-        metadata_uuids.extend(file_uuids)
+            archive_entity = ArchiveEntity()
+            archive_entity.manifest_id = self.manifest.manifest_id
+            archive_type = "sequencingRun"
+            archive_entity.archive_entity_type = archive_type
+            archive_entity.id = self.generate_archive_entity_id(archive_type, process)
 
-        archive_entity.metadata_uuids = metadata_uuids
+            archive_entity.data = {
+                'library_preparation_protocol': lib_prep_protocol,
+                'process': process,
+                'files': lane_files,
+                'manifest_id': archive_entity.manifest_id
+            }
 
-        archive_entity.accessioned_metadata_uuids = file_uuids
+            metadata_uuids = [
+                lib_prep_protocol['uuid']['uuid'],
+                process['uuid']['uuid']
+            ]
 
-        archive_entity.links = {
-            'assayRefs': [{
-                "alias": self.generate_archive_entity_id('sequencingExperiment', process)
-            }]
-        }
-        return [archive_entity]
+            file_uuids = [f['uuid']['uuid'] for f in lane_files]
+
+            metadata_uuids.extend(file_uuids)
+
+            archive_entity.accessioned_metadata_uuids = file_uuids
+
+            archive_entity.links = {
+                'assayRefs': [{
+                    "alias": self.generate_archive_entity_id('sequencingExperiment', process)
+                }]
+            }
+            if len(lanes) > 1:
+                archive_entity.data['lane_index'] = lane_index
+                archive_entity.id = f'{archive_entity.id}_{lane_index}'
+            archive_entities.append(archive_entity)
+
+        return archive_entities
 
     def get_archive_entities(self, archive_entity_type):
         entities = []

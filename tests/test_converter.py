@@ -1,11 +1,11 @@
 import json
 import unittest
+from copy import deepcopy
 from random import randint
 
 from mock import MagicMock, patch
 
 import config
-from api import ontology
 from archiver.converter import SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
     StudyConverter, ProjectConverter
 
@@ -50,30 +50,46 @@ class TestConverter(unittest.TestCase):
         # given:
         biomaterial = self.hca_data.get('biomaterial')
         with open(config.JSON_DIR + 'dsp/sample.json', encoding=config.ENCODING) as data_file:
-            expected_json = json.loads(data_file.read())
+            no_release_date = json.loads(data_file.read())
 
         # and:
         test_alias = 'hca' + str(randint(0, 1000))
         biomaterial['uuid']['uuid'] = test_alias
-        expected_json['alias'] = test_alias
-        expected_json['attributes']['HCA Biomaterial UUID'] = [{'value': test_alias}]
+        no_release_date['alias'] = test_alias
+        no_release_date['attributes']['HCA Biomaterial UUID'] = [{'value': test_alias}]
+
+        # and:
+        with_release_date = deepcopy(no_release_date)
+        with_release_date['releaseDate'] = '2018-10-11'
 
         # and:
         converter = SampleConverter(ontology_api=self.ontology_api)
         converter.ingest_api = self.ingest_api
 
         # when:
-        actual_json = converter.convert({
-            'biomaterial': biomaterial
+        converted_with_release_date = converter.convert({
+            'biomaterial': biomaterial,
+            'project': {
+                'releaseDate': '2018-10-11T14:33:22.111Z'
+            }
+        })
+
+        # and:
+        converted_no_release_date = converter.convert({
+            'biomaterial': biomaterial,
+            'project': {
+                'releaseDate': None
+            }
         })
 
         # then:
-        self.assertEqual(expected_json, actual_json)
+        self.assertEqual(with_release_date, converted_with_release_date)
+        self.assertEqual(no_release_date, converted_no_release_date)
 
     @patch('api.ontology.OntologyAPI.expand_curie')
     def test_convert_sequencing_experiment(self, expand_curie):
         # given:
-        expand_curie.return_value='http://purl.obolibrary.org/obo/UO_0000015'
+        expand_curie.return_value = 'http://purl.obolibrary.org/obo/UO_0000015'
         # and:
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
@@ -134,8 +150,6 @@ class TestConverter(unittest.TestCase):
         test_alias = f'sequencingRun_{uuid}'
         with open(config.JSON_DIR + 'dsp/sequencing_run.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
-            expected_json['alias'] = test_alias
-            expected_json['assayRefs'] = [{'alias': test_alias}]
 
         process = dict(self.hca_data.get('process'))
         process['uuid']['uuid'] = uuid
@@ -171,8 +185,6 @@ class TestConverter(unittest.TestCase):
         test_alias = f'sequencingRun_{uuid}'
         with open(config.JSON_DIR + 'dsp/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
-            expected_json['alias'] = test_alias
-            expected_json['assayRefs'] = [{'alias': test_alias}]
 
         converter = SequencingRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)
