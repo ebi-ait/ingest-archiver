@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-
 def create_app():
     """Construct the core application."""
     app = Flask(__name__)
@@ -100,7 +99,9 @@ def get_submission(dsp_submission_uuid: str):
 def sendFile(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
-    content = json.dumps(ingest_archive_submission.get('fileUploadPlan'), indent=4)
+    jobs = ingest_archive_submission.get('fileUploadPlan')
+    content = json.dumps({'jobs': jobs}, indent=4)
+
     filename = f'FILE_UPLOAD_PLAN_{dsp_submission_uuid}.json'
     return Response(content,
                     mimetype='application/json',
