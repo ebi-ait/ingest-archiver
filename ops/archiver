@@ -10,7 +10,7 @@ archive_image=ebi-ait/ingest-archiver-cli
 env=test
 [[ -n "$ARCHIVER_ENV" ]] && env=$ARCHIVER_ENV
 
-working_dir=$PWD
+working_dir=$PWD/_local
 mkdir -p "$working_dir"/env
 credentials_file="$working_dir/env/aap_credentials"
 config_file="$working_dir"/env/"$env"_config
