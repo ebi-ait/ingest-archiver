@@ -44,12 +44,36 @@ to register the domain given a set of credentials. This is done using the `set-d
     ./archiver set-domain <preferred_centre_name>
     
 If this action succeeds, it will update the credentials file with the reference to the newly registered domain. Note 
-that setting the domain is currently not supported for production environment. 
-
-## Preparing the Docker Image
+that setting the domain is currently not supported for production environment.
 
 ## Archiving
 
-### Production VS Test
+Archiver supports archival on either submission or project context, through the sub-commands `submission` and `project`.
+Each command requires the UUID that identifies the archival context:
 
-### Submission VS Project
+    ./archiver submission <submission_uuid>
+    
+or
+    
+    ./archiver project <project_uuid>
+    
+For older data sets particularly ones that were previously exported to DCP/1, archival in the project context is 
+preferred. For more recent submissions, submission context is advised.
+
+**Quiet Mode**. By default, either of these commands will print out messages about the archival process, until 
+eventually it displays the DSP URL of the submission. Alternatively, they can made to only return the UUID of the
+DSP submission when it succeeds; this is done by using the quiet flag, `-q`.
+
+    ./archiver submission -q <submission_uuid>
+    
+To check the info about the DSP submission, the resulting UUID can be passed on to the `dsp-submission` sub-command:
+
+    ./archiver dsp-submission <dsp_submission_uuid>
+
+### Running in Production
+
+In order to avoid submitting to production, the archiver utility runs in test mode by default. This can changed to 
+prod by setting the environment variable `ARCHIVER_ENV` to `prod`. To preserve the default behaviour, however, it is
+advised to instead use the execute flag `-x` when running any of the archival commands:
+
+    ./archiver -q project -x <project_uuid>
