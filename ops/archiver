@@ -4,13 +4,13 @@ quiet=0
 default_prefix=HCA
 alias_prefix=$default_prefix
 
-archive_image=ebi-ait/ingest-archiver-cli
+archive_image=quay.io/ebi-ait/ingest-archiver:master-cli
 [[ -n $ARCHIVER_IMG ]] && archive_image=$ARCHIVER_IMG
 
 env=test
 [[ -n "$ARCHIVER_ENV" ]] && env=$ARCHIVER_ENV
 
-working_dir=$PWD
+working_dir=$PWD/_local
 mkdir -p "$working_dir"/env
 credentials_file="$working_dir/env/aap_credentials"
 config_file="$working_dir"/env/"$env"_config
