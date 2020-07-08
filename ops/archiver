@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+pref=AAP_API
+quiet=0
+default_prefix=HCA
+alias_prefix=$default_prefix
+
+archive_image=ebi-ait/ingest-archiver-cli
+[[ -n $ARCHIVER_IMG ]] && archive_image=$ARCHIVER_IMG
+
+env=test
+[[ -n "$ARCHIVER_ENV" ]] && env=$ARCHIVER_ENV
+
+working_dir=$PWD
+mkdir -p "$working_dir"/env
+credentials_file="$working_dir/env/aap_credentials"
+config_file="$working_dir"/env/"$env"_config
+
+output_dir=$working_dir/output
+mkdir -p "$output_dir"
+
+ontology_url=https://www.ebi.ac.uk/ols
+aap_test_url=https://explore.api.aai.ebi.ac.uk/auth
+ingest_url=https://api.ingest__sub__archive.data.humancellatlas.org/
+dsp_url=https://submission__suf__.ebi.ac.uk
+
+function _setup_env() {
+  ingest_env=$env
+  [[ "test" == $ingest_env ]] && ingest_env=staging
+
+  sub=."$ingest_env".
+  [[ "prod" == "$ingest_env" ]] && sub='.'
+  ingest_url=${ingest_url/__sub__/$sub}
+
+  suffix=-$env
+  [[ "prod" == $env ]] && suffix=''
+  dsp_url=${dsp_url/__suf__/$suffix}
+
+  [[ -z "$alias_prefix" ]] && alias_prefix=$default_prefix
+
+  [[ "test" == $env ]] && credentials_file=${credentials_file}_${env}
+  config_file="$working_dir"/env/"$env"_config
+}
+
+function _generate_credentials() {
+  # TODO update this to use AWS_DEFAULT_PROFILE/REGION
+  aws --region=us-east-1 --profile=embl-ebi secretsmanager get-secret-value \
+    --secret-id=ingest/aap_credentials \
+    --query=SecretString | jq -r | jq -r \
+    ". |\
+    \"${pref}_URL=\" + .url,\
+    \"${pref}_DOMAIN=\" + .c_name,\
+    \"${pref}_USER=\" + .user,\
+    \"${pref}_PASSWORD=\" + .password" \
+    >"$credentials_file"
+
+  [[ 0 == $quiet ]] && echo "AAP credentials copied to [$credentials_file]"
+}
+
+function _generate_config() {
+  printf "INGEST_API_URL=%s\nDSP_API_URL=%s\nONTOLOGY_DSP_API_URL=%s" \
+    $ingest_url $dsp_url $ontology_url >"$config_file"
+  [[ 'test' == $env ]] && printf "\nAAP_API_URL=%s\n" $aap_test_url >> "$config_file"
+  if [[ 'prod' == $env ]]; then
+    printf "\nVALIDATION_POLL_FOREVER=False" >> "$config_file"
+    printf "\nSUBMISSION_POLL_FOREVER=False\n" >> "$config_file"
+  fi
+
+  echo "config written to [$config_file]"
+}
+
+function _import_credentials() {
+  [[ ! -f "$credentials_file" ]] && echo "expecting credentials file [$credentials_file]" && exit 1
+  set -a
+  source "$credentials_file"
+  set +a
+}
+
+function _aap_token() {
+  user_name=${pref}_USER
+  user_name=${!user_name}
+  password=${pref}_PASSWORD
+  password=${!password}
+  [[ -z "$user_name" ]] || [[ -z "$password" ]] && echo 'incomplete credentials' && exit 1
+
+  aap_url=${pref}_URL
+  aap_url=${!aap_url}
+  [[ -z "$aap_url" ]] && echo "no AAP URL provided" && exit 1
+  curl -su "$user_name":"$password" "$aap_url"
+}
+
+function get-token() {
+  _import_credentials
+  _aap_token
+}
+
+function set-domain() {
+  [[ "prod" == "$env" ]] && echo 'cannot change domain for production' && exit 1
+  [[ -z "$1" ]] && echo 'no centre name specified' && exit 1
+  c_name=$1
+  echo "using centre name [$c_name]"
+
+  _import_credentials
+
+  domain=${pref}_DOMAIN
+  domain=${!domain}
+  [[ -n "$domain" ]] && echo "domain is already set to [$domain]" && exit 1
+  token=$(_aap_token)
+
+  domain=$(curl -s -X POST \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/hal+json' \
+    -H "Authorization: Bearer $token" \
+    -d '{"centreName" : "'"$c_name"'"}' \
+    ${dsp_url}/api/user/teams | jq -r '.name')
+
+  export "${pref}_URL=$aap_test_url"
+  export "${pref}_DOMAIN=$domain"
+  env | grep ^"$pref".* >"$credentials_file"
+  echo "[$credentials_file] updated."
+}
+
+function _dsp-submission() {
+  url=$1
+  [[ -z "$url" ]] && echo 'no DSP submission URL provided' && exit 1
+  curl -s -H "Authorization: Bearer $(get-token)" "$url"
+}
+
+function dsp-submission() {
+  uuid=$1
+  [[ -z "$uuid" ]] && echo 'no DSP id provided.' && exit 1
+  _dsp-submission "$dsp_url"/api/submissions/"$uuid"
+}
+
+function _do_submit() {
+  [[ 0 == $quiet ]] && echo "using working directory [$working_dir]"
+  [[ -z $uuid ]] && echo "no UUID provided"  && exit 1
+  [[ -z $uuid_field ]] && echo "unknown UUID usage (e.g. Project or Submission)" && exit 1
+
+  if [[ ! -f "$credentials_file" ]]; then
+    if [[ 'prod' == "$env" ]]; then
+      _generate_credentials
+    else
+      echo "expecting credentials file in [$credentials_file]"
+      exit 1
+    fi
+  fi
+  [[ ! -f "$config_file" ]] && _generate_config
+
+  [[ 0 == $quiet ]] && echo "archiving [$uuid]..."
+  result_url=$(docker run --rm -v "$output_dir":/app/output \
+    --env-file="$credentials_file" --env-file="$config_file" \
+    "$archive_image" \
+    --alias_prefix="$alias_prefix" \
+    --"$uuid_field"="$uuid" |
+    grep -ioE "${dsp_url}.*")
+
+  if [[ -n "$result_url" ]]; then
+    [[ 0 == $quiet ]] && echo "successfully archived [$result_url]"
+  else
+    report_directory=$(ls -dtp "$output_dir"/* | head -1)
+    cat "$report_directory"/REPORT.json
+    exit 1
+  fi
+  [[ 1 == $quiet ]] && _dsp-submission "$result_url" | jq -r '.id'
+}
+
+function submission() {
+  uuid=$1
+  uuid_field=ingest_submission_uuid
+  _do_submit
+}
+
+function project() {
+  uuid=$1
+  uuid_field=project_uuid
+  _do_submit
+}
+
+if [ -z "$1" ]; then
+  echo 'no command specified; available commands:'
+  compgen -A function | grep -ivoE '_.*' | xargs printf "  * %s\n"
+  exit 1
+fi
+
+# option processing code based on:
+# https://stackoverflow.com/a/14203146/404604
+args=()
+while [[ $# -gt 0 ]]; do
+  arg="$1"
+  case "$arg" in
+  -p | --prefix)
+    alias_prefix="$2"
+    shift
+    shift
+    ;;
+  -q | --quiet)
+    quiet=1
+    shift
+    ;;
+  -x | --execute)
+    env=prod
+    shift
+    ;;
+  *)
+    args+=("$1")
+    shift
+    ;;
+  esac
+done
+set -- "${args[@]}"
+
+_setup_env
+"$@"
