@@ -46,6 +46,13 @@ to register the domain given a set of credentials. This is done using the `set-d
 If this action succeeds, it will update the credentials file with the reference to the newly registered domain. Note 
 that setting the domain is currently not supported for production environment.
 
+## Obtaining Token
+
+The archiver utility provides an easy way to obtain security token from AAP based on the configured credentials. This
+can be done using the `get-token` sub-command:
+
+    ./archiver get-token
+
 ## Archiving
 
 Archiver supports archival on either submission or project context, through the sub-commands `submission` and `project`.
