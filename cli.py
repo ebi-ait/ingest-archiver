@@ -226,7 +226,7 @@ if __name__ == '__main__':
         entity_map = cli.build_map()
 
     if options.submission_url:
-        cli.complete_submission(options.submission_url, entity_map)
+        cli.complete_submission(options.submission_url)
     elif entity_map and not options.no_validation:
         cli.validate_submission(entity_map, options.submit, ingest_submission_uuid=options.ingest_submission_uuid)
 

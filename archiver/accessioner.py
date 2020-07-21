@@ -75,7 +75,7 @@ class Accessioner:
         elif accession.accession_type == 'file':
             entity_patch['content']['insdc_run_accessions'] = [accession.accession_id]
 
-        entity_patch['validationState'] = 'Draft'
+        # TODO IMPORTANT!!! How to make sure that patching won't invalidate the json
 
         return entity_patch
 
