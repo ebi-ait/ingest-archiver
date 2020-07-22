@@ -546,6 +546,7 @@ class ArchiveEntityAggregator:
 
             metadata_uuids.extend(file_uuids)
 
+            archive_entity.metadata_uuids = metadata_uuids
             archive_entity.accessioned_metadata_uuids = file_uuids
 
             archive_entity.links = {
