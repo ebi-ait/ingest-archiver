@@ -299,6 +299,12 @@ class ArchiveSubmission:
                 if entity:
                     entity.accession = accession
             elif result['status'] == 'Error':
+                alias = result['alias']
+                accession = result.get('accession')
+                accession_map[alias] = accession
+                entity = self.entity_map.find_entity(alias)
+                if entity:
+                    entity.accession = accession
                 self.add_error('archive_submission.complete.error',
                                f"There was an error submitting a " +
                                f"{result.get('submittableType', '')} with alias {result.get('alias', '')} to " +
