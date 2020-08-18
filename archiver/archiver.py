@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Iterator, Tuple
+from typing import Iterator, Tuple, List
 
 from api import ontology
 from api.dsp import DataSubmissionPortal
@@ -23,11 +23,12 @@ class ArchiverException(Exception):
 
 
 class Biomaterial:
-    def __init__(self, data, derived_by_process=None, derived_with_protocols=None, derived_from=None):
+    def __init__(self, data, derived_by_process=None, derived_with_protocols=None,
+                 derived_from_biomaterials: List[dict] = None):
         self.data = data
         self.derived_by_process = derived_by_process
         self.derived_with_protocols = derived_with_protocols
-        self.derived_from = derived_from
+        self.derived_from_biomaterials = derived_from_biomaterials if derived_from_biomaterials else None
 
     @classmethod
     def from_uuid(cls, ingest_api, biomaterial_uuid):
@@ -65,8 +66,8 @@ class Biomaterial:
                 raise ArchiverException(
                     'A biomaterial derived from multiple biomaterials is not supported yet for conversion.')
 
-            derived_from = next(input_biomaterials)
-            return cls(data, derived_by_process, derived_with_protocols, derived_from)
+            derived_from_biomaterials = list(input_biomaterials)
+            return cls(data, derived_by_process, derived_with_protocols, derived_from_biomaterials)
         else:
             return cls(data)
 
@@ -441,14 +442,17 @@ class ArchiveEntityAggregator:
                 # TODO protocols will be needed for samples conversion
                 # archive_entity.data.update(biomaterial.derived_with_protocols)
 
-                derived_from_alias = self.generate_archive_entity_id('sample', biomaterial.derived_from)
-                derived_from_graph.add_edge(derived_from_alias, archive_entity.id)
-                links = {'sampleRelationships': [
-                    {
+                sample_links: []
+
+                for derived_from in biomaterial.derived_from_biomaterials:
+                    derived_from_alias = self.generate_archive_entity_id('sample', derived_from)
+                    derived_from_graph.add_edge(derived_from_alias, archive_entity.id)
+                    sample_links.append({
                         'alias': derived_from_alias,
                         'relationshipNature': 'derived from'
-                    }
-                ]}
+                    })
+
+                links = {'sampleRelationships': sample_links}
                 archive_entity.links = links
 
             samples_map[archive_entity.id] = archive_entity
