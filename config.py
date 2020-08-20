@@ -1,5 +1,7 @@
 import os
 
+ARCHIVER_API_KEY = os.environ.get('ARCHIVER_API_KEY')
+
 RABBITMQ_ARCHIVAL_QUEUE = 'ingest.archival.queue'
 RABBITMQ_ARCHIVAL_QUEUE = os.environ.get('RABBITMQ_ARCHIVAL_QUEUE', RABBITMQ_ARCHIVAL_QUEUE)
 

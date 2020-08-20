@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from http import HTTPStatus
+from functools import wraps
 
 from flask import Flask, Response
 from flask import jsonify
@@ -36,12 +37,28 @@ def create_app():
 app = create_app()
 
 
+def require_apikey(func):
+    @wraps(func)
+    def decorator(*args, **kwargs):
+        apikey = request.headers.get('Api-Key')
+        
+        if apikey is None:
+            return jsonify({'message': 'header missing Api-Key'})
+
+        if apikey == config.ARCHIVER_API_KEY:
+            return func(*args, **kwargs)
+        else:
+            return jsonify({'message': 'invalid Api-Key'})
+
+    return decorator
+
 @app.route("/")
 def index():
     return "Ingest Archiver is running"
 
 
 @app.route("/archiveSubmissions", methods=['POST'])
+@require_apikey
 def archive():
     data = request.get_json()
 
@@ -88,6 +105,7 @@ def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uu
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
+@require_apikey
 def get_submission(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
@@ -96,6 +114,7 @@ def get_submission(dsp_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/fileUploadPlan', methods=['GET'])
+@require_apikey
 def sendFile(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
@@ -109,6 +128,7 @@ def sendFile(dsp_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/entities')
+@require_apikey
 def get_submission_entities(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
@@ -127,6 +147,7 @@ def get_submission_entities(dsp_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<archive_submission_uuid>/validationErrors')
+@require_apikey
 def get_validation_errors(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
@@ -136,6 +157,7 @@ def get_validation_errors(archive_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<archive_submission_uuid>/validationResult')
+@require_apikey
 def get_validation_result(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
@@ -145,6 +167,7 @@ def get_validation_result(archive_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<archive_submission_uuid>/blockers')
+@require_apikey
 def get_blockers(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
@@ -154,6 +177,7 @@ def get_blockers(archive_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<archive_submission_uuid>/submit', methods=['POST'])
+@require_apikey
 def submit(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
@@ -173,6 +197,7 @@ def submit(archive_submission_uuid: str):
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/complete', methods=['POST'])
+@require_apikey
 def complete(dsp_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     ingest_api = IngestAPI(config.INGEST_API_URL)
