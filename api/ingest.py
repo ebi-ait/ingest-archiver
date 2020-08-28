@@ -170,7 +170,7 @@ class IngestAPI:
 
     def entity_info_from_url(self, url):
         parsed_url = urlparse(url)
-        location = parsed_url.params.strip('/')
+        location = parsed_url.path.strip('/')
         entity_type = location.split('/')[0]
         entity_id = location.split('/')[1]
         return entity_type, entity_id
