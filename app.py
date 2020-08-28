@@ -41,16 +41,17 @@ def require_apikey(func):
     @wraps(func)
     def decorator(*args, **kwargs):
         apikey = request.headers.get('Api-Key')
-        
+
         if apikey is None:
-            return jsonify({'message': 'header missing Api-Key'})
+            return response_json(HTTPStatus.UNAUTHORIZED, {'message': 'header missing Api-Key'})
 
         if apikey == config.ARCHIVER_API_KEY:
             return func(*args, **kwargs)
         else:
-            return jsonify({'message': 'invalid Api-Key'})
+            return response_json(HTTPStatus.UNAUTHORIZED, {'message': 'invalid Api-Key'})
 
     return decorator
+
 
 @app.route("/")
 def index():
@@ -93,15 +94,20 @@ def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uu
     logger.info('Starting...')
     start = time.time()
     manifests = ingest_api.get_manifest_ids_from_submission(submission_uuid)
-    entity_map: ArchiveEntityMap = archiver.convert(manifests)
-    dsp_submission, ingest_tracker = archiver.archive_metadata(entity_map)
-    archiver.notify_file_archiver(dsp_submission)
-    ingest_tracker.patch_archive_submission({
-        'submissionUuid': submission_uuid,
-        'fileUploadPlan': dsp_submission.file_upload_info
-    })
-    end = time.time()
-    logger.info(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
+
+    try:
+        entity_map: ArchiveEntityMap = archiver.convert(manifests)
+        dsp_submission, ingest_tracker = archiver.archive_metadata(entity_map)
+        archiver.notify_file_archiver(dsp_submission)
+        ingest_tracker.patch_archive_submission({
+            'submissionUuid': submission_uuid,
+            'fileUploadPlan': dsp_submission.file_upload_info
+        })
+        end = time.time()
+        logger.info(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
+    except Exception as e:
+        logger.exception(e)
+        raise
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
@@ -191,7 +197,7 @@ def submit(archive_submission_uuid: str):
 
     data = {
         'message': f'DSP submission {archive_submission_uuid} is not submittable.'
-        f' Please make sure that the validation is passing and there are no submission blockers'
+                   f' Please make sure that the validation is passing and there are no submission blockers'
     }
     return response_json(HTTPStatus.BAD_REQUEST, data=data)
 
