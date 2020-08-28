@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from typing import Iterator, List
+from urllib.parse import urlparse
 
 import requests
 from ingest.utils.s2s_token_client import S2STokenClient
@@ -168,7 +169,8 @@ class IngestAPI:
         return entity_id
 
     def entity_info_from_url(self, url):
-        location = str.replace(url, self.url, '').strip('/')
+        parsed_url = urlparse(url)
+        location = parsed_url.params.strip('/')
         entity_type = location.split('/')[0]
         entity_id = location.split('/')[1]
         return entity_type, entity_id
