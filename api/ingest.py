@@ -212,8 +212,7 @@ class IngestAPI:
 
     def get_archive_entity_by_archive_submission_url_and_alias(self, archive_submission_url: str, alias: str):
         url = f'{self.url}/archiveEntities/search/findByArchiveSubmissionAndAlias'
-        entities = self.get(url, params={'archiveSubmission': archive_submission_url, 'alias': alias})
-        return entities.get('_embedded', {}).get('archiveEntities', [])
+        return self.get(url, params={'archiveSubmission': archive_submission_url, 'alias': alias})
 
     def get(self, url, **kwargs):
         r = self.session.get(url, headers=self.headers, **kwargs)
