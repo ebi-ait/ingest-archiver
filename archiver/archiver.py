@@ -217,7 +217,9 @@ class IngestArchiver:
             dsp_submission_url = archive_submission.get_url()
             archive_submission.dsp_url = dsp_submission_url
             archive_submission.dsp_uuid = dsp_submission_url.rsplit('/', 1)[-1]
-            print(f"DSP SUBMISSION: {dsp_submission_url}")
+            output = f"DSP SUBMISSION: {dsp_submission_url}"
+            print(output)
+            self.logger.info(output)
             ingest_tracker = self.ingest_tracker
             ingest_tracker.create_archive_submission(archive_submission)
 
@@ -248,7 +250,7 @@ class IngestArchiver:
             archive_submission.is_completed = True
 
         archive_submission.process_result()
-        self.ingest_tracker.update_entities(entity_map)
+        self.ingest_tracker.update_entities(archive_submission.dsp_uuid, entity_map)
         self.accessioner.accession_entities(archive_submission.entity_map)
         self.ingest_tracker.set_submission_as_archived(archive_submission)
 
