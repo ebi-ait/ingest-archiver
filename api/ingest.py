@@ -209,7 +209,7 @@ class IngestAPI:
         return self.get(url)
 
     def get_latest_archive_submission_by_submission_uuid(self, submission_uuid):
-        search_url = f'{self.ingest_api_url}/archiveSubmissions/search/findBySubmissionUuid'
+        search_url = f'{self.url}/archiveSubmissions/search/findBySubmissionUuid'
         params = {
             "submissionUuid": submission_uuid,
             "sort": "created,desc"
