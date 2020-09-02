@@ -117,7 +117,7 @@ def get_latest_archive_submission(ingest_submission_uuid):
     latest_archive_submission = ingest_api.get_latest_archive_submission_by_submission_uuid(ingest_submission_uuid)
 
     if not latest_archive_submission:
-        return response_json(HTTPStatus.NOT_FOUND)
+        return response_json(HTTPStatus.NOT_FOUND, None)
 
     del latest_archive_submission['_links']
     return jsonify(latest_archive_submission)
