@@ -110,6 +110,19 @@ def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uu
         raise
 
 
+@app.route('/latestArchiveSubmission/<ingest_submission_uuid>')
+@require_apikey
+def get_latest_archive_submission(ingest_submission_uuid):
+    ingest_api = IngestAPI(config.INGEST_API_URL)
+    latest_archive_submission = ingest_api.get_latest_archive_submission_by_submission_uuid(ingest_submission_uuid)
+
+    if not latest_archive_submission:
+        return response_json(HTTPStatus.NOT_FOUND)
+
+    del latest_archive_submission['_links']
+    return jsonify(latest_archive_submission)
+
+
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
 @require_apikey
 def get_submission(dsp_submission_uuid: str):
@@ -117,6 +130,21 @@ def get_submission(dsp_submission_uuid: str):
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     del ingest_archive_submission['_links']
     return jsonify(ingest_archive_submission)
+
+
+@app.route('/archiveSubmissions/<dsp_submission_uuid>', methods=['DELETE'])
+@require_apikey
+def delete_archive_submission(dsp_submission_uuid: str):
+    ingest_api = IngestAPI(config.INGEST_API_URL)
+    dsp_api = DataSubmissionPortal(config.DSP_API_URL)
+    ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
+    dsp_url = ingest_archive_submission['dspUrl']
+    dsp_api.delete_submission(dsp_url)
+    logger.info(f'Deleting DSP submission {dsp_url}')
+    archive_submission_url = ingest_archive_submission['_links']['self']['href']
+    logger.info(f'Deleting Ingest Archive Submission {archive_submission_url}')
+    response = ingest_api.delete(archive_submission_url)
+    return response_json(HTTPStatus.OK, data=response)
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/fileUploadPlan', methods=['GET'])
@@ -180,26 +208,6 @@ def get_blockers(archive_submission_uuid: str):
     submission = ArchiveSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
     blockers = submission.get_blockers()
     return jsonify(blockers)
-
-
-@app.route('/archiveSubmissions/<archive_submission_uuid>/submit', methods=['POST'])
-@require_apikey
-def submit(archive_submission_uuid: str):
-    dsp_api = DataSubmissionPortal(config.DSP_API_URL)
-    submission_url = dsp_api.get_submission_url(archive_submission_uuid)
-    submission = ArchiveSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
-    if submission.is_submittable():
-        submission.submit()
-        data = {
-            'message': f'DSP Submission {submission.dsp_uuid} was submitted successfully'
-        }
-        return response_json(HTTPStatus.ACCEPTED, data=data)
-
-    data = {
-        'message': f'DSP submission {archive_submission_uuid} is not submittable.'
-                   f' Please make sure that the validation is passing and there are no submission blockers'
-    }
-    return response_json(HTTPStatus.BAD_REQUEST, data=data)
 
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/complete', methods=['POST'])

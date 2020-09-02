@@ -208,6 +208,17 @@ class IngestAPI:
         url = f'{self.url}/archiveSubmissions/search/findByDspUuid?dspUuid={dsp_uuid}'
         return self.get(url)
 
+    def get_latest_archive_submission_by_submission_uuid(self, submission_uuid):
+        search_url = f'{self.ingest_api_url}/archiveSubmissions/search/findBySubmissionUuid'
+        params = {
+            "submissionUuid": submission_uuid,
+            "sort": "created,desc"
+        }
+        data = self.session.get(search_url, params)
+        archive_submissions = data['_embedded']['archiveSubmissions']
+        archive_submission = archive_submissions[0] if len(archive_submissions) > 0 else None
+        return archive_submission
+
     def get_archive_entity_by_dsp_uuid(self, dsp_uuid):
         url = f'{self.url}/archiveEntities/search/findByDspUuid?dspUuid={dsp_uuid}'
         return self.get(url)
@@ -233,5 +244,10 @@ class IngestAPI:
 
     def put(self, url):
         r = self.session.put(url, headers=self.headers)
+        r.raise_for_status()
+        return r.json()
+
+    def delete(self, url):
+        r = self.session.delete(url, headers=self.headers)
         r.raise_for_status()
         return r.json()
