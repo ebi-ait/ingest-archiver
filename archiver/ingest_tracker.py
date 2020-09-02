@@ -45,22 +45,28 @@ class IngestTracker:
         self.entity_url_map[entity.dsp_uuid] = ingest_url
         return ingest_entity
 
-    def update_entities(self, entity_map: EntityMap):
+    def update_entities(self, dsp_submission_uuid: str, entity_map: EntityMap):
+        archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
+        archive_submission_url = archive_submission['_links']['self']['href']
         for entity in entity_map.get_entities():
-            self.update_entity(entity)
+            self.update_entity(archive_submission_url, entity)
 
-    def update_entity(self, entity: ArchiveEntity) -> dict:
+    def update_entity(self, archive_submission_url: str, entity: ArchiveEntity) -> dict:
         data = self._map_archive_entity(entity)
         if self.entity_url_map.get(entity.dsp_uuid):
             ingest_entity_url = self.entity_url_map.get(entity.dsp_uuid)
         else:
-            ingest_entity = self.find_entity(entity)
+            ingest_entity = self.find_entity(archive_submission_url, entity)
             ingest_entity_url = ingest_entity['_links']['self']['href']
         ingest_entity = self.ingest_api.patch(ingest_entity_url, data)
         return ingest_entity
 
-    def find_entity(self, entity: ArchiveEntity) -> dict:
-        return self.ingest_api.get_archive_entity_by_alias(entity.id)
+    def find_entity(self, archive_submission_url: str, entity: ArchiveEntity) -> dict:
+        entity = self.ingest_api.get_archive_entity_by_archive_submission_url_and_alias(archive_submission_url, entity.id)
+        return entity
+
+    def find_archive_submission(self, dsp_submission_uuid: str) -> dict:
+        return self.ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
 
     def set_submission_as_archived(self, archive_submission: ArchiveSubmission):
         dsp_uuid = archive_submission.dsp_uuid

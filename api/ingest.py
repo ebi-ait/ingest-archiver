@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from typing import Iterator, List
+from urllib.parse import urlparse
 
 import requests
 from ingest.utils.s2s_token_client import S2STokenClient
@@ -168,7 +169,8 @@ class IngestAPI:
         return entity_id
 
     def entity_info_from_url(self, url):
-        location = str.replace(url, self.url, '').strip('/')
+        parsed_url = urlparse(url)
+        location = parsed_url.path.strip('/')
         entity_type = location.split('/')[0]
         entity_id = location.split('/')[1]
         return entity_type, entity_id
@@ -206,13 +208,24 @@ class IngestAPI:
         url = f'{self.url}/archiveSubmissions/search/findByDspUuid?dspUuid={dsp_uuid}'
         return self.get(url)
 
+    def get_latest_archive_submission_by_submission_uuid(self, submission_uuid):
+        search_url = f'{self.url}/archiveSubmissions/search/findBySubmissionUuid'
+        params = {
+            "submissionUuid": submission_uuid,
+            "sort": "created,desc"
+        }
+        data = self.get(search_url, params=params)
+        archive_submissions = data['_embedded']['archiveSubmissions']
+        archive_submission = archive_submissions[0] if len(archive_submissions) > 0 else None
+        return archive_submission
+
     def get_archive_entity_by_dsp_uuid(self, dsp_uuid):
         url = f'{self.url}/archiveEntities/search/findByDspUuid?dspUuid={dsp_uuid}'
         return self.get(url)
 
-    def get_archive_entity_by_alias(self, alias):
-        url = f'{self.url}/archiveEntities/search/findByAlias?alias={alias}'
-        return self.get(url)
+    def get_archive_entity_by_archive_submission_url_and_alias(self, archive_submission_url: str, alias: str):
+        url = f'{self.url}/archiveEntities/search/findByArchiveSubmissionAndAlias'
+        return self.get(url, params={'archiveSubmission': archive_submission_url, 'alias': alias})
 
     def get(self, url, **kwargs):
         r = self.session.get(url, headers=self.headers, **kwargs)
@@ -231,5 +244,10 @@ class IngestAPI:
 
     def put(self, url):
         r = self.session.put(url, headers=self.headers)
+        r.raise_for_status()
+        return r.json()
+
+    def delete(self, url):
+        r = self.session.delete(url, headers=self.headers)
         r.raise_for_status()
         return r.json()

@@ -156,6 +156,7 @@ class DataSubmissionPortal:
 
     def _delete(self, delete_url):
         response = self.session.delete(delete_url, headers=self.get_headers())
+        response.raise_for_status()
 
         if response.ok:
             return True
