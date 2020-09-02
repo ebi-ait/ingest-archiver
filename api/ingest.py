@@ -214,7 +214,7 @@ class IngestAPI:
             "submissionUuid": submission_uuid,
             "sort": "created,desc"
         }
-        data = self.get(search_url, params)
+        data = self.get(search_url, params=params)
         archive_submissions = data['_embedded']['archiveSubmissions']
         archive_submission = archive_submissions[0] if len(archive_submissions) > 0 else None
         return archive_submission
