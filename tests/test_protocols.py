@@ -1,8 +1,6 @@
 import json
 from unittest import TestCase
 
-from mock import MagicMock
-
 import config
 from utils import protocols
 
@@ -43,6 +41,20 @@ class TestProtocols(TestCase):
         is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
         self.assertTrue(is10x)
 
+    def test_is_10x_citeSeq(self):
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "text": "CITE-seq",
+                    "ontology": "EFO:0009294",
+                    "ontology_label": "CITE-seq"
+                }
+            }
+        }
+
+        is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
+        self.assertTrue(is10x)
+
     def test_is_10x_false(self):
         with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
             lib_prep_protocol = json.loads(data_file.read())
@@ -53,6 +65,20 @@ class TestProtocols(TestCase):
     def test_map_bam_schema_v2(self):
         with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             lib_prep_protocol = json.loads(data_file.read())
+
+        bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
+        self.assertEqual(bam_schema, '10xV2')
+
+    def test_map_bam_schema_v2_citeSeq(self):
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "text": "CITE-seq",
+                    "ontology": "EFO:0009294",
+                    "ontology_label": "CITE-seq"
+                }
+            }
+        }
 
         bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
         self.assertEqual(bam_schema, '10xV2')
