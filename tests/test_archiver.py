@@ -134,7 +134,6 @@ class TestIngestArchiver(unittest.TestCase):
         expected = {
             "dsp_api_url": 'dsp_url',
             "dcp_bundle_uuid": 'dcp_uuid',
-            'ingest_api_url': 'ingest_domain_name',
             'submission_url': 'url',
             'files': [{'name': 'dummy_manifest_id.bam'}],
             'conversion': {

@@ -347,7 +347,7 @@ class IngestArchiver:
 
                 message = {
                     "dsp_api_url": self.dsp_api.url,
-                    "ingest_api_url": self.ingest_api.domain_name,
+
                     "submission_url": archive_submission.get_url(),
                     "files": files,
                     "manifest_id": entity.manifest_id

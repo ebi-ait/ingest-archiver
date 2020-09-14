@@ -20,7 +20,6 @@ INGEST_API_HOST = 'http://localhost'
 INGEST_API_PORT = '8080'
 INGEST_API_URL = INGEST_API_HOST + ':' + INGEST_API_PORT
 INGEST_API_URL = os.path.expandvars(os.environ.get('INGEST_API_URL', INGEST_API_URL))
-INGEST_API_DOMAIN_NAME = os.environ.get('INGEST_API_DOMAIN_NAME')
 
 AAP_API_URL = 'https://explore.api.aai.ebi.ac.uk/auth'
 AAP_API_URL = os.environ.get('AAP_API_URL', AAP_API_URL)
