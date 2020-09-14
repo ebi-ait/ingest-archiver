@@ -17,6 +17,7 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.ingest_api = MagicMock()
         self.ingest_api.url = 'ingest_url'
+        self.ingest_api.domain_name = 'ingest_domain_name'
 
         self.dsp_api = MagicMock()
         self.dsp_api.url = 'dsp_url'
@@ -133,7 +134,7 @@ class TestIngestArchiver(unittest.TestCase):
         expected = {
             "dsp_api_url": 'dsp_url',
             "dcp_bundle_uuid": 'dcp_uuid',
-            'ingest_api_url': 'ingest_url',
+            'ingest_api_url': 'ingest_domain_name',
             'submission_url': 'url',
             'files': [{'name': 'dummy_manifest_id.bam'}],
             'conversion': {

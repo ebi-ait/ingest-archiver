@@ -20,7 +20,7 @@ from archiver.archiver import IngestArchiver, ArchiveEntityMap, ArchiveSubmissio
 class ArchiveCLI:
     def __init__(self, alias_prefix, output_dir, exclude_types, no_validation):
         self.manifests = []
-        self.ingest_api = IngestAPI(config.INGEST_API_URL)
+        self.ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
         self.dsp_api = DataSubmissionPortal(config.DSP_API_URL)
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"

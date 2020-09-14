@@ -14,12 +14,13 @@ import config
 
 
 class IngestAPI:
-    def __init__(self, url=None):
+    def __init__(self, url, domain_name):
         self.logger = logging.getLogger(__name__)
         self.headers = {
             'Content-type': 'application/json',
         }
         self.url = url if url else config.INGEST_API_URL
+        self.domain_name = domain_name if domain_name else config.INGEST_API_DOMAIN_NAME
         self.url = self.url.rstrip('/')
         self.logger.info(f'Using {self.url}')
         self.entity_cache = {}

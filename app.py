@@ -73,7 +73,7 @@ def archive():
         }
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
     archiver = IngestArchiver(ingest_api=ingest_api,
                               dsp_api=DataSubmissionPortal(config.DSP_API_URL),
                               exclude_types=exclude_types,
@@ -113,7 +113,7 @@ def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uu
 @app.route('/latestArchiveSubmission/<ingest_submission_uuid>')
 @require_apikey
 def get_latest_archive_submission(ingest_submission_uuid):
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
     latest_archive_submission = ingest_api.get_latest_archive_submission_by_submission_uuid(ingest_submission_uuid)
 
     if not latest_archive_submission:
@@ -126,7 +126,7 @@ def get_latest_archive_submission(ingest_submission_uuid):
 @app.route('/archiveSubmissions/<dsp_submission_uuid>')
 @require_apikey
 def get_submission(dsp_submission_uuid: str):
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     del ingest_archive_submission['_links']
     return jsonify(ingest_archive_submission)
@@ -135,7 +135,7 @@ def get_submission(dsp_submission_uuid: str):
 @app.route('/archiveSubmissions/<dsp_submission_uuid>', methods=['DELETE'])
 @require_apikey
 def delete_archive_submission(dsp_submission_uuid: str):
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     dsp_url = ingest_archive_submission['dspUrl']
@@ -150,7 +150,7 @@ def delete_archive_submission(dsp_submission_uuid: str):
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/fileUploadPlan', methods=['GET'])
 @require_apikey
 def sendFile(dsp_submission_uuid: str):
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     jobs = ingest_archive_submission.get('fileUploadPlan')
     content = json.dumps({'jobs': jobs}, indent=4)
@@ -164,7 +164,7 @@ def sendFile(dsp_submission_uuid: str):
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/entities')
 @require_apikey
 def get_submission_entities(dsp_submission_uuid: str):
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     entities_url = ingest_archive_submission['_links']['entities']['href']
     params = request.args
@@ -214,7 +214,7 @@ def get_blockers(archive_submission_uuid: str):
 @require_apikey
 def complete(dsp_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
-    ingest_api = IngestAPI(config.INGEST_API_URL)
+    ingest_api = IngestAPI(config.INGEST_API_URL, config.INGEST_API_DOMAIN_NAME)
 
     thread = threading.Thread(target=async_complete,
                               args=(dsp_api, dsp_submission_uuid, ingest_api))
