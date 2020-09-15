@@ -20,7 +20,6 @@ from archiver.archiver import IngestArchiver, ArchiveEntityMap, ArchiveSubmissio
 class ArchiveCLI:
     def __init__(self, alias_prefix, output_dir, exclude_types, no_validation):
         self.manifests = []
-        # since this is being ran from CLI, domain name will be always the same as the URL
         self.ingest_api = IngestAPI(config.INGEST_API_URL)
         self.dsp_api = DataSubmissionPortal(config.DSP_API_URL)
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
