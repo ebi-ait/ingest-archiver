@@ -14,7 +14,7 @@ import config
 
 
 class IngestAPI:
-    def __init__(self, url):
+    def __init__(self, url=None):
         self.logger = logging.getLogger(__name__)
         self.headers = {
             'Content-type': 'application/json',
