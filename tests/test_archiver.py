@@ -17,7 +17,6 @@ class TestIngestArchiver(unittest.TestCase):
 
         self.ingest_api = MagicMock()
         self.ingest_api.url = 'ingest_url'
-        self.ingest_api.domain_name = 'ingest_domain_name'
 
         self.dsp_api = MagicMock()
         self.dsp_api.url = 'dsp_url'
