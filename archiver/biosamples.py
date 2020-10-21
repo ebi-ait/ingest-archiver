@@ -4,6 +4,19 @@ from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import format_date, default_to
 
+ontology_url = 'http://purl.obolibrary.org/obo/{}'
+
+
+def format_ontology(*args):
+    if args[0] and 'ontology_label' in args[0] and 'ontology' in args[0]:
+        label: str = args[0]['ontology_label']
+        ontology: str = args[0]['ontology']
+        url = ontology_url.format(ontology.replace(':','_'))
+        return [{
+            'value': label,
+            'terms': [{'url': url}]
+        }]
+
 
 def _taxon(*args):
     ontology_item = args[0]
@@ -14,8 +27,13 @@ def _taxon(*args):
 
 def derive_concrete_type(*args):
     schema_url = args[0]
-    concrete_type = schema_url.split('/')[-1]
+    concrete_type = get_concrete_type(schema_url)
     return dsp_attribute(concrete_type)
+
+
+def get_concrete_type(schema_url):
+    concrete_type = schema_url.split('/')[-1]
+    return concrete_type
 
 
 spec = {
@@ -44,5 +62,9 @@ def convert(hca_data: dict):
 
     if 'releaseDate' not in hca_data.get('project', {}):
         use_spec['releaseDate'] = ['biomaterial.submissionDate', format_date]
+
+    if (get_concrete_type(hca_data['biomaterial']['content']['describedBy']) == 'specimen_from_organism'
+            and 'organ' in hca_data['biomaterial']['content']):
+        use_spec['attributes']['Organ'] = ['biomaterial.content.organ', format_ontology]
 
     return JsonMapper(hca_data).map(use_spec)
