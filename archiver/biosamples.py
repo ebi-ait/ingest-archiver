@@ -59,12 +59,23 @@ spec = {
 
 def convert(hca_data: dict):
     use_spec = deepcopy(spec)
+    is_specimen = ('describedBy' in hca_data.get('biomaterial', {}).get('content',{}) and
+                   get_concrete_type(hca_data['biomaterial']['content']['describedBy']) == 'specimen_from_organism')
 
     if 'releaseDate' not in hca_data.get('project', {}):
         use_spec['releaseDate'] = ['biomaterial.submissionDate', format_date]
 
-    if (get_concrete_type(hca_data['biomaterial']['content']['describedBy']) == 'specimen_from_organism'
-            and 'organ' in hca_data['biomaterial']['content']):
+    if is_specimen and 'organ' in hca_data['biomaterial']['content']:
         use_spec['attributes']['Organ'] = ['biomaterial.content.organ', format_ontology]
 
-    return JsonMapper(hca_data).map(use_spec)
+    converted_data = JsonMapper(hca_data).map(use_spec)
+
+    if is_specimen and 'organ_parts' in hca_data['biomaterial']['content']:
+        organ_parts = hca_data['biomaterial']['content']['organ_parts']
+        if len(organ_parts) == 1:
+            converted_data['attributes']['Organ Part'] = format_ontology(organ_parts[0])
+        elif len(organ_parts) > 1:
+            for index, organ_part in enumerate(organ_parts):
+                converted_data['attributes']['Organ Part - {}'.format(index)] = format_ontology(organ_parts[index])
+
+    return converted_data
