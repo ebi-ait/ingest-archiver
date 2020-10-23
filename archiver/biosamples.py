@@ -9,18 +9,18 @@ _ontology_api = ontology.__api__
 
 
 def format_ontology(*args):
-    if args[0] and 'ontology_label' in args[0] and 'ontology' in args[0]:
-        label: str = args[0]['ontology_label']
-        obo_id: str = args[0]['ontology']
-        iri = _ontology_api.iri_from_obo_id(obo_id)
-        if not iri:
-            short_form = obo_id.replace(':','_')
-            # Fallback ontology URL if no iri found
-            iri = f'http://purl.obolibrary.org/obo/{short_form}'
-        return [{
-            'value': label,
-            'terms': [{'url': iri}]
-        }]
+    if args[0]:
+        if 'ontology_label' in args[0] and 'ontology' in args[0]:
+            label: str = args[0]['ontology_label']
+            obo_id: str = args[0]['ontology']
+            iri = _ontology_api.iri_from_obo_id(obo_id)
+            if iri:
+                return [{
+                    'value': label,
+                    'terms': [{'url': iri}]
+                }]
+        if 'text' in args[0]:
+            return dsp_attribute(args[0]['text'])
 
 
 def _taxon(*args):
