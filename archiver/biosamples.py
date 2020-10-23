@@ -76,6 +76,6 @@ def convert(hca_data: dict):
             converted_data['attributes']['Organ Part'] = format_ontology(organ_parts[0])
         elif len(organ_parts) > 1:
             for index, organ_part in enumerate(organ_parts):
-                converted_data['attributes']['Organ Part - {}'.format(index)] = format_ontology(organ_parts[index])
+                converted_data['attributes'][f'Organ Part - {index}'] = format_ontology(organ_parts[index])
 
     return converted_data

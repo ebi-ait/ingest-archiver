@@ -25,7 +25,7 @@ class OntologyAPI:
         raise Error(f'Could not retrieve IRI for {term}')
 
     def search_for_iri(self, term, exact=True, obsolete=False, group=True, query_fields=None):
-        doc = self.search(term,exact,obsolete,group,query_fields)
+        doc = self.search(term, exact, obsolete, group, query_fields)
         return doc.get('iri') if doc else None
 
     def search(self, term, exact=True, obsolete=False, group=True, query_fields=None):
@@ -71,7 +71,7 @@ class OntologyAPI:
         results = []
         while query_url:
             response: dict = self.get_json(query_url)
-            results.extend(response.get('_embedded',{}).get(result_type,[]))
+            results.extend(response.get('_embedded', {}).get(result_type, []))
             query_url = response.get('_links', {}).get('next', {}).get('href', None)
         return results
 
