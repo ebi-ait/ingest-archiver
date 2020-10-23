@@ -106,7 +106,7 @@ class Converter:
                     attr = {
                         "value": text,
                         "terms": [{
-                            "url": self.ontology_api.expand_curie(value)
+                            "url": self.ontology_api.iri_from_obo_id(value)
                         }]
                     }
                     text_field = text_field.replace(prefix, '')
