@@ -6,12 +6,27 @@ import json
 
 from urllib.parse import quote
 
-
+# iri: "http://purl.obolibrary.org/obo/UBERON_0000948"
+# curie: "obo:UBERON_0000948"
+# label: "heart"
+# short_form: "UBERON_0000948"
+# obo_id: "UBERON:0000948"
 class OntologyAPI:
     def __init__(self, url=None):
         self.url = url if url else config.ONTOLOGY_API_URL
         self.logger = logging.getLogger(__name__)
         self.logger.info(f'Using {self.url}')
+
+    def iri_from_obo_id(self, obo_id):
+        term = self.find_by_id_defining(obo_id)
+        if term and 'iri' in term:
+            return term['iri']
+
+    def find_by_id_defining(self, obo_id):
+        query_url = f'{self.url}/api/terms/findByIdAndIsDefiningOntology?obo_id={obo_id}'
+        all_terms = self.get_all(query_url, 'terms')
+        if all_terms:
+            return all_terms[0]
 
     def expand_curie(self, term):
         iri = self.search_for_iri(term)

@@ -1,20 +1,25 @@
 from copy import deepcopy
 
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id
+from api import ontology
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import format_date, default_to
 
-ontology_url = 'http://purl.obolibrary.org/obo/{}'
+_ontology_api = ontology.__api__
 
 
 def format_ontology(*args):
     if args[0] and 'ontology_label' in args[0] and 'ontology' in args[0]:
         label: str = args[0]['ontology_label']
-        ontology: str = args[0]['ontology']
-        url = ontology_url.format(ontology.replace(':','_'))
+        obo_id: str = args[0]['ontology']
+        iri = _ontology_api.iri_from_obo_id(obo_id)
+        if not iri:
+            short_form = obo_id.replace(':','_')
+            # Fallback ontology URL if no iri found
+            iri = f'http://purl.obolibrary.org/obo/{short_form}'
         return [{
             'value': label,
-            'terms': [{'url': url}]
+            'terms': [{'url': iri}]
         }]
 
 
