@@ -1,5 +1,5 @@
 from api import ontology
-from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute
+from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, dsp_ontology
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
 
@@ -26,18 +26,6 @@ def library_layout_attribute(*args):
 def taxon_id_attribute(*args):
     ids: list = args[0]
     return dsp_attribute(ids[0])
-
-
-def ontology_term(*args):
-    term = args[0]
-
-    if not term:
-        return None
-
-    return [{
-        'terms': [{'url': _ontology_api.expand_curie(term)}],
-        'value': term
-    }]
 
 
 def nominal_value(*args):
@@ -82,7 +70,7 @@ def convert(hca_data: dict):
                 [f'{ib}.content.biomaterial_core.ncbi_taxon_id', taxon_id_attribute],
             'Library Preparation Protocol - End Bias': [f'{lp}.content.end_bias', dsp_attribute],
             'Library Preparation Protocol - Library Construction Method':
-                [f'{lp}.content.library_construction_method.ontology_label', ontology_term],
+                [f'{lp}.content.library_construction_method', dsp_ontology],
             'Library Preparation Protocol - Nucleic Acid Source':
                 [f'{lp}.content.nucleic_acid_source', dsp_attribute],
             'Library Preparation Protocol - Primer': [f'{lp}.content.primer', dsp_attribute],
@@ -93,7 +81,7 @@ def convert(hca_data: dict):
             'Sequencing Protocol - Paired End': [f'{sp}.content.paired_end', dsp_attribute],
             'Sequencing Protocol - Protocol Core - Protocol Id':
                 [f'{sp}.content.protocol_core.protocol_id', dsp_attribute],
-            'Sequencing Protocol - Sequencing Approach': [f'{sp}.content.sequencing_approach.text', ontology_term],
+            'Sequencing Protocol - Sequencing Approach': [f'{sp}.content.sequencing_approach', dsp_ontology],
             'library_strategy': ['', fixed_dsp_attribute, 'OTHER'],
             'library_source': ['', fixed_dsp_attribute, 'TRANSCRIPTOMIC SINGLE CELL'],
             'library_selection': [f'{lp}.content.primer', map_primer],

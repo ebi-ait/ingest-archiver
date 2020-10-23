@@ -1,26 +1,8 @@
 from copy import deepcopy
 
-from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id
-from api import ontology
+from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id, dsp_ontology
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import format_date, default_to
-
-_ontology_api = ontology.__api__
-
-
-def format_ontology(*args):
-    if args[0]:
-        if 'ontology_label' in args[0] and 'ontology' in args[0]:
-            label: str = args[0]['ontology_label']
-            obo_id: str = args[0]['ontology']
-            iri = _ontology_api.iri_from_obo_id(obo_id)
-            if iri:
-                return [{
-                    'value': label,
-                    'terms': [{'url': iri}]
-                }]
-        if 'text' in args[0]:
-            return dsp_attribute(args[0]['text'])
 
 
 def _taxon(*args):
@@ -71,16 +53,16 @@ def convert(hca_data: dict):
         use_spec['releaseDate'] = ['biomaterial.submissionDate', format_date]
 
     if is_specimen and 'organ' in hca_data['biomaterial']['content']:
-        use_spec['attributes']['Organ'] = ['biomaterial.content.organ', format_ontology]
+        use_spec['attributes']['Organ'] = ['biomaterial.content.organ', dsp_ontology]
 
     converted_data = JsonMapper(hca_data).map(use_spec)
 
     if is_specimen and 'organ_parts' in hca_data['biomaterial']['content']:
         organ_parts = hca_data['biomaterial']['content']['organ_parts']
         if len(organ_parts) == 1:
-            converted_data['attributes']['Organ Part'] = format_ontology(organ_parts[0])
+            converted_data['attributes']['Organ Part'] = dsp_ontology(organ_parts[0])
         elif len(organ_parts) > 1:
             for index, organ_part in enumerate(organ_parts):
-                converted_data['attributes'][f'Organ Part - {index}'] = format_ontology(organ_parts[index])
+                converted_data['attributes'][f'Organ Part - {index}'] = dsp_ontology(organ_parts[index])
 
     return converted_data
