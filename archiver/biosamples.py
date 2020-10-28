@@ -1,8 +1,26 @@
 from copy import deepcopy
 
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id
+from api import ontology
 from conversion.json_mapper import JsonMapper
 from conversion.post_process import format_date, default_to
+
+_ontology_api = ontology.__api__
+
+
+def format_ontology(*args):
+    if args[0]:
+        if 'ontology_label' in args[0] and 'ontology' in args[0]:
+            label: str = args[0]['ontology_label']
+            obo_id: str = args[0]['ontology']
+            iri = _ontology_api.iri_from_obo_id(obo_id)
+            if iri:
+                return [{
+                    'value': label,
+                    'terms': [{'url': iri}]
+                }]
+        if 'text' in args[0]:
+            return dsp_attribute(args[0]['text'])
 
 
 def _taxon(*args):
@@ -14,8 +32,13 @@ def _taxon(*args):
 
 def derive_concrete_type(*args):
     schema_url = args[0]
-    concrete_type = schema_url.split('/')[-1]
+    concrete_type = get_concrete_type(schema_url)
     return dsp_attribute(concrete_type)
+
+
+def get_concrete_type(schema_url):
+    concrete_type = schema_url.split('/')[-1]
+    return concrete_type
 
 
 spec = {
@@ -38,11 +61,26 @@ spec = {
     'title': ['biomaterial.content.biomaterial_core.biomaterial_name']
 }
 
-no_release_date_spec = deepcopy(spec)
-no_release_date_spec['releaseDate'] = ['biomaterial.submissionDate', format_date]
-
 
 def convert(hca_data: dict):
-    project = hca_data.get('project')
-    use_spec = spec if project and project.get('releaseDate') else no_release_date_spec
-    return JsonMapper(hca_data).map(use_spec)
+    use_spec = deepcopy(spec)
+    is_specimen = ('describedBy' in hca_data.get('biomaterial', {}).get('content',{}) and
+                   get_concrete_type(hca_data['biomaterial']['content']['describedBy']) == 'specimen_from_organism')
+
+    if 'releaseDate' not in hca_data.get('project', {}):
+        use_spec['releaseDate'] = ['biomaterial.submissionDate', format_date]
+
+    if is_specimen and 'organ' in hca_data['biomaterial']['content']:
+        use_spec['attributes']['Organ'] = ['biomaterial.content.organ', format_ontology]
+
+    converted_data = JsonMapper(hca_data).map(use_spec)
+
+    if is_specimen and 'organ_parts' in hca_data['biomaterial']['content']:
+        organ_parts = hca_data['biomaterial']['content']['organ_parts']
+        if len(organ_parts) == 1:
+            converted_data['attributes']['Organ Part'] = format_ontology(organ_parts[0])
+        elif len(organ_parts) > 1:
+            for index, organ_part in enumerate(organ_parts):
+                converted_data['attributes'][f'Organ Part - {index}'] = format_ontology(organ_parts[index])
+
+    return converted_data

@@ -6,12 +6,27 @@ import json
 
 from urllib.parse import quote
 
-
+# iri: "http://purl.obolibrary.org/obo/UBERON_0000948"
+# curie: "obo:UBERON_0000948"
+# label: "heart"
+# short_form: "UBERON_0000948"
+# obo_id: "UBERON:0000948"
 class OntologyAPI:
     def __init__(self, url=None):
         self.url = url if url else config.ONTOLOGY_API_URL
         self.logger = logging.getLogger(__name__)
         self.logger.info(f'Using {self.url}')
+
+    def iri_from_obo_id(self, obo_id):
+        term = self.find_by_id_defining(obo_id)
+        if term and 'iri' in term:
+            return term['iri']
+
+    def find_by_id_defining(self, obo_id):
+        query_url = f'{self.url}/api/terms/findByIdAndIsDefiningOntology?obo_id={obo_id}'
+        all_terms = self.get_all(query_url, 'terms')
+        if all_terms:
+            return all_terms[0]
 
     def expand_curie(self, term):
         iri = self.search_for_iri(term)
@@ -25,7 +40,7 @@ class OntologyAPI:
         raise Error(f'Could not retrieve IRI for {term}')
 
     def search_for_iri(self, term, exact=True, obsolete=False, group=True, query_fields=None):
-        doc = self.search(term,exact,obsolete,group,query_fields)
+        doc = self.search(term, exact, obsolete, group, query_fields)
         return doc.get('iri') if doc else None
 
     def search(self, term, exact=True, obsolete=False, group=True, query_fields=None):
@@ -71,7 +86,7 @@ class OntologyAPI:
         results = []
         while query_url:
             response: dict = self.get_json(query_url)
-            results.extend(response.get('_embedded',{}).get(result_type,[]))
+            results.extend(response.get('_embedded', {}).get(result_type, []))
             query_url = response.get('_links', {}).get('next', {}).get('href', None)
         return results
 
