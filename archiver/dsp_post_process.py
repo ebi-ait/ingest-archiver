@@ -1,7 +1,26 @@
+from api import ontology
+
+
 def dsp_attribute(*args):
     value = args[0]
     if value is not None:
         return [{'value': value}]
+
+
+def dsp_ontology(*args):
+    hca_ontology = args[0]
+    if hca_ontology:
+        if 'ontology_label' in hca_ontology and 'ontology' in hca_ontology:
+            label: str = hca_ontology['ontology_label']
+            obo_id: str = hca_ontology['ontology']
+            iri = ontology.__api__.iri_from_obo_id(obo_id)
+            if iri:
+                return [{
+                    'value': label,
+                    'terms': [{'url': iri}]
+                }]
+        if 'text' in hca_ontology:
+            return dsp_attribute(hca_ontology['text'])
 
 
 def fixed_dsp_attribute(*args):

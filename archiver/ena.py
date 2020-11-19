@@ -1,5 +1,5 @@
 from api import ontology
-from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id_attribute
+from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id_attribute, dsp_ontology
 from archiver.instrument_model import to_dsp_name
 from conversion.json_mapper import JsonMapper, json_array, json_object
 from conversion.post_process import prefix_with, default_to, format_date
@@ -25,18 +25,6 @@ def _library_layout_attribute(*args):
     paired_end = args[0]
     value = 'PAIRED' if paired_end else 'SINGLE'
     return dsp_attribute(value)
-
-
-def ontology_term(*args):
-    term = args[0]
-
-    if not term:
-        return None
-
-    return [{
-        'terms': [{'url': _ontology_api.expand_curie(term)}],
-        'value': term
-    }]
 
 
 def nominal_value(*args):
@@ -80,7 +68,7 @@ sq_experiment_spec = {
             [f'{ib}.content.biomaterial_core.ncbi_taxon_id', taxon_id_attribute],
         'Library Preparation Protocol - End Bias': [f'{lp}.content.end_bias', dsp_attribute],
         'Library Preparation Protocol - Library Construction Method':
-            [f'{lp}.content.library_construction_method.ontology_label', ontology_term],
+            [f'{lp}.content.library_construction_method', dsp_ontology],
         'Library Preparation Protocol - Nucleic Acid Source':
             [f'{lp}.content.nucleic_acid_source', dsp_attribute],
         'Library Preparation Protocol - Primer': [f'{lp}.content.primer', dsp_attribute],
@@ -91,7 +79,7 @@ sq_experiment_spec = {
         'Sequencing Protocol - Paired End': [f'{sp}.content.paired_end', dsp_attribute],
         'Sequencing Protocol - Protocol Core - Protocol Id':
             [f'{sp}.content.protocol_core.protocol_id', dsp_attribute],
-        'Sequencing Protocol - Sequencing Approach': [f'{sp}.content.sequencing_approach.text', ontology_term],
+        'Sequencing Protocol - Sequencing Approach': [f'{sp}.content.sequencing_approach', dsp_ontology],
         'library_strategy': ['', fixed_dsp_attribute, 'OTHER'],
         'library_source': ['', fixed_dsp_attribute, 'TRANSCRIPTOMIC SINGLE CELL'],
         'library_selection': [f'{lp}.content.primer', _map_primer],
@@ -135,7 +123,6 @@ def convert_study(hca_data: dict):
 
 _sq_run_alias_prefix = 'sequencingRun_'
 
-
 _file_format_mapping = {
     'fastq.gz': 'fastq',
     'bam': 'bam',
@@ -151,10 +138,10 @@ def convert_sequencing_run(hca_data: dict):
     mapper = JsonMapper(hca_data)
     converted_data = mapper.map({
         '$on': 'process',
-        #being overwritten 'alias': ['uuid.uuid', prefix_with, _sq_run_alias_prefix],
+        # being overwritten 'alias': ['uuid.uuid', prefix_with, _sq_run_alias_prefix],
         'title': ['content.process_core.process_name', default_to, ''],
         'description': ['content.process_core.process_description', default_to, ''],
-        #being overwritten 'assayRefs': ['uuid.uuid', _sq_run_assay_ref]
+        # being overwritten 'assayRefs': ['uuid.uuid', _sq_run_assay_ref]
     })
 
     converted_files = mapper.map({
