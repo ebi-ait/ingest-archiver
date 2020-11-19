@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM quay.io/ebi-ait/ingest-base-images:python_3.7-slim
 
 RUN apt-get update && \
     apt-get install -y git
