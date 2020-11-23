@@ -80,11 +80,6 @@ class DataSubmissionPortal:
     def create_entity(self, create_entity_url, content):
         return self._post(create_entity_url, content)
 
-    def create_samples(self, create_sample_url, samples):
-        for sample in samples:
-            converted_sample = self.converter.convert_project(sample)
-            self.create_entity(create_sample_url, converted_sample)
-
     def get_available_statuses(self, get_available_statuses_url):
         return self._get_all(get_available_statuses_url, 'statusDescriptions')
 
@@ -120,9 +115,9 @@ class DataSubmissionPortal:
         url = f'{self.url}/api/{entity_link}/search/current-version?teamName={self.aap_api_domain}&alias={alias}'
         response = self.session.get(url, headers=self.get_headers())
 
-        if response.status_code == requests.codes.not_found:
+        if response.status_code == requests.codes['not_found']:
             return None
-        elif response.status_code == requests.codes.ok:
+        elif response.status_code == requests.codes['ok']:
             return response.json()
         else:
             response.raise_for_status()
