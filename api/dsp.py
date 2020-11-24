@@ -7,7 +7,7 @@ from urllib3.util import retry
 
 import config
 from api.aap import AAPTokenClient
-from utils.token_manager import TokenManager
+from ingest.utils.token_manager import TokenManager
 
 
 DSP_ENTITY_LINK = {
