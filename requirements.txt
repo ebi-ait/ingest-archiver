@@ -4,6 +4,6 @@ flatten_json
 requests
 pika
 polling
-git+https://github.com/HumanCellAtlas/ingest-client.git#egg=hca_ingest
+git+https://github.com/ebi-ait/ingest-client.git#egg=hca_ingest
 git+https://github.com/ebi-ait/python_biosamples-v4_lib.git#egg=biosamples-v4
 six #flatten_json undeclared dependancy
