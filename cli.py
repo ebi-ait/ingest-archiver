@@ -14,7 +14,9 @@ from optparse import OptionParser
 import config
 from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
-from archiver.archiver import IngestArchiver, ArchiveEntityMap, ArchiveSubmission
+from archiver.dsp.submission import DspSubmission
+from archiver.entity_map import ArchiveEntityMap
+from archiver.dsp.broker import DspBroker
 
 
 class ArchiveCLI:
@@ -24,11 +26,9 @@ class ArchiveCLI:
         self.dsp_api = DataSubmissionPortal(config.DSP_API_URL)
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         self.output_dir = output_dir if output_dir else f"output/ARCHIVER_{now}"
-        self.archiver = IngestArchiver(ingest_api=self.ingest_api,
-                                       dsp_api=self.dsp_api,
-                                       exclude_types=self.split_exclude_types(exclude_types),
-                                       alias_prefix=alias_prefix,
-                                       dsp_validation=not no_validation)
+        self.archiver = DspBroker(ingest_api=self.ingest_api, dsp_api=self.dsp_api,
+                                  exclude_types=self.split_exclude_types(exclude_types),
+                                  alias_prefix=alias_prefix, dsp_validation=not no_validation)
 
     def get_manifests_from_project(self, project_uuid):
         logging.info(f'GETTING MANIFESTS FOR PROJECT: {project_uuid}')
@@ -47,25 +47,25 @@ class ArchiveCLI:
 
     def complete_submission(self, dsp_submission_url):
         logging.info(f'##################### COMPLETING DSP SUBMISSION {dsp_submission_url}')
-        archive_submission = ArchiveSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
+        archive_submission = DspSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
         ingest_archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(archive_submission.dsp_uuid)
         ingest_entities = self.ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
-        entity_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
-        archive_submission = self.archiver.complete_submission(dsp_submission_url, entity_map)
+        ingest_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
+        archive_submission = self.archiver.complete_submission(dsp_submission_url, ingest_map)
         report = archive_submission.generate_report()
         self.save_dict_to_file(f'COMPLETE_SUBMISSION_{archive_submission.dsp_uuid}', report)
 
     def build_map(self):
         logging.info(f'Processing {len(self.manifests)} manifests:\n' + "\n".join(map(str, self.manifests)))
 
-        entity_map: ArchiveEntityMap = self.archiver.convert(self.manifests)
-        summary = entity_map.get_conversion_summary()
+        conversion_map: ArchiveEntityMap = self.archiver.convert(self.manifests)
+        summary = conversion_map.get_conversion_summary()
         logging.info(f'Entities to be converted: {json.dumps(summary)}')
 
-        report = entity_map.generate_report()
+        report = conversion_map.generate_report()
         logging.info("Saving Report file...")
         self.save_dict_to_file("REPORT", report)
-        return entity_map
+        return conversion_map
 
     def load_map(self, load_path):
         logging.info(f'Loading Entity Map: {load_path}')
@@ -75,13 +75,14 @@ class ArchiveCLI:
         logging.error(f"--load_path files does not have an entities object: {file_content}")
         exit(2)
 
-    def validate_submission(self, entity_map: ArchiveEntityMap, submit, ingest_submission_uuid=None):
-        archive_submission, ingest_archive_submission = self.archiver.archive_metadata(entity_map)
+    def validate_submission(self, submission_map: ArchiveEntityMap, submit, ingest_submission_uuid=None):
+        archive_submission, ingest_tracker = self.archiver.archive_metadata(submission_map)
         all_messages = self.archiver.notify_file_archiver(archive_submission)
-        ingest_archive_submission.patch_archive_submission({
+        ingest_tracker.patch_archive_submission({
             'submissionUuid': ingest_submission_uuid,
             'fileUploadPlan': archive_submission.file_upload_info
         })
+
         report = archive_submission.generate_report()
         logging.info("Updating Report file...")
         self.save_dict_to_file("REPORT", report)
@@ -94,7 +95,7 @@ class ArchiveCLI:
             archive_submission.validate()
 
     def generate_validation_error_report(self, dsp_submission_url):
-        submission = ArchiveSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
+        submission = DspSubmission(dsp_api=self.archiver.dsp_api, dsp_submission_url=dsp_submission_url)
         self.save_dict_to_file("VALIDATION_ERROR_REPORT", submission.get_validation_error_report())
 
     def save_dict_to_file(self, file_name, json_content):

@@ -155,7 +155,7 @@ class IngestAPI:
         manifests = self.get_manifests_from_submission(submission_uuid)
         return self.get_manifest_ids(manifests)
 
-    def get_manifest_ids(self, manifests: List['dict']):
+    def get_manifest_ids(self, manifests: List[dict]):
         return [self.get_entity_id(manifest, 'bundleManifests') for manifest in manifests]
 
     def get_manifests_from_submission(self, submission_uuid):

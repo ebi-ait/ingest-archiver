@@ -6,7 +6,10 @@ import unittest
 from mock import MagicMock, patch
 
 import config
-from archiver.archiver import IngestArchiver, Manifest, ArchiveSubmission, Biomaterial
+from archiver.dsp.submission import DspSubmission
+from archiver.dsp.broker import DspBroker
+from archiver.manifest import Manifest
+from archiver.biomaterial import Biomaterial
 
 
 # TODO use mocks for integration tests
@@ -74,14 +77,11 @@ class TestIngestArchiver(unittest.TestCase):
         return prefix + '_' + now
 
     @patch('api.ontology.OntologyAPI.expand_curie')
-    def test_get_archivable_entities(self, expand_curie):
+    def test_get_archivable_entities(self):
         mock_manifest = self._mock_manifest(self.base_manifest)
 
-        archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            dsp_api=self.dsp_api,
-            exclude_types=['sequencingRun'])
+        archiver = DspBroker(ingest_api=self.ingest_api, dsp_api=self.dsp_api,
+                             ontology_api=self.ontology_api, exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['manifest_id'])
         entities_by_type = entity_map.entities_dict_type
@@ -93,11 +93,8 @@ class TestIngestArchiver(unittest.TestCase):
     @unittest.skip("This is an Integration Test")
     def test_archive(self):
         mock_manifest = self._mock_manifest(self.base_manifest)
-        archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            dsp_api=self.dsp_api,
-            exclude_types=['sequencingRun'])
+        archiver = DspBroker(ingest_api=self.ingest_api, dsp_api=self.dsp_api,
+                             ontology_api=self.ontology_api, exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission = archiver.archive(entity_map)
@@ -107,8 +104,8 @@ class TestIngestArchiver(unittest.TestCase):
             self.assertTrue(archive_submission.accession_map.get(entity.id), f"{entity.id} has no accession.")
 
     @patch('api.ontology.OntologyAPI.expand_curie')
-    def test_notify_file_archiver(self, expand_curie):
-        archive_submission = MagicMock(ArchiveSubmission)
+    def test_notify_file_archiver(self):
+        archive_submission = MagicMock(DspSubmission)
         archive_submission.get_url = MagicMock(return_value='url')
 
         mock_manifest = self._mock_manifest(self.base_manifest)
@@ -122,7 +119,8 @@ class TestIngestArchiver(unittest.TestCase):
         mock_manifest.get_files = MagicMock(return_value=seq_files)
         ingest_api = copy.deepcopy(self.ingest_api)
         ingest_api.get_manifest_by_id = MagicMock(return_value={'bundleUuid': 'dcp_uuid'})
-        archiver = IngestArchiver(ingest_api=ingest_api, dsp_api=self.dsp_api, ontology_api=self.ontology_api)
+        archiver = DspBroker(ingest_api=ingest_api, dsp_api=self.dsp_api,
+                             ontology_api=self.ontology_api)
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
         archive_submission.converted_entities = list(entity_map.get_converted_entities())
@@ -157,14 +155,11 @@ class TestIngestArchiver(unittest.TestCase):
     @unittest.skip("This is an Integration Test")
     def test_validate_and_complete_submission(self):
         mock_manifest = self._mock_manifest(self.base_manifest)
-        archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            dsp_api=self.dsp_api,
-            exclude_types=['sequencingRun'])
+        archiver = DspBroker(ingest_api=self.ingest_api, dsp_api=self.dsp_api,
+                             ontology_api=self.ontology_api, exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert(['bundle_uuid'])
-        archive_submission, _ = archiver.archive_metadata(entity_map)
+        archive_submission, tracker = archiver.archive_metadata(entity_map)
         url = archive_submission.get_url()
 
         archive_submission = archiver.complete_submission(dsp_submission_url=url)
@@ -196,11 +191,8 @@ class TestIngestArchiver(unittest.TestCase):
             biomaterials = json.loads(data_file.read())
         biomaterial_manifest = {'biomaterials': biomaterials}
         mock_manifest = self._mock_manifest(biomaterial_manifest)
-        archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            dsp_api=self.dsp_api,
-            exclude_types=['sequencingRun'])
+        archiver = DspBroker(ingest_api=self.ingest_api, dsp_api=self.dsp_api,
+                             ontology_api=self.ontology_api, exclude_types=['sequencingRun'])
         archiver.get_manifest = MagicMock(return_value=mock_manifest)
         entity_map = archiver.convert('')
         archive_submission = archiver.archive(entity_map)

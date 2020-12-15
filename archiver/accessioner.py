@@ -2,9 +2,9 @@ import logging
 from typing import List
 
 from requests import HTTPError
-
 from api.ingest import IngestAPI
-from archiver.submission import ArchiveEntity, ArchiveEntityMap
+from .entity_map import ArchiveEntityMap
+from .entity import IngestArchiveEntity
 
 
 class IngestAccession:
@@ -45,7 +45,7 @@ class Accessioner:
 
     # TODO needs to be updated!
     @staticmethod
-    def is_metadata_accessioned(entity: ArchiveEntity):
+    def is_metadata_accessioned(entity: IngestArchiveEntity):
         if entity.archive_entity_type != "sample":
             return False
 
@@ -104,7 +104,7 @@ class Accessioner:
         entity = self.ingest_api.get_entity_by_uuid(plural_type, metadata_uuid)
         return entity['_links']['self']['href']
 
-    def get_accessions_from_entity(self, entity: ArchiveEntity) -> List[IngestAccession]:
+    def get_accessions_from_entity(self, entity: IngestArchiveEntity) -> List[IngestAccession]:
         accessions: List[IngestAccession] = []
 
         if entity.accession:

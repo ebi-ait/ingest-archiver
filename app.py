@@ -14,12 +14,14 @@ from flask import request
 import config
 from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
-from archiver.archiver import IngestArchiver, ArchiveSubmission, ArchiveEntityMap
+from archiver.dsp.submission import DspSubmission
+from archiver.entity_map import ArchiveEntityMap
+from archiver.dsp.broker import DspBroker
 
-format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
+log_format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
          '%(lineno)s %(funcName)s(): %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=format)
+                    format=log_format)
 
 logging.getLogger('archiver').setLevel(logging.INFO)
 logging.getLogger('api').setLevel(logging.INFO)
@@ -30,8 +32,8 @@ logger.setLevel(logging.INFO)
 
 def create_app():
     """Construct the core application."""
-    app = Flask(__name__)
-    return app
+    flask_app = Flask(__name__)
+    return flask_app
 
 
 app = create_app()
@@ -74,10 +76,8 @@ def archive():
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
     ingest_api = IngestAPI(config.INGEST_API_URL)
-    archiver = IngestArchiver(ingest_api=ingest_api,
-                              dsp_api=DataSubmissionPortal(config.DSP_API_URL),
-                              exclude_types=exclude_types,
-                              alias_prefix=alias_prefix)
+    archiver = DspBroker(ingest_api=ingest_api, dsp_api=DataSubmissionPortal(config.DSP_API_URL),
+                         exclude_types=exclude_types, alias_prefix=alias_prefix)
 
     thread = threading.Thread(target=async_archive,
                               args=(ingest_api, archiver, submission_uuid))
@@ -90,19 +90,20 @@ def archive():
     return jsonify(response)
 
 
-def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
+def async_archive(ingest_api: IngestAPI, archiver: DspBroker, submission_uuid: str):
     logger.info('Starting...')
     start = time.time()
     manifests = ingest_api.get_manifest_ids_from_submission(submission_uuid)
 
     try:
         entity_map: ArchiveEntityMap = archiver.convert(manifests)
+        samples = entity_map.entities_dict_type.pop('sample')
         dsp_submission, ingest_tracker = archiver.archive_metadata(entity_map)
         archiver.notify_file_archiver(dsp_submission)
         ingest_tracker.patch_archive_submission({
             'submissionUuid': submission_uuid,
             'fileUploadPlan': dsp_submission.file_upload_info
-        })
+         })
         end = time.time()
         logger.info(f'Creating DSP submission for {submission_uuid} finished in {end - start}s')
     except Exception as e:
@@ -149,7 +150,7 @@ def delete_archive_submission(dsp_submission_uuid: str):
 
 @app.route('/archiveSubmissions/<dsp_submission_uuid>/fileUploadPlan', methods=['GET'])
 @require_apikey
-def sendFile(dsp_submission_uuid: str):
+def send_file(dsp_submission_uuid: str):
     ingest_api = IngestAPI(config.INGEST_API_URL)
     ingest_archive_submission = ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
     jobs = ingest_archive_submission.get('fileUploadPlan')
@@ -185,7 +186,7 @@ def get_submission_entities(dsp_submission_uuid: str):
 def get_validation_errors(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
-    submission = ArchiveSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
+    submission = DspSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
     validation_errors = submission.get_validation_error_report()
     return jsonify(validation_errors)
 
@@ -195,7 +196,7 @@ def get_validation_errors(archive_submission_uuid: str):
 def get_validation_result(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
-    submission = ArchiveSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
+    submission = DspSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
     result = submission.get_all_validation_result_details()
     return jsonify(result)
 
@@ -205,7 +206,7 @@ def get_validation_result(archive_submission_uuid: str):
 def get_blockers(archive_submission_uuid: str):
     dsp_api = DataSubmissionPortal(config.DSP_API_URL)
     submission_url = dsp_api.get_submission_url(archive_submission_uuid)
-    submission = ArchiveSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
+    submission = DspSubmission(dsp_api=dsp_api, dsp_submission_url=submission_url)
     blockers = submission.get_blockers()
     return jsonify(blockers)
 
@@ -233,8 +234,7 @@ def async_complete(dsp_api, dsp_submission_uuid, ingest_api):
     ingest_entities = ingest_api.get_related_entity(ingest_archive_submission, 'entities', 'archiveEntities')
     entity_map = ArchiveEntityMap.map_from_ingest_entities(ingest_entities)
     dsp_submission_url = dsp_api.get_submission_url(dsp_submission_uuid)
-    archiver = IngestArchiver(ingest_api=ingest_api,
-                              dsp_api=dsp_api)
+    archiver = DspBroker(ingest_api=ingest_api, dsp_api=dsp_api)
     archive_submission = archiver.complete_submission(dsp_submission_url, entity_map)
     end = time.time()
     logger.info(f'Completed DSP submission for {dsp_submission_uuid} in {end - start}s')
@@ -251,8 +251,8 @@ def response_json(status_code, data):
 
 
 if __name__ == "__main__":
-    format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
+    log_format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
              '%(lineno)s %(funcName)s(): %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.WARNING,
-                        format=format)
+                        format=log_format)
     app.run(host='0.0.0.0')

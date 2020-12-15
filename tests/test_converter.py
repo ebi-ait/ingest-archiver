@@ -6,8 +6,11 @@ from random import randint
 from mock import MagicMock, patch
 
 import config
-from archiver.converter import SampleConverter, SequencingExperimentConverter, SequencingRunConverter, \
-    StudyConverter, ProjectConverter
+from archiver.dsp.converter.ena_experiment import EnaExperimentConverter
+from archiver.dsp.converter.ena_run import EnaRunConverter
+from archiver.dsp.converter.biostudy import BiostudyConverter
+from archiver.dsp.converter.ena_study import EnaStudyConverter
+from archiver.dsp.converter.biosample import BiosampleConverter
 
 
 class TestConverter(unittest.TestCase):
@@ -63,7 +66,7 @@ class TestConverter(unittest.TestCase):
         with_release_date['releaseDate'] = '2018-10-11'
 
         # and:
-        converter = SampleConverter(ontology_api=self.ontology_api)
+        converter = BiosampleConverter(ontology_api=self.ontology_api)
         converter.ingest_api = self.ingest_api
 
         # when:
@@ -118,7 +121,7 @@ class TestConverter(unittest.TestCase):
             'HCA Process UUID'] = [{'value': process['uuid']['uuid']}]
 
         # when:
-        converter = SequencingExperimentConverter(ontology_api=self.ontology_api)
+        converter = EnaExperimentConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert({
             'input_biomaterial': input_biomaterial,
             'process': process,
@@ -154,7 +157,7 @@ class TestConverter(unittest.TestCase):
         process = dict(self.hca_data.get('process'))
         process['uuid']['uuid'] = uuid
 
-        converter = SequencingRunConverter(ontology_api=self.ontology_api)
+        converter = EnaRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert({
             'library_preparation_protocol': lib_prep_protocol,
             'sequencing_protocol': sequencing_protocol,
@@ -186,7 +189,7 @@ class TestConverter(unittest.TestCase):
         with open(config.JSON_DIR + 'dsp/sequencing_run_10x.json', encoding=config.ENCODING) as data_file:
             expected_json = json.loads(data_file.read())
 
-        converter = SequencingRunConverter(ontology_api=self.ontology_api)
+        converter = EnaRunConverter(ontology_api=self.ontology_api)
         actual_json = converter.convert(hca_data)
         self.assertEqual(expected_json, actual_json)
 
@@ -205,7 +208,7 @@ class TestConverter(unittest.TestCase):
         expected_json['attributes']['HCA Project UUID'] = [{'value': test_alias}]
 
         # when:
-        converter = ProjectConverter(ontology_api=self.ontology_api)
+        converter = BiostudyConverter()
         actual_json = converter.convert({
             'project': hca_data
         })
@@ -227,7 +230,7 @@ class TestConverter(unittest.TestCase):
         expected_json['attributes']['HCA Project UUID'] = [{'value': test_alias}]
 
         # when:
-        converter = StudyConverter(ontology_api=self.ontology_api)
+        converter = EnaStudyConverter()
         actual_json = converter.convert({
             'project': hca_data
         })

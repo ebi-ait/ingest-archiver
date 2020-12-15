@@ -2,7 +2,9 @@ from unittest import TestCase
 
 from mock import MagicMock
 
-from archiver.archiver import Manifest, Biomaterial, ArchiverException
+from archiver.manifest import Manifest
+from archiver.biomaterial import Biomaterial
+from archiver.errors import ArchiverException
 
 
 class ManifestTest(TestCase):

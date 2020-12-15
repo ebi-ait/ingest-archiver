@@ -1,15 +1,15 @@
 from unittest import TestCase
 
-from archiver.dsp_post_process import dsp_attribute
+from archiver.dsp.converter.abstracts import BaseDspConverter
 
 
 class TestPostProcessing(TestCase):
 
     def test_dsp_attribute(self):
         # given:
-        string_attribute = dsp_attribute('name')
-        numeric_attribute = dsp_attribute(28)
-        falsy_attribute = dsp_attribute(0)
+        string_attribute = BaseDspConverter.dsp_attribute('name')
+        numeric_attribute = BaseDspConverter.dsp_attribute(28)
+        falsy_attribute = BaseDspConverter.dsp_attribute(0)
 
         # expect:
         self.assertEqual(1, len(string_attribute))
@@ -24,4 +24,4 @@ class TestPostProcessing(TestCase):
         self.assertEqual(0, falsy_attribute[0].get('value'))
 
         # and:
-        self.assertIsNone(dsp_attribute(None))
+        self.assertIsNone(BaseDspConverter.dsp_attribute(None))

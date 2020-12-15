@@ -1,13 +1,13 @@
 from unittest import TestCase
 
-from archiver.instrument_model import illumina
+from archiver.dsp.converter.ena_experiment import InstrumentModel
 
 
 class InstrumentModelTest(TestCase):
 
     def test_illumina_instrument_model(self):
         # given:
-        genome_analyzer = illumina('Illumina Genome Analyzer II')
+        genome_analyzer = InstrumentModel.illumina('Illumina Genome Analyzer II')
 
         # expect:
         self.assertEqual('illumina genome analyzer ii', genome_analyzer.hca_name)
@@ -16,7 +16,7 @@ class InstrumentModelTest(TestCase):
 
     def test_create_hca_synonym(self):
         # given:
-        hiseq_x_ten = illumina('HiSeq X Ten')
+        hiseq_x_ten = InstrumentModel.illumina('HiSeq X Ten')
         self.assertEqual('hiseq x ten', hiseq_x_ten.hca_name)
 
         # when:

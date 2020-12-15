@@ -1,9 +1,10 @@
 from typing import List
 
-from ingest.importer.submission import EntityMap
-
 from api.ingest import IngestAPI
-from archiver.submission import ArchiveEntity, ArchiveSubmission
+from archiver.dsp.submission import DspSubmission
+from archiver.dsp.entity import IngestDspEntity
+from .errors import IngestArchiveError
+from .entity_map import ArchiveEntityMap
 
 
 class IngestTracker:
@@ -19,14 +20,14 @@ class IngestTracker:
             'sequencingRun': 'SEQUENCING_RUN'
         }
 
-    def create_archive_submission(self, archive_submission: ArchiveSubmission) -> dict:
+    def create_archive_submission(self, archive_submission: DspSubmission) -> dict:
         data = self._map_archive_submission(archive_submission)
 
         ingest_archive_submission = self.ingest_api.create_archive_submission(data)
         self.archive_submission_url = ingest_archive_submission['_links']['self']['href']
         return ingest_archive_submission
 
-    def update_archive_submission(self, archive_submission: ArchiveSubmission) -> dict:
+    def update_archive_submission(self, archive_submission: DspSubmission) -> dict:
         data = self._map_archive_submission(archive_submission)
         ingest_archive_submission = self.ingest_api.patch(self.archive_submission_url, data)
         self.archive_submission_url = ingest_archive_submission['_links']['self']['href']
@@ -38,20 +39,20 @@ class IngestTracker:
         self.archive_submission_url = ingest_archive_submission['_links']['self']['href']
         return ingest_archive_submission
 
-    def add_entity(self, entity: ArchiveEntity) -> dict:
+    def add_entity(self, entity: IngestDspEntity) -> dict:
         data = self._map_archive_entity(entity)
         ingest_entity = self.ingest_api.create_archive_entity(self.archive_submission_url, data)
         ingest_url = ingest_entity['_links']['self']['href']
         self.entity_url_map[entity.dsp_uuid] = ingest_url
         return ingest_entity
 
-    def update_entities(self, dsp_submission_uuid: str, entity_map: EntityMap):
+    def update_entities(self, dsp_submission_uuid: str, entity_map: ArchiveEntityMap):
         archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
         archive_submission_url = archive_submission['_links']['self']['href']
         for entity in entity_map.get_entities():
             self.update_entity(archive_submission_url, entity)
 
-    def update_entity(self, archive_submission_url: str, entity: ArchiveEntity) -> dict:
+    def update_entity(self, archive_submission_url: str, entity: IngestDspEntity) -> dict:
         data = self._map_archive_entity(entity)
         if self.entity_url_map.get(entity.dsp_uuid):
             ingest_entity_url = self.entity_url_map.get(entity.dsp_uuid)
@@ -61,14 +62,14 @@ class IngestTracker:
         ingest_entity = self.ingest_api.patch(ingest_entity_url, data)
         return ingest_entity
 
-    def find_entity(self, archive_submission_url: str, entity: ArchiveEntity) -> dict:
+    def find_entity(self, archive_submission_url: str, entity: IngestDspEntity) -> dict:
         entity = self.ingest_api.get_archive_entity_by_archive_submission_url_and_alias(archive_submission_url, entity.id)
         return entity
 
     def find_archive_submission(self, dsp_submission_uuid: str) -> dict:
         return self.ingest_api.get_archive_submission_by_dsp_uuid(dsp_submission_uuid)
 
-    def set_submission_as_archived(self, archive_submission: ArchiveSubmission):
+    def set_submission_as_archived(self, archive_submission: DspSubmission):
         dsp_uuid = archive_submission.dsp_uuid
         archive_submission = self.ingest_api.get_archive_submission_by_dsp_uuid(dsp_uuid)
         ingest_submission_uuid = archive_submission['submissionUuid']
@@ -78,7 +79,7 @@ class IngestTracker:
             set_archived_link = ingest_submission['_links']['archived']['href']
             self.ingest_api.put(set_archived_link)
 
-    def _map_archive_submission(self, archive_submission: ArchiveSubmission):
+    def _map_archive_submission(self, archive_submission: DspSubmission):
         data = {
             'dspUuid': archive_submission.dsp_uuid,
             'dspUrl': archive_submission.dsp_url,
@@ -87,7 +88,7 @@ class IngestTracker:
         }
         return self._clean_data(data)
 
-    def _map_archive_entity(self, entity: ArchiveEntity):
+    def _map_archive_entity(self, entity: IngestDspEntity):
         data = {
             'type': self.types[entity.archive_entity_type],
             'alias': entity.id,
@@ -105,7 +106,7 @@ class IngestTracker:
     def _clean_data(self, data: dict):
         return {attr: val for attr, val in data.items() if val is not None}
 
-    def _map_errors(self, errors: List['Error']):
+    def _map_errors(self, errors: List[IngestArchiveError]):
         return [{
             'errorCode': error.error_code,
             'message': error.message,

@@ -1,165 +1,18 @@
 import json
-from typing import Iterator
 from typing import List
 
 import polling
 
 import config
+from archiver.entity_map import ArchiveEntityMap
+from .entity import IngestDspEntity
+from .errors import IngestDspError
 
 
-class Error:
-    def __init__(self, error_code: str, message: str, details: dict):
-        self.error_code = error_code
-        self.message = message
-        self.details = details
-
-
-class ArchiveEntity:
-    def __init__(self):
-        self.data = {}
-        self.metadata_uuids = None
-        self.accessioned_metadata_uuids = None
-        self.conversion = {}
-        self.errors: List['Error'] = []
-        self.warnings = []
-        self.id = None
-        self.archive_entity_type = None
-        self.accession = None
-        self.dsp_json = None
-        self.dsp_url = None
-        self.dsp_uuid = None
-        self.dsp_current_version = None
-        self.links = {}
-        self.manifest_id = None
-
-    def __str__(self):
-        return str(vars(self))
-
-    @staticmethod
-    def map_from_report(report_id, report_entity):
-        entity = ArchiveEntity()
-        entity.id = report_id
-        entity.archive_entity_type = report_entity['type']
-        entity.conversion = report_entity['converted_data']
-        entity.accession = report_entity['accession']
-        entity.errors = report_entity['errors']
-        entity.warnings = report_entity['warnings']
-        return entity
-
-    @staticmethod
-    def map_from_ingest_entity(ingest_entity: dict):
-        entity = ArchiveEntity()
-        entity.id = ingest_entity['alias']
-        entity.archive_entity_type = ingest_entity.get('type')
-        entity.conversion = ingest_entity['conversion']
-        entity.accession = ingest_entity['accession']
-        entity.errors = ingest_entity['errors']
-        entity.metadata_uuids = ingest_entity['metadataUuids']
-        entity.accessioned_metadata_uuids = ingest_entity['accessionedMetadataUuids']
-        entity.dsp_url = ingest_entity['dspUrl']
-        entity.dsp_uuid = ingest_entity['dspUuid']
-        return entity
-
-    def add_error(self, error_code, message, details=None):
-        self.errors.append(Error(error_code, message, details))
-
-
-class ArchiveEntityMap:
-    def __init__(self):
-        self.entities_dict_type = {}
-
-    def add_entities(self, entities):
-        for entity in entities:
-            self.add_entity(entity)
-
-    def add_entity(self, entity: ArchiveEntity):
-        if not self.entities_dict_type.get(entity.archive_entity_type):
-            self.entities_dict_type[entity.archive_entity_type] = {}
-        self.entities_dict_type[entity.archive_entity_type][entity.id] = entity
-
-    def get_entity(self, entity_type, archive_entity_id):
-        if self.entities_dict_type.get(entity_type):
-            return self.entities_dict_type[entity_type].get(archive_entity_id)
-        return None
-
-    def get_converted_entities(self):
-        entities = []
-        for entities_dict in self.entities_dict_type.values():
-            for entity in entities_dict.values():
-                if entity.conversion and not entity.errors:
-                    entities.append(entity)
-        return entities
-
-    def get_conversion_summary(self):
-        summary = {}
-        for entities_dict in self.entities_dict_type.values():
-            for entity in entities_dict.values():
-                if entity.conversion and not entity.errors:
-                    if not summary.get(entity.archive_entity_type):
-                        summary[entity.archive_entity_type] = 0
-                    summary[entity.archive_entity_type] = summary[entity.archive_entity_type] + 1
-        return summary
-
-    def generate_report(self):
-        report = {}
-        entities = {}
-        entity: ArchiveEntity
-        for entity in self.get_entities():
-            entities[entity.id] = {}
-            entities[entity.id]['type'] = entity.archive_entity_type
-            entities[entity.id]['errors'] = [error.__dict__ for error in entity.errors]
-            entities[entity.id]['accession'] = entity.accession
-            entities[entity.id]['warnings'] = entity.warnings
-            entities[entity.id]['converted_data'] = entity.conversion
-
-            if entity.dsp_json:
-                entities[entity.id]['entity_url'] = entity.dsp_json['_links']['self']['href']
-
-        report['entities'] = entities
-        report['conversion_summary'] = self.get_conversion_summary()
-
-        return report
-
-    def find_entity(self, alias):
-        for entities_dict in self.entities_dict_type.values():
-            if entities_dict.get(alias):
-                return entities_dict.get(alias)
-        return None
-
-    def get_entities(self) -> List["ArchiveEntity"]:
-        entities = []
-        for entity_type, entities_dict in self.entities_dict_type.items():
-            if not entities_dict:
-                continue
-            for alias, entity in entities_dict.items():
-                entities.append(entity)
-        return entities
-
-    def update(self, entity_type, entities: dict):
-        if not self.entities_dict_type.get(entity_type):
-            self.entities_dict_type[entity_type] = {}
-        self.entities_dict_type[entity_type].update_archive_submission(entities)
-
-    @staticmethod
-    def map_from_report(report):
-        entity_map = ArchiveEntityMap()
-        for key, entity in report.items():
-            entity_map.add_entity(ArchiveEntity.map_from_report(key, entity))
-        return entity_map
-
-    @staticmethod
-    def map_from_ingest_entities(ingest_entities: Iterator['dict']):
-        entity_map = ArchiveEntityMap()
-        for ingest_entity in ingest_entities:
-            entity = ArchiveEntity.map_from_ingest_entity(ingest_entity)
-            entity_map.add_entity(entity)
-        return entity_map
-
-
-class ArchiveSubmission:
+class DspSubmission:
     def __init__(self, dsp_api, dsp_submission_url=None):
         self.submission = {}
-        self.errors: List['Error'] = list()
+        self.errors: List[IngestDspError] = []
         self.processing_result = list()
         self.validation_result = list()
         self.is_completed = False
@@ -188,7 +41,7 @@ class ArchiveSubmission:
     def __str__(self):
         return str(vars(self))
 
-    def add_entity(self, entity: ArchiveEntity):
+    def add_entity(self, entity: IngestDspEntity):
         get_contents_url = self.submission['_links']['contents']['href']
         contents = self.dsp_api.get_contents(get_contents_url)
 
@@ -200,12 +53,12 @@ class ArchiveSubmission:
         entity.dsp_url = created_entity['_links']['self']['href']
         entity.dsp_uuid = entity.dsp_url.rsplit('/', 1)[-1]
 
-    def add_entities(self, converted_entities: List['ArchiveEntity']):
+    def add_entities(self, converted_entities: List[IngestDspEntity]):
         for entity in converted_entities:
             self.add_entity(entity)
 
     def add_error(self, error_code, message, details=None):
-        self.errors.append(Error(error_code, message, details))
+        self.errors.append(IngestDspError(error_code, message, details))
 
     def validate(self):
         if not self.submission:
@@ -219,7 +72,7 @@ class ArchiveSubmission:
                 timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
-        except polling.TimeoutException as te:
+        except polling.TimeoutException:
             self.add_error('archive_submission.validate.timed_out',
                            'DSP validation takes too long to complete.')
 
@@ -249,7 +102,7 @@ class ArchiveSubmission:
                 timeout=config.VALIDATION_POLLING_TIMEOUT if not config.VALIDATION_POLL_FOREVER else None,
                 poll_forever=True if config.VALIDATION_POLL_FOREVER else False
             )
-        except polling.TimeoutException as te:
+        except polling.TimeoutException:
             self.add_error('archive_submission.validate_and_submit.timed_out',
                            'DSP validation takes too long to complete.')
 
@@ -384,9 +237,9 @@ class ArchiveSubmission:
                     report['errors'][report_key] = []
                     report['errors'][report_key].append(validation_result_details.get('errorMessages'))
 
-            if validation_result[
-                'validationStatus'] == "Pending" and validation_result_details and validation_result_details.get(
-                'expectedResults'):
+            if validation_result['validationStatus'] == "Pending"\
+                    and validation_result_details\
+                    and validation_result_details.get('expectedResults'):
                 report['pending'].append(validation_result_details)
 
         return report
@@ -415,7 +268,7 @@ class ArchiveSubmission:
         return True
 
     def is_validated_and_submittable(self):
-        return self.is_validated(self.submission) and self.is_submittable(self.submission)
+        return self.is_validated() and self.is_submittable()
 
     def is_processing_complete(self):
         results = self.dsp_api.get_processing_results(self.submission)

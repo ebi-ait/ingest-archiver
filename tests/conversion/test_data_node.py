@@ -14,9 +14,9 @@ class DataNodeTest(TestCase):
         node['path.to.nested.field'] = 347
 
         # then:
-        dict = node.as_dict()
-        self.assertEqual('value', dict['path']['to']['node'])
-        self.assertEqual(347, dict['path']['to']['nested']['field'])
+        node_dict = node.as_dict()
+        self.assertEqual('value', node_dict['path']['to']['node'])
+        self.assertEqual(347, node_dict['path']['to']['nested']['field'])
 
     def test___getitem__(self):
         # given:

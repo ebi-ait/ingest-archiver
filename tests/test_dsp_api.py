@@ -5,7 +5,7 @@ import config
 
 from mock import MagicMock
 from api.dsp import DataSubmissionPortal, AAPTokenClient
-from archiver.converter import SampleConverter
+from archiver.dsp.converter.biosample import BiosampleConverter
 
 
 # TODO use mocks for requests
@@ -26,7 +26,7 @@ class TestDataSubmissionPortal(unittest.TestCase):
         self.ingest_api.url = 'ingest_url'
         self.ingest_api.get_concrete_entity_type = MagicMock(return_value='donor_organism')
 
-        self.converter = SampleConverter(ontology_api=self.ontology_api)
+        self.converter = BiosampleConverter(ontology_api=self.ontology_api)
         self.converter.ingest_api = self.ingest_api
         pass
 
