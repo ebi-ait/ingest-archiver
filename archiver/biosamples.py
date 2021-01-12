@@ -1,8 +1,8 @@
 from copy import deepcopy
 
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id, dsp_ontology
-from conversion.json_mapper import JsonMapper
-from conversion.post_process import format_date, default_to
+from jsonconverter.json_mapper import JsonMapper
+from jsonconverter.post_process import format_date, default_to
 
 
 def _taxon(*args):

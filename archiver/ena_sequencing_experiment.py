@@ -1,7 +1,7 @@
 from api import ontology
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, dsp_ontology
 from archiver.instrument_model import to_dsp_name
-from conversion.json_mapper import JsonMapper, json_array, json_object
+from jsonconverter.json_mapper import JsonMapper, json_array, json_object
 
 _ontology_api = ontology.__api__
 
