@@ -15,6 +15,24 @@ class OntologyAPI:
         self.logger = logging.getLogger(__name__)
         self.logger.info(f'Using {self.url}')
 
+    def search(self, term, exact=True, obsolete=False, group=True, query_fields=None):
+        if not term:
+            raise Error(f'Search term must be supplied.')
+
+        exact = 'true' if exact else 'false'
+        obsolete = 'true' if obsolete else 'false'
+        group = 'true' if group else 'false'
+
+        params = f'q={quote(term)}&exact={exact}&obsoletes={obsolete}&groupField={group}'
+        if query_fields:
+            params += f'&queryFields={query_fields}'
+        response = get_json(f'{self.url}/api/search?{params}').get('response')
+        doc = None
+        if response and response.get('numFound') and response.get('docs'):
+            docs = response.get('docs')
+            doc = docs[0] if docs else None
+        return doc
+
     def iri_from_obo_id(self, obo_id):
         term = self.find_by_id_defining(obo_id)
         if term and 'iri' in term:
@@ -32,7 +50,7 @@ class OntologyAPI:
         return self.is_descendant(reference_obo_id, test_obo_id)
 
     def is_descendant(self, reference_obo_id, test_obo_id):
-        reference_doc = self.find_by_id_defining(reference_obo_id)
+        reference_doc = self.search(reference_obo_id, exact=True)
         if not reference_doc:
             raise Error(f'Could not find {reference_obo_id}')
         ontology_name = reference_doc.get('ontology_name')
