@@ -1,6 +1,6 @@
 from archiver.dsp_post_process import dsp_attribute
-from jsonconverter.json_mapper import JsonMapper
-from jsonconverter.post_process import *
+from json_converter.json_mapper import JsonMapper
+from json_converter.post_process import *
 
 PREFIX_PROJECT = 'project_'
 

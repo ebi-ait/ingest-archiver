@@ -1,8 +1,8 @@
 from api import ontology
 from archiver.dsp_post_process import dsp_attribute, fixed_dsp_attribute, taxon_id_attribute, dsp_ontology
 from archiver.instrument_model import to_dsp_name
-from jsonconverter.json_mapper import JsonMapper, json_array, json_object
-from jsonconverter.post_process import prefix_with, default_to, format_date
+from json_converter.json_mapper import JsonMapper, json_array, json_object
+from json_converter.post_process import prefix_with, default_to, format_date
 from utils import protocols
 
 PREFIX_STUDY = 'study_'
