@@ -6,3 +6,4 @@ pika
 polling
 -e git+https://github.com/HumanCellAtlas/ingest-client.git#egg=hca_ingest
 six #flatten_json undeclared dependancy
+json-converter
