@@ -44,7 +44,6 @@ class TestConverter(unittest.TestCase):
         self.ingest_api.url = 'ingest_url'
         self.ingest_api.get_concrete_entity_type = MagicMock(return_value='donor_organism')
         self.ontology_api = MagicMock()
-        self.ontology_api.expand_curie = MagicMock(return_value='http://purl.obolibrary.org/obo/UO_0000015')
 
     def test_convert_sample(self):
         # given:
@@ -77,20 +76,15 @@ class TestConverter(unittest.TestCase):
         # and:
         converted_no_release_date = converter.convert({
             'biomaterial': biomaterial,
-            'project': {
-                'releaseDate': None
-            }
+            'project': {}
         })
 
         # then:
         self.assertEqual(with_release_date, converted_with_release_date)
         self.assertEqual(no_release_date, converted_no_release_date)
 
-    @patch('api.ontology.OntologyAPI.expand_curie')
-    def test_convert_sequencing_experiment(self, expand_curie):
+    def test_convert_sequencing_experiment(self):
         # given:
-        expand_curie.return_value = 'http://purl.obolibrary.org/obo/UO_0000015'
-        # and:
         process = dict(self.hca_data.get('process'))
         lib_prep_protocol = dict(self.hca_data.get('library_preparation_protocol'))
         input_biomaterial = dict(self.hca_data.get('input_biomaterial'))
@@ -190,8 +184,7 @@ class TestConverter(unittest.TestCase):
         actual_json = converter.convert(hca_data)
         self.assertEqual(expected_json, actual_json)
 
-    @patch('api.ontology.OntologyAPI.expand_curie')
-    def test_convert_project(self, expand_curie):
+    def test_convert_project(self):
         # given: read from files
         with open(config.JSON_DIR + 'hca/project.json', encoding=config.ENCODING) as data_file:
             hca_data = json.loads(data_file.read())

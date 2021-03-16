@@ -73,8 +73,7 @@ class TestIngestArchiver(unittest.TestCase):
         now = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S")
         return prefix + '_' + now
 
-    @patch('api.ontology.OntologyAPI.expand_curie')
-    def test_get_archivable_entities(self, expand_curie):
+    def test_get_archivable_entities(self):
         mock_manifest = self._mock_manifest(self.base_manifest)
 
         archiver = IngestArchiver(
@@ -106,8 +105,7 @@ class TestIngestArchiver(unittest.TestCase):
         for entity in archive_submission.entity_map.get_entities():
             self.assertTrue(archive_submission.accession_map.get(entity.id), f"{entity.id} has no accession.")
 
-    @patch('api.ontology.OntologyAPI.expand_curie')
-    def test_notify_file_archiver(self, expand_curie):
+    def test_notify_file_archiver(self):
         archive_submission = MagicMock(ArchiveSubmission)
         archive_submission.get_url = MagicMock(return_value='url')
 
