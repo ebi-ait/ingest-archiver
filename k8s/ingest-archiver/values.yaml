@@ -1,0 +1,6 @@
+# Default values for ingest-archiver.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+environment: provide_through_set_flag
+image: provide_through_set_flag
+replicas: provide_through_set_flag

@@ -1,0 +1,12 @@
+include:
+  remote: 'https://raw.githubusercontent.com/ebi-ait/gitlab-ci-templates/master/build-release-deploy.yml'
+
+Unit Test:
+  image: quay.io/ebi-ait/ingest-base-images:python_3.6-slim
+  stage: build
+  script:
+    - apt-get update
+    - apt-get install -y git
+    - pip install -r requirements.txt
+    - pip install -r requirements-dev.txt
+    - python -m unittest discover -s tests -t tests

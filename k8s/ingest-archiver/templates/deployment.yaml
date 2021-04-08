@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.gitlab.com/app: {{ .Values.gitlab_app }}
+    app.gitlab.com/env: {{ .Values.gitlab_env }}
+  labels:
+    role: ingestion
+  name: ingest-archiver
+  namespace: {{ .Values.environment }}-environment
+spec:
+  selector:
+    matchLabels:
+      app: ingest-archiver
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ingest-archiver
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+        app.gitlab.com/app: {{ .Values.gitlab_app }}
+        app.gitlab.com/env: {{ .Values.gitlab_env }}
+    spec:
+      dnsPolicy: Default
+      containers:
+      - env:
+        - name: ARCHIVER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: archiver-api-key
+              name: api-keys
+        - name: RABBITMQ_URL
+          value: amqp://$(RABBIT_SERVICE_SERVICE_HOST):$(RABBIT_SERVICE_SERVICE_PORT_SERVICE)
+        - name: INGEST_API_URL
+          value: http://$(INGEST_CORE_SERVICE_SERVICE_HOST):$(INGEST_CORE_SERVICE_SERVICE_PORT)
+        - name: ONTOLOGY_API_URL
+          value: http://$(ONTOLOGY_SERVICE_SERVICE_HOST):$(ONTOLOGY_SERVICE_SERVICE_PORT)
+        - name: DSP_API_URL
+          value: {{ .Values.dspUrl }}
+        - name: AAP_API_URL
+          value: {{ .Values.aapUrl }}
+        - name: AAP_API_DOMAIN
+          value: {{ .Values.aapDomain }}
+        - name: AAP_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: aap-api-password
+              name: api-keys
+        - name: AAP_API_USER
+          value: {{ .Values.aapUser }}
+        image: {{ .Values.image }}
+        imagePullPolicy: Always
+        name: ingest-archiver
+        ports:
+        - containerPort: 5000
