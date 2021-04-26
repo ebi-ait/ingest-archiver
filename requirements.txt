@@ -7,3 +7,4 @@ polling
 -e git+https://github.com/ebi-ait/ingest-client.git#egg=hca_ingest
 six #flatten_json undeclared dependancy
 json-converter
+submission-broker
