@@ -1,15 +1,15 @@
 from ingest.api.ingestapi import IngestApi
 from submission_broker.submission.entity import Entity
 
-from hca.submission import HcaSubmission
+from hca.submission import HcaSubmission, HandleCollision
 
 
 class HcaLoader:
     def __init__(self, ingest: IngestApi):
         self.ingest = ingest
 
-    def map_project(self, project_uuid: str):
-        hca_submission = HcaSubmission()
+    def get_project(self, project_uuid: str) -> HcaSubmission:
+        hca_submission = HcaSubmission(HandleCollision.IGNORE)
         project_type = 'projects'
         project = self.__map_entity(hca_submission, project_type, project_uuid)
         submission_type = 'submissionEnvelopes'
@@ -18,8 +18,8 @@ class HcaLoader:
             self.__map_submission_manifests(hca_submission, submission_entity)
         return hca_submission
 
-    def map_submission(self, submission_uuid: str):
-        hca_submission = HcaSubmission()
+    def get_submission(self, submission_uuid: str) -> HcaSubmission:
+        hca_submission = HcaSubmission(HandleCollision.IGNORE)
         submission_type = 'submissionEnvelopes'
         submission_entity = self.__map_entity(hca_submission, submission_type, submission_uuid)
         self.__map_submission_manifests(hca_submission, submission_entity)
@@ -29,37 +29,72 @@ class HcaLoader:
         manifest_type = 'bundleManifests'
         self.__map_related_entities(hca_submission, submission_entity, manifest_type)
         for manifest_entity in hca_submission.get_entities(manifest_type):
-            self.__map_manifest_content(hca_submission, manifest_entity.attributes)
+            self.__map_manifest_content(hca_submission, manifest_entity)
 
     def __map_entity(self, submission: HcaSubmission, entity_type: str, entity_uuid: str) -> Entity:
         entity = submission.get_entity_from_uuid(entity_type, entity_uuid)
-        if entity:
-            return entity
-        entity_attributes = self.ingest.get_entity_by_uuid(entity_type, entity_uuid)
-        return submission.map_ingest_entity(entity_type, entity_attributes)
+        if not entity:
+            entity_attributes = self.ingest.get_entity_by_uuid(entity_type, entity_uuid)
+            entity = submission.map_ingest_entity(entity_type, entity_attributes)
+            self.__add_related_entities(submission, entity)
+        return entity
 
-    def __map_related_entities(self, submission: HcaSubmission, entity: Entity, related_entity_type: str):
-        related_entities = self.ingest.get_related_entities(related_entity_type, entity.attributes, related_entity_type)
+    def __add_related_entities(self, submission: HcaSubmission, entity: Entity):
+        entity_type = entity.identifier.entity_type
+        if entity_type == 'biomaterials' or entity_type == 'files':
+            link_type = 'processes'
+            self.__map_related_entities(submission, entity, link_type, 'inputToProcesses')
+            self.__map_related_entities(submission, entity, link_type, 'derivedByProcesses')
+        elif entity_type == 'processes':
+            self.__map_related_entities(submission, entity, 'protocols')
+            link_type = 'biomaterials'
+            self.__map_related_entities(submission, entity, link_type, 'inputBiomaterials')
+            self.__map_related_entities(submission, entity, link_type, 'derivedBiomaterials')
+            link_type = 'files'
+            self.__map_related_entities(submission, entity, link_type, 'inputFiles')
+            self.__map_related_entities(submission, entity, link_type, 'derivedFiles')
+
+    def __map_related_entities(self, submission: HcaSubmission, entity: Entity, related_entity_type: str, link_name: str = None):
+        if not link_name:
+            link_name = related_entity_type
+        related_entities = self.ingest.get_related_entities(link_name, entity.attributes, related_entity_type)
         for entity_attributes in related_entities:
+            in_cache = submission.ingest_entity_cached(related_entity_type, entity_attributes)
             related_entity = submission.map_ingest_entity(related_entity_type, entity_attributes)
+            if not in_cache:
+                self.__add_related_entities(submission, related_entity)
             submission.link_entities(entity, related_entity)
 
-    def __map_manifest_content(self, hca_submission: HcaSubmission, manifest: dict):
-        # Save manifest content using self.__map_entity(hca_submission, entity_type, entity_uuid)
-        #   This acts as a cache to reduce traffic
-        #
-        # entity_type is dependant on which key in the dictionary is inspected
-        #   manifest.fileProjectMap = 'projects'
-        #   manifest.fileBiomaterialMap = 'biomaterials'
-        #   manifest.fileProtocolMap = 'protocols'
-        #   manifest.fileFilesMap = 'files'
-        #   manifest.fileProcessMap = 'processes'
-        #   manifest.dataFiles = It's complicated
-        pass
+    def __map_manifest_content(self, submission: HcaSubmission, manifest: Entity):
+        for project_uuid in manifest.attributes.get('fileProjectMap', {}).keys():
+            project = self.__map_entity(submission, 'projects', project_uuid)
+            submission.link_entities(manifest, project)
 
-    def __link_submission_entities(self):
-        # use self.ingest.get_related_entities to help here
-        # for each 'processes' link to 'protocols', 'biomaterials' and 'files'
-        # for each 'files' get linked 'processes'
-        # for each 'biomaterials' get linked 'processes'
-        pass
+        for biomaterial_uuid in manifest.attributes.get('fileBiomaterialMap', {}).keys():
+            biomaterial = self.__map_entity(submission, 'biomaterials', biomaterial_uuid)
+            submission.link_entities(manifest, biomaterial)
+
+        for protocol_uuid in manifest.attributes.get('fileProtocolMap', {}).keys():
+            protocol = self.__map_entity(submission, 'protocols', protocol_uuid)
+            submission.link_entities(manifest, protocol)
+
+        for process_uuid in manifest.attributes.get('fileProcessMap', {}).keys():
+            process = self.__map_entity(submission, 'processes', process_uuid)
+            submission.link_entities(manifest, process)
+
+        data_file_map = {}
+        for file_uuid in manifest.attributes.get('fileFilesMap', {}).keys():
+            file = self.__map_entity(submission, 'files', file_uuid)
+            submission.link_entities(manifest, file)
+            data_file_uuid = file.attributes.get('dataFileUuid', '')
+            data_file_map[data_file_uuid] = file
+
+# for data_file_uuid in manifest.attributes.get('dataFiles', []):
+#     if data_file_uuid in data_file_map:
+#         ToDo: Check the data file is on the ena FTP server
+#         file_metadata = data_file_map[data_file_uuid].attributes
+#         file_name = file_metadata['fileName']
+#         file_name = file_metadata['content']['file_core']['file_name']
+#         s3_source = file_metadata['cloudUrl']
+#         sha256_checksum = file_metadata['checksums']['sha256']
+#     else: ToDo: Raise Error?
