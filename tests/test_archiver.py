@@ -90,22 +90,6 @@ class TestIngestArchiver(unittest.TestCase):
         self.assertTrue(entities_by_type.get('sample'))
         self.assertTrue(entities_by_type.get('sequencingExperiment'))
 
-    @unittest.skip("This is an Integration Test")
-    def test_archive(self):
-        mock_manifest = self._mock_manifest(self.base_manifest)
-        archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            dsp_api=self.dsp_api,
-            exclude_types=['sequencingRun'])
-        archiver.get_manifest = MagicMock(return_value=mock_manifest)
-        entity_map = archiver.convert(['bundle_uuid'])
-        archive_submission = archiver.archive(entity_map)
-        self.assertTrue(archive_submission.is_completed)
-
-        for entity in archive_submission.entity_map.get_entities():
-            self.assertTrue(archive_submission.accession_map.get(entity.id), f"{entity.id} has no accession.")
-
     @patch('api.ontology.OntologyAPI.expand_curie')
     def test_notify_file_archiver(self, expand_curie):
         archive_submission = MagicMock(ArchiveSubmission)
@@ -153,23 +137,6 @@ class TestIngestArchiver(unittest.TestCase):
         }
         self.assertTrue(messages)
         self.assertEqual(expected, messages[0])
-
-    @unittest.skip("This is an Integration Test")
-    def test_validate_and_complete_submission(self):
-        mock_manifest = self._mock_manifest(self.base_manifest)
-        archiver = IngestArchiver(
-            ontology_api=self.ontology_api,
-            ingest_api=self.ingest_api,
-            dsp_api=self.dsp_api,
-            exclude_types=['sequencingRun'])
-        archiver.get_manifest = MagicMock(return_value=mock_manifest)
-        entity_map = archiver.convert(['bundle_uuid'])
-        archive_submission, _ = archiver.archive_metadata(entity_map)
-        url = archive_submission.get_url()
-
-        archive_submission = archiver.complete_submission(dsp_submission_url=url)
-        self.assertTrue(archive_submission.is_completed)
-        self.assertTrue(archive_submission.accession_map)
 
     @staticmethod
     def _mock_manifest(manifest):
