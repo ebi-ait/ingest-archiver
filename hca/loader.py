@@ -9,7 +9,7 @@ class HcaLoader:
         self.ingest = ingest
 
     def get_project(self, project_uuid: str) -> HcaSubmission:
-        hca_submission = HcaSubmission(HandleCollision.IGNORE)
+        hca_submission = HcaSubmission(HandleCollision.OVERWRITE)
         project_type = 'projects'
         project = self.__map_entity(hca_submission, project_type, project_uuid)
         submission_type = 'submissionEnvelopes'
@@ -19,7 +19,7 @@ class HcaLoader:
         return hca_submission
 
     def get_submission(self, submission_uuid: str) -> HcaSubmission:
-        hca_submission = HcaSubmission(HandleCollision.IGNORE)
+        hca_submission = HcaSubmission(HandleCollision.OVERWRITE)
         submission_type = 'submissionEnvelopes'
         submission_entity = self.__map_entity(hca_submission, submission_type, submission_uuid)
         self.__map_submission_manifests(hca_submission, submission_entity)
