@@ -35,7 +35,7 @@ class HcaLoader:
         entity = submission.get_entity_from_uuid(entity_type, entity_uuid)
         if not entity:
             entity_attributes = self.ingest.get_entity_by_uuid(entity_type, entity_uuid)
-            entity = submission.map_ingest_entity(entity_type, entity_attributes)
+            entity = submission.map_ingest_entity(entity_attributes)
             self.__add_related_entities(submission, entity)
         return entity
 
@@ -59,8 +59,8 @@ class HcaLoader:
             link_name = related_entity_type
         related_entities = self.ingest.get_related_entities(link_name, entity.attributes, related_entity_type)
         for entity_attributes in related_entities:
-            in_cache = submission.ingest_entity_cached(related_entity_type, entity_attributes)
-            related_entity = submission.map_ingest_entity(related_entity_type, entity_attributes)
+            in_cache = submission.ingest_entity_cached(entity_attributes)
+            related_entity = submission.map_ingest_entity(entity_attributes)
             if not in_cache:
                 self.__add_related_entities(submission, related_entity)
             submission.link_entities(entity, related_entity)
