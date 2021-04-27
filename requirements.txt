@@ -8,3 +8,4 @@ polling
 six #flatten_json undeclared dependancy
 json-converter
 submission-broker
+biosamples-client
