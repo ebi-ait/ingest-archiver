@@ -1,12 +1,19 @@
 from biosamples_v4.models import Sample, Attribute
+from json_converter.json_mapper import JsonMapper
 
-ATTRIBUTE_NAMES = {
-    'content.biomaterial_core.biomaterial_id': 'Biomaterial Core - Biomaterial Id',
-    'content.describedBy': 'HCA Biomaterial Type',
-    'uuid.uuid': 'HCA Biomaterial UUID',
-    'content.is_living': 'Is Living',
-    'content.medical_history.smoking_history': 'Medical History - Smoking History',
-    'content.sex': 'Sex',
+
+def get_concrete_type(schema_url):
+    concrete_type = schema_url.split('/')[-1]
+    return concrete_type
+
+
+ATTRIBUTE_SPEC = {
+    'Biomaterial Core - Biomaterial Id': ['content.biomaterial_core.biomaterial_id'],
+    'HCA Biomaterial Type': ['content.describedBy', get_concrete_type],
+    'HCA Biomaterial UUID': ['uuid.uuid'],
+    'Is Living': ['content.is_living'],
+    'Medical History - Smoking History': ['content.medical_history.smoking_history'],
+    'Sex': ['content.sex']
 }
 
 
@@ -40,16 +47,10 @@ class BioSamplesConverter:
 
     @staticmethod
     def __add_attributes(sample, biomaterial_attributes):
-        for key, attribute_name in ATTRIBUTE_NAMES.items():
-            indexes = str(key).split('.')
-            indexes.reverse()
-            value = BioSamplesConverter.__get_attr_value(biomaterial_attributes, indexes)
-            sample.attributes.append(
-                Attribute(
-                    name=attribute_name,
-                    value=value
-                )
-            )
+        converted_attributes = JsonMapper(biomaterial_attributes).map(ATTRIBUTE_SPEC)
+        for name, value in converted_attributes.items():
+            sample.attributes.append(Attribute(name, value))
+
         BioSamplesConverter.__add_project_attribute(sample)
 
     @staticmethod
@@ -60,19 +61,6 @@ class BioSamplesConverter:
                 value='Human Cell Atlas'
             )
         )
-
-    @staticmethod
-    def __get_attr_value(biomaterial_attributes, indexes: list) -> str:
-        index = indexes.pop()
-        biomaterial_attribute = biomaterial_attributes[index]
-
-        if index == 'describedBy':
-            biomaterial_attribute = str(biomaterial_attribute).split('/')[-1]
-
-        if len(indexes) > 0:
-            biomaterial_attribute = BioSamplesConverter.__get_attr_value(biomaterial_attribute, indexes)
-
-        return biomaterial_attribute
 
     @staticmethod
     def __named_attribute(biomaterial: dict, attribute_name: str, default=None):
