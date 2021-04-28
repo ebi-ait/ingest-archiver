@@ -17,6 +17,8 @@
           "catalog_number": "ABM022F",
           "catalog_url": "https://www.allcells.com/products/bone-marrow-cd34-stem-progenitor-cells",
           "type": "stem cell",
+          "sex": "male",
+          "is_living": "yes",
           "cell_type": {
             "ontology_label": "CD34-positive, CD38-negative hematopoietic stem cell",
             "text": "CD34-positive, CD38-negative hematopoietic stem cell",
@@ -34,6 +36,9 @@
             "text": "bone marrow",
             "ontology": "UBERON:0002371",
             "ontology_label": "bone marrow"
+          },
+          "medical_history": {
+            "smoking_history": "20 cigarettes/day for 25 years, stopped 2000"
           }
         },
         "submissionDate": "2019-07-18T21:12:39.770Z",
