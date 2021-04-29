@@ -5,10 +5,10 @@ from os.path import dirname
 from biosamples_v4.models import Sample, Attribute
 from typing import List
 
-from converter.biosample import BioSamplesConverter
+from converter.biosamples import BioSamplesConverter
 
 
-class MyTestCase(unittest.TestCase):
+class BioSamplesConverterTests(unittest.TestCase):
 
     def setUp(self) -> None:
         with open(dirname(__file__) + '/../resources/biomaterials.json') as file:

@@ -21,7 +21,7 @@ class BioSamplesConverter:
     def __init__(self, domain=None):
         self.domain = domain
 
-    def convert(self, biomaterial: dict, domain:str, release_date: str = None) -> Sample:
+    def convert(self, biomaterial: dict, domain: str, release_date: str = None) -> Sample:
         biomaterial_content = biomaterial['attributes']['content']
         sample = Sample(
             accession=self.__named_attribute(biomaterial_content['biomaterial_core'], 'biosamples_accession'),
