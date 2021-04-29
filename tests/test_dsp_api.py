@@ -11,6 +11,7 @@ from archiver.converter import SampleConverter
 # TODO use mocks for requests
 # TODO add test cases
 
+@unittest.skip("This is an Integration Test Class")
 class TestDataSubmissionPortal(unittest.TestCase):
     def setUp(self):
         self.dsp_api = DataSubmissionPortal()
