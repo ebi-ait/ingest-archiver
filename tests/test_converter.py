@@ -55,7 +55,6 @@ class TestConverter(unittest.TestCase):
         test_alias = 'hca' + str(randint(0, 1000))
         biomaterial['uuid']['uuid'] = test_alias
         no_release_date['alias'] = test_alias
-        del no_release_date['releaseDate']
         no_release_date['attributes']['HCA Biomaterial UUID'] = [{'value': test_alias}]
 
         # and:
