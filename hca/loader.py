@@ -88,13 +88,3 @@ class HcaLoader:
             submission.link_entities(manifest, file)
             data_file_uuid = file.attributes.get('dataFileUuid', '')
             data_file_map[data_file_uuid] = file
-
-# for data_file_uuid in manifest.attributes.get('dataFiles', []):
-#     if data_file_uuid in data_file_map:
-#         ToDo: Check the data file is on the ena FTP server
-#         file_metadata = data_file_map[data_file_uuid].attributes
-#         file_name = file_metadata['fileName']
-#         file_name = file_metadata['content']['file_core']['file_name']
-#         s3_source = file_metadata['cloudUrl']
-#         sha256_checksum = file_metadata['checksums']['sha256']
-#     else: ToDo: Raise Error?
