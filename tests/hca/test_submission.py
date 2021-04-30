@@ -5,85 +5,53 @@ from tests.hca.utils import make_ingest_entity, random_id, random_uuid
 
 
 class TestHcaSubmission(unittest.TestCase):
-
     def setUp(self) -> None:
+        # Given
+        self.test_type = random_id()
         self.test_id = random_id()
         self.test_uuid = random_uuid()
-
-    def test_added_entity_is_contained_in_hca_submission(self):
-        # Given
-        test_type = 'hca_submission_test'
-        test_case = make_ingest_entity(test_type, random_id(), self.test_uuid)
-        submission = HcaSubmission()
-
+        self.test_case = make_ingest_entity(self.test_type, self.test_id, self.test_uuid)
+        self.submission = HcaSubmission()
         # When
-        submission.map_ingest_entity(test_case)
-
-        # Then
-        self.assertTrue(submission.contains_entity(test_case))
-        self.assertTrue(submission.contains_entity_by_uuid(test_type, self.test_uuid))
+        self.test_entity = self.submission.map_ingest_entity(self.test_case)
 
     def test_added_entity_is_contained_in_submission(self):
-        # Given
-        test_type = 'submission_test'
-        test_case = make_ingest_entity(test_type, self.test_id, random_uuid())
-        submission = HcaSubmission()
-
-        # When
-        submission.map_ingest_entity(test_case)
-
         # Then
-        self.assertTrue(submission.get_entity(test_type, self.test_id))
+        self.assertTrue(self.submission.contains_entity(self.test_case))
+        self.assertTrue(self.submission.contains_entity_by_uuid(self.test_type, self.test_uuid))
+        self.assertTrue(self.submission.get_entity(self.test_type, self.test_id))
 
     def test_entity_attributes_are_equal_to_source(self):
-        # Given
-        test_type = 'attribute_equality_test'
-        test_case = make_ingest_entity(test_type, random_id(), random_uuid())
-        submission = HcaSubmission()
-
-        # When
-        test_entity = submission.map_ingest_entity(test_case)
-
         # Then
-        self.assertEqual(test_case, test_entity.attributes)
+        self.assertEqual(self.test_case, self.test_entity.attributes)
 
     def test_added_entity_is_equal_to_entity_returned_from_submission(self):
-        # Given
-        test_type = 'entity_equality_test'
-        test_case = make_ingest_entity(test_type, self.test_id, random_uuid())
-        submission = HcaSubmission()
-
         # When
-        added_entity = submission.map_ingest_entity(test_case)
-
+        returned_entity = self.submission.get_entity(self.test_type, self.test_id)
         # Then
-        self.assertEqual(added_entity, submission.get_entity(test_type, self.test_id))
+        self.assertEqual(self.test_entity, returned_entity)
 
     def test_added_entity_is_equal_to_entity_returned_from_hca_submission_by_uuid(self):
-        # Given
-        ingest_type = 'uuid_test'
-        test_case = make_ingest_entity(ingest_type, random_id(), self.test_uuid)
-        submission = HcaSubmission()
-
         # When
-        added_entity = submission.map_ingest_entity(test_case)
-
+        returned_entity = self.submission.get_entity_by_uuid(self.test_type, self.test_uuid)
         # Then
-        self.assertEqual(added_entity, submission.get_entity_by_uuid(ingest_type, self.test_uuid))
+        self.assertEqual(self.test_entity, returned_entity)
 
-    def test_duplicate_entities_with_matching_ids_are_equal(self):
-        # Given
-        ingest_type = 'duplicate_test'
-        test_case_1 = make_ingest_entity(ingest_type, self.test_id, random_uuid())
-        test_case_2 = make_ingest_entity(ingest_type, self.test_id, random_uuid())
-        submission = HcaSubmission()
-
+    def test_adding_a_duplicate_entity_returns_the_original_entity(self):
         # When
-        entity_1 = submission.map_ingest_entity(test_case_1)
-        entity_2 = submission.map_ingest_entity(test_case_2)
-
+        returned_entity = self.submission.map_ingest_entity(self.test_case)
         # Then
-        self.assertEqual(entity_1, entity_2)
+        self.assertEqual(self.test_entity, returned_entity)
+
+    def test_duplication_is_determined_by_matching_type_and_id_not_content(self):
+        # Given
+        different_uuid = random_uuid()
+        duplicate_test_case = make_ingest_entity(self.test_type, self.test_id, different_uuid)
+        # When
+        duplicate_entity = self.submission.map_ingest_entity(duplicate_test_case)
+        # Then
+        self.assertEqual(self.test_entity, duplicate_entity)
+        self.assertNotEqual(self.test_uuid, self.test_entity.attributes['uuid']['uuid'])
 
 
 if __name__ == '__main__':
