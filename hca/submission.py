@@ -15,8 +15,12 @@ class HcaSubmission(Submission):
         entity_uuid = self.__get_uuid(entity_attributes)
         if not entity_uuid and entity_type == 'bundleManifests':
             entity_uuid = entity_id
+        existing_entity = super().get_entity(entity_type, entity_id)
+        if existing_entity:
+            return existing_entity
         self.__uuid_map.setdefault(entity_type, {})[entity_uuid] = entity_id
-        return super().map(entity_type, entity_id, entity_attributes)
+        entity = super().map(entity_type, entity_id, entity_attributes)
+        return entity
 
     def get_entity_by_uuid(self, entity_type: str, entity_uuid: str) -> Entity:
         if self.contains_entity_by_uuid(entity_type, entity_uuid):

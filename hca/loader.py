@@ -1,7 +1,5 @@
 from ingest.api.ingestapi import IngestApi
-from submission_broker.submission.entity import Entity
-
-from hca.submission import HcaSubmission, HandleCollision
+from hca.submission import HcaSubmission, Entity, HandleCollision
 
 
 class HcaLoader:

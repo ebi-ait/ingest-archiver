@@ -43,15 +43,16 @@ class TestHcaSubmission(unittest.TestCase):
         # Then
         self.assertEqual(self.test_entity, returned_entity)
 
-    def test_duplication_is_determined_by_matching_type_and_id_not_content(self):
+    def test_duplication_entity_with_differing_content_is_ignored(self):
         # Given
-        different_uuid = random_uuid()
-        duplicate_test_case = make_ingest_entity(self.test_type, self.test_id, different_uuid)
+        ignored_uuid = random_uuid()
+        duplicate_test_case = make_ingest_entity(self.test_type, self.test_id, ignored_uuid)
         # When
         duplicate_entity = self.submission.map_ingest_entity(duplicate_test_case)
         # Then
         self.assertEqual(self.test_entity, duplicate_entity)
-        self.assertNotEqual(self.test_uuid, self.test_entity.attributes['uuid']['uuid'])
+        self.assertEqual(self.test_uuid, self.test_entity.attributes['uuid']['uuid'])
+        self.assertNotEqual(ignored_uuid, self.test_entity.attributes['uuid']['uuid'])
 
 
 if __name__ == '__main__':
