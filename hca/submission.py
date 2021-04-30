@@ -1,7 +1,12 @@
 import re
 
-from submission_broker.submission.submission import Submission, HandleCollision
-from submission_broker.submission.entity import Entity
+from json_converter.json_mapper import JsonMapper
+from submission_broker.submission.submission import Submission, Entity, HandleCollision
+
+
+ACCESSION_SPEC = {
+    'BioSamples': ['content.biomaterial_core.biosamples_accession']
+}
 
 
 class HcaSubmission(Submission):
@@ -20,6 +25,7 @@ class HcaSubmission(Submission):
             return existing_entity
         self.__uuid_map.setdefault(entity_type, {})[entity_uuid] = entity_id
         entity = super().map(entity_type, entity_id, entity_attributes)
+        self.__add_entity_accessions(entity)
         return entity
 
     def get_entity_by_uuid(self, entity_type: str, entity_uuid: str) -> Entity:
@@ -41,6 +47,12 @@ class HcaSubmission(Submission):
         entity_type = match.group('entity_type')
         entity_id = match.group('entity_id')
         return entity_type, entity_id
+
+    @staticmethod
+    def __add_entity_accessions(entity: Entity):
+        accessions = JsonMapper(entity.attributes).map(ACCESSION_SPEC)
+        for service, accession in accessions.items():
+            entity.add_accession(service, accession)
 
     @staticmethod
     def __get_uuid(entity_attributes: dict) -> str:
