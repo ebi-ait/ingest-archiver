@@ -1,5 +1,6 @@
 from biosamples_v4.models import Sample, Attribute
 from json_converter.json_mapper import JsonMapper
+from .errors import MissingBioSamplesDomain
 
 
 def get_concrete_type(schema_url):
@@ -18,39 +19,32 @@ ATTRIBUTE_SPEC = {
 
 
 class BioSamplesConverter:
-    def __init__(self, domain=None):
-        self.domain = domain
+    def __init__(self, default_domain=None):
+        self.default_domain = default_domain
 
-    def convert(self, biomaterial: dict, domain: str, release_date: str = None) -> Sample:
-        biomaterial_content = biomaterial['attributes']['content']
+    def convert(self, biomaterial: dict, domain: str = None, release_date: str = None, accession: str = None) -> Sample:
+        if not domain and not self.default_domain:
+            raise MissingBioSamplesDomain()
+        biomaterial_content = biomaterial.get('content', {})
+        biomaterial_core = biomaterial_content.get('biomaterial_core', {})
         sample = Sample(
-            accession=self.__named_attribute(biomaterial_content['biomaterial_core'], 'biosamples_accession'),
-            name=self.__named_attribute(biomaterial_content['biomaterial_core'], 'biomaterial_name'),
-            update=self.__named_attribute(biomaterial['attributes'], 'updateDate'),
-            domain=domain,
-            species=self.__named_attribute(biomaterial_content['genus_species'][0], 'ontology_label'),
-            ncbi_taxon_id=self.__named_attribute(biomaterial_content['biomaterial_core'], 'ncbi_taxon_id')[0]
+            accession=accession if accession else biomaterial_core.get('biosamples_accession'),
+            name=biomaterial_core('biomaterial_name'),
+            update=biomaterial.get('updateDate'),
+            domain=domain if domain else self.default_domain,
+            species=biomaterial_content['genus_species'][0].get('ontology_label') if biomaterial_content.get('genus_species') else None,
+            ncbi_taxon_id=biomaterial_core.get('ncbi_taxon_id')[0] if biomaterial_core.get('ncbi_taxon_id') else None,
+            release=release_date if release_date else biomaterial.get('submissionDate')
         )
-        self.__add_release_date(sample, biomaterial['attributes']['submissionDate'], release_date)
         sample._append_organism_attribute()
-
-        self.__add_attributes(sample, biomaterial['attributes'])
-
+        self.__add_attributes(sample, biomaterial)
         return sample
 
     @staticmethod
-    def __add_release_date(sample, submission_date, release_date):
-        if release_date:
-            sample.release = release_date
-        else:
-            sample.release = submission_date
-
-    @staticmethod
-    def __add_attributes(sample, biomaterial_attributes):
-        converted_attributes = JsonMapper(biomaterial_attributes).map(ATTRIBUTE_SPEC)
+    def __add_attributes(sample: Sample, biomaterial: dict):
+        converted_attributes = JsonMapper(biomaterial).map(ATTRIBUTE_SPEC)
         for name, value in converted_attributes.items():
             sample.attributes.append(Attribute(name, value))
-
         BioSamplesConverter.__add_project_attribute(sample)
 
     @staticmethod
@@ -61,7 +55,3 @@ class BioSamplesConverter:
                 value='Human Cell Atlas'
             )
         )
-
-    @staticmethod
-    def __named_attribute(biomaterial: dict, attribute_name: str, default=None):
-        return biomaterial[attribute_name] if attribute_name in biomaterial else default
