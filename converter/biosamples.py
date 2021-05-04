@@ -29,7 +29,7 @@ class BioSamplesConverter:
         biomaterial_core = biomaterial_content.get('biomaterial_core', {})
         sample = Sample(
             accession=accession if accession else biomaterial_core.get('biosamples_accession'),
-            name=biomaterial_core('biomaterial_name'),
+            name=biomaterial_core.get('biomaterial_name'),
             update=biomaterial.get('updateDate'),
             domain=domain if domain else self.default_domain,
             species=biomaterial_content['genus_species'][0].get('ontology_label') if biomaterial_content.get('genus_species') else None,
