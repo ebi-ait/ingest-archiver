@@ -25,7 +25,7 @@ class HcaSubmission(Submission):
             return existing_entity
         self.__uuid_map.setdefault(entity_type, {})[entity_uuid] = entity_id
         entity = super().map(entity_type, entity_id, entity_attributes)
-        self.__add_entity_accessions(entity)
+        self.__get_accessions_from_attributes(entity)
         return entity
 
     def get_entity_by_uuid(self, entity_type: str, entity_uuid: str) -> Entity:
@@ -49,10 +49,24 @@ class HcaSubmission(Submission):
         return entity_type, entity_id
 
     @staticmethod
-    def __add_entity_accessions(entity: Entity):
+    def __get_accessions_from_attributes(entity: Entity):
         accessions = JsonMapper(entity.attributes).map(ACCESSION_SPEC)
         for service, accession in accessions.items():
             entity.add_accession(service, accession)
+
+    @staticmethod
+    def add_accessions_to_attributes(entity: Entity):
+        for service, mapping_list in ACCESSION_SPEC.items():
+            accession = entity.get_accession(service)
+            if accession:
+                location_list = mapping_list[0]
+                attributes = entity.attributes
+                locations = location_list.split('.')
+                while len(locations) > 1:
+                    location = locations.pop(0)
+                    attributes.setdefault(location, {})
+                    attributes = attributes[location]
+                attributes[locations[0]] = accession
 
     @staticmethod
     def __get_uuid(entity_attributes: dict) -> str:

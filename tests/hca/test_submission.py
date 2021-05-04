@@ -54,6 +54,16 @@ class TestHcaSubmission(unittest.TestCase):
         self.assertEqual(self.test_uuid, self.test_entity.attributes['uuid']['uuid'])
         self.assertNotEqual(ignored_uuid, self.test_entity.attributes['uuid']['uuid'])
 
+    def test_attributes_set_correctly_when_biosamples_accession_is_added_to_attributes(self):
+        # When
+        random_accession = random_id()
+        self.test_entity.add_accession('BioSamples', random_accession)
+        self.submission.add_accessions_to_attributes(self.test_entity)
+
+        # Then
+        acc = self.test_entity.attributes['content']['biomaterial_core']['biosamples_accession']
+        self.assertEqual(random_accession, acc)
+
 
 if __name__ == '__main__':
     unittest.main()
