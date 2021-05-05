@@ -1,7 +1,7 @@
 import unittest
 
 from hca.submission import HcaSubmission
-from tests.hca.utils import make_ingest_entity, random_id, random_uuid
+from tests.utils import make_ingest_entity, random_id, random_uuid
 
 
 class TestHcaSubmission(unittest.TestCase):

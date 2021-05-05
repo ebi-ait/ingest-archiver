@@ -3,7 +3,7 @@ from mock import MagicMock, call
 
 from hca.submission import HcaSubmission
 from hca.updater import HcaUpdater
-from tests.hca.utils import random_id, random_uuid, make_ingest_entity
+from tests.utils import random_id, random_uuid, make_ingest_entity
 
 
 class TestHcaUpdater(unittest.TestCase):
