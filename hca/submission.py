@@ -17,7 +17,7 @@ class HcaSubmission(Submission):
 
     def map_ingest_entity(self, entity_attributes: dict) -> Entity:
         entity_type, entity_id = self.__get_entity_key(entity_attributes)
-        entity_uuid = self.__get_uuid(entity_attributes)
+        entity_uuid = self.get_uuid(entity_attributes)
         if not entity_uuid and entity_type == 'bundleManifests':
             entity_uuid = entity_id
         existing_entity = super().get_entity(entity_type, entity_id)
@@ -42,17 +42,11 @@ class HcaSubmission(Submission):
         return False
 
     def __get_entity_key(self, entity_attributes: dict) -> [str, str]:
-        entity_uri = HcaSubmission.__get_link(entity_attributes, 'self')
+        entity_uri = HcaSubmission.get_link(entity_attributes, 'self')
         match = self.__regex.search(entity_uri)
         entity_type = match.group('entity_type')
         entity_id = match.group('entity_id')
         return entity_type, entity_id
-
-    @staticmethod
-    def __get_accessions_from_attributes(entity: Entity):
-        accessions = JsonMapper(entity.attributes).map(ACCESSION_SPEC)
-        for service, accession in accessions.items():
-            entity.add_accession(service, accession)
 
     @staticmethod
     def add_accessions_to_attributes(entity: Entity):
@@ -69,10 +63,16 @@ class HcaSubmission(Submission):
                 attributes[locations[0]] = accession
 
     @staticmethod
-    def __get_uuid(entity_attributes: dict) -> str:
+    def get_uuid(entity_attributes: dict) -> str:
         return entity_attributes.get('uuid', {}).get('uuid', '')
 
     @staticmethod
-    def __get_link(entity_attributes: dict, link_name: str) -> str:
+    def get_link(entity_attributes: dict, link_name: str) -> str:
         link = entity_attributes['_links'][link_name]
         return link['href'].rsplit("{")[0] if link else ''
+
+    @staticmethod
+    def __get_accessions_from_attributes(entity: Entity):
+        accessions = JsonMapper(entity.attributes).map(ACCESSION_SPEC)
+        for service, accession in accessions.items():
+            entity.add_accession(service, accession)

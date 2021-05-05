@@ -4,7 +4,7 @@ from hca.submission import HcaSubmission, Entity, HandleCollision
 
 class HcaLoader:
     def __init__(self, ingest: IngestApi):
-        self.ingest = ingest
+        self.__ingest = ingest
 
     def get_project(self, project_uuid: str) -> HcaSubmission:
         hca_submission = HcaSubmission(HandleCollision.OVERWRITE)
@@ -32,7 +32,7 @@ class HcaLoader:
     def __map_entity(self, submission: HcaSubmission, entity_type: str, entity_uuid: str) -> Entity:
         entity = submission.get_entity_by_uuid(entity_type, entity_uuid)
         if not entity:
-            entity_attributes = self.ingest.get_entity_by_uuid(entity_type, entity_uuid)
+            entity_attributes = self.__ingest.get_entity_by_uuid(entity_type, entity_uuid)
             entity = submission.map_ingest_entity(entity_attributes)
             self.__add_related_entities(submission, entity)
         return entity
@@ -55,7 +55,7 @@ class HcaLoader:
     def __map_related_entities(self, submission: HcaSubmission, entity: Entity, related_entity_type: str, link_name: str = None):
         if not link_name:
             link_name = related_entity_type
-        related_entities = self.ingest.get_related_entities(link_name, entity.attributes, related_entity_type)
+        related_entities = self.__ingest.get_related_entities(link_name, entity.attributes, related_entity_type)
         for entity_attributes in related_entities:
             in_cache = submission.contains_entity(entity_attributes)
             related_entity = submission.map_ingest_entity(entity_attributes)
