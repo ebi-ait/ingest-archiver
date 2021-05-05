@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from biosamples_v4.models import Sample, Attribute
 from json_converter.json_mapper import JsonMapper
 from .errors import MissingBioSamplesDomain
@@ -30,11 +32,11 @@ class BioSamplesConverter:
         sample = Sample(
             accession=accession if accession else biomaterial_core.get('biosamples_accession'),
             name=biomaterial_core.get('biomaterial_name'),
-            update=biomaterial.get('updateDate'),
             domain=domain if domain else self.default_domain,
             species=biomaterial_content['genus_species'][0].get('ontology_label') if biomaterial_content.get('genus_species') else None,
             ncbi_taxon_id=biomaterial_core.get('ncbi_taxon_id')[0] if biomaterial_core.get('ncbi_taxon_id') else None,
-            release=release_date if release_date else biomaterial.get('submissionDate')
+            update=self.__convert_datetime(biomaterial.get('updateDate')),
+            release=self.__convert_datetime(release_date if release_date else biomaterial.get('submissionDate'))
         )
         sample._append_organism_attribute()
         self.__add_attributes(sample, biomaterial)
@@ -55,3 +57,12 @@ class BioSamplesConverter:
                 value='Human Cell Atlas'
             )
         )
+
+    @staticmethod
+    def __convert_datetime(datetime_str: str) -> datetime:
+        if datetime_str:
+            if '.' in datetime_str:
+                datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
+            else:
+                datetime_format = '%Y-%m-%dT%H:%M:%SZ'
+            return datetime.strptime(datetime_str, datetime_format)

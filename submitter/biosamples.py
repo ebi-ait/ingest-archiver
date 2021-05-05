@@ -18,7 +18,7 @@ class BioSamplesSubmitter:
 
     def send_sample(self, sample: Entity, release_date: str = None) -> str:
         accession = sample.get_accession('BioSamples')
-        biosample = self.__converter.convert(sample.attributes, release_date, accession)
+        biosample = self.__converter.convert(sample.attributes, release_date=release_date, accession=accession)
         try:
             response = self.__biosamples.send_sample(biosample)
             if 'accession' in response and not accession:
