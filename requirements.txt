@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
--e git+https://github.com/ebi-ait/ingest-client.git#egg=hca_ingest
+hca-ingest==0.6.12
 biosamples-client==1.3.0
     # via submission-broker
 biostudies-client==0.1.3
