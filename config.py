@@ -47,3 +47,6 @@ SUBMISSION_POLLING_TIMEOUT = os.environ.get('SUBMISSION_POLLING_TIMEOUT', 120)
 SUBMISSION_POLL_FOREVER = os.environ.get('SUBMISSION_POLL_FOREVER', True)
 
 ONTOLOGY_API_URL = os.environ.get('ONTOLOGY_API_URL', 'https://ontology.staging.archive.data.humancellatlas.org')
+
+DIRECT_SUBMISSION = os.environ.get('DIRECT_SUBMISSION', False)
+BIOSAMPLES_URL = os.environ.get('BIOSAMPLES_URL', 'https://wwwdev.ebi.ac.uk/biosamples')

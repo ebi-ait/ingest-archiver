@@ -15,6 +15,7 @@ import config
 from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
 from archiver.archiver import IngestArchiver, ArchiveSubmission, ArchiveEntityMap
+from archiver.direct import direct_archiver_from_config
 
 format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
          '%(lineno)s %(funcName)s(): %(message)s'
@@ -73,19 +74,24 @@ def archive():
         }
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
-    ingest_api = IngestAPI(config.INGEST_API_URL)
-    archiver = IngestArchiver(ingest_api=ingest_api,
-                              dsp_api=DataSubmissionPortal(config.DSP_API_URL),
-                              exclude_types=exclude_types,
-                              alias_prefix=alias_prefix)
+    if config.DIRECT_SUBMISSION:
+        direct_archiver = direct_archiver_from_config()
+        submission = direct_archiver.archive_submission(submission_uuid)
+        response = submission.as_dict(string_lists=True)
+    else:
+        ingest_api = IngestAPI(config.INGEST_API_URL)
+        archiver = IngestArchiver(ingest_api=ingest_api,
+                                  dsp_api=DataSubmissionPortal(config.DSP_API_URL),
+                                  exclude_types=exclude_types,
+                                  alias_prefix=alias_prefix)
 
-    thread = threading.Thread(target=async_archive,
-                              args=(ingest_api, archiver, submission_uuid))
-    thread.start()
+        thread = threading.Thread(target=async_archive,
+                                  args=(ingest_api, archiver, submission_uuid))
+        thread.start()
 
-    response = {
-        'message': 'successfully triggered!'
-    }
+        response = {
+            'message': 'successfully triggered!'
+        }
 
     return jsonify(response)
 
