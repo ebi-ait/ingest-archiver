@@ -1,0 +1,7 @@
+flask
+flatten_json
+pika
+polling
+json-converter
+submission-broker
+-e git+https://github.com/ebi-ait/ingest-client.git#egg=hca_ingest # ToDo: Update ingest-client to play nice with pip-compile, remove this line to make pip-compile work for now
