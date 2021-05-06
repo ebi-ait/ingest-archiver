@@ -23,12 +23,12 @@ class BioSamplesSubmitter:
             response = self.__biosamples.send_sample(biosample)
             if 'accession' in response and not accession:
                 sample.add_accession('BioSamples', response['accession'])
-                return f"CREATED"
-            return f"UPDATED"
+                return 'CREATED'
+            return 'UPDATED'
         except Exception as e:
             error_msg = f'BioSamples Error: {e}'
             sample.add_error('content.biomaterial_core.biosamples_accession', error_msg)
-            return "ERRORED"
+            return 'ERRORED'
 
     @staticmethod
     def __get_project_release_date_from_submission(submission: Submission) -> str:
