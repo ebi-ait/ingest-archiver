@@ -1,5 +1,5 @@
 flask
-flatten_json
+flatten-json
 pika
 polling
 json-converter
