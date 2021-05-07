@@ -1,3 +1,5 @@
+from typing import List, Union
+
 from ingest.api.ingestapi import IngestApi
 from hca.submission import HcaSubmission, Entity, HandleCollision
 
@@ -11,7 +13,7 @@ class HcaLoader:
         project_type = 'projects'
         project = self.__map_entity(hca_submission, project_type, project_uuid)
         submission_type = 'submissionEnvelopes'
-        self.__map_related_entities(hca_submission, project, submission_type)
+        self.__map_link_type_to_link_names(hca_submission, project, submission_type)
         for submission_entity in hca_submission.get_entities(submission_type):
             self.__map_submission_manifests(hca_submission, submission_entity)
         return hca_submission
@@ -25,7 +27,7 @@ class HcaLoader:
 
     def __map_submission_manifests(self, hca_submission: HcaSubmission, submission_entity: Entity):
         manifest_type = 'bundleManifests'
-        self.__map_related_entities(hca_submission, submission_entity, manifest_type)
+        self.__map_link_type_to_link_names(hca_submission, submission_entity, manifest_type)
         for manifest_entity in hca_submission.get_entities(manifest_type):
             self.__map_manifest_content(hca_submission, manifest_entity)
 
@@ -40,21 +42,24 @@ class HcaLoader:
     def __add_related_entities(self, submission: HcaSubmission, entity: Entity):
         entity_type = entity.identifier.entity_type
         if entity_type == 'biomaterials' or entity_type == 'files':
-            link_type = 'processes'
-            self.__map_related_entities(submission, entity, link_type, 'inputToProcesses')
-            self.__map_related_entities(submission, entity, link_type, 'derivedByProcesses')
+            self.__map_link_type_to_link_names(submission, entity, link_type='processes', link_names=['inputToProcesses', 'derivedByProcesses'])
         elif entity_type == 'processes':
-            self.__map_related_entities(submission, entity, 'protocols')
-            link_type = 'biomaterials'
-            self.__map_related_entities(submission, entity, link_type, 'inputBiomaterials')
-            self.__map_related_entities(submission, entity, link_type, 'derivedBiomaterials')
-            link_type = 'files'
-            self.__map_related_entities(submission, entity, link_type, 'inputFiles')
-            self.__map_related_entities(submission, entity, link_type, 'derivedFiles')
+            self.__map_link_type_to_link_names(submission, entity, 'protocols')
+            self.__map_link_type_to_link_names(submission, entity, link_type='biomaterials', link_names=['inputBiomaterials', 'derivedBiomaterials'])
+            self.__map_link_type_to_link_names(submission, entity, link_type='files', link_names=['inputFiles', 'derivedFiles'])
 
-    def __map_related_entities(self, submission: HcaSubmission, entity: Entity, related_entity_type: str, link_name: str = None):
-        if not link_name:
-            link_name = related_entity_type
+    def __map_link_type_to_link_names(self, submission: HcaSubmission,
+                                      entity: Entity,
+                                      link_type: str,
+                                      link_names: Union[str, List[str]] = None):
+        if not link_names:
+            link_names = link_type
+        if type(link_names) == str:
+            link_names = [link_names]
+        for link_name in link_names:
+            self.__map_related_entities(submission, entity, link_type, link_name)
+
+    def __map_related_entities(self, submission: HcaSubmission, entity: Entity, related_entity_type: str, link_name):
         related_entities = self.__ingest.get_related_entities(link_name, entity.attributes, related_entity_type)
         for entity_attributes in related_entities:
             in_cache = submission.contains_entity(entity_attributes)
@@ -64,25 +69,13 @@ class HcaLoader:
             submission.link_entities(entity, related_entity)
 
     def __map_manifest_content(self, submission: HcaSubmission, manifest: Entity):
-        for project_uuid in manifest.attributes.get('fileProjectMap', {}).keys():
-            project = self.__map_entity(submission, 'projects', project_uuid)
-            submission.link_entities(manifest, project)
+        self.__map_bundle_manifest_relations(submission, manifest, 'projects', 'fileProjectMap')
+        self.__map_bundle_manifest_relations(submission, manifest, 'biomaterials', 'fileBiomaterialMap')
+        self.__map_bundle_manifest_relations(submission, manifest, 'protocols', 'fileProtocolMap')
+        self.__map_bundle_manifest_relations(submission, manifest, 'processes', 'fileProcessMap')
+        self.__map_bundle_manifest_relations(submission, manifest, 'files', 'fileFilesMap')
 
-        for biomaterial_uuid in manifest.attributes.get('fileBiomaterialMap', {}).keys():
-            biomaterial = self.__map_entity(submission, 'biomaterials', biomaterial_uuid)
-            submission.link_entities(manifest, biomaterial)
-
-        for protocol_uuid in manifest.attributes.get('fileProtocolMap', {}).keys():
-            protocol = self.__map_entity(submission, 'protocols', protocol_uuid)
-            submission.link_entities(manifest, protocol)
-
-        for process_uuid in manifest.attributes.get('fileProcessMap', {}).keys():
-            process = self.__map_entity(submission, 'processes', process_uuid)
-            submission.link_entities(manifest, process)
-
-        data_file_map = {}
-        for file_uuid in manifest.attributes.get('fileFilesMap', {}).keys():
-            file = self.__map_entity(submission, 'files', file_uuid)
-            submission.link_entities(manifest, file)
-            data_file_uuid = file.attributes.get('dataFileUuid', '')
-            data_file_map[data_file_uuid] = file
+    def __map_bundle_manifest_relations(self, submission: HcaSubmission, manifest: Entity, entity_type, manifest_key):
+        for uuid in manifest.attributes.get(manifest_key, {}).keys():
+            entity = self.__map_entity(submission, entity_type, uuid)
+            submission.link_entities(manifest, entity)
