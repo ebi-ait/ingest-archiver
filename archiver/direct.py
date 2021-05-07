@@ -16,15 +16,15 @@ class DirectArchiver:
 
     def archive_project(self, project_uuid: str) -> HcaSubmission:
         hca_submission = self.__loader.get_project(project_uuid=project_uuid)
-        self.archive(hca_submission)
+        self.__archive(hca_submission)
         return hca_submission
 
     def archive_submission(self, submission_uuid: str) -> HcaSubmission:
         hca_submission = self.__loader.get_submission(submission_uuid=submission_uuid)
-        self.archive(hca_submission)
+        self.__archive(hca_submission)
         return hca_submission
 
-    def archive(self, submission: HcaSubmission):
+    def __archive(self, submission: HcaSubmission):
         ingest_entities_to_update = []
         if self.__biosamples_submitter:
             biosamples = self.__biosamples_submitter.send_all_samples(submission)
