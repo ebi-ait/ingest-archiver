@@ -36,14 +36,27 @@ class DirectArchiver:
             self.__updater.update_entity(entity)
 
 
-def direct_archiver_from_config() -> DirectArchiver:
-    ingest = IngestApi(config.INGEST_API_URL.strip('/'))
-    aap = AapClient(config.AAP_API_USER, config.AAP_API_PASSWORD, config.AAP_API_URL.replace('/auth', ''))
-    biosamples = BioSamples(aap, config.BIOSAMPLES_URL)
-    biosamples_converter = BioSamplesConverter(config.AAP_API_DOMAIN)
-    return DirectArchiver(
-        loader=HcaLoader(ingest),
-        updater=HcaUpdater(ingest),
-        biosamples_submitter=BioSamplesSubmitter(biosamples, biosamples_converter)
-    )
+def direct_archiver_from_params(
+        ingest_url: str,
+        biosamples_url: str, biosamples_domain: str, aap_url: str, aap_user: str, aap_password: str
+) -> DirectArchiver:
+    ingest_client = IngestApi(ingest_url)
+    hca_loader = HcaLoader(ingest_client)
+    hca_updater = HcaUpdater(ingest_client)
+    aap_client = AapClient(aap_user, aap_password, aap_url)
+    biosamples_client = BioSamples(aap_client, biosamples_url)
+    biosamples_converter = BioSamplesConverter(biosamples_domain)
+    submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter)
+    return DirectArchiver(loader=hca_loader, updater=hca_updater, biosamples_submitter=submitter)
 
+
+def direct_archiver_from_config() -> DirectArchiver:
+    params = {
+        'ingest_url': config.INGEST_API_URL.strip('/'),
+        'aap_url': config.AAP_API_URL.replace('/auth', ''),
+        'aap_user': config.AAP_API_USER,
+        'aap_password': config.AAP_API_PASSWORD,
+        'biosamples_url': config.BIOSAMPLES_URL,
+        'biosamples_domain': config.AAP_API_DOMAIN
+    }
+    return direct_archiver_from_params(**params)
