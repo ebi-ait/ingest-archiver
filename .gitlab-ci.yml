@@ -5,4 +5,5 @@ Unit Test:
   image: docker:latest
   stage: test
   script:
-    - docker build -f test.Dockerfile . | tee /dev/tty | tail -n1 | cut -d' ' -f3 | xargs -I{} docker run {}
+    - docker build -f test.Dockerfile -t unittests .
+    - docker run unittests
