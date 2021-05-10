@@ -2,4 +2,5 @@ mock
 coverage
 pylint
 nose
+pip-tools
 -r requirements.txt

@@ -156,7 +156,14 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-.idea
+# IDEs
+/.idea
+/.vscode
+
+# Ignore default output folder
 output
+
+# Ignore biosamples-cache
+biosamples-cache.sqlite
 
 _local

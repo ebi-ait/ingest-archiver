@@ -15,6 +15,7 @@ import config
 from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
 from archiver.archiver import IngestArchiver, ArchiveEntityMap, ArchiveSubmission
+from archiver.direct import direct_archiver_from_config
 
 
 class ArchiveCLI:
@@ -146,6 +147,14 @@ def exit_success(message: str = None):
     exit(0)
 
 
+def write_dict(file_path: str, data: dict):
+    file_path = os.path.abspath(file_path)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    with open(file_path, "w") as open_file:
+        json.dump(data, open_file, indent=2)
+
+
 if __name__ == '__main__':
     logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(format=logging_format, stream=sys.stdout, level=logging.INFO)
@@ -207,27 +216,39 @@ if __name__ == '__main__':
     if options.submission_url and options.load_path:
         logging.warning("When loading entities from disk, accessions won't be saved to ingest")
 
-    cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation or options.submission_url)
-
-    if options.validation_errors and options.submission_url:
-        cli.generate_validation_error_report(options.submission_url)
-        exit_success()
-
-    entity_map: ArchiveEntityMap
-    if options.load_path:
-        entity_map = cli.load_map(options.load_path)
-    else:
+    if config.DIRECT_SUBMISSION and (options.project_uuid or options.ingest_submission_uuid):
+        file_name = options.output_dir.removesuffix('/') if options.output_dir else 'output'
+        direct_archiver = direct_archiver_from_config()
         if options.project_uuid:
-            cli.get_manifests_from_project(options.project_uuid)
-        elif options.ingest_submission_uuid:
-            cli.get_manifests_from_submission(options.ingest_submission_uuid)
-        elif options.manifest_list_file:
-            cli.get_manifests_from_list(options.manifest_list_file)
-        entity_map = cli.build_map()
+            file_name += f'/project_{options.project_uuid}'
+            submission = direct_archiver.archive_project(options.project_uuid)
+        else:
+            file_name += f'/submission_{options.ingest_submission_uuid}'
+            submission = direct_archiver.archive_submission(options.ingest_submission_uuid)
+        file_name += f'_{datetime.datetime.now().isoformat()}.json'
+        write_dict(file_name, submission.as_dict(string_lists=True))
+    else:
+        cli = ArchiveCLI(options.alias_prefix, options.output_dir, options.exclude_types, options.no_validation or options.submission_url)
 
-    if options.submission_url:
-        cli.complete_submission(options.submission_url)
-    elif entity_map and not options.no_validation:
-        cli.validate_submission(entity_map, options.submit, ingest_submission_uuid=options.ingest_submission_uuid)
+        if options.validation_errors and options.submission_url:
+            cli.generate_validation_error_report(options.submission_url)
+            exit_success()
+
+        entity_map: ArchiveEntityMap
+        if options.load_path:
+            entity_map = cli.load_map(options.load_path)
+        else:
+            if options.project_uuid:
+                cli.get_manifests_from_project(options.project_uuid)
+            elif options.ingest_submission_uuid:
+                cli.get_manifests_from_submission(options.ingest_submission_uuid)
+            elif options.manifest_list_file:
+                cli.get_manifests_from_list(options.manifest_list_file)
+            entity_map = cli.build_map()
+
+        if options.submission_url:
+            cli.complete_submission(options.submission_url)
+        elif entity_map and not options.no_validation:
+            cli.validate_submission(entity_map, options.submit, ingest_submission_uuid=options.ingest_submission_uuid)
 
     exit_success()

@@ -7,6 +7,6 @@ Unit Test:
   script:
     - apt-get update
     - apt-get install -y git
-    - pip install -r requirements.txt
+    - pip install --upgrade pip
     - pip install -r requirements-dev.txt
-    - python -m unittest discover -s tests -t tests
+    - python -m unittest
