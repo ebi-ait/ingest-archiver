@@ -4,6 +4,8 @@ include:
 Unit Test:
   image: docker:latest
   stage: test
+  services:
+    - docker:dind
   script:
     - docker build -f test.Dockerfile -t unittests .
     - docker run unittests
