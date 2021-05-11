@@ -2,10 +2,11 @@ include:
   remote: 'https://raw.githubusercontent.com/ebi-ait/gitlab-ci-templates/master/build-release-deploy.yml'
 
 Unit Test:
-  image: docker:latest
+  image: quay.io/ebi-ait/ingest-base-images:python_3.6-slim
   stage: test
-  services:
-    - docker:dind
   script:
-    - docker build -f test.Dockerfile -t unittests .
-    - docker run unittests
+    - apt-get update
+    - apt-get install -y git
+    - pip install --upgrade pip
+    - pip install -r requirements-dev.txt
+    - python -m unittest
