@@ -250,10 +250,14 @@ On success you will get the message `SUCCESSFULLY SUBMITTED`. You're done!
 
 
 # How to run the tests
-
+## In Docker
 ```
-python -m unittest discover -s tests -t tests
-
+docker build -f test.Dockerfile -t unittests .
+docker run unittests
+```
+## Natively
+```
+python -m unittest
 ```
 
 # Versioning
