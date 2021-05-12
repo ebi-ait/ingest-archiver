@@ -6,8 +6,11 @@ RUN apt-get update && \
 RUN mkdir /app
 WORKDIR /app
 
-COPY archiver ./archiver
 COPY api ./api
+COPY archiver ./archiver
+COPY converter ./converter
+COPY hca ./hca
+COPY submitter ./submitter
 COPY utils ./utils
 COPY config.py cli.py requirements.txt ./
 
