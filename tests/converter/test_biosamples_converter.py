@@ -1,9 +1,9 @@
 import json
 import unittest
 from os.path import dirname
+from typing import List
 
 from biosamples_v4.models import Sample, Attribute
-from typing import List
 
 from converter.biosamples import BioSamplesConverter
 
@@ -22,18 +22,19 @@ class BioSamplesConverterTests(unittest.TestCase):
         biomaterial = self.__get_biomaterial_by_index(0)
 
         release_date = '2020-08-01T14:26:37.998Z'
-        biosample = self.__create_a_sample(release_date)
+        sample_release_date = '2020-08-01 14:26:37.998000'
+        biosample = self.__create_a_sample(sample_release_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain,
                                                                  release_date)
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
-    def test_given_ingest_biomaterial_when_release_date_NOT_defined_in_project_converts_correct_biosample(
+    def test_given_ingest_biomaterial_when_release_date_not_defined_in_project_converts_correct_biosample(
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        submission_date = '2019-07-18T21:12:39.770Z'
+        submission_date = '2019-07-18 21:12:39.770000'
         biosample = self.__create_a_sample(submission_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain, )
@@ -45,7 +46,7 @@ class BioSamplesConverterTests(unittest.TestCase):
             accession='SAMEA6877932',
             name='Bone Marrow CD34+ stem/progenitor cells',
             release=date,
-            update='2020-06-12T14:26:37.998Z',
+            update='2020-06-12 14:26:37.998000',
             domain=self.domain,
             species='Homo sapiens',
             ncbi_taxon_id=9606,
@@ -91,9 +92,9 @@ class SampleMatcher:
     def __eq__(self, other):
         other_equals = self.expected.accession == other.accession and \
                        self.expected.name == other.name and \
-                       self.expected.update == other.update and \
-                       self.expected.release == other.release and \
-                       self.expected.domain == other.default_domain and \
+                       self.expected.update == str(other.update) and \
+                       self.expected.release == str(other.release) and \
+                       self.expected.domain == other.domain and \
                        self.expected.species == other.species and \
                        self.expected.ncbi_taxon_id == other.ncbi_taxon_id
         attributes_matcher = AttributeMatcher(self.expected.attributes)
