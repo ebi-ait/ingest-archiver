@@ -1,36 +1,35 @@
 from json_converter.json_mapper import JsonMapper
-
-from converter.conversion_utils import fixed_attribute
+from json_converter.post_process import default_to
 
 PROJECT_SPEC_BASE = [
     {
-        'name': ['', fixed_attribute, 'Project Core - Project Short Name'],
+        'name': ['', default_to, 'Project Core - Project Short Name'],
         'value': ['attributes.content.project_core.project_short_name']
     },
     {
-        'name': ['', fixed_attribute, 'HCA Project UUID'],
+        'name': ['', default_to, 'HCA Project UUID'],
         'value': ['attributes.uuid.uuid']
     },
     {
-        'name': ['', fixed_attribute, 'ReleaseDate'],
+        'name': ['', default_to, 'ReleaseDate'],
         'value': ['attributes.releaseDate']
     },
     {
-        'name': ['', fixed_attribute, 'AttachTo'],
-        'value': ['', fixed_attribute, 'HCA']
+        'name': ['', default_to, 'AttachTo'],
+        'value': ['', default_to, 'HCA']
     }
 ]
 
 PROJECT_SPEC_SECTION = {
-    "accno": ['', fixed_attribute, "PROJECT"],
-    "type": ['', fixed_attribute, "Study"],
+    "accno": ['', default_to, "PROJECT"],
+    "type": ['', default_to, "Study"],
     "attributes": ['$array', [
             {
-                "name": ['', fixed_attribute, "Title"],
+                "name": ['', default_to, "Title"],
                 "value": ['attributes.content.project_core.project_title']
             },
             {
-                "name": ['', fixed_attribute, "Description"],
+                "name": ['', default_to, "Description"],
                 "value": ['attributes.content.project_core.project_description']
             }
         ],
@@ -45,23 +44,23 @@ def array_to_string(*args):
 
 
 PROJECT_SPEC_PUBLICATIONS = {
-    "type": ['', fixed_attribute, "Publication"],
+    "type": ['', default_to, "Publication"],
     "$on": 'publications',
     "attributes": ['$array', [
             {
-                "name": ['', fixed_attribute, "Authors"],
+                "name": ['', default_to, "Authors"],
                 "value": ['authors', array_to_string]
             },
             {
-                "name": ['', fixed_attribute, "Title"],
+                "name": ['', default_to, "Title"],
                 "value": ['title']
             },
             {
-                "name": ['', fixed_attribute, "doi"],
+                "name": ['', default_to, "doi"],
                 "value": ['doi']
             },
             {
-                "name": ['', fixed_attribute, "URL"],
+                "name": ['', default_to, "URL"],
                 "value": ['url']
             }
         ],
@@ -82,40 +81,40 @@ def _parse_name(*args):
 
 
 PROJECT_SPEC_AUTHORS = {
-    "type": ['', fixed_attribute, "Author"],
+    "type": ['', default_to, "Author"],
     "$on": 'contributors',
     # '$filter': ['project_role', _is_not_wrangler],
     "attributes": ['$array', [
             {
-                "name": ['', fixed_attribute, "First Name"],
+                "name": ['', default_to, "First Name"],
                 "value": ['name', _parse_name, 0]
             },
             {
-                "name": ['', fixed_attribute, "Middle Initials"],
+                "name": ['', default_to, "Middle Initials"],
                 "value": ['name', _parse_name, 1]
             },
             {
-                "name": ['', fixed_attribute, "Last Name"],
+                "name": ['', default_to, "Last Name"],
                 "value": ['name', _parse_name, 2]
             },
             {
-                "name": ['', fixed_attribute, "Email"],
+                "name": ['', default_to, "Email"],
                 "value": ['email']
             },
             {
-                "name": ['', fixed_attribute, "Phone"],
+                "name": ['', default_to, "Phone"],
                 "value": ['phone']
             },
             {
-                "name": ['', fixed_attribute, "Affiliation"],
+                "name": ['', default_to, "Affiliation"],
                 "value": ['institution']
             },
             {
-                "name": ['', fixed_attribute, "Address"],
+                "name": ['', default_to, "Address"],
                 "value": ['address']
             },
             {
-                "name": ['', fixed_attribute, "Orcid ID"],
+                "name": ['', default_to, "Orcid ID"],
                 "value": ['orcid_id']
             },
     ],
@@ -124,19 +123,19 @@ PROJECT_SPEC_AUTHORS = {
 }
 
 PROJECT_SPEC_ORGANIZATIONS = {
-    "type": ['', fixed_attribute, "Organization"],
+    "type": ['', default_to, "Organization"],
     "$on": 'funders',
     "attributes": ['$array', [
             {
-                "name": ['', fixed_attribute, "Grant ID"],
+                "name": ['', default_to, "Grant ID"],
                 "value": ['grant_id']
             },
             {
-                "name": ['', fixed_attribute, "Grant Title"],
+                "name": ['', default_to, "Grant Title"],
                 "value": ['grant_title']
             },
             {
-                "name": ['', fixed_attribute, "Organization"],
+                "name": ['', default_to, "Organization"],
                 "value": ['organization']
             },
     ],
