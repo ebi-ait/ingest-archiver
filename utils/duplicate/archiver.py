@@ -1,6 +1,8 @@
 import logging
-from typing import Tuple, List
+from copy import deepcopy
+from typing import Tuple
 
+from requests.exceptions import HTTPError
 from assertpy import assert_warn
 from biosamples_v4.api import Client as BioSamplesClient
 from ingest.api.ingestapi import IngestApi
@@ -31,7 +33,7 @@ class DuplicateArchiver:
 
     def compare_duplicate_project(self, project_uuid: str, ignored_keys):
         submission = self.loader.duplicate_project(project_uuid)
-        for biomaterial_uuid, biosamples_accession in submission.old_accessions.get('biomaterials', {}).items():
+        for biomaterial_uuid, biosamples_accession in submission.old_accessions['BioSamples'].items():
             biosample = self.read_biosamples.fetch_sample(biosamples_accession)
             submission.biosamples.setdefault(biomaterial_uuid, {})['old'] = biosample
             self.__send_biosample(submission, biomaterial_uuid, project_uuid)
@@ -55,20 +57,23 @@ class DuplicateArchiver:
         return submission, biomaterial_uuid, project_uuid
 
     # Todo: Refactor Entity to allow storage of response object so that we can use the real submitter here
-    def __send_biosample(self, submission: DuplicateSubmission, biomaterial_uuid: str, project_uuid: str) -> dict:
+    def __send_biosample(self, submission: DuplicateSubmission, biomaterial_uuid: str, project_uuid: str):
         project_release_date = self.__get_project_release_date(submission, project_uuid)
         biomaterial = submission.get_entity_by_uuid('biomaterials', biomaterial_uuid)
-        payload = self.converter.convert(biomaterial.attributes, release_date=project_release_date)
-        biosample = self.write_biosamples.send_sample(payload)
-        submission.biosamples.setdefault(biomaterial_uuid, {})['new'] = biosample
-        return biosample
+        sample = self.converter.convert(biomaterial.attributes, release_date=project_release_date)
+        try:
+            biosample = self.write_biosamples.send_sample(sample)
+            submission.biosamples.setdefault(biomaterial_uuid, {})['new'] = biosample
+        except HTTPError:
+            payload = self.write_biosamples.encoder.default(sample)
+            submission.biosamples.setdefault(biomaterial_uuid, {})['new'] = payload
 
     @staticmethod
     def __log_comparison(submission: DuplicateSubmission, biomaterial_uuid: str, ignored_keys):
-        old_sample = submission.biosamples.get(biomaterial_uuid, {}).get('old', {})
-        new_sample = submission.biosamples.get(biomaterial_uuid, {}).get('new', {})
+        old_sample = deepcopy(submission.biosamples.get(biomaterial_uuid, {}).get('old', {}))
+        new_sample = deepcopy(submission.biosamples.get(biomaterial_uuid, {}).get('new', {}))
         logger = logging.getLogger('biosample_comparisons')
-        logger.info(f"Comparing Biomaterial UUID: {biomaterial_uuid}, original: {old_sample['accession']}, new {new_sample['accession']}")
+        logger.info(f"Comparing Biomaterial UUID: {biomaterial_uuid}, original: {old_sample.get('accession', 'NoOriginal')}, new {new_sample.get('accession', 'SubmissionFailed')}")
         for key in ignored_keys:
             if key in old_sample:
                 old_sample.pop(key)
