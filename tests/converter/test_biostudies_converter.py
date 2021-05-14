@@ -2,7 +2,7 @@ import json
 import unittest
 from os.path import dirname
 
-from converter.biostudies import BioStudiesConverter
+from converter.biostudies import BioStudiesConverter, _parse_name
 
 
 class TestBioStudiesConverter(unittest.TestCase):
@@ -20,27 +20,17 @@ class TestBioStudiesConverter(unittest.TestCase):
 
         converted_payload = self.biostudies_converter.convert(project)
 
-        self.assertEqual(expected_payload, converted_payload)
+        self.assertEqual(json.dumps(expected_payload, sort_keys=True, indent=2),
+                         json.dumps(converted_payload, sort_keys=True, indent=2))
 
     def __get_project_by_index(self, index):
         return list(self.projects['projects'].values())[index]
 
     @staticmethod
-    def __parse_name(*args):
-        full_name = args[0]
-        position = args[1]
-
-        if not full_name:
-            return None
-
-        name_element = full_name.split(',', 2)[position]
-        return name_element[0] if name_element and position == 1 else name_element
-
-    @staticmethod
     def __get_expected_payload(hca_project):
         attributes = hca_project['attributes']
         contributors = hca_project['attributes']['content']['contributors']
-        # funders = hca_project['attributes']['content']['funders']
+        funders = hca_project['attributes']['content']['funders']
         publications = hca_project['attributes']['content']['publications']
         expected_payload = {
             "attributes": [
@@ -101,15 +91,15 @@ class TestBioStudiesConverter(unittest.TestCase):
                         "attributes": [
                             {
                                 "name": "First Name",
-                                "value": TestBioStudiesConverter.__parse_name(contributors[0]['name'], 0)
+                                "value": _parse_name(contributors[0]['name'], 0)
                             },
                             {
                                 "name": "Middle Initials",
-                                "value": TestBioStudiesConverter.__parse_name(contributors[0]['name'], 1)
+                                "value": _parse_name(contributors[0]['name'], 1)
                             },
                             {
                                 "name": "Last Name",
-                                "value": TestBioStudiesConverter.__parse_name(contributors[0]['name'], 2)
+                                "value": _parse_name(contributors[0]['name'], 2)
                             },
                             {
                                 "name": "Email",
@@ -138,15 +128,15 @@ class TestBioStudiesConverter(unittest.TestCase):
                         "attributes": [
                             {
                                 "name": "First Name",
-                                "value": TestBioStudiesConverter.__parse_name(contributors[1]['name'], 0)
+                                "value": _parse_name(contributors[1]['name'], 0)
                             },
                             {
                                 "name": "Middle Initials",
-                                "value": TestBioStudiesConverter.__parse_name(contributors[1]['name'], 1)
+                                "value": _parse_name(contributors[1]['name'], 1)
                             },
                             {
                                 "name": "Last Name",
-                                "value": TestBioStudiesConverter.__parse_name(contributors[1]['name'], 2)
+                                "value": _parse_name(contributors[1]['name'], 2)
                             },
                             {
                                 "name": "Email",
@@ -169,41 +159,41 @@ class TestBioStudiesConverter(unittest.TestCase):
                                 "value": contributors[1]['orcid_id']
                             }
                         ]
+                    },
+                    {
+                        "type": "Organization",
+                        "attributes": [
+                            {
+                                "name": "Grant ID",
+                                "value": funders[0]['grant_id']
+                            },
+                            {
+                                "name": "Grant Title",
+                                "value": funders[0]['grant_title']
+                            },
+                            {
+                                "name": "Organization",
+                                "value": funders[0]['organization']
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Organization",
+                        "attributes": [
+                            {
+                                "name": "Grant ID",
+                                "value": funders[1]['grant_id']
+                            },
+                            {
+                                "name": "Grant Title",
+                                "value": funders[1]['grant_title']
+                            },
+                            {
+                                "name": "Organization",
+                                "value": funders[1]['organization']
+                            }
+                        ]
                     }
-            #         {
-            #             "type": "Organization",
-            #             "attributes": [
-            #                 {
-            #                     "name": "Grant ID",
-            #                     "value": funders[0]['grant_id']
-            #                 },
-            #                 {
-            #                     "name": "Grant Title",
-            #                     "value": funders[0]['grant_title']
-            #                 },
-            #                 {
-            #                     "name": "Organization",
-            #                     "value": funders[0]['organization']
-            #                 }
-            #             ]
-            #         },
-            #         {
-            #             "type": "Organization",
-            #             "attributes": [
-            #                 {
-            #                     "name": "Grant ID",
-            #                     "value": funders[1]['grant_id']
-            #                 },
-            #                 {
-            #                     "name": "Grant Title",
-            #                     "value": funders[1]['grant_title']
-            #                 },
-            #                 {
-            #                     "name": "Organization",
-            #                     "value": funders[1]['organization']
-            #                 }
-            #             ]
-            #         }
                 ]
             }
         }

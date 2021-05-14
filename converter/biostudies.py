@@ -2,67 +2,6 @@ from json_converter.json_mapper import JsonMapper
 
 from converter.conversion_utils import fixed_attribute
 
-# PROJECT_SPEC = {
-#     'attributes': ['$array', [
-#             {
-#                 'name': ['', fixed_attribute, 'Project Core - Project Short Name'],
-#                 'value': ['attributes.content.project_core.project_short_name']
-#             },
-#             {
-#                 'name': ['', fixed_attribute, 'HCA Project UUID'],
-#                 'value': ['attributes.uuid.uuid']
-#             },
-#             {
-#                 'name': ['', fixed_attribute, 'ReleaseDate'],
-#                 'value': ['attributes.releaseDate']
-#             },
-#             {
-#                 'name': ['', fixed_attribute, 'AttachTo'],
-#                 'value': ['', fixed_attribute, 'HCA']
-#             }
-#         ],
-#         True
-#     ],
-#     "$on": 'attributes',
-#     "section": {
-#         "accno": ['', fixed_attribute, "PROJECT"],
-#         "type": ['', fixed_attribute, "Study"],
-#         "attributes": ['$array', [
-#                 {
-#                     "name": ['', fixed_attribute, "Title"],
-#                     "value": ['attributes.content.project_core.project_title']
-#                 },
-#                 {
-#                     "name": ['', fixed_attribute, "Description"],
-#                     "value": ['attributes.content.project_core.project_description']
-#                 }
-#             ],
-#             True
-#         ],
-#         "$on": 'content',
-#         "subsections": ['$array', [
-#                 {
-#                     "type": ['', fixed_attribute, "Publication"],
-#                     "$on": 'publications',
-#                     "attributes": ['$array', [
-#                             {
-#                                 "name": ['', fixed_attribute, "Authors"],
-#                                 "value": ['authors']
-#                             },
-#                             {
-#                                 "name": ['', fixed_attribute, "Title"],
-#                                 "value": ['title']
-#                             }
-#                         ],
-#                         True
-#                     ]
-#                 }
-#             ],
-#             True
-#         ]
-#     }
-# }
-
 PROJECT_SPEC_BASE = [
     {
         'name': ['', fixed_attribute, 'Project Core - Project Short Name'],
@@ -184,6 +123,27 @@ PROJECT_SPEC_AUTHORS = {
     ]
 }
 
+PROJECT_SPEC_ORGANIZATIONS = {
+    "type": ['', fixed_attribute, "Organization"],
+    "$on": 'funders',
+    "attributes": ['$array', [
+            {
+                "name": ['', fixed_attribute, "Grant ID"],
+                "value": ['grant_id']
+            },
+            {
+                "name": ['', fixed_attribute, "Grant Title"],
+                "value": ['grant_title']
+            },
+            {
+                "name": ['', fixed_attribute, "Organization"],
+                "value": ['organization']
+            },
+    ],
+        True
+    ]
+}
+
 
 class BioStudiesConverter:
 
@@ -202,16 +162,19 @@ class BioStudiesConverter:
         attributes = hca_project['attributes']
         project_content = attributes['content'] if 'content' in attributes else None
         if project_content:
-            contributors = project_content['contributors']
-            funders = project_content['funders']
-            publications = project_content['publications']
-            if contributors or funders or publications:
-                converted_project['section']['subsections'] = []
-
-            publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS)
-            authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS)
-
-            converted_project['section']['subsections'] = publications + authors
-            # converted_project['section']['subsections'].extend(authors)
+            self.__add_subsections_to_project(converted_project, project_content)
 
         return converted_project
+
+    @staticmethod
+    def __add_subsections_to_project(converted_project, project_content):
+        contributors = project_content['contributors']
+        funders = project_content['funders']
+        publications = project_content['publications']
+        if contributors or funders or publications:
+            converted_project['section']['subsections'] = []
+        converted_publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS)
+        converted_authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS)
+        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_ORGANIZATIONS)
+        converted_project['section']['subsections'] = \
+            converted_publications + converted_authors + converted_funders
