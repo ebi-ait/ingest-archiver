@@ -61,8 +61,14 @@ if __name__ == '__main__':
     prod_ingest_url = 'https://api.ingest.archive.data.humancellatlas.org/'
 
     aap_client = AapClient(os.environ['AAP_USERNAME'], os.environ['AAP_PASSWORD'], args['test_aap_url'])
-    archiver = DuplicateArchiver(IngestApi(prod_ingest_url), BioSamplesClient(prod_biosamples_url), BioSamples(aap_client, args['test_biosamples_url']), BioSamplesConverter(args['test_biosamples_domain']))
+    archiver = DuplicateArchiver(
+        IngestApi(prod_ingest_url),
+        BioSamplesClient(prod_biosamples_url),
+        BioSamples(aap_client, args['test_biosamples_url']),
+        BioSamplesConverter(args['test_biosamples_domain']),
+        IGNORED_KEYS
+    )
     if args['biosamples_accession']:
-        archiver.compare_duplicate_biosample(args['biosamples_accession'], IGNORED_KEYS)
+        archiver.compare_duplicate_biosample(args['biosamples_accession'])
     elif args['project_uuid']:
-        archiver.compare_duplicate_project(args['project_uuid'], IGNORED_KEYS)
+        archiver.compare_duplicate_project(args['project_uuid'])
