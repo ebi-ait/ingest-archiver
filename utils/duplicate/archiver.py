@@ -43,7 +43,6 @@ class DuplicateArchiver:
     # Copy of HcaLoader, Restricted to only load the one project and one biomaterial rather than loading the whole project.
     # Could refactor the HCALoader to allow an IsolatedLoader subclass to make this method redundant
     def __load_project_and_biomaterial(self, biosamples_accession: str) -> Tuple[DuplicateSubmission, str, str]:
-
         submission = DuplicateSubmission()
         biosample = self.read_biosamples.fetch_sample(biosamples_accession)
         biomaterial_uuid = biosample.get('characteristics', {}).get('HCA Biomaterial UUID', [{}])[0].get('text', '')
