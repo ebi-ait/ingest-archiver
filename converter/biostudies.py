@@ -4,15 +4,15 @@ from json_converter.post_process import default_to
 PROJECT_SPEC_BASE = [
     {
         'name': ['', default_to, 'Project Core - Project Short Name'],
-        'value': ['attributes.content.project_core.project_short_name']
+        'value': ['content.project_core.project_short_name']
     },
     {
         'name': ['', default_to, 'HCA Project UUID'],
-        'value': ['attributes.uuid.uuid']
+        'value': ['uuid.uuid']
     },
     {
         'name': ['', default_to, 'ReleaseDate'],
-        'value': ['attributes.releaseDate']
+        'value': ['releaseDate']
     },
     {
         'name': ['', default_to, 'AttachTo'],
@@ -26,11 +26,11 @@ PROJECT_SPEC_SECTION = {
     "attributes": ['$array', [
             {
                 "name": ['', default_to, "Title"],
-                "value": ['attributes.content.project_core.project_title']
+                "value": ['content.project_core.project_title']
             },
             {
                 "name": ['', default_to, "Description"],
-                "value": ['attributes.content.project_core.project_description']
+                "value": ['content.project_core.project_description']
             }
         ],
         True
@@ -158,8 +158,7 @@ class BioStudiesConverter:
             'section': PROJECT_SPEC_SECTION
             })
 
-        attributes = hca_project['attributes']
-        project_content = attributes['content'] if 'content' in attributes else None
+        project_content = hca_project['content'] if 'content' in hca_project else None
         if project_content:
             self.__add_subsections_to_project(converted_project, project_content)
 

@@ -18,7 +18,7 @@ class TestBioStudiesConverter(unittest.TestCase):
         project = self.__get_project_by_index(0)
         expected_payload = self.__get_expected_payload(project)
 
-        converted_payload = self.biostudies_converter.convert(project)
+        converted_payload = self.biostudies_converter.convert(project['attributes'])
 
         self.assertEqual(json.dumps(expected_payload, sort_keys=True, indent=2),
                          json.dumps(converted_payload, sort_keys=True, indent=2))
