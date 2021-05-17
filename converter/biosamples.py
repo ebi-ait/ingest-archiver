@@ -27,8 +27,7 @@ class BioSamplesConverter:
     def convert(self, biomaterial: dict, domain: str = None, release_date: str = None, accession: str = None) -> Sample:
         if not domain and not self.default_domain:
             raise MissingBioSamplesDomain()
-        biomaterial_attributes = biomaterial.get('attributes', {})
-        biomaterial_content = biomaterial_attributes.get('content', {})
+        biomaterial_content = biomaterial.get('content', {})
         biomaterial_core = biomaterial_content.get('biomaterial_core', {})
         sample = Sample(
             accession=accession if accession else biomaterial_core.get('biosamples_accession'),
@@ -36,11 +35,11 @@ class BioSamplesConverter:
             domain=domain if domain else self.default_domain,
             species=biomaterial_content['genus_species'][0].get('ontology_label') if biomaterial_content.get('genus_species') else None,
             ncbi_taxon_id=biomaterial_core.get('ncbi_taxon_id')[0] if biomaterial_core.get('ncbi_taxon_id') else None,
-            update=self.__convert_datetime(biomaterial_attributes.get('updateDate')),
-            release=self.__convert_datetime(release_date if release_date else biomaterial_attributes.get('submissionDate'))
+            update=self.__convert_datetime(biomaterial.get('updateDate')),
+            release=self.__convert_datetime(release_date if release_date else biomaterial.get('submissionDate'))
         )
         sample._append_organism_attribute()
-        self.__add_attributes(sample, biomaterial_attributes)
+        self.__add_attributes(sample, biomaterial)
         return sample
 
     @staticmethod
