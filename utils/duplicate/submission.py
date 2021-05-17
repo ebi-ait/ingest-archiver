@@ -1,5 +1,3 @@
-from json_converter.json_mapper import JsonMapper
-
 from submission_broker.submission.submission import Entity, HandleCollision
 from hca.submission import HcaSubmission
 

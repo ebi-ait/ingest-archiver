@@ -14,30 +14,31 @@ from .submission import DuplicateSubmission, HcaSubmission
 
 
 class DuplicateArchiver:
-    def __init__(self, ingest: IngestApi, biosamples: BioSamplesClient, test_biosamples: BioSamples, converter: BioSamplesConverter):
+    def __init__(self, ingest: IngestApi, biosamples: BioSamplesClient, test_biosamples: BioSamples, converter: BioSamplesConverter, ignored_keys=[]):
         self.ingest = ingest
         self.loader = DuplicateLoader(ingest)
         self.read_biosamples = biosamples
         self.converter = converter
         self.write_biosamples = test_biosamples
+        self.ignored_keys = ignored_keys
         logger = logging.getLogger('biosample_comparisons')
         logger.setLevel(logging.INFO)
         fh = logging.FileHandler("biosample_comparisons.log")
         fh.setLevel(logging.INFO)
         logger.addHandler(fh)
 
-    def compare_duplicate_biosample(self, biosamples_accession: str, ignored_keys):
+    def compare_duplicate_biosample(self, biosamples_accession: str):
         submission, biomaterial_uuid, project_uuid = self.__load_project_and_biomaterial(biosamples_accession)
         self.__send_biosample(submission, biomaterial_uuid, project_uuid)
-        self.__log_comparison(submission, biomaterial_uuid, ignored_keys)
+        self.__log_comparison(submission, biomaterial_uuid)
 
-    def compare_duplicate_project(self, project_uuid: str, ignored_keys):
+    def compare_duplicate_project(self, project_uuid: str):
         submission = self.loader.duplicate_project(project_uuid)
         for biomaterial_uuid, biosamples_accession in submission.old_accessions['BioSamples'].items():
             biosample = self.read_biosamples.fetch_sample(biosamples_accession)
             submission.biosamples.setdefault(biomaterial_uuid, {})['old'] = biosample
             self.__send_biosample(submission, biomaterial_uuid, project_uuid)
-            self.__log_comparison(submission, biomaterial_uuid, ignored_keys)
+            self.__log_comparison(submission, biomaterial_uuid)
 
     def __load_project_and_biomaterial(self, biosamples_accession: str) -> Tuple[DuplicateSubmission, str, str]:
         # Restricted Loader that only loads the one project and one biomaterial rather than loading the whole project.
@@ -68,18 +69,17 @@ class DuplicateArchiver:
             payload = self.write_biosamples.encoder.default(sample)
             submission.biosamples.setdefault(biomaterial_uuid, {})['new'] = payload
 
-    @staticmethod
-    def __log_comparison(submission: DuplicateSubmission, biomaterial_uuid: str, ignored_keys):
+    def __log_comparison(self, submission: DuplicateSubmission, biomaterial_uuid: str):
         old_sample = deepcopy(submission.biosamples.get(biomaterial_uuid, {}).get('old', {}))
         new_sample = deepcopy(submission.biosamples.get(biomaterial_uuid, {}).get('new', {}))
         logger = logging.getLogger('biosample_comparisons')
         logger.info(f"Comparing Biomaterial UUID: {biomaterial_uuid}, original: {old_sample.get('accession', 'NoOriginal')}, new {new_sample.get('accession', 'SubmissionFailed')}")
-        for key in ignored_keys:
+        for key in self.ignored_keys:
             if key in old_sample:
                 old_sample.pop(key)
             if key in new_sample:
                 new_sample.pop(key)
-        assert_warn(old_sample, logger=logger).is_equal_to(new_sample, ignore=ignored_keys)
+        assert_warn(old_sample, logger=logger).is_equal_to(new_sample, ignore=self.ignored_keys)
 
     @staticmethod
     def __get_project_release_date(submission: HcaSubmission, project_uuid: str = None) -> str:
