@@ -40,8 +40,10 @@ class DuplicateArchiver:
             self.__send_biosample(submission, biomaterial_uuid, project_uuid)
             self.__log_comparison(submission, biomaterial_uuid)
 
+    # Copy of HcaLoader, Restricted to only load the one project and one biomaterial rather than loading the whole project.
+    # Could refactor the HCALoader to allow an IsolatedLoader subclass to make this method redundant
     def __load_project_and_biomaterial(self, biosamples_accession: str) -> Tuple[DuplicateSubmission, str, str]:
-        # Restricted Loader that only loads the one project and one biomaterial rather than loading the whole project.
+
         submission = DuplicateSubmission()
         biosample = self.read_biosamples.fetch_sample(biosamples_accession)
         biomaterial_uuid = biosample.get('characteristics', {}).get('HCA Biomaterial UUID', [{}])[0].get('text', '')
@@ -57,7 +59,8 @@ class DuplicateArchiver:
         submission.biosamples.setdefault(biomaterial_uuid, {})['old'] = biosample
         return submission, biomaterial_uuid, project_uuid
 
-    # Todo: Refactor Entity to allow storage of response object so that we can use the real submitter here
+    # Copy of BioSamplesSubmitter that stores the payload / response
+    # Refactoring the Submission.Entity to allow storage of response object would allow us to use the real submitter here.
     def __send_biosample(self, submission: DuplicateSubmission, biomaterial_uuid: str, project_uuid: str):
         project_release_date = self.__get_project_release_date(submission, project_uuid)
         biomaterial = submission.get_entity_by_uuid('biomaterials', biomaterial_uuid)
