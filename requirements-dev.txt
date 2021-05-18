@@ -3,4 +3,5 @@ coverage
 pylint
 nose
 pip-tools
+assertpy
 -r requirements.txt
