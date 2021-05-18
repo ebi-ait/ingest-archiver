@@ -23,10 +23,14 @@ class BioSamplesConverterTests(unittest.TestCase):
 
         release_date = '2020-08-01T14:26:37.998Z'
         sample_release_date = '2020-08-01 14:26:37.998000'
+        additional_attributes = {
+            'release_date': release_date,
+            'domain': self.domain
+        }
+
         biosample = self.__create_a_sample(sample_release_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial['attributes'], self.domain,
-                                                                 release_date)
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial['attributes'], additional_attributes)
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
@@ -35,9 +39,13 @@ class BioSamplesConverterTests(unittest.TestCase):
         biomaterial = self.__get_biomaterial_by_index(0)
 
         submission_date = '2019-07-18 21:12:39.770000'
+        additional_attributes = {
+            'domain': self.domain
+        }
+
         biosample = self.__create_a_sample(submission_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial['attributes'], self.domain, )
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial['attributes'], additional_attributes )
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 

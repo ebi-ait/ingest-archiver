@@ -45,10 +45,6 @@ class TestBioStudiesConverter(unittest.TestCase):
                 {
                     "name": "ReleaseDate",
                     "value": attributes['releaseDate']
-                },
-                {
-                    "name": "AttachTo",
-                    "value": "HCA"
                 }
             ],
             "section": {

@@ -13,10 +13,6 @@ PROJECT_SPEC_BASE = [
     {
         'name': ['', default_to, 'ReleaseDate'],
         'value': ['releaseDate']
-    },
-    {
-        'name': ['', default_to, 'AttachTo'],
-        'value': ['', default_to, 'HCA']
     }
 ]
 
@@ -152,7 +148,7 @@ class BioStudiesConverter:
         self.funders = None
         self.publications = None
 
-    def convert(self, hca_project: dict) -> dict:
+    def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
         converted_project = JsonMapper(hca_project).map({
             'attributes': ['$array', PROJECT_SPEC_BASE, True],
             'section': PROJECT_SPEC_SECTION
@@ -166,13 +162,15 @@ class BioStudiesConverter:
 
     @staticmethod
     def __add_subsections_to_project(converted_project, project_content):
-        contributors = project_content['contributors']
-        funders = project_content['funders']
-        publications = project_content['publications']
+        contributors = project_content.get('contributors')
+        funders = project_content.get('funders')
+        publications = project_content.get('publications')
         if contributors or funders or publications:
             converted_project['section']['subsections'] = []
-        converted_publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS)
-        converted_authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS)
-        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_ORGANIZATIONS)
+
+        converted_publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS) if publications else []
+        converted_authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS) if contributors else []
+        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_ORGANIZATIONS) if funders else []
+
         converted_project['section']['subsections'] = \
             converted_publications + converted_authors + converted_funders
