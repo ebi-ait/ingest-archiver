@@ -24,7 +24,11 @@ class BioSamplesConverter:
     def __init__(self, default_domain=None):
         self.default_domain = default_domain
 
-    def convert(self, biomaterial: dict, domain: str = None, release_date: str = None, accession: str = None) -> Sample:
+    def convert(self, biomaterial: dict, additional_attributes: dict = None) -> Sample:
+        domain = additional_attributes.get('domain')
+        release_date = additional_attributes.get('release_date')
+        accession = additional_attributes.get('accession')
+
         if not domain and not self.default_domain:
             raise MissingBioSamplesDomain()
         biomaterial_content = biomaterial.get('content', {})
@@ -66,3 +70,4 @@ class BioSamplesConverter:
             else:
                 datetime_format = '%Y-%m-%dT%H:%M:%SZ'
             return datetime.strptime(datetime_str, datetime_format)
+        return None
