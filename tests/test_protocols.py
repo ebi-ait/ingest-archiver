@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 from utils import protocols
 from api.ontology import OntologyAPI
-from utils.protocols import ONTOLOGY_3PRIME_PARENT, ONTOLOGY_5PRIME_PARENT
+from utils.protocols import ONTOLOGY_3PRIME_PARENT, ONTOLOGY_5PRIME_PARENT, ONTOLOGY_CITESEQ
 
 
 class TestProtocols(TestCase):
@@ -47,7 +47,7 @@ class TestProtocols(TestCase):
         lib_prep_protocol = {
             'content': {
                 'library_construction_method': {
-                    'ontology': 'EFO:0009294'
+                    'ontology': ONTOLOGY_CITESEQ
                 }
             }
         }
@@ -76,7 +76,7 @@ class TestProtocols(TestCase):
         lib_prep_protocol = {
             "content": {
                 "library_construction_method": {
-                    "ontology": "EFO:0009294",
+                    "ontology": ONTOLOGY_CITESEQ,
                 }
             }
         }
