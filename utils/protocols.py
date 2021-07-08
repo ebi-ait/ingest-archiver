@@ -16,6 +16,15 @@ def is_10x(ontology_api: OntologyAPI, library_preparation_protocol: dict):
            ontology_api.is_equal_or_descendant(ONTOLOGY_5PRIME_PARENT, library_construction)
 
 
+def map_10x_bam_schema(ontology_api: OntologyAPI, library_preparation_protocol: dict):
+    library_construction = get_library_construction(library_preparation_protocol)
+    if library_construction == ONTOLOGY_CITESEQ:
+        return '10xV2'
+    if is_leaf_term(ontology_api, library_construction):
+        return f'10x{version_10x_by_label(ontology_api, library_preparation_protocol)}'
+    return None
+
+
 def is_leaf_term(ontology_api: OntologyAPI, library_construction: str):
     term = ontology_api.search(library_construction)
     ontology = term['ontology_name']
@@ -31,15 +40,6 @@ def version_10x_by_label(ontology_api: OntologyAPI, library_preparation_protocol
     if not version:
         raise ProtocolError(f'Could not determine version from {label}')
     return version.capitalize()
-
-
-def map_10x_bam_schema(ontology_api: OntologyAPI, library_preparation_protocol: dict):
-    library_construction = get_library_construction(library_preparation_protocol)
-    if library_construction == ONTOLOGY_CITESEQ:
-        return '10xV2'
-    if is_leaf_term(ontology_api, library_construction):
-        return f'10x{version_10x_by_label(ontology_api, library_preparation_protocol)}'
-    return None
 
 
 def get_library_construction(library_preparation_protocol: dict):

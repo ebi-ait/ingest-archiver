@@ -1,116 +1,163 @@
 import json
 from unittest import TestCase
+from unittest.mock import Mock
 
 import config
 from utils import protocols
 from api.ontology import quote, get_json, get_all, OntologyAPI
 
 
-class MockOntologyAPI:
-    children_10x = ['EFO:0009897', 'EFO:0009310', 'EFO:0009898']
-    children_10xV1 = ['EFO:0009901']
-    children_10xV2 = ['EFO:0009899', 'EFO:0009900', 'EFO:0010713', 'EFO:0010715', 'EFO:0010714']
-    children_10xV3 = ['EFO:0009922', 'EFO:0009921']
-
-    def __init__(self):
-        self.children_10x.extend(self.children_10xV1)
-        self.children_10x.extend(self.children_10xV2)
-        self.children_10x.extend(self.children_10xV3)
-
-    def is_equal_or_descendant(self, root_obo_id, child_obo_id):
-        if root_obo_id == child_obo_id:
-            return True
-        elif root_obo_id == 'EFO:0008995':  # 10x
-            return child_obo_id in self.children_10x
-        elif root_obo_id == 'EFO:0009897':  # 10xV1
-            return child_obo_id in self.children_10xV1
-        elif root_obo_id == 'EFO:0009310':  # 10xV2
-            return child_obo_id in self.children_10xV2
-        elif root_obo_id == 'EFO:0009898':  # 10xV3
-            return child_obo_id in self.children_10xV3
-        return False
-
-    def search(self, term, exact=True, obsolete=False, group=True, query_fields=None):
-        if not term:
-            return False
-
-        exact = 'true' if exact else 'false'
-        obsolete = 'true' if obsolete else 'false'
-        group = 'true' if group else 'false'
-
-        params = f'q={quote(term)}&exact={exact}&obsoletes={obsolete}&groupField={group}'
-        if query_fields:
-            params += f'&queryFields={query_fields}'
-        response = get_json(f'https://ontology.staging.archive.data.humancellatlas.org/api/search?{params}').get('response')
-        doc = None
-        if response and response.get('numFound') and response.get('docs'):
-            docs = response.get('docs')
-            doc = docs[0] if docs else None
-        return doc
-
-    def get_descendants(self, ontology_name, iri):
-        safe_iri = quote(quote(iri, safe=''))
-        query_url = f'https://ontology.staging.archive.data.humancellatlas.org/api/ontologies/{ontology_name}/terms/{safe_iri}/descendants'
-        return get_all(query_url, 'terms')
-
-
 class TestProtocols(TestCase):
     def setUp(self) -> None:
-        self.ontology_api = MockOntologyAPI()
+        self.ontology_api = Mock()
 
-    def test_is_10x_true(self):
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
-            lib_prep_protocol = json.loads(data_file.read())
-
-        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
-        self.assertTrue(is10x)
-
-    def test_is_10x_citeSeq(self):
+    def test_is_10x__when_equal_3prime_parent__returns_true(self):
+        # given
         lib_prep_protocol = {
-            "content": {
-                "library_construction_method": {
-                    "text": "CITE-seq",
-                    "ontology": "EFO:0009294",
-                    "ontology_label": "CITE-seq"
+            'content': {
+                'library_construction_method': {
+                    'ontology': 'EFO:0030003'
                 }
             }
         }
 
-        is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
+        # when
+        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
+
+        # then
         self.assertTrue(is10x)
 
-    def test_is_10x_false(self):
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol.json', encoding=config.ENCODING) as data_file:
-            lib_prep_protocol = json.loads(data_file.read())
+    def test_is_10x__when_equal_5prime_parent__returns_true(self):
+        # given
+        lib_prep_protocol = {
+            'content': {
+                'library_construction_method': {
+                    'ontology': 'EFO:0030004'
+                }
+            }
+        }
 
+        # when
+        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
+
+        # then
+        self.assertTrue(is10x)
+
+    def test_is_10x__when_equal_citeseq__returns_true(self):
+        # given
+        lib_prep_protocol = {
+            'content': {
+                'library_construction_method': {
+                    'ontology': 'EFO:0009294'
+                }
+            }
+        }
+
+        # when
+        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
+
+        # then
+        self.assertTrue(is10x)
+
+    def test_is_10x__when_not_descendant__returns_false(self):
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "ontology": "EFO:0000000",
+                }
+            }
+        }
+
+        self.ontology_api.is_equal_or_descendant = Mock(return_value=False)
         is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
         self.assertFalse(is10x)
 
-    def test_map_bam_schema_v2(self):
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
-            lib_prep_protocol = json.loads(data_file.read())
-
-        bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
-        self.assertEqual(bam_schema, '10xV2')
-
-    def test_map_bam_schema_v2_citeSeq(self):
+    def test_map_bam_schema__when_equals_citeseq__returns_10xV2(self):
+        # given
         lib_prep_protocol = {
             "content": {
                 "library_construction_method": {
-                    "text": "CITE-seq",
                     "ontology": "EFO:0009294",
-                    "ontology_label": "CITE-seq"
                 }
             }
         }
 
+        # when
         bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
+
+        # then
         self.assertEqual(bam_schema, '10xV2')
 
-    def test_map_bam_schema_v3(self):
-        with open(config.JSON_DIR + 'hca/library_preparation_protocol_10xV3.json',
-                  encoding=config.ENCODING) as data_file:
-            lib_prep_protocol = json.loads(data_file.read())
+    def test_map_bam_schema__when_not_leaf_term__returns_none(self):
+        # given
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "ontology": "EFO:0000000",
+                }
+            }
+        }
 
+        self.ontology_api.get_descendants = Mock(return_value=['descendant'])
+        self.ontology_api.search = Mock(return_value={'ontology_name': 'name', 'iri': 'iri', 'label': "10x 5' v2"})
+
+        # when
         bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
-        self.assertEqual(bam_schema, '10xV3')
+
+        # then
+        self.assertEqual(bam_schema, None)
+
+    def test_map_bam_schema__when_leaf_term__returns_correct_bam_schema(self):
+        # given
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "ontology": "EFO:0009294",
+                }
+            }
+        }
+
+        self.ontology_api.is_leaf_term = Mock(return_value=True)
+        self.ontology_api.version_10x_by_label = Mock(return_value='V2')
+
+        # when
+        bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
+
+        # then
+        self.assertEqual(bam_schema, '10xV2')
+
+    def test_version_10x_by_label__given_label__return_version(self):
+        # given
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "ontology": "EFO:0009294",
+                }
+            }
+        }
+
+        self.ontology_api.search = Mock(return_value={'label': "10x 5' v2"})
+
+        # when
+        bam_schema = protocols.version_10x_by_label(self.ontology_api, lib_prep_protocol)
+
+        # then
+        self.assertEqual(bam_schema, 'V2')
+
+    def test_version_10x_by_label__given_label__return_version(self):
+        # given
+        lib_prep_protocol = {
+            "content": {
+                "library_construction_method": {
+                    "ontology": "EFO:0009294",
+                }
+            }
+        }
+
+        self.ontology_api.search = Mock(return_value={'label': "10x 3' v3"})
+
+        # when
+        bam_schema = protocols.version_10x_by_label(self.ontology_api, lib_prep_protocol)
+
+        # then
+        self.assertEqual(bam_schema, 'V3')
