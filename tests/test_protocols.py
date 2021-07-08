@@ -3,6 +3,7 @@ from unittest import TestCase
 
 import config
 from utils import protocols
+from api.ontology import quote, get_json, get_all
 
 
 class MockOntologyAPI:
@@ -28,6 +29,29 @@ class MockOntologyAPI:
         elif root_obo_id == 'EFO:0009898':  # 10xV3
             return child_obo_id in self.children_10xV3
         return False
+
+    def search(self, term, exact=True, obsolete=False, group=True, query_fields=None):
+        if not term:
+            return False
+
+        exact = 'true' if exact else 'false'
+        obsolete = 'true' if obsolete else 'false'
+        group = 'true' if group else 'false'
+
+        params = f'q={quote(term)}&exact={exact}&obsoletes={obsolete}&groupField={group}'
+        if query_fields:
+            params += f'&queryFields={query_fields}'
+        response = get_json(f'https://ontology.staging.archive.data.humancellatlas.org/api/search?{params}').get('response')
+        doc = None
+        if response and response.get('numFound') and response.get('docs'):
+            docs = response.get('docs')
+            doc = docs[0] if docs else None
+        return doc
+
+    def get_descendants(self, ontology_name, iri):
+        safe_iri = quote(quote(iri, safe=''))
+        query_url = f'https://ontology.staging.archive.data.humancellatlas.org/api/ontologies/{ontology_name}/terms/{safe_iri}/descendants'
+        return get_all(query_url, 'terms')
 
 
 class TestProtocols(TestCase):
