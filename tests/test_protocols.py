@@ -97,7 +97,7 @@ class TestProtocols(TestCase):
             }
         }
 
-        self.ontology_api.get_descendants = Mock(return_value=['descendant'])
+        self.ontology_api.get_descendants = Mock(return_value=['descendant']) # not leaf term
         self.ontology_api.search = Mock(return_value={'ontology_name': 'name', 'iri': 'iri', 'label': "10x 5' v2"})
 
         # when
@@ -111,13 +111,13 @@ class TestProtocols(TestCase):
         lib_prep_protocol = {
             "content": {
                 "library_construction_method": {
-                    "ontology": "EFO:0009294",
+                    "ontology": "EFO:0000000",
                 }
             }
         }
 
-        self.ontology_api.is_leaf_term = Mock(return_value=True)
-        self.ontology_api.version_10x_by_label = Mock(return_value='V2')
+        self.ontology_api.get_descendants = Mock(return_value=[]) # leaf term
+        self.ontology_api.search = Mock(return_value={'ontology_name': 'name', 'iri': 'iri', 'label': "10x 5' v2"})
 
         # when
         bam_schema = protocols.map_10x_bam_schema(self.ontology_api, lib_prep_protocol)
