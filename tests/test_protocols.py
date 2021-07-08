@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 from utils import protocols
 from api.ontology import OntologyAPI
+from utils.protocols import ONTOLOGY_3PRIME_PARENT, ONTOLOGY_5PRIME_PARENT
 
 
 class TestProtocols(TestCase):
@@ -14,7 +15,7 @@ class TestProtocols(TestCase):
         lib_prep_protocol = {
             'content': {
                 'library_construction_method': {
-                    'ontology': 'EFO:0030003'
+                    'ontology': ONTOLOGY_3PRIME_PARENT
                 }
             }
         }
@@ -30,13 +31,13 @@ class TestProtocols(TestCase):
         lib_prep_protocol = {
             'content': {
                 'library_construction_method': {
-                    'ontology': 'EFO:0030004'
+                    'ontology': ONTOLOGY_5PRIME_PARENT
                 }
             }
         }
 
         # when
-        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
+        is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
 
         # then
         self.assertTrue(is10x)
@@ -52,7 +53,7 @@ class TestProtocols(TestCase):
         }
 
         # when
-        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
+        is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
 
         # then
         self.assertTrue(is10x)
