@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import config
 from utils import protocols
-from api.ontology import quote, get_json, get_all
+from api.ontology import quote, get_json, get_all, OntologyAPI
 
 
 class MockOntologyAPI:
@@ -62,7 +62,7 @@ class TestProtocols(TestCase):
         with open(config.JSON_DIR + 'hca/library_preparation_protocol_10x.json', encoding=config.ENCODING) as data_file:
             lib_prep_protocol = json.loads(data_file.read())
 
-        is10x = protocols.is_10x(self.ontology_api, lib_prep_protocol)
+        is10x = protocols.is_10x(OntologyAPI(), lib_prep_protocol)
         self.assertTrue(is10x)
 
     def test_is_10x_citeSeq(self):

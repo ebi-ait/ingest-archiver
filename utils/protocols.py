@@ -2,6 +2,8 @@ import re
 from api.ontology import OntologyAPI
 
 ONTOLOGY_10x_PARENT = "EFO:0008995"
+ONTOLOGY_3PRIME_PARENT = "EFO:0030003"
+ONTOLOGY_5PRIME_PARENT = "EFO:0030004"
 
 ONTOLOGY_CITESEQ = "EFO:0009294"
 
@@ -10,7 +12,8 @@ def is_10x(ontology_api: OntologyAPI, library_preparation_protocol: dict):
     library_construction = get_library_construction(library_preparation_protocol)
     if library_construction == ONTOLOGY_CITESEQ:
         return True
-    return ontology_api.is_equal_or_descendant(ONTOLOGY_10x_PARENT, library_construction)
+    return ontology_api.is_equal_or_descendant(ONTOLOGY_3PRIME_PARENT, library_construction) or \
+           ontology_api.is_equal_or_descendant(ONTOLOGY_5PRIME_PARENT, library_construction)
 
 
 def is_leaf_term(ontology_api: OntologyAPI, library_construction: str):
