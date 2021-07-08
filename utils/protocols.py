@@ -29,9 +29,7 @@ def version_10x_by_label(ontology_api: OntologyAPI, library_preparation_protocol
     label = term['label']
     version = re.findall('v[23]$|$', label)[0]
     if not version:
-        raise ProtocolError(
-            f'Could not determine library construction from library_preparation_protocol: '
-            f'{label}')
+        raise ProtocolError(f'Could not determine version from {label}')
     return version.capitalize()
 
 
