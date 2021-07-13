@@ -1,7 +1,3 @@
-[![Ingest Archiver Build Status](https://travis-ci.org/HumanCellAtlas/ingest-archiver.svg?branch=master)](https://travis-ci.org/HumanCellAtlas/ingest-archiver)
-[![Maintainability](https://api.codeclimate.com/v1/badges/8ce423001595db4e6de7/maintainability)](https://codeclimate.com/github/HumanCellAtlas/ingest-archiver/maintainability)
-[![codecov](https://codecov.io/gh/HumanCellAtlas/ingest-archiver/branch/master/graph/badge.svg)](https://codecov.io/gh/HumanCellAtlas/ingest-archiver)
-
 # Ingest Archiver
 The archiver service is an ingest component that:
 - Submits metadata to the appropriate external accessioning authorities. These are currently only EBI authorities (e.g. Biosamples).
@@ -254,16 +250,12 @@ On success you will get the message `SUCCESSFULLY SUBMITTED`. You're done!
 
 
 # How to run the tests
-
+## In Docker
 ```
-python -m unittest discover -s tests -t tests
-
+docker build -f test.Dockerfile -t unittests .
+docker run unittests
 ```
-
-# Versioning
-
-For the versions available, see the [tags on this repository](https://github.com/HumanCellAtlas/ingest-archiver/tags).
-
-# License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
+## Natively
+```
+python -m unittest
+```

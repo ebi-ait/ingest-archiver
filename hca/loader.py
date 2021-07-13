@@ -10,20 +10,26 @@ class HcaLoader:
 
     def get_project(self, project_uuid: str) -> HcaSubmission:
         hca_submission = HcaSubmission(HandleCollision.OVERWRITE)
-        project_type = 'projects'
-        project = self.__map_entity(hca_submission, project_type, project_uuid)
-        submission_type = 'submissionEnvelopes'
-        self.__map_link_type_to_link_names(hca_submission, project, submission_type)
-        for submission_entity in hca_submission.get_entities(submission_type):
-            self.__map_submission_manifests(hca_submission, submission_entity)
+        self._map_project(hca_submission, project_uuid)
         return hca_submission
 
     def get_submission(self, submission_uuid: str) -> HcaSubmission:
         hca_submission = HcaSubmission(HandleCollision.OVERWRITE)
-        submission_type = 'submissionEnvelopes'
-        submission_entity = self.__map_entity(hca_submission, submission_type, submission_uuid)
-        self.__map_submission_manifests(hca_submission, submission_entity)
+        self._map_submission(hca_submission, submission_uuid)
         return hca_submission
+
+    def _map_project(self, hca_submission, project_uuid):
+        project_type = 'projects'
+        project = self._map_entity(hca_submission, project_type, project_uuid)
+        submission_type = 'submissionEnvelopes'
+        self.__map_link_type_to_link_names(hca_submission, project, submission_type)
+        for submission_entity in hca_submission.get_entities(submission_type):
+            self.__map_submission_manifests(hca_submission, submission_entity)
+
+    def _map_submission(self, hca_submission, submission_uuid):
+        submission_type = 'submissionEnvelopes'
+        submission_entity = self._map_entity(hca_submission, submission_type, submission_uuid)
+        self.__map_submission_manifests(hca_submission, submission_entity)
 
     def __map_submission_manifests(self, hca_submission: HcaSubmission, submission_entity: Entity):
         manifest_type = 'bundleManifests'
@@ -31,7 +37,7 @@ class HcaLoader:
         for manifest_entity in hca_submission.get_entities(manifest_type):
             self.__map_manifest_content(hca_submission, manifest_entity)
 
-    def __map_entity(self, submission: HcaSubmission, entity_type: str, entity_uuid: str) -> Entity:
+    def _map_entity(self, submission: HcaSubmission, entity_type: str, entity_uuid: str) -> Entity:
         entity = submission.get_entity_by_uuid(entity_type, entity_uuid)
         if not entity:
             entity_attributes = self.__ingest.get_entity_by_uuid(entity_type, entity_uuid)
@@ -77,5 +83,5 @@ class HcaLoader:
 
     def __map_bundle_manifest_relations(self, submission: HcaSubmission, manifest: Entity, entity_type, manifest_key):
         for uuid in manifest.attributes.get(manifest_key, {}).keys():
-            entity = self.__map_entity(submission, entity_type, uuid)
+            entity = self._map_entity(submission, entity_type, uuid)
             submission.link_entities(manifest, entity)
