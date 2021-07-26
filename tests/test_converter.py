@@ -48,7 +48,7 @@ class TestConverter(unittest.TestCase):
     def test_convert_sample(self):
         # given:
         biomaterial = self.hca_data.get('biomaterial')
-        with open(config.JSON_DIR + 'dsp/sample_run.json', encoding=config.ENCODING) as data_file:
+        with open(config.JSON_DIR + 'dsp/sample.json', encoding=config.ENCODING) as data_file:
             no_release_date = json.loads(data_file.read())
 
         # and:
