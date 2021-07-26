@@ -1,0 +1,12 @@
+<RUN_SET>
+    <run alias="alias-001">
+        <TITLE>tile-001</TITLE>
+        <EXPERIMENT_REF refname="exp-ref-001"/>
+        <DATA_BLOCK>
+            <FILES>
+                <FILE filename="442536_28_S12_L002_I1_001.fastq.gz" filetype="fastq" checksum_method="MD5"
+                      checksum="d8ca81a13acdaa9dbe62cb10c67b2b8b"/>
+            </FILES>
+        </DATA_BLOCK>
+    </run>
+</RUN_SET>
