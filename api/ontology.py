@@ -39,8 +39,10 @@ class OntologyAPI:
             return term['iri']
 
     def find_by_id_defining(self, obo_id):
-        query_url = f'{self.url}/api/terms/findByIdAndIsDefiningOntology?obo_id={obo_id}'
+        obo_id = obo_id.replace(':', '_')
+        query_url = f'{self.url}/api/terms/?short_form={obo_id}'
         all_terms = get_all(query_url, 'terms')
+        all_terms = [term for term in all_terms if term.get('is_defining_ontology')]
         if all_terms:
             return all_terms[0]
 
