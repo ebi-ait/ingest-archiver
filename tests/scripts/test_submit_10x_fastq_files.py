@@ -1,63 +1,69 @@
-from unittest import TestCase
-
+import json
 import xmltodict
 
-from scripts.submit_10x_fastq_files import RunXmLConverter
+from unittest import TestCase
+from unittest.mock import MagicMock, patch, Mock
+
+from scripts.submit_10x_fastq_files import SequencingRunDataConverter
 
 
-class TestRunXmlConverter(TestCase):
+def load_xml(filename) -> dict:
+    with open(filename) as xml_file:
+        xml_dict = xmltodict.parse(xml_file.read())
+        xml_file.close()
+    return xml_dict
+
+
+def write_xml(tree, filename):
+    tree.write(filename, encoding="UTF-8", xml_declaration=True)
+
+
+def load_json(filename):
+    with open(filename) as json_file:
+        data = json.load(json_file)
+    return data
+
+
+class TestSequencingRunDataConverter(TestCase):
     def setUp(self) -> None:
-        self.run_xml_converter = RunXmLConverter()
+        self.ingest_api = MagicMock()
+        self.run_xml_converter = SequencingRunDataConverter(self.ingest_api)
 
-    def test_convert_to_xml_tree(self):
-        # TODO how can we get this info?
-        # could read assay/bundle manifest
-        # files will be in submission upload area directory
+    def test_prepare_sequencing_run_data(self):
+        # given
+        mock_manifest = self._create_mock_manifest()
+        self.run_xml_converter.get_manifest = Mock(return_value=mock_manifest)
 
-        run_data = {
-            'run_alias': 'alias-001',
-            'run_title': 'title-001',
-            'experiment_ref': 'exp-ref-001',
-            'files': [
-                {
-                    'filename': '442536_28_S12_L002_I1_001.fastq.gz',
-                    'filetype': 'fastq',
-                    'checksum_method': 'MD5',
-                    'checksum': 'd8ca81a13acdaa9dbe62cb10c67b2b8b',
-                    'read_types': [
-                        'sample_barcode'
-                    ]
-                },
-                {
-                    'filename': '442536_28_S12_L002_R1_001.fastq.gz',
-                    'filetype': 'fastq',
-                    'checksum_method': 'MD5',
-                    'checksum': 'd8ca81a13acdaa9dbe62cb10c67b2b8b',
-                    'read_types': [
-                        'cell_barcode',
-                        'umi_barcode'
-                    ]
-                },
-                {
-                    'filename': '442536_28_S12_L002_R2_001.fastq.gz',
-                    'filetype': 'fastq',
-                    'checksum_method': 'MD5',
-                    'checksum': 'd8ca81a13acdaa9dbe62cb10c67b2b8b',
-                    'read_types': [
-                        'single'
-                    ]
-                }
-            ]
-        }
-        tree = self.run_xml_converter.convert_to_xml_tree(run_data)
-        tree.write('actual.xml', encoding="UTF-8", xml_declaration=True)
+        # when
+        manifest_id = '60f2a4a6d5d575160aafb78f'
+        run_data = self.run_xml_converter.prepare_sequencing_run_data(manifest_id)
 
-        with open("actual.xml") as xml_file:
-            actual = xmltodict.parse(xml_file.read())
-            xml_file.close()
+        expected_run_data = load_json('sequencing_run_data.json')
 
-        with open("sample_run.xml") as xml_file:
-            expected = xmltodict.parse(xml_file.read())
-            xml_file.close()
+        # then
+        self.assertEqual(run_data, expected_run_data)
+
+    def _create_mock_manifest(self):
+        mock_manifest = Mock()
+        mock_manifest.get_submission_uuid.return_value = '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6'
+        mock_manifest.get_assay_process.return_value = {'uuid': {'uuid': '21aa0e1a-a31b-42ae-a82b-5773c481e36b'}}
+        files = load_json('files.json')
+        mock_manifest.get_files.return_value = files
+        return mock_manifest
+
+    def test_convert_sequencing_run_data_to_xml_tree(self):
+        # given
+        run_data = load_json('sequencing_run_data.json')
+
+        # when
+        tree = self.run_xml_converter.convert_sequencing_run_data_to_xml_tree(run_data)
+
+        # then
+        actual_file = 'actual.xml'
+        write_xml(tree, actual_file)
+        actual = load_xml(actual_file)
+
+        expected_file = 'sample_run.xml'
+        expected = load_xml(expected_file)
 
         self.assertEqual(actual, expected)

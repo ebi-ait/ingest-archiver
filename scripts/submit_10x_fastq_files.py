@@ -1,38 +1,42 @@
-# 1. fix submission to delete the project and seq experiments should point to correct ENA study accession
-# 2. submit samples and sequencing experiment, keep track of accessions - study, sample, seq experiment
-# 3. upload to ftp for each file - submission-uuid/files
-# generate sequencing run entities - dunno how yet
-# using file upload plan
-# for each sequencing run
-# assign read type for each file
-# create run xml - wait to be validated and wait for accessions
-# create submission xml
-# https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html
-# curl -u username:password -F "SUBMISSION=@submission.xml" -F "EXPERIMENT=@experiment.xml" -F "RUN=@run.xml" "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
-
 import xml.etree.ElementTree as ET
 
+from api.ingest import IngestAPI
+from archiver.archiver import Manifest
 
-class RunXmLConverter:
-    def __init__(self):
-        pass
 
-    def convert_to_xml_tree(self, data) -> ET.ElementTree:
+# TODO This is only applicable for Peng's dataset
+READ_TYPES = {
+    'index1': ['sample_barcode'],
+    'read1': [
+        'cell_barcode',
+        'umi_barcode'
+    ],
+    'read2': [
+        'single'
+    ]
+}
+
+
+class SequencingRunDataConverter:
+    def __init__(self, ingest_api: IngestAPI):
+        self.ingest_api = ingest_api
+
+    def convert_sequencing_run_data_to_xml_tree(self, run_data: dict) -> ET.ElementTree:
         run_set = ET.Element("RUN_SET")
         run = ET.SubElement(run_set, "RUN")
-        run.set('alias', data.get('run_alias'))
+        run.set('alias', run_data.get('run_alias'))
 
         title = ET.SubElement(run, "TITLE")
-        title.text = data.get('run_title')
+        title.text = run_data.get('run_title')
 
         experiment_ref = ET.SubElement(run, "EXPERIMENT_REF")
-        experiment_ref.set('refname', data.get('experiment_ref'))
+        experiment_ref.set('refname', run_data.get('experiment_ref'))
 
         data_block = ET.SubElement(run, "DATA_BLOCK")
 
         files = ET.SubElement(data_block, "FILES")
 
-        for file in data.get('files'):
+        for file in run_data.get('files'):
             file_elem = ET.SubElement(files, "FILE")
             file_elem.set('filename', file.get('filename'))
             file_elem.set('filetype', file.get('filetype'))
@@ -45,3 +49,41 @@ class RunXmLConverter:
 
         run_xml_tree = ET.ElementTree(run_set)
         return run_xml_tree
+
+    def get_manifest(self, manifest_id: str):
+        manifest = Manifest(manifest_id)
+        return manifest
+
+    def prepare_sequencing_run_data(self, manifest_id: str):
+        data = {}
+        manifest = self.get_manifest(manifest_id)
+        submission_uuid = manifest.get_submission_uuid()
+        assay_process = manifest.get_assay_process()
+        assay_process_uuid = assay_process['uuid']['uuid']
+
+        run_alias = f'sequencingRun-{assay_process_uuid}'
+        data['run_alias'] = run_alias
+        data['run_title'] = run_alias
+        data['experiment_ref'] = f'sequencingExperiment-{assay_process_uuid}'
+        data['files'] = []
+        files = list(manifest.get_files())
+        for manifest_file in files:
+            read_index = manifest_file['content']['read_index']
+            filename = manifest_file.get('fileName')
+            checksums = manifest_file.get('checksums')
+
+            # The files will be uploaded to the submission uuid directory in the FTP upload area
+            file_location = f'{submission_uuid}/{filename}'
+
+            file = {
+                'filename': file_location,
+                'filetype': 'fastq',
+                'checksum_method': 'SHA-256',
+                'checksum': checksums.get('sha256'),
+                'read_types': READ_TYPES.get(read_index)
+            }
+
+            data['files'].append(file)
+
+        return data
+
