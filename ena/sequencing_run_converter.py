@@ -3,7 +3,6 @@ import xml.etree.ElementTree as ET
 from api.ingest import IngestAPI
 from archiver.archiver import Manifest
 
-
 # TODO This is only applicable for Peng's dataset
 READ_TYPES = {
     'index1': ['sample_barcode'],
@@ -54,7 +53,7 @@ class SequencingRunConverter:
         manifest = Manifest(manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str):
+    def prepare_sequencing_run_data(self, manifest_id: str, no_dir=False):
         data = {}
         manifest = self.get_manifest(manifest_id)
         submission_uuid = manifest.get_submission_uuid()
@@ -76,7 +75,11 @@ class SequencingRunConverter:
             checksums = manifest_file.get('checksums')
 
             # The files will be uploaded to the submission uuid directory in the FTP upload area
-            file_location = f'{submission_uuid}/{filename}'
+            if no_dir:
+                file_location = filename
+            else:
+                file_location = f'{submission_uuid}/{filename}'
+
 
             file = {
                 'filename': file_location,
