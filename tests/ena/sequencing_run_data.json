@@ -10,7 +10,8 @@
       "checksum": "d935a01fcd781d99e1f6c04b693314d6546036a86fd4d2d49055c9feb9f40639",
       "read_types": [
         "sample_barcode"
-      ]
+      ],
+      "lane_index": 1
     },
     {
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R1_001.fastq.gz",
@@ -20,7 +21,8 @@
       "read_types": [
         "cell_barcode",
         "umi_barcode"
-      ]
+      ],
+      "lane_index": 1
     },
     {
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R2_001.fastq.gz",
@@ -29,7 +31,8 @@
       "checksum": "d2cc24bff5264feacf008ff00893ad12c9b9e1f56158d124ae5bd25d148f8251",
       "read_types": [
         "single"
-      ]
+      ],
+      "lane_index": 1
     }
   ]
 }

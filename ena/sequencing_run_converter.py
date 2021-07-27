@@ -17,7 +17,7 @@ READ_TYPES = {
 }
 
 
-class SequencingRunDataConverter:
+class SequencingRunConverter:
     def __init__(self, ingest_api: IngestAPI):
         self.ingest_api = ingest_api
 
@@ -66,9 +66,11 @@ class SequencingRunDataConverter:
         data['run_title'] = run_alias
         data['experiment_ref'] = f'sequencingExperiment-{assay_process_uuid}'
         data['files'] = []
+
         files = list(manifest.get_files())
         for manifest_file in files:
             read_index = manifest_file['content']['read_index']
+            lane_index = manifest_file['content']['lane_index']
             filename = manifest_file.get('fileName')
             checksums = manifest_file.get('checksums')
 
@@ -80,10 +82,10 @@ class SequencingRunDataConverter:
                 'filetype': 'fastq',
                 'checksum_method': 'SHA-256',
                 'checksum': checksums.get('sha256'),
-                'read_types': READ_TYPES.get(read_index)
+                'read_types': READ_TYPES.get(read_index),
+                'lane_index': lane_index
             }
 
             data['files'].append(file)
 
         return data
-

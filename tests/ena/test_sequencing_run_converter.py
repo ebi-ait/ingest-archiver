@@ -1,42 +1,25 @@
-import json
-import xmltodict
+
 
 from unittest import TestCase
 from unittest.mock import MagicMock, patch, Mock
 
-from scripts.submit_10x_fastq_files import SequencingRunDataConverter
-
-
-def load_xml(filename) -> dict:
-    with open(filename) as xml_file:
-        xml_dict = xmltodict.parse(xml_file.read())
-        xml_file.close()
-    return xml_dict
-
-
-def write_xml(tree, filename):
-    tree.write(filename, encoding="UTF-8", xml_declaration=True)
-
-
-def load_json(filename):
-    with open(filename) as json_file:
-        data = json.load(json_file)
-    return data
+from ena.sequencing_run_converter import SequencingRunConverter
+from ena.util import load_json, load_xml, write_xml
 
 
 class TestSequencingRunDataConverter(TestCase):
     def setUp(self) -> None:
         self.ingest_api = MagicMock()
-        self.run_xml_converter = SequencingRunDataConverter(self.ingest_api)
+        self.run_converter = SequencingRunConverter(self.ingest_api)
 
     def test_prepare_sequencing_run_data(self):
         # given
         mock_manifest = self._create_mock_manifest()
-        self.run_xml_converter.get_manifest = Mock(return_value=mock_manifest)
+        self.run_converter.get_manifest = Mock(return_value=mock_manifest)
 
         # when
         manifest_id = '60f2a4a6d5d575160aafb78f'
-        run_data = self.run_xml_converter.prepare_sequencing_run_data(manifest_id)
+        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id)
 
         expected_run_data = load_json('sequencing_run_data.json')
 
@@ -56,7 +39,7 @@ class TestSequencingRunDataConverter(TestCase):
         run_data = load_json('sequencing_run_data.json')
 
         # when
-        tree = self.run_xml_converter.convert_sequencing_run_data_to_xml_tree(run_data)
+        tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(run_data)
 
         # then
         actual_file = 'actual.xml'
