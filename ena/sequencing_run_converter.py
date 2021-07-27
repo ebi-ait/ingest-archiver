@@ -30,7 +30,7 @@ class SequencingRunConverter:
         title.text = run_data.get('run_title')
 
         experiment_ref = ET.SubElement(run, "EXPERIMENT_REF")
-        experiment_ref.set('refname', run_data.get('experiment_ref'))
+        experiment_ref.set('accession', run_data.get('experiment_accession'))
 
         data_block = ET.SubElement(run, "DATA_BLOCK")
 
@@ -59,12 +59,13 @@ class SequencingRunConverter:
         manifest = self.get_manifest(manifest_id)
         submission_uuid = manifest.get_submission_uuid()
         assay_process = manifest.get_assay_process()
+        experiment_accession = assay_process['content']['insdc_experiment']['insdc_experiment_accession']
         assay_process_uuid = assay_process['uuid']['uuid']
 
         run_alias = f'sequencingRun-{assay_process_uuid}'
         data['run_alias'] = run_alias
         data['run_title'] = run_alias
-        data['experiment_ref'] = f'sequencingExperiment-{assay_process_uuid}'
+        data['experiment_accession'] = experiment_accession
         data['files'] = []
 
         files = list(manifest.get_files())

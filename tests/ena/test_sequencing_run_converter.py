@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 from unittest.mock import MagicMock, patch, Mock
 
@@ -29,7 +27,14 @@ class TestSequencingRunDataConverter(TestCase):
     def _create_mock_manifest(self):
         mock_manifest = Mock()
         mock_manifest.get_submission_uuid.return_value = '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6'
-        mock_manifest.get_assay_process.return_value = {'uuid': {'uuid': '21aa0e1a-a31b-42ae-a82b-5773c481e36b'}}
+        mock_manifest.get_assay_process.return_value = {
+            'content': {
+                'insdc_experiment': {
+                    'insdc_experiment_accession': 'ERX123456'
+                }
+            },
+            'uuid': {'uuid': '21aa0e1a-a31b-42ae-a82b-5773c481e36b'}
+        }
         files = load_json('files.json')
         mock_manifest.get_files.return_value = files
         return mock_manifest

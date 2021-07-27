@@ -1,7 +1,7 @@
 {
   "run_alias": "sequencingRun-21aa0e1a-a31b-42ae-a82b-5773c481e36b",
   "run_title": "sequencingRun-21aa0e1a-a31b-42ae-a82b-5773c481e36b",
-  "experiment_ref": "sequencingExperiment-21aa0e1a-a31b-42ae-a82b-5773c481e36b",
+  "experiment_accession": "ERX123456",
   "files": [
     {
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_I1_001.fastq.gz",
