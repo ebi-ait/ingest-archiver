@@ -14,10 +14,11 @@ class TestSequencingRunDataConverter(TestCase):
         # given
         mock_manifest = self._create_mock_manifest()
         self.run_converter.get_manifest = Mock(return_value=mock_manifest)
+        md5_file = 'md5.txt'
 
         # when
         manifest_id = '60f2a4a6d5d575160aafb78f'
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id)
+        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
 
         expected_run_data = load_json('sequencing_run_data.json')
 
@@ -28,10 +29,11 @@ class TestSequencingRunDataConverter(TestCase):
         # given
         mock_manifest = self._create_mock_manifest()
         self.run_converter.get_manifest = Mock(return_value=mock_manifest)
+        md5_file = 'md5.txt'
 
         # when
         manifest_id = '60f2a4a6d5d575160aafb78f'
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, True)
+        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, True)
 
         expected_run_data = load_json('sequencing_run_data__no_dir.json')
 
@@ -69,3 +71,11 @@ class TestSequencingRunDataConverter(TestCase):
         expected = load_xml(expected_file)
 
         self.assertEqual(actual, expected)
+
+    def test_load_md5_file(self):
+        # when
+        md5 = self.run_converter.load_md5_file('md5.txt')
+
+        # then
+        expected = load_json('md5.json')
+        self.assertEqual(md5, expected)

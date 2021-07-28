@@ -25,20 +25,24 @@ class EnaApi:
         self.ingest_api = IngestAPI(url=INGEST_API)
         self.run_converter = SequencingRunConverter(self.ingest_api)
 
-    def submit_run_xml(self, manifests_ids: List[str]):
+    def submit_run_xml(self, manifests_ids: List[str], no_dir: bool = False):
         for manifest_id in manifests_ids:
-            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id)
-            lane_index = run_data.get('lane_index')
+            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, no_dir)
+            lane_index = run_data.get('lane_index', '0')
             run_xml_tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(run_data)
-            run_xml_path = f'{self.xml_dir.name}/run_{manifest_id}_{lane_index}.xml'
+            run_xml_path = f'{self.xml_dir}/run_{manifest_id}_{lane_index}.xml'
             write_xml(run_xml_tree, run_xml_path)
 
         submission_xml_file = self.create_submission_xml()
+
+        result = self.submit(run_xml_path, submission_xml_file)
+        return result
+
+    def submit(self, run_xml_path, submission_xml_file):
         files = {
             'SUBMISSION': open(submission_xml_file, 'r'),
-            'RUN': open(submission_xml_file, 'r'),
+            'RUN': open(run_xml_path, 'r'),
         }
-
         r = requests.post(self.url, files=files, auth=(self.user, self.password))
         r.raise_for_status()
         result = r.json()
@@ -58,6 +62,6 @@ class EnaApi:
         submission = ET.fromstring(submission_xml_as_string)
         submission_xml_tree = ET.ElementTree(submission)
 
-        path = f'{self.xml_dir.name}/submission.xml'
+        path = f'{self.xml_dir}/submission.xml'
         write_xml(submission_xml_tree, path)
         return path

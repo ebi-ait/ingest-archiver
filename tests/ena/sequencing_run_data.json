@@ -6,8 +6,8 @@
     {
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_I1_001.fastq.gz",
       "filetype": "fastq",
-      "checksum_method": "SHA-256",
-      "checksum": "d935a01fcd781d99e1f6c04b693314d6546036a86fd4d2d49055c9feb9f40639",
+      "checksum_method": "MD5",
+      "checksum": "646fef059b90c457c04ef1e54f722fbb",
       "read_types": [
         "sample_barcode"
       ],
@@ -16,8 +16,8 @@
     {
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R1_001.fastq.gz",
       "filetype": "fastq",
-      "checksum_method": "SHA-256",
-      "checksum": "b93a6198d992d4edb105836437630b81132fec06844e0486d6b2a8b392a8bd43",
+      "checksum_method": "MD5",
+      "checksum": "986c098dfd7bb40db113e05812fafde6",
       "read_types": [
         "cell_barcode",
         "umi_barcode"
@@ -27,8 +27,8 @@
     {
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R2_001.fastq.gz",
       "filetype": "fastq",
-      "checksum_method": "SHA-256",
-      "checksum": "d2cc24bff5264feacf008ff00893ad12c9b9e1f56158d124ae5bd25d148f8251",
+      "checksum_method": "MD5",
+      "checksum": "e2190744a78e891fc030284431e361da",
       "read_types": [
         "single"
       ],

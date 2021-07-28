@@ -50,10 +50,10 @@ class SequencingRunConverter:
         return run_xml_tree
 
     def get_manifest(self, manifest_id: str):
-        manifest = Manifest(manifest_id)
+        manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str, no_dir=False):
+    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, no_dir=False):
         data = {}
         manifest = self.get_manifest(manifest_id)
         submission_uuid = manifest.get_submission_uuid()
@@ -67,12 +67,13 @@ class SequencingRunConverter:
         data['experiment_accession'] = experiment_accession
         data['files'] = []
 
+        md5 = self.load_md5_file(md5_file)
+
         files = list(manifest.get_files())
         for manifest_file in files:
             read_index = manifest_file['content']['read_index']
             lane_index = manifest_file['content']['lane_index']
             filename = manifest_file.get('fileName')
-            checksums = manifest_file.get('checksums')
 
             # The files will be uploaded to the submission uuid directory in the FTP upload area
             if no_dir:
@@ -80,12 +81,11 @@ class SequencingRunConverter:
             else:
                 file_location = f'{submission_uuid}/{filename}'
 
-
             file = {
                 'filename': file_location,
                 'filetype': 'fastq',
-                'checksum_method': 'SHA-256',
-                'checksum': checksums.get('sha256'),
+                'checksum_method': 'MD5',
+                'checksum': md5.get(filename),
                 'read_types': READ_TYPES.get(read_index),
                 'lane_index': lane_index
             }
@@ -93,3 +93,16 @@ class SequencingRunConverter:
             data['files'].append(file)
 
         return data
+
+    def load_md5_file(self, md5_file: str):
+        md5 = {}
+        with open(md5_file) as f:
+            lines = [line.rstrip() for line in f]
+
+        for line in lines:
+            parts = line.split('  ')
+            checksum = parts[0]
+            filename = parts[1]
+            md5[filename] = checksum
+
+        return md5
