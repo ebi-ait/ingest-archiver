@@ -29,23 +29,23 @@ class EnaApi:
         if not all([self.user, self.password]):
             raise Error('The ENA_USER, ENA_PASSWORD must be set in environment variables.')
 
-    def submit_run_xml_files(self, manifests_ids: List[str], md5_file: str, in_root_dir: bool = False):
-        files = self.create_xml_files(manifests_ids, md5_file, in_root_dir)
+    def submit_run_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str):
+        files = self.create_xml_files(manifests_ids, md5_file, ftp_parent_dir)
         result = self.post_files(files)
         return result
 
-    def create_xml_files(self, manifests_ids, md5_file, in_root_dir):
+    def create_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str = ''):
         submission_xml_file = self.create_submission_xml()
         files = [('SUBMISSION', open(submission_xml_file, 'r'))]
 
         for manifest_id in manifests_ids:
-            run_xml_path = self.create_run_xml_from_manifest(in_root_dir, manifest_id, md5_file)
+            run_xml_path = self.create_run_xml_from_manifest(manifest_id, md5_file, ftp_parent_dir)
             files.append(('RUN', open(run_xml_path, 'r')))
 
         return files
 
-    def create_run_xml_from_manifest(self, in_root_dir, manifest_id, md5_file):
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, in_root_dir)
+    def create_run_xml_from_manifest(self, manifest_id, md5_file, ftp_parent_dir=''):
+        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, ftp_parent_dir)
         run_xml_tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(run_data)
         lane_index = run_data.get('lane_index', '0')
         run_xml_path = f'{self.xml_dir}/run_{manifest_id}_{lane_index}.xml'

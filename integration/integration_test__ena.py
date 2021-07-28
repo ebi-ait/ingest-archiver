@@ -23,7 +23,7 @@ class SampleRunTest(TestCase):
         manifest_ids = self.ingest_api.get_manifest_ids_from_submission(ingest_submission_uuid)
         dir = os.path.dirname(os.path.realpath(__file__))
         md5_file = f'{dir}/md5.txt'
-        files = self.ena_api.create_xml_files(manifest_ids, md5_file, True)
+        files = self.ena_api.create_xml_files(manifest_ids, md5_file)
         result_xml_tree = self.ena_api.post_files(files)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         write_xml(result_xml_tree, f'receipt_{timestamp}.xml')

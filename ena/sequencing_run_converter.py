@@ -54,10 +54,9 @@ class SequencingRunConverter:
         manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, in_root_dir=False):
+    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, ftp_parent_dir: str = ''):
         data = {}
         manifest = self.get_manifest(manifest_id)
-        submission_uuid = manifest.get_submission_uuid()
         assay_process = manifest.get_assay_process()
         experiment_accession = assay_process['content']['insdc_experiment']['insdc_experiment_accession']
         assay_process_uuid = assay_process['uuid']['uuid']
@@ -73,25 +72,24 @@ class SequencingRunConverter:
 
         files = list(manifest.get_files())
         for manifest_file in files:
-            file = self._get_file_info(manifest_file, md5, in_root_dir, submission_uuid)
+            file = self._get_file_info(manifest_file, md5, ftp_parent_dir)
             data['files'].append(file)
 
         return data
 
-    def _get_file_info(self, manifest_file, md5, in_root_dir, submission_uuid):
-        read_index = manifest_file['content']['read_index']
-        lane_index = manifest_file['content']['lane_index']
+    def _get_file_info(self, manifest_file, md5, ftp_parent_dir=''):
         filename = manifest_file.get('fileName')
+        file_location = filename
+        if ftp_parent_dir:
+            file_location = f'{ftp_parent_dir}/{filename}'
+
         checksum = md5.get(filename)
 
         if not checksum:
             raise Error(f'There is no checksum found for {filename}')
 
-        if in_root_dir:
-            file_location = filename
-        else:
-            # The files will be uploaded to the submission uuid directory in the FTP upload area
-            file_location = f'{submission_uuid}/{filename}'
+        read_index = manifest_file['content']['read_index']
+        lane_index = manifest_file['content']['lane_index']
         file = {
             'filename': file_location,
             'filetype': 'fastq',
