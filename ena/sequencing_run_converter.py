@@ -20,7 +20,8 @@ class SequencingRunConverter:
     def __init__(self, ingest_api: IngestAPI):
         self.ingest_api = ingest_api
 
-    def convert_sequencing_run_data_to_xml_tree(self, run_data: dict) -> ET.ElementTree:
+    @staticmethod
+    def convert_sequencing_run_data_to_xml_tree(run_data: dict) -> ET.ElementTree:
         run_set = ET.Element("RUN_SET")
         run = ET.SubElement(run_set, "RUN")
         run.set('alias', run_data.get('run_alias'))
@@ -53,7 +54,7 @@ class SequencingRunConverter:
         manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, no_dir=False):
+    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, in_root_dir=False):
         data = {}
         manifest = self.get_manifest(manifest_id)
         submission_uuid = manifest.get_submission_uuid()
@@ -61,6 +62,7 @@ class SequencingRunConverter:
         experiment_accession = assay_process['content']['insdc_experiment']['insdc_experiment_accession']
         assay_process_uuid = assay_process['uuid']['uuid']
 
+        # TODO Change run alias to have HCA_ prefix
         run_alias = f'sequencingRun-{assay_process_uuid}'
         data['run_alias'] = run_alias
         data['run_title'] = run_alias
@@ -71,30 +73,37 @@ class SequencingRunConverter:
 
         files = list(manifest.get_files())
         for manifest_file in files:
-            read_index = manifest_file['content']['read_index']
-            lane_index = manifest_file['content']['lane_index']
-            filename = manifest_file.get('fileName')
-
-            # The files will be uploaded to the submission uuid directory in the FTP upload area
-            if no_dir:
-                file_location = filename
-            else:
-                file_location = f'{submission_uuid}/{filename}'
-
-            file = {
-                'filename': file_location,
-                'filetype': 'fastq',
-                'checksum_method': 'MD5',
-                'checksum': md5.get(filename),
-                'read_types': READ_TYPES.get(read_index),
-                'lane_index': lane_index
-            }
-
+            file = self._get_file_info(manifest_file, md5, in_root_dir, submission_uuid)
             data['files'].append(file)
 
         return data
 
-    def load_md5_file(self, md5_file: str):
+    def _get_file_info(self, manifest_file, md5, in_root_dir, submission_uuid):
+        read_index = manifest_file['content']['read_index']
+        lane_index = manifest_file['content']['lane_index']
+        filename = manifest_file.get('fileName')
+        checksum = md5.get(filename)
+
+        if not checksum:
+            raise Error(f'There is no checksum found for {filename}')
+
+        if in_root_dir:
+            file_location = filename
+        else:
+            # The files will be uploaded to the submission uuid directory in the FTP upload area
+            file_location = f'{submission_uuid}/{filename}'
+        file = {
+            'filename': file_location,
+            'filetype': 'fastq',
+            'checksum_method': 'MD5',
+            'checksum': checksum,
+            'read_types': READ_TYPES.get(read_index),
+            'lane_index': lane_index
+        }
+        return file
+
+    @staticmethod
+    def load_md5_file(md5_file: str):
         md5 = {}
         with open(md5_file) as f:
             lines = [line.rstrip() for line in f]
@@ -106,3 +115,7 @@ class SequencingRunConverter:
             md5[filename] = checksum
 
         return md5
+
+
+class Error(Exception):
+    """Base-class for all exceptions raised by this module."""
