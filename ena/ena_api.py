@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 import xml.etree.ElementTree as ET
@@ -7,7 +8,7 @@ import requests
 
 from api.ingest import IngestAPI
 from ena.sequencing_run_converter import SequencingRunConverter
-from ena.util import write_xml, load_xml_from_string
+from ena.util import write_xml, load_xml_from_string, xml_to_string
 
 
 class EnaApi:
@@ -18,10 +19,9 @@ class EnaApi:
 
         self.temp_dir = tempfile.TemporaryDirectory()
         self.xml_dir = self.temp_dir.name
-        # # TODO for testing locally
-        # self.xml_dir = '_local'
         self.ingest_api = ingest_api
         self.run_converter = SequencingRunConverter(self.ingest_api)
+        self.logger = logging.getLogger(__name__)
 
     def _require_env_vars(self):
         if not self.url:
@@ -47,6 +47,7 @@ class EnaApi:
     def create_run_xml_from_manifest(self, manifest_id, md5_file, ftp_parent_dir=''):
         run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, ftp_parent_dir)
         run_xml_tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(run_data)
+        self.logger.debug(xml_to_string(run_xml_tree))
         lane_index = run_data.get('lane_index', '0')
         run_xml_path = f'{self.xml_dir}/run_{manifest_id}_{lane_index}.xml'
         try:
@@ -76,6 +77,7 @@ class EnaApi:
 
         submission = ET.fromstring(submission_xml_as_string)
         submission_xml_tree = ET.ElementTree(submission)
+        self.logger.debug(xml_to_string(submission_xml_tree))
 
         path = f'{self.xml_dir}/submission.xml'
         write_xml(submission_xml_tree, path)

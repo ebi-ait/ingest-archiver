@@ -1,9 +1,12 @@
 import argparse
+import logging
 import time
 
 from api.ingest import IngestAPI
 from ena.ena_api import EnaApi
 from ena.util import write_xml
+
+logging.getLogger('ena.ena_api').setLevel(logging.DEBUG)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Submits sequencing run entities to ENA')
@@ -17,8 +20,8 @@ if __name__ == "__main__":
     ena_api = EnaApi(ingest_api)
 
     manifest_ids = ingest_api.get_manifest_ids_from_submission(args.ingest_submission_uuid)
-
     files = ena_api.create_xml_files(manifest_ids, args.md5_file)
+
     result_xml_tree = ena_api.post_files(files)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     write_xml(result_xml_tree, f'receipt_{timestamp}.xml')

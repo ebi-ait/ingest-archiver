@@ -63,7 +63,6 @@ class TestSequencingRunDataConverter(TestCase):
             run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
             self.assertFalse(run_data)
 
-
     def _create_mock_manifest(self):
         mock_manifest = Mock()
         mock_manifest.get_submission_uuid.return_value = '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6'
