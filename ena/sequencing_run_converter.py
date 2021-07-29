@@ -58,18 +58,20 @@ class SequencingRunConverter:
         data = {}
         manifest = self.get_manifest(manifest_id)
         assay_process = manifest.get_assay_process()
-        experiment_accession = assay_process['content']['insdc_experiment']['insdc_experiment_accession']
-        assay_process_uuid = assay_process['uuid']['uuid']
 
+        assay_process_uuid = assay_process['uuid']['uuid']
         # TODO Change run alias to have HCA_ prefix
         run_alias = f'sequencingRun-{assay_process_uuid}'
         data['run_alias'] = run_alias
         data['run_title'] = run_alias
+
+        experiment_accession = assay_process['content'].get('insdc_experiment', {}).get('insdc_experiment_accession')
+        if not experiment_accession:
+            raise Error(f'The sequencing experiment accession for assay process {assay_process_uuid} is missing.')
         data['experiment_accession'] = experiment_accession
+
         data['files'] = []
-
         md5 = self.load_md5_file(md5_file)
-
         files = list(manifest.get_files())
         for manifest_file in files:
             file = self._get_file_info(manifest_file, md5, ftp_parent_dir)

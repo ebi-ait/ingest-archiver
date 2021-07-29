@@ -2,6 +2,7 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
+from ena import sequencing_run_converter
 from ena.sequencing_run_converter import SequencingRunConverter
 from ena.util import load_json, load_xml, write_xml
 
@@ -23,7 +24,8 @@ class TestSequencingRunDataConverter(TestCase):
         manifest_id = '60f2a4a6d5d575160aafb78f'
 
         # when
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6')
+        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file,
+                                                                  '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6')
 
         expected_run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
 
@@ -42,6 +44,25 @@ class TestSequencingRunDataConverter(TestCase):
 
         # then
         self.assertEqual(run_data, expected_run_data)
+
+    def test_prepare_sequencing_run_data__no_experiment_acession(self):
+        # given
+        md5_file = f'{self.expected_dir}/md5.txt'
+        manifest_id = '60f2a4a6d5d575160aafb78f'
+        mock_manifest = self._create_mock_manifest()
+        mock_manifest.get_assay_process.return_value = {
+            'content': {},
+            'uuid': {'uuid': '21aa0e1a-a31b-42ae-a82b-5773c481e36b'}
+        }
+        self.run_converter.get_manifest = Mock(return_value=mock_manifest)
+
+        self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
+
+        # when
+        with self.assertRaises(sequencing_run_converter.Error) as e:
+            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
+            self.assertFalse(run_data)
+
 
     def _create_mock_manifest(self):
         mock_manifest = Mock()
