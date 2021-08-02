@@ -24,7 +24,11 @@ class SequencingRunConverter:
     def convert_sequencing_run_data_to_xml_tree(run_data: dict) -> ET.ElementTree:
         run_set = ET.Element("RUN_SET")
         run = ET.SubElement(run_set, "RUN")
-        run.set('alias', run_data.get('run_alias'))
+
+        if run_data.get('accession'):
+            run.set('accession', run_data.get('run_accession'))
+        else:
+            run.set('alias', run_data.get('run_alias'))
 
         title = ET.SubElement(run, "TITLE")
         title.text = run_data.get('run_title')
