@@ -58,17 +58,12 @@ class SequencingRunConverter:
         manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, ftp_parent_dir: str = ''):
+    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, ftp_parent_dir: str = '',
+                                    action: str = 'ADD'):
         data = {}
         manifest = self.get_manifest(manifest_id)
         assay_process = manifest.get_assay_process()
-
         assay_process_uuid = assay_process['uuid']['uuid']
-        # TODO Change run alias to have HCA_ prefix
-        run_alias = f'sequencingRun-{assay_process_uuid}'
-        data['run_alias'] = run_alias
-        data['run_title'] = run_alias
-
         experiment_accession = assay_process['content'].get('insdc_experiment', {}).get('insdc_experiment_accession')
         if not experiment_accession:
             raise Error(f'The sequencing experiment accession for assay process {assay_process_uuid} is missing.')
@@ -81,6 +76,17 @@ class SequencingRunConverter:
             file = self._get_file_info(manifest_file, md5, ftp_parent_dir)
             self._check_and_set_run_accession(data, manifest_file)
             data['files'].append(file)
+
+        if action == 'ADD':
+            # TODO Change run alias to have HCA_ prefix
+            run_alias = f'sequencingRun-{assay_process_uuid}'
+            data['run_alias'] = run_alias
+            # TODO Confirm if title is required?
+            data['run_title'] = run_alias
+
+        if action == 'MODIFY' and not data.get('run_accession'):
+            raise Error(f'The sequencing run data from manifest id {manifest_id} '
+                        f'should have accession if action is {action}')
 
         return data
 

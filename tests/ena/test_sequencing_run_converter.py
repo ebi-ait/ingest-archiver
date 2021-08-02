@@ -79,6 +79,19 @@ class TestSequencingRunDataConverter(TestCase):
         # then
         self.assertEqual(run_data, expected_run_data)
 
+    def test_prepare_sequencing_run_data__modify_with_no_run_accession(self):
+        # given
+        md5_file = f'{self.expected_dir}/md5.txt'
+        manifest_id = '60f2a4a6d5d575160aafb78f'
+        files = load_json(f'{self.expected_dir}/files.json')
+        mock_manifest = self._create_mock_manifest(files)
+        self.run_converter.get_manifest = Mock(return_value=mock_manifest)
+
+        # when
+        with self.assertRaises(sequencing_run_converter.Error) as e:
+            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, action='MODIFY')
+            self.assertFalse(run_data)
+
     def _create_mock_manifest(self, files):
         mock_manifest = Mock()
         mock_manifest.get_submission_uuid.return_value = '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6'
