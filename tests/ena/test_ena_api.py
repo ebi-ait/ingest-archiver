@@ -1,14 +1,11 @@
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, mock_open
 
 from ena.ena_api import EnaApi
 from ena.util import load_xml
 
 
 class EnaApiTest(TestCase):
-
-    # @patch('ena.ena_api.os')
-    # def setUp(self, mock_os) -> None:
     def setUp(self) -> None:
         self.ingest_api = Mock()
         self.ena_api = EnaApi(self.ingest_api)
@@ -23,14 +20,23 @@ class EnaApiTest(TestCase):
 
         self.assertEqual(actual, expected)
 
-    # TODO
     def test_create_xml_files(self):
-        pass
+        path = {
+            'm1': 'run_for_m1.xml',
+            'm2': 'run_for_m2.xml'
+        }
+        data = {
+            'submission.xml': 'submission_data',
+            'run_for_m1.xml': 'm1_seq_run_data',
+            'run_for_m2.xml': 'm2_seq_run_data'
+        }
 
-    # TODO
-    def test_create_run_xml_from_manifest(self):
-        pass
+        self.ena_api.create_run_xml_from_manifest = lambda manifest, x, y: path.get(manifest)
+        self.ena_api.create_submission_xml = Mock(return_value='submission.xml')
 
-    # TODO
-    def test_post_files(self):
-        pass
+        with patch("builtins.open", mock_open(lambda p, _: data.get(p))):
+            files = self.ena_api.create_xml_files(['m1', 'm2'], 'md5.txt')
+            self.assertEqual(files,
+                             [('SUBMISSION', 'submission_data'),
+                              ('RUN', 'm1_seq_run_data'),
+                              ('RUN', 'm2_seq_run_data')])
