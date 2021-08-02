@@ -25,13 +25,14 @@ class SequencingRunConverter:
         run_set = ET.Element("RUN_SET")
         run = ET.SubElement(run_set, "RUN")
 
-        if run_data.get('accession'):
+        if run_data.get('run_accession'):
             run.set('accession', run_data.get('run_accession'))
         else:
             run.set('alias', run_data.get('run_alias'))
 
-        title = ET.SubElement(run, "TITLE")
-        title.text = run_data.get('run_title')
+        if run_data.get('run_title'):
+            title = ET.SubElement(run, "TITLE")
+            title.text = run_data.get('run_title')
 
         experiment_ref = ET.SubElement(run, "EXPERIMENT_REF")
         experiment_ref.set('accession', run_data.get('experiment_accession'))
@@ -77,14 +78,14 @@ class SequencingRunConverter:
             self._check_and_set_run_accession(data, manifest_file)
             data['files'].append(file)
 
-        if action == 'ADD':
+        if action.upper() == 'ADD':
             # TODO Change run alias to have HCA_ prefix
             run_alias = f'sequencingRun-{assay_process_uuid}'
             data['run_alias'] = run_alias
             # TODO Confirm if title is required?
             data['run_title'] = run_alias
 
-        if action == 'MODIFY' and not data.get('run_accession'):
+        if action.upper() == 'MODIFY' and not data.get('run_accession'):
             raise Error(f'The sequencing run data from manifest id {manifest_id} '
                         f'should have accession if action is {action}')
 
