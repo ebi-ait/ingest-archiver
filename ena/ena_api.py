@@ -10,6 +10,8 @@ from api.ingest import IngestAPI
 from ena.sequencing_run_converter import SequencingRunConverter
 from ena.util import write_xml, load_xml_from_string, xml_to_string
 
+SUBMIT_ACTIONS = ['ADD', 'MODIFY']
+
 
 class EnaApi:
     def __init__(self, ingest_api: IngestAPI, url: str = None):
@@ -29,13 +31,13 @@ class EnaApi:
         if not all([self.user, self.password]):
             raise Error('The ENA_USER, ENA_PASSWORD must be set in environment variables.')
 
-    def submit_run_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str):
-        files = self.create_xml_files(manifests_ids, md5_file, ftp_parent_dir)
+    def submit_run_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str, action: str = 'ADD'):
+        files = self.create_xml_files(manifests_ids, md5_file, ftp_parent_dir, action)
         result = self.post_files(files)
         return result
 
-    def create_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str = ''):
-        submission_xml_file = self.create_submission_xml()
+    def create_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str = '', action: str = 'ADD'):
+        submission_xml_file = self.create_submission_xml(action)
         files = [('SUBMISSION', open(submission_xml_file, 'r'))]
 
         for manifest_id in manifests_ids:
@@ -64,12 +66,15 @@ class EnaApi:
         result_xml_tree = ET.ElementTree(result)
         return result_xml_tree
 
-    def create_submission_xml(self):
-        submission_xml_as_string = """
+    def create_submission_xml(self, action: str = 'ADD'):
+        if action.upper() not in SUBMIT_ACTIONS:
+            raise Error(f'The submission action {action.upper()} is invalid, should be in {SUBMIT_ACTIONS}')
+
+        submission_xml_as_string = f"""
         <SUBMISSION>
            <ACTIONS>
               <ACTION>
-                 <ADD/>
+                 <{action.upper()}/>
               </ACTION>
            </ACTIONS>
         </SUBMISSION>

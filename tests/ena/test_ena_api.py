@@ -1,8 +1,11 @@
+import xml
 from unittest import TestCase
 from unittest.mock import Mock, patch, mock_open
 
+import xmltodict
+
 from ena.ena_api import EnaApi
-from ena.util import load_xml
+from ena.util import load_xml, load_xml_from_string
 
 
 class EnaApiTest(TestCase):
@@ -14,9 +17,30 @@ class EnaApiTest(TestCase):
     def test_create_submission_xml(self):
         submission_xml_path = self.ena_api.create_submission_xml()
         actual = load_xml(submission_xml_path)
+        expected = xmltodict.parse(f"""
+        <SUBMISSION>
+           <ACTIONS>
+              <ACTION>
+                 <ADD/>
+              </ACTION>
+           </ACTIONS>
+        </SUBMISSION>
+        """)
 
-        expected_file = f'{self.expected_dir}/submission.xml'
-        expected = load_xml(expected_file)
+        self.assertEqual(actual, expected)
+
+    def test_create_submission_xml__modify(self):
+        submission_xml_path = self.ena_api.create_submission_xml('MODIFY')
+        actual = load_xml(submission_xml_path)
+        expected = xmltodict.parse(f"""
+        <SUBMISSION>
+           <ACTIONS>
+              <ACTION>
+                 <MODIFY/>
+              </ACTION>
+           </ACTIONS>
+        </SUBMISSION>
+        """)
 
         self.assertEqual(actual, expected)
 
