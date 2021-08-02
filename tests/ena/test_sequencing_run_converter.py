@@ -56,8 +56,6 @@ class TestSequencingRunDataConverter(TestCase):
         }
         self.run_converter.get_manifest = Mock(return_value=mock_manifest)
 
-        self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
-
         # when
         with self.assertRaises(sequencing_run_converter.Error) as e:
             run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
