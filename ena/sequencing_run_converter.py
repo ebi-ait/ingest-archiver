@@ -75,9 +75,14 @@ class SequencingRunConverter:
         files = list(manifest.get_files())
         for manifest_file in files:
             file = self._get_file_info(manifest_file, md5, ftp_parent_dir)
+            self._check_and_set_run_accession(data, manifest_file)
             data['files'].append(file)
 
         return data
+
+    def _check_and_set_run_accession(self, data, manifest_file):
+        if manifest_file.get('content', {}).get('insdc_run_accessions', []):
+            data['run_accession'] = manifest_file['content']['insdc_run_accessions'][0]
 
     def _get_file_info(self, manifest_file, md5, ftp_parent_dir=''):
         filename = manifest_file.get('fileName')

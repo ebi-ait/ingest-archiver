@@ -1,0 +1,299 @@
+[
+  {
+    "content": {
+      "describedBy": "https://schema.humancellatlas.org/type/file/9.2.0/sequence_file",
+      "schema_type": "file",
+      "file_core": {
+        "file_name": "5478STDY7717491_S1_L001_I1_001.fastq.gz",
+        "format": "fastq.gz",
+        "content_description": [
+          {
+            "text": "DNA sequence",
+            "ontology": "data:3494",
+            "ontology_label": "DNA sequence"
+          }
+        ]
+      },
+      "insdc_run_accessions": [
+        "ERR1234567"
+      ],
+      "read_index": "index1",
+      "lane_index": 1,
+      "library_prep_id": "lib_8"
+    },
+    "fileName": "5478STDY7717491_S1_L001_I1_001.fastq.gz",
+    "submissionDate": "2021-07-15T16:06:34.359Z",
+    "updateDate": "2021-07-15T16:15:05.502Z",
+    "user": "None",
+    "lastModifiedUser": "anonymousUser",
+    "type": "File",
+    "uuid": {
+      "uuid": "1b3c8158-40b1-4176-8971-78f875585ca7"
+    },
+    "events": [],
+    "firstDcpVersion": "2021-07-15T16:06:34.359Z",
+    "dcpVersion": "2021-07-15T16:06:34.359Z",
+    "contentLastModified": "2021-07-15T16:06:34.355Z",
+    "accession": "None",
+    "validationState": "Valid",
+    "validationErrors": [],
+    "isUpdate": "False",
+    "cloudUrl": "s3://org-hca-data-archive-upload-prod/8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_I1_001.fastq.gz",
+    "checksums": {
+      "sha1": "39b5cd16af7f20fae91f24cba2a0b7a0df84f23b",
+      "sha256": "d935a01fcd781d99e1f6c04b693314d6546036a86fd4d2d49055c9feb9f40639",
+      "crc32c": "52abb1ad",
+      "s3_etag": "4c28ae54310b2e9c3d887678852f1623-40"
+    },
+    "lastExportedChecksums": "None",
+    "validationJob": {
+      "validationId": "0ccbaf6a-1f7c-4225-a612-ef072905eb62",
+      "checksums": {
+        "sha1": "39b5cd16af7f20fae91f24cba2a0b7a0df84f23b",
+        "sha256": "d935a01fcd781d99e1f6c04b693314d6546036a86fd4d2d49055c9feb9f40639",
+        "crc32c": "52abb1ad",
+        "s3_etag": "4c28ae54310b2e9c3d887678852f1623-40"
+      },
+      "jobCompleted": "True",
+      "validationReport": {
+        "validationState": "Valid",
+        "validationErrors": []
+      }
+    },
+    "validationId": "None",
+    "dataFileUuid": "fc48e452-e7d9-454b-91e3-e2bf647f3925",
+    "size": 2631668586,
+    "fileContentType": "application/gzip; dcp-type=data",
+    "linked": "True",
+    "_links": {
+      "self": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250"
+      },
+      "file": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250",
+        "title": "A single file"
+      },
+      "processing": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/processingEvent"
+      },
+      "draft": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/draftEvent"
+      },
+      "validationJob": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/validationJob"
+      },
+      "project": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/project",
+        "title": "A single project"
+      },
+      "inputToProcesses": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/inputToProcesses"
+      },
+      "derivedByProcesses": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/derivedByProcesses"
+      },
+      "submissionEnvelope": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250/submissionEnvelope",
+        "title": "A single submission envelope"
+      }
+    }
+  },
+  {
+    "content": {
+      "describedBy": "https://schema.humancellatlas.org/type/file/9.2.0/sequence_file",
+      "schema_type": "file",
+      "file_core": {
+        "file_name": "5478STDY7717491_S1_L001_R1_001.fastq.gz",
+        "format": "fastq.gz",
+        "content_description": [
+          {
+            "text": "DNA sequence",
+            "ontology": "data:3494",
+            "ontology_label": "DNA sequence"
+          }
+        ]
+      },
+      "insdc_run_accessions": [
+        "ERR1234567"
+      ],
+      "read_index": "read1",
+      "lane_index": 1,
+      "library_prep_id": "lib_8"
+    },
+    "fileName": "5478STDY7717491_S1_L001_R1_001.fastq.gz",
+    "submissionDate": "2021-07-15T16:06:34.374Z",
+    "updateDate": "2021-07-15T16:21:08.409Z",
+    "user": "None",
+    "lastModifiedUser": "anonymousUser",
+    "type": "File",
+    "uuid": {
+      "uuid": "81323fe9-509f-4d0f-a6a3-e624421c6f15"
+    },
+    "events": [],
+    "firstDcpVersion": "2021-07-15T16:06:34.374Z",
+    "dcpVersion": "2021-07-15T16:06:34.374Z",
+    "contentLastModified": "2021-07-15T16:06:34.373Z",
+    "accession": "None",
+    "validationState": "Valid",
+    "validationErrors": [],
+    "isUpdate": "False",
+    "cloudUrl": "s3://org-hca-data-archive-upload-prod/8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R1_001.fastq.gz",
+    "checksums": {
+      "sha1": "d7df9fab44f3bcdae71c94bef7e1fb5cd3313cba",
+      "sha256": "b93a6198d992d4edb105836437630b81132fec06844e0486d6b2a8b392a8bd43",
+      "crc32c": "1d7fb268",
+      "s3_etag": "93dba760d74a1848689c6a4ecf2992f6-121"
+    },
+    "lastExportedChecksums": "None",
+    "validationJob": {
+      "validationId": "6c395d3f-3242-400f-beb9-c0fbbb526cad",
+      "checksums": {
+        "sha1": "d7df9fab44f3bcdae71c94bef7e1fb5cd3313cba",
+        "sha256": "b93a6198d992d4edb105836437630b81132fec06844e0486d6b2a8b392a8bd43",
+        "crc32c": "1d7fb268",
+        "s3_etag": "93dba760d74a1848689c6a4ecf2992f6-121"
+      },
+      "jobCompleted": "True",
+      "validationReport": {
+        "validationState": "Valid",
+        "validationErrors": []
+      }
+    },
+    "validationId": "None",
+    "dataFileUuid": "d603ab3b-6410-47b4-993a-cfd2c2f025b8",
+    "size": 8097947551,
+    "fileContentType": "application/gzip; dcp-type=data",
+    "linked": "True",
+    "_links": {
+      "self": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251"
+      },
+      "file": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251",
+        "title": "A single file"
+      },
+      "processing": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/processingEvent"
+      },
+      "draft": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/draftEvent"
+      },
+      "validationJob": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/validationJob"
+      },
+      "project": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/project",
+        "title": "A single project"
+      },
+      "inputToProcesses": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/inputToProcesses"
+      },
+      "derivedByProcesses": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/derivedByProcesses"
+      },
+      "submissionEnvelope": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251/submissionEnvelope",
+        "title": "A single submission envelope"
+      }
+    }
+  },
+  {
+    "content": {
+      "describedBy": "https://schema.humancellatlas.org/type/file/9.2.0/sequence_file",
+      "schema_type": "file",
+      "file_core": {
+        "file_name": "5478STDY7717491_S1_L001_R2_001.fastq.gz",
+        "format": "fastq.gz",
+        "content_description": [
+          {
+            "text": "DNA sequence",
+            "ontology": "data:3494",
+            "ontology_label": "DNA sequence"
+          }
+        ]
+      },
+      "insdc_run_accessions": [
+        "ERR1234567"
+      ],
+      "read_index": "read2",
+      "lane_index": 1,
+      "library_prep_id": "lib_8"
+    },
+    "fileName": "5478STDY7717491_S1_L001_R2_001.fastq.gz",
+    "submissionDate": "2021-07-15T16:06:34.396Z",
+    "updateDate": "2021-07-15T16:43:34.008Z",
+    "user": "None",
+    "lastModifiedUser": "anonymousUser",
+    "type": "File",
+    "uuid": {
+      "uuid": "9a3b04ca-00db-460b-9715-d2e6c1d249fd"
+    },
+    "events": [],
+    "firstDcpVersion": "2021-07-15T16:06:34.396Z",
+    "dcpVersion": "2021-07-15T16:06:34.396Z",
+    "contentLastModified": "2021-07-15T16:06:34.389Z",
+    "accession": "None",
+    "validationState": "Valid",
+    "validationErrors": [],
+    "isUpdate": "False",
+    "cloudUrl": "s3://org-hca-data-archive-upload-prod/8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R2_001.fastq.gz",
+    "checksums": {
+      "sha1": "91acfcce03fcbf2b34615c1c83a77f8eb2e2ee46",
+      "sha256": "d2cc24bff5264feacf008ff00893ad12c9b9e1f56158d124ae5bd25d148f8251",
+      "crc32c": "419E5D8A",
+      "s3_etag": "fd635933f9f708d08ac22e9f04732d88-440"
+    },
+    "lastExportedChecksums": "None",
+    "validationJob": {
+      "validationId": "c63ac096-8628-4e67-a761-973472931037",
+      "checksums": {
+        "sha1": "91acfcce03fcbf2b34615c1c83a77f8eb2e2ee46",
+        "sha256": "d2cc24bff5264feacf008ff00893ad12c9b9e1f56158d124ae5bd25d148f8251",
+        "crc32c": "419E5D8A",
+        "s3_etag": "fd635933f9f708d08ac22e9f04732d88-440"
+      },
+      "jobCompleted": "True",
+      "validationReport": {
+        "validationState": "Valid",
+        "validationErrors": []
+      }
+    },
+    "validationId": "None",
+    "dataFileUuid": "bfba8556-386a-4c4b-b05b-bcda222cfd30",
+    "size": 29487581689,
+    "fileContentType": "application/gzip; dcp-type=data",
+    "linked": "True",
+    "_links": {
+      "self": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252"
+      },
+      "file": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252",
+        "title": "A single file"
+      },
+      "processing": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/processingEvent"
+      },
+      "draft": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/draftEvent"
+      },
+      "validationJob": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/validationJob"
+      },
+      "project": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/project",
+        "title": "A single project"
+      },
+      "inputToProcesses": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/inputToProcesses"
+      },
+      "derivedByProcesses": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/derivedByProcesses"
+      },
+      "submissionEnvelope": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252/submissionEnvelope",
+        "title": "A single submission envelope"
+      }
+    }
+  }
+]
