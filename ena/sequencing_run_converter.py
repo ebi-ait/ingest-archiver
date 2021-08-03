@@ -43,34 +43,35 @@ class SequencingRunConverter:
 
             files = ET.SubElement(data_block, "FILES")
 
-            for file in run_data.get('files'):
-                file_elem = ET.SubElement(files, "FILE")
-                file_elem.set('filename', file.get('filename'))
-                file_elem.set('filetype', file.get('filetype'))
-                file_elem.set('checksum_method', file.get('checksum_method'))
-                file_elem.set('checksum', file.get('checksum'))
-
-                for read_type in file.get('read_types'):
-                    file_elem_read_type = ET.SubElement(file_elem, "READ_TYPE")
-                    file_elem_read_type.text = read_type
+            SequencingRunConverter.set_files_in_data_block(files, run_data)
 
         run_xml_tree = ET.ElementTree(run_set)
         return run_xml_tree
+
+    @staticmethod
+    def set_files_in_data_block(files: ET.SubElement, run_data: dict):
+        for file in run_data.get('files'):
+            file_elem = ET.SubElement(files, "FILE")
+            file_elem.set('filename', file.get('filename'))
+            file_elem.set('filetype', file.get('filetype'))
+            file_elem.set('checksum_method', file.get('checksum_method'))
+            file_elem.set('checksum', file.get('checksum'))
+
+            for read_type in file.get('read_types'):
+                file_elem_read_type = ET.SubElement(file_elem, "READ_TYPE")
+                file_elem_read_type.text = read_type
 
     def get_manifest(self, manifest_id: str):
         manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str, ftp_parent_dir: str = '',
-                                    action: str = 'ADD'):
+    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str,
+                                    ftp_parent_dir: str = '', action: str = 'ADD'):
         data = {}
         manifest = self.get_manifest(manifest_id)
         assay_process = manifest.get_assay_process()
         assay_process_uuid = assay_process['uuid']['uuid']
-        experiment_accession = assay_process['content'].get('insdc_experiment', {}).get('insdc_experiment_accession')
-        if not experiment_accession:
-            raise Error(f'The sequencing experiment accession for assay process {assay_process_uuid} is missing.')
-        data['experiment_accession'] = experiment_accession
+        data['experiment_accession'] = self._get_experiment_accession(assay_process)
 
         data['files'] = []
         md5 = self.load_md5_file(md5_file)
@@ -92,6 +93,13 @@ class SequencingRunConverter:
                         f'should have accession if action is {action}')
 
         return data
+
+    def _get_experiment_accession(self, assay_process: dict):
+        experiment_accession = assay_process['content'].get('insdc_experiment', {}).get('insdc_experiment_accession')
+        if not experiment_accession:
+            assay_process_uuid = assay_process['uuid']['uuid']
+            raise Error(f'The sequencing experiment accession for assay process {assay_process_uuid} is missing.')
+        return experiment_accession
 
     def _check_and_set_run_accession(self, data, manifest_file):
         if manifest_file.get('content', {}).get('insdc_run_accessions', []):
