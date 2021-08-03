@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from typing import List
 
 from api.ingest import IngestAPI
 from archiver.archiver import Manifest
@@ -21,36 +22,36 @@ class SequencingRunConverter:
         self.ingest_api = ingest_api
 
     @staticmethod
-    def convert_sequencing_run_data_to_xml_tree(run_data: dict) -> ET.ElementTree:
+    def convert_sequencing_run_data_to_xml_tree(run_data_list: List[dict]) -> ET.ElementTree:
         run_set = ET.Element("RUN_SET")
-        run = ET.SubElement(run_set, "RUN")
+        for run_data in run_data_list:
+            run = ET.SubElement(run_set, "RUN")
+            if run_data.get('run_accession'):
+                run.set('accession', run_data.get('run_accession'))
+            else:
+                run.set('alias', run_data.get('run_alias'))
 
-        if run_data.get('run_accession'):
-            run.set('accession', run_data.get('run_accession'))
-        else:
-            run.set('alias', run_data.get('run_alias'))
+            if run_data.get('run_title'):
+                title = ET.SubElement(run, "TITLE")
+                title.text = run_data.get('run_title')
 
-        if run_data.get('run_title'):
-            title = ET.SubElement(run, "TITLE")
-            title.text = run_data.get('run_title')
+            experiment_ref = ET.SubElement(run, "EXPERIMENT_REF")
+            experiment_ref.set('accession', run_data.get('experiment_accession'))
 
-        experiment_ref = ET.SubElement(run, "EXPERIMENT_REF")
-        experiment_ref.set('accession', run_data.get('experiment_accession'))
+            data_block = ET.SubElement(run, "DATA_BLOCK")
 
-        data_block = ET.SubElement(run, "DATA_BLOCK")
+            files = ET.SubElement(data_block, "FILES")
 
-        files = ET.SubElement(data_block, "FILES")
+            for file in run_data.get('files'):
+                file_elem = ET.SubElement(files, "FILE")
+                file_elem.set('filename', file.get('filename'))
+                file_elem.set('filetype', file.get('filetype'))
+                file_elem.set('checksum_method', file.get('checksum_method'))
+                file_elem.set('checksum', file.get('checksum'))
 
-        for file in run_data.get('files'):
-            file_elem = ET.SubElement(files, "FILE")
-            file_elem.set('filename', file.get('filename'))
-            file_elem.set('filetype', file.get('filetype'))
-            file_elem.set('checksum_method', file.get('checksum_method'))
-            file_elem.set('checksum', file.get('checksum'))
-
-            for read_type in file.get('read_types'):
-                file_elem_read_type = ET.SubElement(file_elem, "READ_TYPE")
-                file_elem_read_type.text = read_type
+                for read_type in file.get('read_types'):
+                    file_elem_read_type = ET.SubElement(file_elem, "READ_TYPE")
+                    file_elem_read_type.text = read_type
 
         run_xml_tree = ET.ElementTree(run_set)
         return run_xml_tree

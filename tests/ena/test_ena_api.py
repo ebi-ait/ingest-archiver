@@ -45,22 +45,16 @@ class EnaApiTest(TestCase):
         self.assertEqual(actual, expected)
 
     def test_create_xml_files(self):
-        path = {
-            'm1': 'run_for_m1.xml',
-            'm2': 'run_for_m2.xml'
-        }
         data = {
             'submission.xml': 'submission_data',
-            'run_for_m1.xml': 'm1_seq_run_data',
-            'run_for_m2.xml': 'm2_seq_run_data'
+            'run.xml': 'all_seq_run_data'
         }
 
-        self.ena_api.create_run_xml_from_manifest = lambda manifest, x, y: path.get(manifest)
+        self.ena_api.create_run_xml_from_manifests = Mock(return_value='run.xml')
         self.ena_api.create_submission_xml = Mock(return_value='submission.xml')
 
         with patch("builtins.open", mock_open(lambda p, _: data.get(p))):
             files = self.ena_api.create_xml_files(['m1', 'm2'], 'md5.txt')
             self.assertEqual(files,
                              [('SUBMISSION', 'submission_data'),
-                              ('RUN', 'm1_seq_run_data'),
-                              ('RUN', 'm2_seq_run_data')])
+                              ('RUN', 'all_seq_run_data')])

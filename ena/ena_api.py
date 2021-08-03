@@ -40,19 +40,21 @@ class EnaApi:
         submission_xml_file = self.create_submission_xml(action)
         files = [('SUBMISSION', open(submission_xml_file, 'r'))]
 
-        for manifest_id in manifests_ids:
-            run_xml_path = self.create_run_xml_from_manifest(manifest_id, md5_file, ftp_parent_dir, action)
-            files.append(('RUN', open(run_xml_path, 'r')))
+        run_xml_path = self.create_run_xml_from_manifests(manifests_ids, md5_file, ftp_parent_dir, action)
+        files.append(('RUN', open(run_xml_path, 'r')))
 
         return files
 
-    def create_run_xml_from_manifest(self, manifest_id: str, md5_file: str, ftp_parent_dir: str = '',
-                                     action: str = 'ADD'):
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, ftp_parent_dir, action)
-        run_xml_tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(run_data)
+    def create_run_xml_from_manifests(self, manifest_ids: List[str], md5_file: str, ftp_parent_dir: str = '',
+                                      action: str = 'ADD'):
+        all_run_data = []
+        for manifest_id in manifest_ids:
+            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, ftp_parent_dir, action)
+            all_run_data.append(run_data)
+
+        run_xml_tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(all_run_data)
         self.logger.debug(xml_to_string(run_xml_tree))
-        lane_index = run_data.get('lane_index', '0')
-        run_xml_path = f'{self.xml_dir}/run_{manifest_id}_{lane_index}.xml'
+        run_xml_path = f'{self.xml_dir}/run.xml'
         try:
             write_xml(run_xml_tree, run_xml_path)
         except Exception as e:

@@ -13,6 +13,7 @@ class TestSequencingRunDataConverter(TestCase):
         self.run_converter = SequencingRunConverter(self.ingest_api)
         self.temp_dir = tempfile.TemporaryDirectory()
         self.actual_dir = self.temp_dir.name
+        self.actual_dir = '/Users/aaclan/dev/ait/repos/ingest-archiver/_local'
         self.expected_dir = 'data'
 
         files = load_json(f'{self.expected_dir}/files.json')
@@ -111,14 +112,32 @@ class TestSequencingRunDataConverter(TestCase):
         run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
 
         # when
-        tree = self.run_converter.convert_sequencing_run_data_to_xml_tree(run_data)
+        tree = self.run_converter.convert_sequencing_run_data_to_xml_tree([run_data])
 
         # then
         actual_file = f'{self.actual_dir}/actual.xml'
         write_xml(tree, actual_file)
         actual = load_xml(actual_file)
 
-        expected_file = f'{self.expected_dir}/sample_run.xml'
+        expected_file = f'{self.expected_dir}/sample_add_run.xml'
+        expected = load_xml(expected_file)
+
+        self.assertEqual(actual, expected)
+
+    def test_convert_sequencing_run_data_to_xml_tree__multiple_runs(self):
+        # given
+        run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
+        run_data_2 = load_json(f'{self.expected_dir}/sequencing_run_data_2.json')
+
+        # when
+        tree = self.run_converter.convert_sequencing_run_data_to_xml_tree([run_data, run_data_2])
+
+        # then
+        actual_file = f'{self.actual_dir}/actual.xml'
+        write_xml(tree, actual_file)
+        actual = load_xml(actual_file)
+
+        expected_file = f'{self.expected_dir}/sample_add_multiple_runs.xml'
         expected = load_xml(expected_file)
 
         self.assertEqual(actual, expected)
