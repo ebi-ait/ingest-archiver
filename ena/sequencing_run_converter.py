@@ -4,7 +4,8 @@ from typing import List
 from api.ingest import IngestAPI
 from archiver.archiver import Manifest
 
-# TODO This is only applicable for Peng's dataset
+# TODO This is only applicable for 10x datasets
+# Add logic in checking the lib prep protocol
 READ_TYPES = {
     'index1': ['sample_barcode'],
     'read1': [
