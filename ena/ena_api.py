@@ -58,7 +58,7 @@ class EnaApi:
         try:
             write_xml(run_xml_tree, run_xml_path)
         except Exception as e:
-            print(e)
+            raise Error(f"An error occurred in writing the run xml : {str(e)}")
         return run_xml_path
 
     def post_files(self, files: dict):
