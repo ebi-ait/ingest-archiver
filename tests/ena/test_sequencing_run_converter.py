@@ -13,7 +13,6 @@ class TestSequencingRunDataConverter(TestCase):
         self.run_converter = SequencingRunConverter(self.ingest_api)
         self.temp_dir = tempfile.TemporaryDirectory()
         self.actual_dir = self.temp_dir.name
-        self.actual_dir = '/Users/aaclan/dev/ait/repos/ingest-archiver/_local'
         self.expected_dir = 'data'
 
         files = load_json(f'{self.expected_dir}/files.json')
