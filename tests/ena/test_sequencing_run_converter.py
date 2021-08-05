@@ -46,6 +46,22 @@ class TestSequencingRunDataConverter(TestCase):
         # then
         self.assertEqual(runs, [expected_run_data])
 
+    def test_prepare_sequencing_runs__experiment_with_multiple_runs(self):
+        # given
+        md5_file = f'{self.expected_dir}/md5_files_in_multiple_lanes.txt'
+        manifest_id = '60f2a4a6d5d575160aafb78f'
+        files = load_json(f'{self.expected_dir}/files_in_multiple_lanes.json')
+        mock_manifest = self._create_mock_manifest(files)
+        self.run_converter.get_manifest = Mock(return_value=mock_manifest)
+
+        # when
+        runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file)
+
+        expected_runs = load_json(f'{self.expected_dir}/sequencing_runs_in_multiple_lanes.json')
+
+        # then
+        self.assertEqual(runs, expected_runs)
+
     def test_prepare_sequencing_runs__add_with_no_experiment_acession(self):
         # given
         md5_file = f'{self.expected_dir}/md5.txt'
