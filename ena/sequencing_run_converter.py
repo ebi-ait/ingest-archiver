@@ -136,6 +136,7 @@ class SequencingRunConverter:
         read_index = manifest_file['content']['read_index']
         lane_index = manifest_file['content']['lane_index']
         file = {
+            'url': manifest_file['_links']['self']['href'],
             'filename': file_location,
             'filetype': 'fastq',
             'checksum_method': 'MD5',

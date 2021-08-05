@@ -25,7 +25,7 @@
     "lastModifiedUser": "anonymousUser",
     "type": "File",
     "uuid": {
-      "uuid": "1b3c8158-40b1-4176-8971-78f875585ca7"
+      "uuid": "uuid1"
     },
     "events": [],
     "firstDcpVersion": "2021-07-15T16:06:34.359Z",
@@ -64,7 +64,7 @@
     "linked": "True",
     "_links": {
       "self": {
-        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250"
+        "href": "url1"
       },
       "file": {
         "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250",
@@ -121,7 +121,7 @@
     "lastModifiedUser": "anonymousUser",
     "type": "File",
     "uuid": {
-      "uuid": "81323fe9-509f-4d0f-a6a3-e624421c6f15"
+      "uuid": "uuid2"
     },
     "events": [],
     "firstDcpVersion": "2021-07-15T16:06:34.374Z",
@@ -160,7 +160,7 @@
     "linked": "True",
     "_links": {
       "self": {
-        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251"
+        "href": "url2"
       },
       "file": {
         "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251",
@@ -217,7 +217,7 @@
     "lastModifiedUser": "anonymousUser",
     "type": "File",
     "uuid": {
-      "uuid": "9a3b04ca-00db-460b-9715-d2e6c1d249fd"
+      "uuid": "uuid3"
     },
     "events": [],
     "firstDcpVersion": "2021-07-15T16:06:34.396Z",
@@ -256,7 +256,7 @@
     "linked": "True",
     "_links": {
       "self": {
-        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252"
+        "href": "url3"
       },
       "file": {
         "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252",
@@ -315,7 +315,7 @@
     "lastModifiedUser": "anonymousUser",
     "type": "File",
     "uuid": {
-      "uuid": "1b3c8158-40b1-4176-8971-78f875585ca7"
+      "uuid": "uuid4"
     },
     "events": [],
     "firstDcpVersion": "2021-07-15T16:06:34.359Z",
@@ -354,7 +354,7 @@
     "linked": "True",
     "_links": {
       "self": {
-        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250"
+        "href": "url4"
       },
       "file": {
         "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250",
@@ -411,7 +411,7 @@
     "lastModifiedUser": "anonymousUser",
     "type": "File",
     "uuid": {
-      "uuid": "81323fe9-509f-4d0f-a6a3-e624421c6f15"
+      "uuid": "uuid5"
     },
     "events": [],
     "firstDcpVersion": "2021-07-15T16:06:34.374Z",
@@ -450,7 +450,7 @@
     "linked": "True",
     "_links": {
       "self": {
-        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251"
+        "href": "url5"
       },
       "file": {
         "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251",
@@ -507,7 +507,7 @@
     "lastModifiedUser": "anonymousUser",
     "type": "File",
     "uuid": {
-      "uuid": "9a3b04ca-00db-460b-9715-d2e6c1d249fd"
+      "uuid": "uuid6"
     },
     "events": [],
     "firstDcpVersion": "2021-07-15T16:06:34.396Z",
@@ -546,7 +546,7 @@
     "linked": "True",
     "_links": {
       "self": {
-        "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252"
+        "href": "url6"
       },
       "file": {
         "href": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252",

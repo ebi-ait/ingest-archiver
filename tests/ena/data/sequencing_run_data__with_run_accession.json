@@ -3,6 +3,7 @@
   "experiment_accession": "ERX123456",
   "files": [
     {
+      "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250",
       "filename": "5478STDY7717491_S1_L001_I1_001.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -13,6 +14,7 @@
       "lane_index": 1
     },
     {
+      "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251",
       "filename": "5478STDY7717491_S1_L001_R1_001.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -24,6 +26,7 @@
       "lane_index": 1
     },
     {
+      "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252",
       "filename": "5478STDY7717491_S1_L001_R2_001.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
