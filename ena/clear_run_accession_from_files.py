@@ -3,8 +3,6 @@ import logging
 from api.ingest import IngestAPI
 
 
-logging.getLogger('ena.ena_api').setLevel(logging.DEBUG)
-
 TOKEN = '<TOKEN>'
 
 INGEST_URL = 'https://api.ingest.dev.archive.data.humancellatlas.org/'
@@ -23,6 +21,7 @@ def get_submission():
 
 
 def remove_run_accessions(files):
+    logger.info('Accessing removing started')
     for file in files:
         file_id = ingest_api.get_entity_id(file, 'files')
         file_content = file['content']
@@ -31,9 +30,14 @@ def remove_run_accessions(files):
             'content': file_content
         }
         ingest_api.patch_entity_by_id('files', file_id, patch)
+        logger.debug(f'File with id: {file_id} has been processed')
+    logger.info('Accessing removing ended')
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG)
+
     parser = argparse.ArgumentParser(
         description='Clear run accessions from the file metadata in Ingest'
     )
