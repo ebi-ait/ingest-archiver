@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <RUN_SET>
-    <RUN alias="sequencingRun-21aa0e1a-a31b-42ae-a82b-5773c481e36b">
-        <TITLE>sequencingRun-21aa0e1a-a31b-42ae-a82b-5773c481e36b</TITLE>
+    <RUN alias="sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1">
+        <TITLE>sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1</TITLE>
         <EXPERIMENT_REF accession="ERX123456"/>
         <DATA_BLOCK>
             <FILES>
@@ -24,8 +24,8 @@
             </FILES>
         </DATA_BLOCK>
     </RUN>
-    <RUN alias="sequencingRun-21aa0e1a-a31b-42ae-a82b-5773c481e36c">
-        <TITLE>sequencingRun-21aa0e1a-a31b-42ae-a82b-5773c481e36c</TITLE>
+    <RUN alias="sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36c_1">
+        <TITLE>sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36c_1</TITLE>
         <EXPERIMENT_REF accession="ERX123457"/>
         <DATA_BLOCK>
             <FILES>

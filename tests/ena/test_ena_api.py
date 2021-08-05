@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch, mock_open
 import xmltodict
 
 from ena.ena_api import EnaApi
-from ena.util import load_xml, load_xml_from_string
+from ena.util import load_xml_dict, load_xml_tree_from_string
 
 
 class EnaApiTest(TestCase):
@@ -16,7 +16,7 @@ class EnaApiTest(TestCase):
 
     def test_create_submission_xml(self):
         submission_xml_path = self.ena_api.create_submission_xml()
-        actual = load_xml(submission_xml_path)
+        actual = load_xml_dict(submission_xml_path)
         expected = xmltodict.parse(f"""
         <SUBMISSION>
            <ACTIONS>
@@ -31,7 +31,7 @@ class EnaApiTest(TestCase):
 
     def test_create_submission_xml__modify(self):
         submission_xml_path = self.ena_api.create_submission_xml('MODIFY')
-        actual = load_xml(submission_xml_path)
+        actual = load_xml_dict(submission_xml_path)
         expected = xmltodict.parse(f"""
         <SUBMISSION>
            <ACTIONS>
@@ -45,16 +45,10 @@ class EnaApiTest(TestCase):
         self.assertEqual(actual, expected)
 
     def test_create_xml_files(self):
-        data = {
-            'submission.xml': 'submission_data',
-            'run.xml': 'all_seq_run_data'
-        }
-
-        self.ena_api.create_run_xml_from_manifests = Mock(return_value='run.xml')
+        self.ena_api.create_run_xml_from_manifests = Mock(return_value={'run_xml_path': 'run.xml', 'all_run_data': []})
         self.ena_api.create_submission_xml = Mock(return_value='submission.xml')
 
-        with patch("builtins.open", mock_open(lambda p, _: data.get(p))):
-            files = self.ena_api.create_xml_files(['m1', 'm2'], 'md5.txt')
-            self.assertEqual(files,
-                             [('SUBMISSION', 'submission_data'),
-                              ('RUN', 'all_seq_run_data')])
+        output = self.ena_api.create_xml_files(['m1', 'm2'], 'md5.txt')
+        self.assertEqual({'all_run_data': [],
+                          'run_xml_path': 'run.xml',
+                          'submission_xml_path': 'submission.xml'}, output)

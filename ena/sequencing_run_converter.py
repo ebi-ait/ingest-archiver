@@ -65,34 +65,55 @@ class SequencingRunConverter:
         manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_run_data(self, manifest_id: str, md5_file: str,
-                                    ftp_parent_dir: str = '', action: str = 'ADD'):
-        data = {}
+    def prepare_sequencing_runs(self, manifest_id: str, md5_file: str,
+                                ftp_parent_dir: str = '', action: str = 'ADD'):
+
         manifest = self.get_manifest(manifest_id)
         assay_process = manifest.get_assay_process()
         assay_process_uuid = assay_process['uuid']['uuid']
-        data['experiment_accession'] = self._get_experiment_accession(assay_process)
-
-        data['files'] = []
         md5 = self.load_md5_file(md5_file)
         files = list(manifest.get_files())
+
+        lanes = {}
+        runs = []
         for manifest_file in files:
-            file = self._get_file_info(manifest_file, md5, ftp_parent_dir)
-            self._check_and_set_run_accession(data, manifest_file)
-            data['files'].append(file)
+            lane_index = manifest_file.get('content').get('lane_index', 1)
+            if lane_index not in lanes:
+                lanes[lane_index] = []
+            lanes[lane_index].append(manifest_file)
 
-        if action.upper() == 'ADD':
-            # TODO Change run alias to have HCA_ prefix
-            run_alias = f'sequencingRun-{assay_process_uuid}'
-            data['run_alias'] = run_alias
-            # TODO Confirm if title is required?
-            data['run_title'] = run_alias
+        for lane_index in lanes.keys():
+            lane_files = lanes.get(lane_index)
 
-        if action.upper() == 'MODIFY' and not data.get('run_accession'):
-            raise Error(f'The sequencing run data from manifest id {manifest_id} '
-                        f'should have accession if action is {action}')
+            data = {
+                'experiment_accession': self._get_experiment_accession(assay_process),
+                'files': []
+            }
 
-        return data
+            for manifest_file in lane_files:
+                file = self._get_file_info(manifest_file, md5, ftp_parent_dir)
+                data['files'].append(file)
+                if manifest_file.get('content', {}).get('insdc_run_accessions', []):
+                    data['run_accession'] = manifest_file['content']['insdc_run_accessions'][0]
+
+                if action.upper() == 'ADD':
+                    # TODO Change run alias to have HCA_ prefix
+                    run_alias = f'sequencingRun_{assay_process_uuid}_{lane_index}'
+                    data['run_alias'] = run_alias
+                    data['run_title'] = run_alias
+
+                    if data.get('run_accession'):
+                        raise Error(
+                            f'The sequencing run data from manifest id {manifest_id} with lane index {lane_index}'
+                            f'should have no accession if action is ADD')
+
+                if action.upper() == 'MODIFY' and not data.get('run_accession'):
+                    raise Error(f'The sequencing run data from manifest id {manifest_id} with lane index {lane_index}'
+                                f'should have accession if action is MODIFY')
+
+            runs.append(data)
+
+        return runs
 
     def _get_experiment_accession(self, assay_process: dict):
         experiment_accession = assay_process['content'].get('insdc_experiment', {}).get('insdc_experiment_accession')
@@ -100,10 +121,6 @@ class SequencingRunConverter:
             assay_process_uuid = assay_process['uuid']['uuid']
             raise Error(f'The sequencing experiment accession for assay process {assay_process_uuid} is missing.')
         return experiment_accession
-
-    def _check_and_set_run_accession(self, data, manifest_file):
-        if manifest_file.get('content', {}).get('insdc_run_accessions', []):
-            data['run_accession'] = manifest_file['content']['insdc_run_accessions'][0]
 
     def _get_file_info(self, manifest_file, md5, ftp_parent_dir=''):
         filename = manifest_file.get('fileName')

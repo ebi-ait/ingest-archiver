@@ -22,7 +22,4 @@ if __name__ == "__main__":
 
     manifest_ids = ingest_api.get_manifest_ids_from_submission(args.ingest_submission_uuid)
 
-    files = ena_api.create_xml_files(manifest_ids, args.md5_file, args.ftp_dir, args.action.upper())
-    result_xml_tree = ena_api.post_files(files)
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
-    write_xml(result_xml_tree, f'receipt_{timestamp}.xml')
+    files = ena_api.submit_run_xml_files(manifest_ids, args.md5_file, args.ftp_dir, args.action.upper())

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock
 
 from ena import sequencing_run_converter
 from ena.sequencing_run_converter import SequencingRunConverter
-from ena.util import load_json, load_xml, write_xml
+from ena.util import load_json, load_xml_dict, write_xml
 
 
 class TestSequencingRunDataConverter(TestCase):
@@ -19,34 +19,34 @@ class TestSequencingRunDataConverter(TestCase):
         mock_manifest = self._create_mock_manifest(files)
         self.run_converter.get_manifest = Mock(return_value=mock_manifest)
 
-    def test_prepare_sequencing_run_data__with_ftp_parent_dir(self):
+    def test_prepare_sequencing_runs__with_ftp_parent_dir(self):
         # given
         md5_file = f'{self.expected_dir}/md5.txt'
         manifest_id = '60f2a4a6d5d575160aafb78f'
 
         # when
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file,
+        runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file,
                                                                   '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6')
 
         expected_run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
 
         # then
-        self.assertEqual(run_data, expected_run_data)
+        self.assertEqual(runs, [expected_run_data])
 
-    def test_prepare_sequencing_run_data(self):
+    def test_prepare_sequencing_runs(self):
         # given
         md5_file = f'{self.expected_dir}/md5.txt'
         manifest_id = '60f2a4a6d5d575160aafb78f'
 
         # when
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
+        runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file)
 
         expected_run_data = load_json(f'{self.expected_dir}/sequencing_run_data__no_dir.json')
 
         # then
-        self.assertEqual(run_data, expected_run_data)
+        self.assertEqual(runs, [expected_run_data])
 
-    def test_prepare_sequencing_run_data__no_experiment_acession(self):
+    def test_prepare_sequencing_runs__add_with_no_experiment_acession(self):
         # given
         md5_file = f'{self.expected_dir}/md5.txt'
         manifest_id = '60f2a4a6d5d575160aafb78f'
@@ -60,10 +60,10 @@ class TestSequencingRunDataConverter(TestCase):
 
         # when
         with self.assertRaises(sequencing_run_converter.Error) as e:
-            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
+            run_data = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file)
             self.assertFalse(run_data)
 
-    def test_prepare_sequencing_run_data__with_run_accession(self):
+    def test_prepare_sequencing_runs__modify_with_run_accession(self):
         # given
         md5_file = f'{self.expected_dir}/md5.txt'
         manifest_id = '60f2a4a6d5d575160aafb78f'
@@ -72,14 +72,14 @@ class TestSequencingRunDataConverter(TestCase):
         self.run_converter.get_manifest = Mock(return_value=mock_manifest)
 
         # when
-        run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file)
+        runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file, action='MODIFY')
 
         expected_run_data = load_json(f'{self.expected_dir}/sequencing_run_data__with_run_accession.json')
 
         # then
-        self.assertEqual(run_data, expected_run_data)
+        self.assertEqual(runs, [expected_run_data])
 
-    def test_prepare_sequencing_run_data__modify_with_no_run_accession(self):
+    def test_prepare_sequencing_runs__modify_with_no_run_accession__raises_error(self):
         # given
         md5_file = f'{self.expected_dir}/md5.txt'
         manifest_id = '60f2a4a6d5d575160aafb78f'
@@ -89,8 +89,21 @@ class TestSequencingRunDataConverter(TestCase):
 
         # when
         with self.assertRaises(sequencing_run_converter.Error) as e:
-            run_data = self.run_converter.prepare_sequencing_run_data(manifest_id, md5_file, action='MODIFY')
-            self.assertFalse(run_data)
+            runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file, action='MODIFY')
+            self.assertFalse(runs)
+
+    def test_prepare_sequencing_runs__add_with_run_accession__raises_error(self):
+        # given
+        md5_file = f'{self.expected_dir}/md5.txt'
+        manifest_id = '60f2a4a6d5d575160aafb78f'
+        files = load_json(f'{self.expected_dir}/files_with_run_accession.json')
+        mock_manifest = self._create_mock_manifest(files)
+        self.run_converter.get_manifest = Mock(return_value=mock_manifest)
+
+        # when
+        with self.assertRaises(sequencing_run_converter.Error) as e:
+            runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file, action='ADD')
+            self.assertFalse(runs)
 
     def _create_mock_manifest(self, files):
         mock_manifest = Mock()
@@ -116,10 +129,10 @@ class TestSequencingRunDataConverter(TestCase):
         # then
         actual_file = f'{self.actual_dir}/actual.xml'
         write_xml(tree, actual_file)
-        actual = load_xml(actual_file)
+        actual = load_xml_dict(actual_file)
 
         expected_file = f'{self.expected_dir}/sample_add_run.xml'
-        expected = load_xml(expected_file)
+        expected = load_xml_dict(expected_file)
 
         self.assertEqual(actual, expected)
 
@@ -134,10 +147,10 @@ class TestSequencingRunDataConverter(TestCase):
         # then
         actual_file = f'{self.actual_dir}/actual.xml'
         write_xml(tree, actual_file)
-        actual = load_xml(actual_file)
+        actual = load_xml_dict(actual_file)
 
         expected_file = f'{self.expected_dir}/sample_add_multiple_runs.xml'
-        expected = load_xml(expected_file)
+        expected = load_xml_dict(expected_file)
 
         self.assertEqual(actual, expected)
 
