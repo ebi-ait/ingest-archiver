@@ -5,14 +5,18 @@ import xmltodict
 from xml.etree import ElementTree
 
 
-def load_xml(filename) -> dict:
+def load_xml_dict(filename:str) -> dict:
     with open(filename) as xml_file:
         xml_dict = xmltodict.parse(xml_file.read())
         xml_file.close()
     return xml_dict
 
 
-def load_xml_from_string(string: str) -> dict:
+def load_xml_dict_from_string(string: str) -> dict:
+    return xmltodict.parse(string)
+
+
+def load_xml_tree_from_string(string: str) -> dict:
     return xml.etree.ElementTree.fromstring(string)
 
 
