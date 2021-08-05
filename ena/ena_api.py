@@ -3,13 +3,13 @@ import os
 import tempfile
 import time
 import xml.etree.ElementTree as ET
-from typing import List, OrderedDict
+from typing import List
 
 import requests
 
 from api.ingest import IngestAPI
 from ena.sequencing_run_converter import SequencingRunConverter
-from ena.util import write_xml, load_xml_tree_from_string, xml_to_string, load_xml_dict_from_string
+from ena.util import write_xml, load_xml_tree_from_string, xml_to_string, load_xml_dict_from_string, write_json
 
 SUBMIT_ACTIONS = ['ADD', 'MODIFY']
 
@@ -43,7 +43,10 @@ class EnaApi:
         all_run_data = output['all_run_data']
         self.save_result_to_file(result)
 
-        self.process_result(result, all_run_data)
+        report = self.process_result(result, all_run_data)
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        write_json(report, f'report_{timestamp}.json')
+
         return result
 
     def create_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str = '', action: str = 'ADD'):
