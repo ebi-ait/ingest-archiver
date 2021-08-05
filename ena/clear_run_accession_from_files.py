@@ -8,11 +8,6 @@ TOKEN = '<TOKEN>'
 INGEST_URL = 'https://api.ingest.dev.archive.data.humancellatlas.org/'
 
 
-def set_token_for_api():
-    headers = ingest_api.get_headers()
-    headers['Authorization'] = f'{TOKEN}'
-
-
 def get_submission():
     submission_url = \
         f'{INGEST_URL}/submissionEnvelopes/search/findByUuidUuid?uuid={submission_uuid}'
@@ -47,7 +42,7 @@ if __name__ == "__main__":
     submission_uuid = args.ingest_submission_uuid
 
     ingest_api = IngestAPI(INGEST_URL)
-    set_token_for_api()
+    ingest_api.set_token(TOKEN)
 
     submission = get_submission()
 

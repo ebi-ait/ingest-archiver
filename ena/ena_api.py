@@ -3,7 +3,7 @@ import os
 import tempfile
 import time
 import xml.etree.ElementTree as ET
-from typing import List
+from typing import List, OrderedDict
 
 import requests
 
@@ -68,7 +68,7 @@ class EnaApi:
             raise Error(f"An error occurred in writing the run xml : {str(e)}")
         return {
             'all_run_data': all_run_data,
-            'run_xml_path' : run_xml_path
+            'run_xml_path': run_xml_path
         }
 
     def post_files(self, files: dict):
@@ -77,9 +77,52 @@ class EnaApi:
         r.raise_for_status()
         return r.text
 
-    def process_result(self, result: str, run_data: dict):
+    def process_result(self, result: str, runs: List[dict]):
         result_dict = load_xml_dict_from_string(result)
-        return result_dict
+        run_xmls = result_dict['RECEIPT']['RUN']
+        accession_by_alias = {}
+        if not isinstance(run_xmls, list):
+            run_xmls = [run_xmls]
+
+        for run_xml in run_xmls:
+            accession = run_xml.get('@accession')
+            alias = run_xml.get('@alias')
+            accession_by_alias[alias] = accession
+
+            if not accession:
+                self.logger.warning(f'Skipping the run with alias {alias} because it has no accession.')
+                continue
+
+        report = {
+            'not_updated': [],
+            'updated': []
+        }
+        for run in runs:
+            alias = run.get('run_alias')
+            accession = accession_by_alias.get(alias)
+
+            files = run.get('files')
+            for file in files:
+                url = file.get('url')
+                if not accession:
+                    report['not_updated'].append({
+                        'file_url': url,
+                        'alias': alias,
+                        'error': 'no accession'
+                    })
+                    continue
+                file_json = self.ingest_api.get_entity(url)
+                content = file_json.get('content', {})
+                content['insdc_run_accessions'] = [accession]
+                patch = {'content': content}
+                self.ingest_api.patch(url, patch)
+                report['updated'].append({
+                    'file_url': url,
+                    'alias': alias,
+                    'accession': accession
+                })
+
+        return report
 
     def create_submission_xml(self, action: str = 'ADD'):
         if action.upper() not in SUBMIT_ACTIONS:

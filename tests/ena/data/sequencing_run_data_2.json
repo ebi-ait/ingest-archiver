@@ -4,6 +4,7 @@
   "experiment_accession": "ERX123457",
   "files": [
     {
+      "url": "url1",
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_I1_002.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -14,6 +15,7 @@
       "lane_index": 1
     },
     {
+      "url": "url2",
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R1_002.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -25,6 +27,7 @@
       "lane_index": 1
     },
     {
+      "url": "url3",
       "filename": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R2_002.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
