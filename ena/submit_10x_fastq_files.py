@@ -19,7 +19,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ingest_api = IngestAPI()
-    ingest_api.set_token(args.token)
+    ingest_api.set_token('Bearer ' + args.token)
 
     ena_api = EnaApi(ingest_api)
 
