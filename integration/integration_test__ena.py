@@ -19,11 +19,13 @@ class SampleRunTest(TestCase):
 
     def test_submit_run_xml(self):
         # TODO this has preexisting data in staging, automate creation
+        # the 10x fastq files is in hca-util upload area ab4f37be-7fd3-4c8f-9f12-7cfb55ef7131
         ingest_submission_uuid = '6fbcce27-f1ee-4606-a0b4-319f1d13b118'
         manifest_ids = self.ingest_api.get_manifest_ids_from_submission(ingest_submission_uuid)
         dir = os.path.dirname(os.path.realpath(__file__))
         md5_file = f'{dir}/md5.txt'
-        files = self.ena_api.create_xml_files(manifest_ids, md5_file)
+        # files need to be ftp-ed to the ftp upload area
+        files = self.ena_api.submit_run_xml_files(manifest_ids, md5_file)
         result_xml_tree = self.ena_api.post_files(files)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         write_xml(result_xml_tree, f'receipt_{timestamp}.xml')
