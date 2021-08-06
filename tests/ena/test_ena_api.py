@@ -69,7 +69,7 @@ class EnaApiTest(TestCase):
         </RECEIPT>
         """
 
-        report = self.ena_api.process_result(result, [run_data, run_data2])
+        report = self.ena_api.process_receipt(result, [run_data, run_data2])
 
         expected = {
             'not_updated': [

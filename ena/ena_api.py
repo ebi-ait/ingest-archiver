@@ -38,16 +38,16 @@ class EnaApi:
         submission_xml_path = output['submission_xml_path']
 
         files = [('SUBMISSION', open(submission_xml_path, 'r')), ('RUN', open(run_xml_path, 'r'))]
-        result = self.post_files(files)
+        receipt = self.post_files(files)
 
         all_run_data = output['all_run_data']
-        self.save_result_to_file(result)
+        self.save_receipt_to_file(receipt)
 
-        report = self.process_result(result, all_run_data)
+        report = self.process_receipt(receipt, all_run_data)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         write_json(report, f'report_{timestamp}.json')
 
-        return result
+        return receipt
 
     def create_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str = '', action: str = 'ADD'):
         submission_xml_path = self.create_submission_xml(action)
@@ -80,13 +80,29 @@ class EnaApi:
         r.raise_for_status()
         return r.text
 
-    def process_result(self, result: str, runs: List[dict]):
+    def process_receipt(self, result: str, runs: List[dict]):
         result_dict = load_xml_dict_from_string(result)
-        run_xmls = result_dict['RECEIPT']['RUN']
+        accession_by_alias = self._get_accessions_from_receipt(result_dict)
+        report = self._update_runs_with_accessions(accession_by_alias, runs)
+        return report
+
+    def _update_runs_with_accessions(self, accession_by_alias, runs):
+        report = {
+            'not_updated': [],
+            'updated': []
+        }
+        for run in runs:
+            alias = run.get('run_alias')
+            accession = accession_by_alias.get(alias)
+            files = run.get('files')
+            self._update_files_with_accession(accession, alias, files, report)
+        return report
+
+    def _get_accessions_from_receipt(self, result_dict):
         accession_by_alias = {}
+        run_xmls = result_dict['RECEIPT']['RUN']
         if not isinstance(run_xmls, list):
             run_xmls = [run_xmls]
-
         for run_xml in run_xmls:
             accession = run_xml.get('@accession')
             alias = run_xml.get('@alias')
@@ -95,37 +111,31 @@ class EnaApi:
             if not accession:
                 self.logger.warning(f'Skipping the run with alias {alias} because it has no accession.')
                 continue
+        return accession_by_alias
 
-        report = {
-            'not_updated': [],
-            'updated': []
-        }
-        for run in runs:
-            alias = run.get('run_alias')
-            accession = accession_by_alias.get(alias)
-
-            files = run.get('files')
-            for file in files:
-                url = file.get('url')
-                if not accession:
-                    report['not_updated'].append({
-                        'file_url': url,
-                        'alias': alias,
-                        'error': 'no accession'
-                    })
-                    continue
-                file_json = self.ingest_api.get_entity(url)
-                content = file_json.get('content', {})
-                content['insdc_run_accessions'] = [accession]
-                patch = {'content': content}
-                self.ingest_api.patch(url, patch)
-                report['updated'].append({
-                    'file_url': url,
-                    'alias': alias,
-                    'accession': accession
+    def _update_files_with_accession(self, accession, run_alias, files, report):
+        for file in files:
+            file_url = file.get('url')
+            if not accession:
+                report['not_updated'].append({
+                    'file_url': file_url,
+                    'alias': run_alias,
+                    'error': 'no accession'
                 })
+                continue
+            self._update_file_with_accession(accession, file_url)
+            report['updated'].append({
+                'file_url': file_url,
+                'alias': run_alias,
+                'accession': accession
+            })
 
-        return report
+    def _update_file_with_accession(self, accession, file_url):
+        file_json = self.ingest_api.get_entity(file_url)
+        content = file_json.get('content', {})
+        content['insdc_run_accessions'] = [accession]
+        patch = {'content': content}
+        self.ingest_api.patch(file_url, patch)
 
     def create_submission_xml(self, action: str = 'ADD'):
         if action.upper() not in SUBMIT_ACTIONS:
@@ -149,8 +159,8 @@ class EnaApi:
         write_xml(submission_xml_tree, path)
         return path
 
-    def save_result_to_file(self, result):
-        result_tree = load_xml_tree_from_string(result)
+    def save_receipt_to_file(self, receipt):
+        result_tree = load_xml_tree_from_string(receipt)
         result_xml_tree = ET.ElementTree(result_tree)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         write_xml(result_xml_tree, f'receipt_{timestamp}.xml')
