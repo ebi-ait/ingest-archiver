@@ -4,6 +4,7 @@
   "files": [
     {
       "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250",
+      "uuid": "1b3c8158-40b1-4176-8971-78f875585ca7",
       "filename": "5478STDY7717491_S1_L001_I1_001.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -11,10 +12,12 @@
       "read_types": [
         "sample_barcode"
       ],
-      "lane_index": 1
+      "lane_index": 1,
+      "accession": "ERR1234567"
     },
     {
       "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251",
+      "uuid": "81323fe9-509f-4d0f-a6a3-e624421c6f15",
       "filename": "5478STDY7717491_S1_L001_R1_001.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -23,10 +26,12 @@
         "cell_barcode",
         "umi_barcode"
       ],
-      "lane_index": 1
+      "lane_index": 1,
+      "accession": "ERR1234567"
     },
     {
       "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252",
+      "uuid": "9a3b04ca-00db-460b-9715-d2e6c1d249fd",
       "filename": "5478STDY7717491_S1_L001_R2_001.fastq.gz",
       "filetype": "fastq",
       "checksum_method": "MD5",
@@ -34,7 +39,8 @@
       "read_types": [
         "single"
       ],
-      "lane_index": 1
+      "lane_index": 1,
+      "accession": "ERR1234567"
     }
   ]
 }

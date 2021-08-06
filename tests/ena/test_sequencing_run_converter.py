@@ -28,7 +28,7 @@ class TestSequencingRunDataConverter(TestCase):
         runs = self.run_converter.prepare_sequencing_runs(manifest_id, md5_file,
                                                                   '8f44d9bb-527c-4d1d-b259-ee9ac62e11b6')
 
-        expected_run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
+        expected_run_data = load_json(f'{self.expected_dir}/sequencing_run_data__with_ftp_dir.json')
 
         # then
         self.assertEqual(runs, [expected_run_data])
@@ -137,7 +137,7 @@ class TestSequencingRunDataConverter(TestCase):
 
     def test_convert_sequencing_run_data_to_xml_tree(self):
         # given
-        run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
+        run_data = load_json(f'{self.expected_dir}/sequencing_run_data__with_ftp_dir.json')
 
         # when
         tree = self.run_converter.convert_sequencing_run_data_to_xml_tree([run_data])
@@ -154,8 +154,8 @@ class TestSequencingRunDataConverter(TestCase):
 
     def test_convert_sequencing_run_data_to_xml_tree__multiple_runs(self):
         # given
-        run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
-        run_data_2 = load_json(f'{self.expected_dir}/sequencing_run_data_2.json')
+        run_data = load_json(f'{self.expected_dir}/sequencing_run_data__with_ftp_dir.json')
+        run_data_2 = load_json(f'{self.expected_dir}/sequencing_run_data__with_ftp_dir_2.json')
 
         # when
         tree = self.run_converter.convert_sequencing_run_data_to_xml_tree([run_data, run_data_2])

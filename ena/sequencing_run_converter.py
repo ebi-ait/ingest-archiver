@@ -40,9 +40,7 @@ class SequencingRunConverter:
             experiment_ref.set('accession', run_data.get('experiment_accession'))
 
             data_block = ET.SubElement(run, "DATA_BLOCK")
-
             files = ET.SubElement(data_block, "FILES")
-
             SequencingRunConverter.set_files_in_data_block(files, run_data)
 
         run_xml_tree = ET.ElementTree(run_set)
@@ -65,58 +63,59 @@ class SequencingRunConverter:
         manifest = Manifest(self.ingest_api, manifest_id)
         return manifest
 
-    def prepare_sequencing_runs(self, manifest_id: str, md5_file: str,
-                                ftp_parent_dir: str = '', action: str = 'ADD'):
-
+    def prepare_sequencing_runs(self, manifest_id: str, md5_file: str, ftp_parent_dir: str = '', action: str = 'ADD'):
         manifest = self.get_manifest(manifest_id)
         assay_process = manifest.get_assay_process()
         assay_process_uuid = assay_process['uuid']['uuid']
         md5 = self.load_md5_file(md5_file)
-        files = list(manifest.get_files())
+        manifest_files = list(manifest.get_files())
+        files = [self._get_file_info(file, md5, ftp_parent_dir) for file in manifest_files]
+        files_by_lane_index = self._group_files_by_lane_index(files)
 
-        lanes = {}
         runs = []
-        for manifest_file in files:
-            lane_index = manifest_file.get('content').get('lane_index', 1)
-            if lane_index not in lanes:
-                lanes[lane_index] = []
-            lanes[lane_index].append(manifest_file)
-
-        for lane_index in lanes.keys():
-            lane_files = lanes.get(lane_index)
-
-            data = {
-                'experiment_accession': self._get_experiment_accession(assay_process),
-                'files': []
-            }
-
-            for manifest_file in lane_files:
-                file = self._get_file_info(manifest_file, md5, ftp_parent_dir)
-                data['files'].append(file)
-                if manifest_file.get('content', {}).get('insdc_run_accessions', []):
-                    data['run_accession'] = manifest_file['content']['insdc_run_accessions'][0]
-
-                if action.upper() == 'ADD':
-                    # TODO Change run alias to have HCA_ prefix
-                    run_alias = f'sequencingRun_{assay_process_uuid}_{lane_index}'
-                    data['run_alias'] = run_alias
-                    data['run_title'] = run_alias
-
-                    if data.get('run_accession'):
-                        raise Error(
-                            f'The sequencing run data from manifest id {manifest_id} with lane index {lane_index}'
-                            f'should have no accession if action is ADD')
-
-                if action.upper() == 'MODIFY' and not data.get('run_accession'):
-                    raise Error(f'The sequencing run data from manifest id {manifest_id} with lane index {lane_index}'
-                                f'should have accession if action is MODIFY')
-
-            runs.append(data)
+        for lane_index, lane_files in files_by_lane_index.items():
+            alias = f'sequencingRun_{assay_process_uuid}_{lane_index}'
+            run = self._create_run_data(alias, action, assay_process, lane_files)
+            runs.append(run)
 
         return runs
 
+    def _create_run_data(self, alias, action, assay_process, lane_files):
+        run_data = {
+            'experiment_accession': self._get_experiment_accession(assay_process),
+            'files': lane_files
+        }
+
+        accession = lane_files[0].get('accession') if lane_files else None
+
+        if action.upper() == 'ADD':
+            if accession:
+                raise Error(f'The sequencing run {alias} should have no run accession {accession}.')
+
+            run_data['run_alias'] = alias
+            run_data['run_title'] = alias
+
+        if action.upper() == 'MODIFY':
+            if not accession:
+                raise Error(f'The sequencing run {alias} should have a run accession')
+
+            run_data['run_accession'] = accession
+
+        return run_data
+
+    def _group_files_by_lane_index(self, files):
+        lanes = {}
+        for file in files:
+            lane_index = file.get('lane_index')
+            if lane_index not in lanes:
+                lanes[lane_index] = []
+            lanes[lane_index].append(file)
+        return lanes
+
     def _get_experiment_accession(self, assay_process: dict):
-        experiment_accession = assay_process['content'].get('insdc_experiment', {}).get('insdc_experiment_accession')
+        assay_content = assay_process.get('content', {})
+        insdc_experiment = assay_content.get('insdc_experiment', {})
+        experiment_accession = insdc_experiment.get('insdc_experiment_accession')
         if not experiment_accession:
             assay_process_uuid = assay_process['uuid']['uuid']
             raise Error(f'The sequencing experiment accession for assay process {assay_process_uuid} is missing.')
@@ -128,15 +127,13 @@ class SequencingRunConverter:
         if ftp_parent_dir:
             file_location = f'{ftp_parent_dir}/{filename}'
 
-        checksum = md5.get(filename)
-
-        if not checksum:
-            raise Error(f'There is no checksum found for {filename}')
-
+        checksum = self._get_checksum(filename, md5)
         read_index = manifest_file['content']['read_index']
         lane_index = manifest_file['content']['lane_index']
+
         file = {
             'url': manifest_file['_links']['self']['href'],
+            'uuid': manifest_file['uuid']['uuid'],
             'filename': file_location,
             'filetype': 'fastq',
             'checksum_method': 'MD5',
@@ -144,7 +141,19 @@ class SequencingRunConverter:
             'read_types': READ_TYPES.get(read_index),
             'lane_index': lane_index
         }
+
+        file_content = manifest_file.get('content', {})
+        run_accessions = file_content.get('insdc_run_accessions', [])
+        if run_accessions:
+            file['accession'] = run_accessions[0]
+
         return file
+
+    def _get_checksum(self, filename, md5):
+        checksum = md5.get(filename)
+        if not checksum:
+            raise Error(f'There is no checksum found for {filename}')
+        return checksum
 
     @staticmethod
     def load_md5_file(md5_file: str):

@@ -56,8 +56,8 @@ class EnaApiTest(TestCase):
     def test_process_result(self):
         self.ingest_api.get_entity = Mock(return_value={'content': {}})
         self.ingest_api.patch = Mock()
-        run_data = load_json(f'{self.expected_dir}/sequencing_run_data.json')
-        run_data2 = load_json(f'{self.expected_dir}/sequencing_run_data_2.json')
+        run_data = load_json(f'{self.expected_dir}/sequencing_run_data__with_ftp_dir.json')
+        run_data2 = load_json(f'{self.expected_dir}/sequencing_run_data__with_ftp_dir_2.json')
         result = """<?xml version='1.0' encoding='UTF-8'?>
         <RECEIPT receiptDate="2021-08-05T11:27:47.033+01:00" submissionFile="submission.xml" success="true">
              <RUN accession="ERR6414234" alias="sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1" status="PRIVATE" />

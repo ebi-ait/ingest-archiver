@@ -6,6 +6,7 @@
     "files": [
       {
         "url": "url1",
+        "uuid": "uuid1",
         "filename": "5478STDY7717491_S1_L001_I1_001.fastq.gz",
         "filetype": "fastq",
         "checksum_method": "MD5",
@@ -17,6 +18,7 @@
       },
       {
         "url": "url2",
+        "uuid": "uuid2",
         "filename": "5478STDY7717491_S1_L001_R1_001.fastq.gz",
         "filetype": "fastq",
         "checksum_method": "MD5",
@@ -29,6 +31,7 @@
       },
       {
         "url": "url3",
+        "uuid": "uuid3",
         "filename": "5478STDY7717491_S1_L001_R2_001.fastq.gz",
         "filetype": "fastq",
         "checksum_method": "MD5",
@@ -47,6 +50,7 @@
     "files": [
       {
         "url": "url4",
+        "uuid": "uuid4",
         "filename": "5478STDY7717491_S1_L002_I1_001.fastq.gz",
         "filetype": "fastq",
         "checksum_method": "MD5",
@@ -58,6 +62,7 @@
       },
       {
         "url": "url5",
+        "uuid": "uuid5",
         "filename": "5478STDY7717491_S1_L002_R1_001.fastq.gz",
         "filetype": "fastq",
         "checksum_method": "MD5",
@@ -70,6 +75,7 @@
       },
       {
         "url": "url6",
+        "uuid": "uuid6",
         "filename": "5478STDY7717491_S1_L002_R2_001.fastq.gz",
         "filetype": "fastq",
         "checksum_method": "MD5",
