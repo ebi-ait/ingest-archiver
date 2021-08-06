@@ -26,12 +26,6 @@ class EnaApi:
         self.run_converter = SequencingRunConverter(self.ingest_api)
         self.logger = logging.getLogger(__name__)
 
-    def _require_env_vars(self):
-        if not self.url:
-            raise Error('The ENA_API_URL be set in environment variables.')
-        if not all([self.user, self.password]):
-            raise Error('The ENA_USER, ENA_PASSWORD must be set in environment variables.')
-
     def submit_run_xml_files(self, manifests_ids: List[str], md5_file: str, ftp_parent_dir: str, action: str = 'ADD'):
         output = self.create_xml_files(manifests_ids, md5_file, ftp_parent_dir, action)
         run_xml_path = output['run_xml_path']
@@ -79,6 +73,12 @@ class EnaApi:
         r = requests.post(self.url, files=files, auth=(self.user, self.password))
         r.raise_for_status()
         return r.text
+
+    def _require_env_vars(self):
+        if not self.url:
+            raise Error('The ENA_API_URL be set in environment variables.')
+        if not all([self.user, self.password]):
+            raise Error('The ENA_USER, ENA_PASSWORD must be set in environment variables.')
 
     def process_receipt(self, result: str, runs: List[dict]):
         result_dict = load_xml_dict_from_string(result)
