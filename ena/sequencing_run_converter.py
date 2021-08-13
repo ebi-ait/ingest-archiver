@@ -1,3 +1,4 @@
+import time
 import xml.etree.ElementTree as ET
 from typing import List
 
@@ -71,10 +72,11 @@ class SequencingRunConverter:
         manifest_files = list(manifest.get_files())
         files = [self._get_file_info(file, md5, ftp_parent_dir) for file in manifest_files]
         files_by_lane_index = self._group_files_by_lane_index(files)
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
 
         runs = []
         for lane_index, lane_files in files_by_lane_index.items():
-            alias = f'sequencingRun_{assay_process_uuid}_{lane_index}'
+            alias = f'{timestamp}_sequencingRun_{assay_process_uuid}_{lane_index}'
             run = self._create_run_data(alias, action, assay_process, lane_files)
             runs.append(run)
 
