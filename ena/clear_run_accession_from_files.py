@@ -16,7 +16,7 @@ def get_submission():
 
 
 def remove_run_accessions(files):
-    logger.info('Accessing removing started')
+    logger.info('Run accessions removing started')
     for file in files:
         file_id = ingest_api.get_entity_id(file, 'files')
         file_content = file['content']
@@ -26,7 +26,7 @@ def remove_run_accessions(files):
         }
         ingest_api.patch_entity_by_id('files', file_id, patch)
         logger.debug(f'File with id: {file_id} has been processed')
-    logger.info('Accessing removing ended')
+    logger.info('Run accessions removing ended')
 
 
 if __name__ == "__main__":
