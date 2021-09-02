@@ -6,6 +6,12 @@ from archiver.archiver import Manifest, Biomaterial, ArchiverException
 
 
 class ManifestTest(TestCase):
+    def test_get_submission_uuid(self):
+        ingest_api_mock = MagicMock(name='ingest_api')
+        ingest_api_mock.get_manifest_by_id = MagicMock(return_value={'envelopeUuid': 'uuid'})
+        manifest = Manifest(ingest_api_mock, 'manifest_id')
+        submission_uuid = manifest.get_submission_uuid()
+        self.assertEqual(submission_uuid, 'uuid')
 
     def test_get_project(self):
         ingest_api_mock = MagicMock(name='ingest_api')

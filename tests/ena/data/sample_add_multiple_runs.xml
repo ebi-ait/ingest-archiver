@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<RUN_SET>
+    <RUN alias="sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1">
+        <TITLE>sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1</TITLE>
+        <EXPERIMENT_REF accession="ERX123456"/>
+        <DATA_BLOCK>
+            <FILES>
+                <FILE filename="8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_I1_001.fastq.gz"
+                      filetype="fastq" checksum_method="MD5"
+                      checksum="646fef059b90c457c04ef1e54f722fbb">
+                    <READ_TYPE>sample_barcode</READ_TYPE>
+                </FILE>
+                <FILE filename="8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R1_001.fastq.gz"
+                      filetype="fastq" checksum_method="MD5"
+                      checksum="986c098dfd7bb40db113e05812fafde6">
+                    <READ_TYPE>cell_barcode</READ_TYPE>
+                    <READ_TYPE>umi_barcode</READ_TYPE>
+                </FILE>
+                <FILE filename="8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R2_001.fastq.gz"
+                      filetype="fastq" checksum_method="MD5"
+                      checksum="e2190744a78e891fc030284431e361da">
+                    <READ_TYPE>single</READ_TYPE>
+                </FILE>
+            </FILES>
+        </DATA_BLOCK>
+    </RUN>
+    <RUN alias="sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36c_1">
+        <TITLE>sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36c_1</TITLE>
+        <EXPERIMENT_REF accession="ERX123457"/>
+        <DATA_BLOCK>
+            <FILES>
+                <FILE filename="8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_I1_002.fastq.gz"
+                      filetype="fastq" checksum_method="MD5"
+                      checksum="dummychecksumi1">
+                    <READ_TYPE>sample_barcode</READ_TYPE>
+                </FILE>
+                <FILE filename="8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R1_002.fastq.gz"
+                      filetype="fastq" checksum_method="MD5"
+                      checksum="dummychecksumr1">
+                    <READ_TYPE>cell_barcode</READ_TYPE>
+                    <READ_TYPE>umi_barcode</READ_TYPE>
+                </FILE>
+                <FILE filename="8f44d9bb-527c-4d1d-b259-ee9ac62e11b6/5478STDY7717491_S1_L001_R2_002.fastq.gz"
+                      filetype="fastq" checksum_method="MD5"
+                      checksum="dummychecksumr2">
+                    <READ_TYPE>single</READ_TYPE>
+                </FILE>
+            </FILES>
+        </DATA_BLOCK>
+    </RUN>
+</RUN_SET>

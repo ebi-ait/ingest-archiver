@@ -1,0 +1,71 @@
+{
+  "bundleUuid": null,
+  "bundleVersion": null,
+  "envelopeUuid": "8f44d9bb-527c-4d1d-b259-ee9ac62e11b6",
+  "dataFiles": [
+    "fc48e452-e7d9-454b-91e3-e2bf647f3925",
+    "d603ab3b-6410-47b4-993a-cfd2c2f025b8",
+    "bfba8556-386a-4c4b-b05b-bcda222cfd30"
+  ],
+  "fileBiomaterialMap": {
+    "1355481d-736f-408b-8ff5-5f5e1832c464": [
+      "1355481d-736f-408b-8ff5-5f5e1832c464"
+    ],
+    "cee878e7-2bc1-41f9-aff0-d4926ab64100": [
+      "cee878e7-2bc1-41f9-aff0-d4926ab64100"
+    ],
+    "eb6beffb-bb6c-4f73-9d2a-79bb4edc36cf": [
+      "eb6beffb-bb6c-4f73-9d2a-79bb4edc36cf"
+    ]
+  },
+  "fileProcessMap": {
+    "21aa0e1a-a31b-42ae-a82b-5773c481e36b": [
+      "21aa0e1a-a31b-42ae-a82b-5773c481e36b"
+    ],
+    "ae1fa31c-e680-4ba3-a6b5-0774c75610a0": [
+      "ae1fa31c-e680-4ba3-a6b5-0774c75610a0"
+    ],
+    "52cd5c49-e31f-4fc5-9113-f84820a52cdd": [
+      "52cd5c49-e31f-4fc5-9113-f84820a52cdd"
+    ]
+  },
+  "fileProjectMap": {
+    "b176d756-62d8-4933-83a4-8b026380262f": [
+      "b176d756-62d8-4933-83a4-8b026380262f"
+    ]
+  },
+  "fileProtocolMap": {
+    "a56bedfb-f2d1-4984-a468-b4375aa116ad": [
+      "a56bedfb-f2d1-4984-a468-b4375aa116ad"
+    ],
+    "827999bd-35ad-4a36-aea2-9b38061dfaea": [
+      "827999bd-35ad-4a36-aea2-9b38061dfaea"
+    ],
+    "d07be6ef-5cee-4eb9-bb90-6f5072a7d379": [
+      "d07be6ef-5cee-4eb9-bb90-6f5072a7d379"
+    ],
+    "47cc82cb-7246-4f59-a767-40c67a4eb6f3": [
+      "47cc82cb-7246-4f59-a767-40c67a4eb6f3"
+    ]
+  },
+  "fileFilesMap": {
+    "1b3c8158-40b1-4176-8971-78f875585ca7": [
+      "1b3c8158-40b1-4176-8971-78f875585ca7"
+    ],
+    "81323fe9-509f-4d0f-a6a3-e624421c6f15": [
+      "81323fe9-509f-4d0f-a6a3-e624421c6f15"
+    ],
+    "9a3b04ca-00db-460b-9715-d2e6c1d249fd": [
+      "9a3b04ca-00db-460b-9715-d2e6c1d249fd"
+    ]
+  },
+  "_links": {
+    "self": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/bundleManifests/60f2a4a6d5d575160aafb78f"
+    },
+    "bundleManifest": {
+      "href": "https://api.ingest.archive.data.humancellatlas.org/bundleManifests/60f2a4a6d5d575160aafb78f",
+      "title": "A single bundle manifest (describing which submitted contents went into which bundle in the datastore)"
+    }
+  }
+}
