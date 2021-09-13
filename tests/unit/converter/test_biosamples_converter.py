@@ -1,3 +1,4 @@
+import datetime
 import json
 import unittest
 from os.path import dirname
@@ -21,7 +22,7 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        release_date = '2020-08-01T14:26:37.998Z'
+        release_date = datetime.datetime(2020, 8, 1, 14, 26, 37, 998000)
         biosample = self.__create_a_sample(release_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain,
@@ -33,10 +34,10 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        submission_date = '2019-07-18T21:12:39.770Z'
+        submission_date = datetime.datetime(2019, 7, 18, 21, 12, 39, 770000)
         biosample = self.__create_a_sample(submission_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain, )
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain)
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
@@ -45,7 +46,7 @@ class BioSamplesConverterTests(unittest.TestCase):
             accession='SAMEA6877932',
             name='Bone Marrow CD34+ stem/progenitor cells',
             release=date,
-            update='2020-06-12T14:26:37.998Z',
+            update=datetime.datetime(2020, 6, 12, 14, 26, 37, 998000),
             domain=self.domain,
             species='Homo sapiens',
             ncbi_taxon_id=9606,
@@ -66,7 +67,7 @@ class BioSamplesConverterTests(unittest.TestCase):
         return biosample
 
     def __get_biomaterial_by_index(self, index):
-        return list(self.biomaterials['biomaterials'].values())[index]
+        return list(map(lambda attribute: attribute['attributes'], list(self.biomaterials['biomaterials'].values())))[index]
 
     @staticmethod
     def __create_attributes(biosample: Sample, attributes: dict):
@@ -93,7 +94,7 @@ class SampleMatcher:
                        self.expected.name == other.name and \
                        self.expected.update == other.update and \
                        self.expected.release == other.release and \
-                       self.expected.domain == other.default_domain and \
+                       self.expected.domain == other.domain and \
                        self.expected.species == other.species and \
                        self.expected.ncbi_taxon_id == other.ncbi_taxon_id
         attributes_matcher = AttributeMatcher(self.expected.attributes)

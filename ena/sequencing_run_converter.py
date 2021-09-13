@@ -76,7 +76,7 @@ class SequencingRunConverter:
 
         runs = []
         for lane_index, lane_files in files_by_lane_index.items():
-            alias = f'{timestamp}_sequencingRun_{assay_process_uuid}_{lane_index}'
+            alias = f'sequencingRun_{assay_process_uuid}_{lane_index}'
             run = self._create_run_data(alias, action, assay_process, lane_files)
             runs.append(run)
 
