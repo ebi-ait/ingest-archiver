@@ -34,9 +34,10 @@ class ManifestTest(TestCase):
         ingest_api_mock.get_manifest_by_id = MagicMock(return_value={'fileFilesMap': ['f1']})
         ingest_api_mock.get_file_by_uuid = MagicMock()
         related_entity_map = {
-            'derivedByProcesses': iter('p1')
+            'derivedByProcesses': iter(['p1'])
         }
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
+        ingest_api_mock.get_related_entity_count = MagicMock(return_value=1)
         manifest = Manifest(ingest_api_mock, 'manifest_id')
         assay_process = manifest.get_assay_process()
         self.assertEqual(assay_process, 'p1')
@@ -49,6 +50,7 @@ class ManifestTest(TestCase):
             'derivedByProcesses': iter(['p1', 'p2'])
         }
         ingest_api_mock.get_related_entity = lambda f, relationship, t: related_entity_map.get(relationship)
+        ingest_api_mock.get_related_entity_count = MagicMock(return_value=2)
         manifest = Manifest(ingest_api_mock, 'manifest_id')
 
         with self.assertRaises(ArchiverException):
@@ -139,7 +141,7 @@ class ManifestTest(TestCase):
         manifest = Manifest(ingest_api_mock, 'manifest_id')
         manifest.get_assay_process = MagicMock()
         files = manifest.get_files()
-        self.assertEqual(files, ['f1', 'f2'])
+        self.assertEqual(list(files), ['f1', 'f2'])
 
     def test_get_input_biomaterial(self):
         ingest_api_mock = MagicMock(name='ingest_api')
