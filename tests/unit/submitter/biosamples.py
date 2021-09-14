@@ -7,7 +7,7 @@ from mock import MagicMock, call
 from biosamples_v4.models import Sample
 from hca.submission import HcaSubmission, Entity
 from submitter.biosamples import BioSamplesSubmitter
-from tests.utils import make_ingest_entity, random_id, random_uuid
+from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
 class TestBioSamplesSubmitter(unittest.TestCase):
