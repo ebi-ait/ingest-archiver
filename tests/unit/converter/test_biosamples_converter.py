@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 import unittest
 from os.path import dirname
@@ -22,7 +22,7 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        release_date = datetime.datetime(2020, 8, 1, 14, 26, 37, 998000)
+        release_date = datetime(2020, 8, 1, 14, 26, 37, 998000)
         biosample = self.__create_a_sample(release_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain,
@@ -34,7 +34,7 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        submission_date = datetime.datetime(2019, 7, 18, 21, 12, 39, 770000)
+        submission_date = datetime(2019, 7, 18, 21, 12, 39, 770000)
         biosample = self.__create_a_sample(submission_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain)
@@ -46,7 +46,7 @@ class BioSamplesConverterTests(unittest.TestCase):
             accession='SAMEA6877932',
             name='Bone Marrow CD34+ stem/progenitor cells',
             release=date,
-            update=datetime.datetime(2020, 6, 12, 14, 26, 37, 998000),
+            update=datetime(2020, 6, 12, 14, 26, 37, 998000),
             domain=self.domain,
             species='Homo sapiens',
             ncbi_taxon_id=9606,
