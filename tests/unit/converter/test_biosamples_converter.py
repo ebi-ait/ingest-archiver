@@ -22,11 +22,11 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        release_date = datetime(2020, 8, 1, 14, 26, 37, 998000)
+        release_date = '2020-08-01T14:26:37.998Z'
         biosample = self.__create_a_sample(release_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain,
-                                                                 release_date)
+                                                                 str(release_date))
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
@@ -34,18 +34,18 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        submission_date = datetime(2019, 7, 18, 21, 12, 39, 770000)
+        submission_date = '2019-07-18T21:12:39.770Z'
         biosample = self.__create_a_sample(submission_date)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain)
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
-    def __create_a_sample(self, date):
+    def __create_a_sample(self, release_date):
         biosample = Sample(
             accession='SAMEA6877932',
             name='Bone Marrow CD34+ stem/progenitor cells',
-            release=date,
+            release=datetime.strptime(release_date, '%Y-%m-%dT%H:%M:%S.%fZ'),
             update=datetime(2020, 6, 12, 14, 26, 37, 998000),
             domain=self.domain,
             species='Homo sapiens',
