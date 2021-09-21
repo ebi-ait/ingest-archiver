@@ -67,6 +67,10 @@ def archive():
     submission_uuid = data.get('submission_uuid')
     exclude_types = data.get('exclude_types')
     alias_prefix = data.get('alias_prefix')
+    is_direct_archiving = data.get('is_direct_archiving')
+
+    if not is_direct_archiving:
+        is_direct_archiving = config.DIRECT_SUBMISSION
 
     if not submission_uuid:
         error = {
@@ -74,7 +78,7 @@ def archive():
         }
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
-    if config.DIRECT_SUBMISSION:
+    if is_direct_archiving:
         direct_archiver = direct_archiver_from_config()
         submission = direct_archiver.archive_submission(submission_uuid)
         response = submission.as_dict(string_lists=True)
