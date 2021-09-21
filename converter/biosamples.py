@@ -60,9 +60,4 @@ class BioSamplesConverter:
 
     @staticmethod
     def __convert_datetime(datetime_str: str) -> datetime:
-        if datetime_str:
-            if '.' in datetime_str:
-                datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-            else:
-                datetime_format = '%Y-%m-%dT%H:%M:%SZ'
-            return datetime.strptime(datetime_str, datetime_format)
+        return datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ')

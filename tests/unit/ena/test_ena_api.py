@@ -1,3 +1,4 @@
+import os
 import xml
 from unittest import TestCase
 from unittest.mock import Mock, patch, mock_open
@@ -12,7 +13,7 @@ class EnaApiTest(TestCase):
     def setUp(self) -> None:
         self.ingest_api = Mock()
         self.ena_api = EnaApi(self.ingest_api)
-        self.expected_dir = 'data'
+        self.expected_dir = os.path.dirname(__file__) + '/data'
 
     def test_create_submission_xml(self):
         submission_xml_path = self.ena_api.create_submission_xml()
