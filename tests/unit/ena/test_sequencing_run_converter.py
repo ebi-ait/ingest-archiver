@@ -1,3 +1,4 @@
+import os
 import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
@@ -13,7 +14,7 @@ class TestSequencingRunDataConverter(TestCase):
         self.run_converter = SequencingRunConverter(self.ingest_api)
         self.temp_dir = tempfile.TemporaryDirectory()
         self.actual_dir = self.temp_dir.name
-        self.expected_dir = 'data'
+        self.expected_dir = os.path.dirname(__file__) + '/data'
 
         files = load_json(f'{self.expected_dir}/files.json')
         mock_manifest = self._create_mock_manifest(files)

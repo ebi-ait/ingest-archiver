@@ -34,7 +34,7 @@ AAP_API_DOMAIN = os.environ.get('AAP_API_DOMAIN', AAP_API_DOMAIN)
 
 DSP_API_URL = os.environ.get('DSP_API_URL', os.environ.get('USI_API_URL', 'https://submission-test.ebi.ac.uk'))
 
-JSON_DIR = os.path.dirname(__file__) + '/tests/json/'
+JSON_DIR = os.path.dirname(__file__) + '/tests/unit/json/'
 ENCODING = 'utf-8'
 
 # polling config
