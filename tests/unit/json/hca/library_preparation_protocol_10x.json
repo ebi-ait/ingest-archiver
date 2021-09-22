@@ -9,8 +9,8 @@
 			"text": "polyA RNA"
 		},
 		"library_construction_method": {
-			"text": "10X v2 sequencing",
-			"ontology": "EFO:0009310",
+			"text": "10X 3' v2",
+			"ontology": "EFO:0009899",
 			"ontology_label": "Smart-seq2"
 		},
 		"nucleic_acid_source": "single cell",

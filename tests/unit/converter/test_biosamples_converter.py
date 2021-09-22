@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import unittest
 from os.path import dirname
@@ -22,15 +23,14 @@ class BioSamplesConverterTests(unittest.TestCase):
         biomaterial = self.__get_biomaterial_by_index(0)
 
         release_date = '2020-08-01T14:26:37.998Z'
-        sample_release_date = '2020-08-01 14:26:37.998000'
         additional_attributes = {
-            'release_date': release_date,
+            'release_date': str(release_date),
             'domain': self.domain
         }
 
-        biosample = self.__create_a_sample(sample_release_date)
+        biosample = self.__create_a_sample(release_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial['attributes'], additional_attributes)
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes)
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
@@ -38,23 +38,23 @@ class BioSamplesConverterTests(unittest.TestCase):
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
-        submission_date = '2019-07-18 21:12:39.770000'
+        submission_date = '2019-07-18T21:12:39.770Z'
         additional_attributes = {
             'domain': self.domain
         }
 
         biosample = self.__create_a_sample(submission_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial['attributes'], additional_attributes )
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes )
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
-    def __create_a_sample(self, date):
+    def __create_a_sample(self, release_date):
         biosample = Sample(
             accession='SAMEA6877932',
             name='Bone Marrow CD34+ stem/progenitor cells',
-            release=date,
-            update='2020-06-12 14:26:37.998000',
+            release=datetime.strptime(release_date, '%Y-%m-%dT%H:%M:%S.%fZ'),
+            update=datetime(2020, 6, 12, 14, 26, 37, 998000),
             domain=self.domain,
             species='Homo sapiens',
             ncbi_taxon_id=9606,
@@ -75,7 +75,7 @@ class BioSamplesConverterTests(unittest.TestCase):
         return biosample
 
     def __get_biomaterial_by_index(self, index):
-        return list(self.biomaterials['biomaterials'].values())[index]
+        return list(map(lambda attribute: attribute['attributes'], list(self.biomaterials['biomaterials'].values())))[index]
 
     @staticmethod
     def __create_attributes(biosample: Sample, attributes: dict):
@@ -100,8 +100,8 @@ class SampleMatcher:
     def __eq__(self, other):
         other_equals = self.expected.accession == other.accession and \
                        self.expected.name == other.name and \
-                       self.expected.update == str(other.update) and \
-                       self.expected.release == str(other.release) and \
+                       self.expected.update == other.update and \
+                       self.expected.release == other.release and \
                        self.expected.domain == other.domain and \
                        self.expected.species == other.species and \
                        self.expected.ncbi_taxon_id == other.ncbi_taxon_id

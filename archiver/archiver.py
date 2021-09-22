@@ -80,6 +80,9 @@ class Manifest:
         self.sequencing_protocol = None
         self.input_biomaterial = None
 
+    def get_submission_uuid(self):
+        return self.manifest.get('envelopeUuid')
+
     def get_project(self):
         if not self.project:
             project_uuid = list(self.manifest['fileProjectMap'])[0]

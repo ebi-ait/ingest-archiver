@@ -6,8 +6,13 @@ from mock import MagicMock, call
 
 from biosamples_v4.models import Sample
 from hca.submission import HcaSubmission, Entity
+<<<<<<< HEAD:tests/submitter/test_biosamples_submitter.py
 from submitter.biosamples import BioSamplesSubmitter, ERROR_KEY
+from tests.utils import make_ingest_entity, random_id, random_uuid
+=======
+from submitter.biosamples import BioSamplesSubmitter
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
+>>>>>>> ce7128ad5502413cc7dfc9ec2d22b5e838fb3052:tests/unit/submitter/biosamples.py
 
 
 class TestBioSamplesSubmitter(unittest.TestCase):

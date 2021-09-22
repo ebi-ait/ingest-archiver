@@ -1,0 +1,44 @@
+{
+  "run_alias": "sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1",
+  "run_title": "sequencingRun_21aa0e1a-a31b-42ae-a82b-5773c481e36b_1",
+  "experiment_accession": "ERX123456",
+  "files": [
+    {
+      "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb250",
+      "uuid": "1b3c8158-40b1-4176-8971-78f875585ca7",
+      "filename": "5478STDY7717491_S1_L001_I1_001.fastq.gz",
+      "filetype": "fastq",
+      "checksum_method": "MD5",
+      "checksum": "646fef059b90c457c04ef1e54f722fbb",
+      "read_types": [
+        "sample_barcode"
+      ],
+      "lane_index": 1
+    },
+    {
+      "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb251",
+      "uuid": "81323fe9-509f-4d0f-a6a3-e624421c6f15",
+      "filename": "5478STDY7717491_S1_L001_R1_001.fastq.gz",
+      "filetype": "fastq",
+      "checksum_method": "MD5",
+      "checksum": "986c098dfd7bb40db113e05812fafde6",
+      "read_types": [
+        "cell_barcode",
+        "umi_barcode"
+      ],
+      "lane_index": 1
+    },
+    {
+      "url": "https://api.ingest.archive.data.humancellatlas.org/files/60f05d0ad5d575160aafb252",
+      "uuid": "9a3b04ca-00db-460b-9715-d2e6c1d249fd",
+      "filename": "5478STDY7717491_S1_L001_R2_001.fastq.gz",
+      "filetype": "fastq",
+      "checksum_method": "MD5",
+      "checksum": "e2190744a78e891fc030284431e361da",
+      "read_types": [
+        "single"
+      ],
+      "lane_index": 1
+    }
+  ]
+}
