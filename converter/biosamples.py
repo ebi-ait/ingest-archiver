@@ -70,4 +70,3 @@ class BioSamplesConverter:
             else:
                 datetime_format = '%Y-%m-%dT%H:%M:%SZ'
             return datetime.strptime(datetime_str, datetime_format)
-        return None
