@@ -79,7 +79,6 @@ def _parse_name(*args):
 PROJECT_SPEC_AUTHORS = {
     "type": ['', default_to, "Author"],
     "$on": 'contributors',
-    # '$filter': ['project_role', _is_not_wrangler],
     "attributes": ['$array', [
             {
                 "name": ['', default_to, "First Name"],
