@@ -4,6 +4,7 @@ from hca.loader import HcaLoader, IngestApi
 from hca.submission import HcaSubmission
 from hca.updater import HcaUpdater
 from converter.biosamples import BioSamplesConverter
+from submitter.base import CREATED_ENTITY
 from submitter.biosamples import BioSamplesSubmitter
 from submission_broker.services.biosamples import BioSamples, AapClient
 from submission_broker.services.biostudies import BioStudies
@@ -35,10 +36,10 @@ class DirectArchiver:
         ingest_entities_to_update = []
         if self.__biosamples_submitter:
             biosamples = self.__biosamples_submitter.send_all_samples(submission)
-            ingest_entities_to_update.extend(biosamples.get('CREATED', []))
+            ingest_entities_to_update.extend(biosamples.get(CREATED_ENTITY, []))
         if self.__biostudies_submitter:
             biostudies = self.__biostudies_submitter.send_all_projects(submission)
-            ingest_entities_to_update.extend(biostudies.get('CREATED', []))
+            ingest_entities_to_update.extend(biostudies.get(CREATED_ENTITY, []))
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
             self.__updater.update_entity(entity)

@@ -2,6 +2,10 @@ from abc import abstractmethod, ABCMeta
 
 from submission_broker.submission.submission import Submission, Entity
 
+CREATED_ENTITY = 'CREATED'
+UPDATED_ENTITY = 'UPDATED'
+ERRORED_ENTITY = 'ERRORED'
+
 ARCHIVE_TO_HCA_ENTITY_MAP = {
     'BioSamples': 'biomaterials',
     'BioStudies': 'projects'
@@ -32,12 +36,12 @@ class Submitter(metaclass=ABCMeta):
             response = self._submit_to_archive(converted_entity)
             if 'accession' in response and not accession:
                 entity.add_accession(entity_type, response['accession'])
-                return 'CREATED'
-            return 'UPDATED'
+                return CREATED_ENTITY
+            return UPDATED_ENTITY
         except Exception as e:
             error_msg = f'{entity_type} Error: {e}'
             entity.add_error(error_key, error_msg)
-            return 'ERRORED'
+            return ERRORED_ENTITY
 
     @abstractmethod
     def _submit_to_archive(self, converted_entity):

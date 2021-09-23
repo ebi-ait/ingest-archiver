@@ -4,6 +4,7 @@ from typing import List
 from mock import MagicMock, call
 
 from hca.submission import HcaSubmission, Entity
+from submitter.base import UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY
 from submitter.biostudies import BioStudiesSubmitter, ERROR_KEY
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
@@ -11,7 +12,6 @@ from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 class TestBioStudiesSubmitter(unittest.TestCase):
     def setUp(self) -> None:
         self.archive_client = MagicMock()
-        # self.archive_client.send_project = MagicMock()
         self.converter = MagicMock()
         self.empty_project = {}
         self.converter.convert = MagicMock(return_value=self.empty_project)
@@ -35,7 +35,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, other_attributes)
         self.submitter._submit_to_archive.assert_called_once_with(self.empty_project)
-        self.assertEqual('UPDATED', result)
+        self.assertEqual(UPDATED_ENTITY, result)
 
     def test_submit_project_return_creation(self):
         # Given
@@ -44,7 +44,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         # When
         result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
-        self.assertEqual('CREATED', result)
+        self.assertEqual(CREATED_ENTITY, result)
 
     def test_submit_project_return_error(self):
         # Given
@@ -55,12 +55,12 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         # When
         result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
-        self.assertEqual('ERRORED', result)
+        self.assertEqual(ERRORED_ENTITY, result)
         self.assertDictEqual(test_case.get_errors(), {self.error_key: [f'BioStudies Error: {error_msg}']})
 
     def test_send_all_projects_sorts_projects_into_results(self):
         # Given
-        self.submitter.send_entity = MagicMock(side_effect=['UPDATED', 'CREATED', 'ERRORED'])
+        self.submitter.send_entity = MagicMock(side_effect=[UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY])
         entities = self.map_random_entities(self.submission, self.entity_type, 3)
         calls = []
         call_count = 0
@@ -74,9 +74,9 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)
         self.assertEqual(call_count, self.submitter.send_entity.call_count)
-        self.assertEqual(1, len(result['UPDATED']))
-        self.assertEqual(1, len(result['CREATED']))
-        self.assertEqual(1, len(result['ERRORED']))
+        self.assertEqual(1, len(result[UPDATED_ENTITY]))
+        self.assertEqual(1, len(result[CREATED_ENTITY]))
+        self.assertEqual(1, len(result[ERRORED_ENTITY]))
 
     @staticmethod
     def map_random_entities(submission: HcaSubmission, entity_type, entity_count: int) -> List[Entity]:
