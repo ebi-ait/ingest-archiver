@@ -2,9 +2,9 @@ from datetime import datetime
 import json
 import unittest
 from os.path import dirname
+from typing import List
 
 from biosamples_v4.models import Sample, Attribute
-from typing import List
 
 from converter.biosamples import BioSamplesConverter
 
@@ -23,21 +23,29 @@ class BioSamplesConverterTests(unittest.TestCase):
         biomaterial = self.__get_biomaterial_by_index(0)
 
         release_date = '2020-08-01T14:26:37.998Z'
+        additional_attributes = {
+            'release_date': str(release_date),
+            'domain': self.domain
+        }
+
         biosample = self.__create_a_sample(release_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain,
-                                                                 str(release_date))
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes)
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
-    def test_given_ingest_biomaterial_when_release_date_NOT_defined_in_project_converts_correct_biosample(
+    def test_given_ingest_biomaterial_when_release_date_not_defined_in_project_converts_correct_biosample(
             self):
         biomaterial = self.__get_biomaterial_by_index(0)
 
         submission_date = '2019-07-18T21:12:39.770Z'
+        additional_attributes = {
+            'domain': self.domain
+        }
+
         biosample = self.__create_a_sample(submission_date)
 
-        converted_bio_sample = self.biosamples_converter.convert(biomaterial, self.domain)
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes )
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 

@@ -23,13 +23,9 @@ INGEST_API_URL = os.path.expandvars(os.environ.get('INGEST_API_URL', INGEST_API_
 
 AAP_API_URL = 'https://explore.api.aai.ebi.ac.uk/auth'
 AAP_API_URL = os.environ.get('AAP_API_URL', AAP_API_URL)
-AAP_API_USER = 'hca-ingest'
-AAP_API_USER = os.environ.get('AAP_API_USER', AAP_API_USER)
-AAP_API_PASSWORD = 'INSERT_PASSWORD'
-AAP_API_PASSWORD = os.environ.get('AAP_API_PASSWORD', AAP_API_PASSWORD)
-
-AAP_API_DOMAIN = 'subs.test-team-21'
-AAP_API_DOMAIN = os.environ.get('AAP_API_DOMAIN', AAP_API_DOMAIN)
+AAP_API_USER = os.environ.get('AAP_API_USER')
+AAP_API_PASSWORD = os.environ.get('AAP_API_PASSWORD')
+AAP_API_DOMAIN = os.environ.get('AAP_API_DOMAIN')
 
 
 DSP_API_URL = os.environ.get('DSP_API_URL', os.environ.get('USI_API_URL', 'https://submission-test.ebi.ac.uk'))
@@ -50,3 +46,7 @@ ONTOLOGY_API_URL = os.environ.get('ONTOLOGY_API_URL', 'https://ontology.staging.
 
 DIRECT_SUBMISSION = os.environ.get('DIRECT_SUBMISSION', False)
 BIOSAMPLES_URL = os.environ.get('BIOSAMPLES_URL', 'https://wwwdev.ebi.ac.uk/biosamples')
+
+BIOSTUDIES_URL = os.environ.get('BIOSAMPLES_URL', 'http://biostudy-bia.ebi.ac.uk:8788')
+BIOSTUDIES_USERNAME = os.environ.get('BIOSTUDIES_USERNAME')
+BIOSTUDIES_PASSWORD = os.environ.get('BIOSTUDIES_PASSWORD')
