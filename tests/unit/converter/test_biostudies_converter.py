@@ -8,7 +8,7 @@ from converter.biostudies import BioStudiesConverter, _parse_name
 class TestBioStudiesConverter(unittest.TestCase):
 
     def setUp(self) -> None:
-        with open(dirname(__file__) + '/../resources/projects.json') as file:
+        with open(dirname(__file__) + '/../../resources/projects.json') as file:
             self.projects = json.load(file)
 
         self.biostudies_converter = BioStudiesConverter()

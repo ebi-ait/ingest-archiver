@@ -5,7 +5,7 @@ from mock import MagicMock, call
 
 from hca.submission import HcaSubmission, Entity
 from submitter.biostudies import BioStudiesSubmitter, ERROR_KEY
-from tests.utils import make_ingest_entity, random_id, random_uuid
+from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
 class TestBioStudiesSubmitter(unittest.TestCase):
