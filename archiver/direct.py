@@ -37,9 +37,10 @@ class DirectArchiver:
         if self.__biosamples_submitter:
             biosamples = self.__biosamples_submitter.send_all_samples(submission)
             ingest_entities_to_update.extend(biosamples.get(CREATED_ENTITY, []))
-        if self.__biostudies_submitter:
-            biostudies = self.__biostudies_submitter.send_all_projects(submission)
-            ingest_entities_to_update.extend(biostudies.get(CREATED_ENTITY, []))
+        # TODO dcp-ingest-central/448 BST Test env is not exposed to outside of EBI VPN
+        # if self.__biostudies_submitter:
+        #     biostudies = self.__biostudies_submitter.send_all_projects(submission)
+        #     ingest_entities_to_update.extend(biostudies.get(CREATED_ENTITY, []))
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
             self.__updater.update_entity(entity)
