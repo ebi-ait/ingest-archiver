@@ -60,9 +60,11 @@ def direct_archiver_from_params(
     biosamples_converter = BioSamplesConverter(biosamples_domain)
     biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter)
 
-    biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
-    biostudies_converter = BioStudiesConverter()
-    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter)
+    biostudies_submitter = None
+    # TODO when we solved the issue with BioStudies availability, then we have change this lines back
+    # biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
+    # biostudies_converter = BioStudiesConverter()
+    # biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter)
     return DirectArchiver(loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
                           biostudies_submitter=biostudies_submitter)
