@@ -2,33 +2,28 @@ from converter.biosamples import BioSamplesConverter
 from submission_broker.submission.submission import Submission, Entity
 from submission_broker.services.biosamples import BioSamples, AapClient
 
+from submitter.base import Submitter
 
-class BioSamplesSubmitter:
-    def __init__(self, biosamples: BioSamples, converter: BioSamplesConverter):
-        self.__biosamples = biosamples
+ERROR_KEY = 'content.biomaterial_core.biosamples_accession'
+
+
+class BioSamplesSubmitter(Submitter):
+    def __init__(self, archive_client: BioSamples, converter: BioSamplesConverter):
+        super().__init__(archive_client, converter)
+        self.__archive_client = archive_client
         self.__converter = converter
 
     def send_all_samples(self, submission: Submission) -> dict:
-        response = {}
         project_release_date = self.__get_project_release_date_from_submission(submission)
-        for sample in submission.get_entities('biomaterials'):
-            result = self.send_sample(sample, project_release_date)
-            response.setdefault(result, []).append(sample)
+        other_attributes = {'release_date': project_release_date}
+        response = self.send_all_entities(submission, "BioSamples", ERROR_KEY, other_attributes)
+
         return response
 
-    def send_sample(self, sample: Entity, release_date: str = None) -> str:
-        accession = sample.get_accession('BioSamples')
-        biosample = self.__converter.convert(sample.attributes, release_date=release_date, accession=accession)
-        try:
-            response = self.__biosamples.send_sample(biosample)
-            if 'accession' in response and not accession:
-                sample.add_accession('BioSamples', response['accession'])
-                return 'CREATED'
-            return 'UPDATED'
-        except Exception as e:
-            error_msg = f'BioSamples Error: {e}'
-            sample.add_error('content.biomaterial_core.biosamples_accession', error_msg)
-            return 'ERRORED'
+    def _submit_to_archive(self, converted_entity):
+        response = self.__archive_client.send_sample(converted_entity)
+
+        return response
 
     @staticmethod
     def __get_project_release_date_from_submission(submission: Submission) -> str:
