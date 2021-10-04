@@ -117,12 +117,12 @@ PROJECT_SPEC_AUTHORS = {
     ]
 }
 
-PROJECT_SPEC_ORGANIZATIONS = {
-    "type": ['', default_to, "Organization"],
+PROJECT_SPEC_FUNDINGS = {
+    "type": ['', default_to, "Funding"],
     "$on": 'funders',
     "attributes": ['$array', [
             {
-                "name": ['', default_to, "Grant ID"],
+                "name": ['', default_to, "grant_id"],
                 "value": ['grant_id']
             },
             {
@@ -130,7 +130,7 @@ PROJECT_SPEC_ORGANIZATIONS = {
                 "value": ['grant_title']
             },
             {
-                "name": ['', default_to, "Organization"],
+                "name": ['', default_to, "Agency"],
                 "value": ['organization']
             },
     ],
@@ -169,7 +169,7 @@ class BioStudiesConverter:
 
         converted_publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS) if publications else []
         converted_authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS) if contributors else []
-        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_ORGANIZATIONS) if funders else []
+        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_FUNDINGS) if funders else []
 
         converted_project['section']['subsections'] = \
             converted_publications + converted_authors + converted_funders
