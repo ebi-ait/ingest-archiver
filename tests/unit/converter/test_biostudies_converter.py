@@ -84,7 +84,12 @@ class TestBioStudiesConverter(unittest.TestCase):
                     },
                     {
                         "type": "Author",
+                        "accno": "a1",
                         "attributes": [
+                            {
+                                "name": "Name",
+                                "value": contributors[0]['name']
+                            },
                             {
                                 "name": "First Name",
                                 "value": _parse_name(contributors[0]['name'], 0)
@@ -106,7 +111,7 @@ class TestBioStudiesConverter(unittest.TestCase):
                                 "value": contributors[0]['phone']
                             },
                             {
-                                "name": "Affiliation",
+                                "name": "affiliation",
                                 "value": contributors[0]['institution']
                             },
                             {
@@ -121,7 +126,12 @@ class TestBioStudiesConverter(unittest.TestCase):
                     },
                     {
                         "type": "Author",
+                        "accno": "a2",
                         "attributes": [
+                            {
+                                "name": "Name",
+                                "value": contributors[1]['name']
+                            },
                             {
                                 "name": "First Name",
                                 "value": _parse_name(contributors[1]['name'], 0)
@@ -143,7 +153,7 @@ class TestBioStudiesConverter(unittest.TestCase):
                                 "value": contributors[1]['phone']
                             },
                             {
-                                "name": "Affiliation",
+                                "name": "affiliation",
                                 "value": contributors[1]['institution']
                             },
                             {
