@@ -157,10 +157,10 @@ class TestBioStudiesConverter(unittest.TestCase):
                         ]
                     },
                     {
-                        "type": "Organization",
+                        "type": "Funding",
                         "attributes": [
                             {
-                                "name": "Grant ID",
+                                "name": "grant_id",
                                 "value": funders[0]['grant_id']
                             },
                             {
@@ -168,16 +168,16 @@ class TestBioStudiesConverter(unittest.TestCase):
                                 "value": funders[0]['grant_title']
                             },
                             {
-                                "name": "Organization",
+                                "name": "Agency",
                                 "value": funders[0]['organization']
                             }
                         ]
                     },
                     {
-                        "type": "Organization",
+                        "type": "Funding",
                         "attributes": [
                             {
-                                "name": "Grant ID",
+                                "name": "grant_id",
                                 "value": funders[1]['grant_id']
                             },
                             {
@@ -185,7 +185,7 @@ class TestBioStudiesConverter(unittest.TestCase):
                                 "value": funders[1]['grant_title']
                             },
                             {
-                                "name": "Organization",
+                                "name": "Agency",
                                 "value": funders[1]['organization']
                             }
                         ]
