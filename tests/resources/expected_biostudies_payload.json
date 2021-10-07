@@ -1,0 +1,193 @@
+{
+  "attributes": [
+    {
+      "name": "Project Core - Project Short Name",
+      "value": "Adult_Nonmobilised_PB"
+    },
+    {
+      "name": "HCA Project UUID",
+      "value": "fc55bd4a-8694-4a28-9a35-59a685bda323"
+    },
+    {
+      "name": "ReleaseDate",
+      "value": "2021-01-20T00:00:00Z"
+    }
+  ],
+  "section": {
+    "accno": "PROJECT",
+    "type": "Study",
+    "attributes": [
+      {
+        "name": "Title",
+        "value": "Transcriptomic characterisation of haematopoietic stem and progenitor cells from adult human homeostatic (non-mobilised) peripheral blood"
+      },
+      {
+        "name": "Description",
+        "value": "Haematopoietic stem and progenitor cells (HSPCs), the precursors of all blood cells, reside predominantly in the bone marrow. Yet, a  small proportion (<1%) of phenotypic HSPCs circulates through peripheral blood (PB) at any given time. To date, the detailed characterization of steady-state circulating HSPCs in adult humans remains very poor. Here, we analyse the single-cell composition of the adult human HSPC pool within non-mobilised PB from four healthy donors. 10x scRNA-seq of 22000 HSPCs from all four donors was paired with single-cell functional analysis using most immature haematopoietic stem cells and multipotent progenitors (HSC/MPPs). We find that long-term functional HSC/MPPs are very rare in non-mobilised PB, and that a large fraction of circulating HSPCs is biased towards the erythroid lineage. In particular, we detect the enrichment of a subset of exclusively erythroid/megakaryocyte-primed quiescent HSC-like cells within the phenotypic PB HSC/MPP compartment."
+      }
+    ],
+    "subsections": [
+      {
+        "type": "Publication",
+        "attributes": [
+          {
+            "name": "Authors",
+            "value": "Stephenson E, Reynolds G, Botting RA, Calero-Nieto FJ, Morgan M, Tuong ZK, Bach K, Sungnak W, Worlock KB, Yoshida M, Kumasaka N, Kania K, Engelbert J, Olabi B, Spegarova JS, Wilson NK, Mende N, Jardine L, Gardner LC, Goh I, Horsfall D, McGrath J, Webb S, Mather MW, Lindeboom RG, Dann E, Huang N, Polanski K, Prigmore E, Gothe F, Scott J, Payne RP, Baker KF, Hanrath AT, Schim van der Loeff IC, Barr AS, Sanchez-Gonzalez A, Bergamaschi L, Mescia F, Barnes JL, Kilich E, Wilton Ad, Saigal A, Saleh A, Janes SM, Smith CM, Gopee N, Wilson C, Coupland P, Coxhead JM, Kiselev VY, Dongen Sv, Bacardit J, King HW, Rostron AJ, Simpson AJ, Hambleton S, Laurenti E, Lyons PA, Meyer KB, Nikolic MZ, Duncan CJ, Smith K, Teichmann SA, Clatworthy MR, Marioni JC, Gottgens B, Haniffa M, "
+          },
+          {
+            "name": "Title",
+            "value": "Single-cell multi-omics analysis of the immune response in COVID-19"
+          },
+          {
+            "name": "doi",
+            "value": "10.1038/s41591-021-01329-2"
+          },
+          {
+            "name": "URL",
+            "value": "https://www.nature.com/articles/s41591-021-01329-2#Sec8"
+          }
+        ]
+      },
+      {
+        "type": "Author",
+        "accno": "a1",
+        "attributes": [
+          {
+            "name": "Name",
+            "value": "Elisa,,Laurenti"
+          },
+          {
+            "name": "First Name",
+            "value": "Elisa"
+          },
+          {
+            "name": "Middle Initials",
+            "value": ""
+          },
+          {
+            "name": "Last Name",
+            "value": "Laurenti"
+          },
+          {
+            "name": "Email",
+            "value": "el422@cam.ac.uk"
+          },
+          {
+            "name": "Phone",
+            "value": "+44 (0) 1223 762044"
+          },
+          {
+            "name": "Address",
+            "value": "Jeffrey Cheah Biomedical Centre,\nPuddicombe Way, CB2 0AW, Cambridge"
+          },
+          {
+            "name": "Orcid ID",
+            "value": "0000-0001-0002-0003"
+          },
+          {
+            "name": "affiliation",
+            "reference": true,
+            "value": "o1"
+          }
+        ]
+      },
+      {
+        "type": "Author",
+        "accno": "a2",
+        "attributes": [
+          {
+            "name": "Name",
+            "value": "Ami,,Day"
+          },
+          {
+            "name": "First Name",
+            "value": "Ami"
+          },
+          {
+            "name": "Middle Initials",
+            "value": ""
+          },
+          {
+            "name": "Last Name",
+            "value": "Day"
+          },
+          {
+            "name": "Email",
+            "value": "ami@ebi.ac.uk"
+          },
+          {
+            "name": "Phone",
+            "value": "345678"
+          },
+          {
+            "name": "Address",
+            "value": "Wellcome Genome Campus, Cambridge, CB10 1SD"
+          },
+          {
+            "name": "Orcid ID",
+            "value": "0004-0005-006-0007"
+          },
+          {
+            "name": "affiliation",
+            "reference": true,
+            "value": "o2"
+          }
+        ]
+      },
+      {
+        "accno": "o1",
+        "attributes": [
+          {
+            "name": "Name",
+            "value": "Wellcome - MRC Cambridge Stem Cell Institute"
+          }
+        ],
+        "type": "Organization"
+      },
+      {
+        "accno": "o2",
+        "attributes": [
+          {
+            "name": "Name",
+            "value": "EMBL-EBI"
+          }
+        ],
+        "type": "Organization"
+      },
+      {
+        "type": "Funding",
+        "attributes": [
+          {
+            "name": "grant_id",
+            "value": "BB/P002293/1"
+          },
+          {
+            "name": "Grant Title",
+            "value": "Cellular and molecular dynamics of healthy ageing in the human Haematopoietic Stem Cell Compartment"
+          },
+          {
+            "name": "Agency",
+            "value": "Biotechnology and Biological Sciences Research Council (BBSRC)"
+          }
+        ]
+      },
+      {
+        "type": "Funding",
+        "attributes": [
+          {
+            "name": "grant_id",
+            "value": "107630/Z/15/Z"
+          },
+          {
+            "name": "Grant Title",
+            "value": "Characterization of inflammation driven responses in human haematopoietic stem and progenitor cells"
+          },
+          {
+            "name": "Agency",
+            "value": "Wellcome Trust"
+          }
+        ]
+      }
+    ]
+  }
+}
