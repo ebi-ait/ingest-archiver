@@ -81,6 +81,10 @@ PROJECT_SPEC_AUTHORS = {
     "$on": 'contributors',
     "attributes": ['$array', [
             {
+                "name": ['', default_to, "Name"],
+                "value": ['name']
+            },
+            {
                 "name": ['', default_to, "First Name"],
                 "value": ['name', _parse_name, 0]
             },
@@ -101,7 +105,7 @@ PROJECT_SPEC_AUTHORS = {
                 "value": ['phone']
             },
             {
-                "name": ['', default_to, "Affiliation"],
+                "name": ['', default_to, "affiliation"],
                 "value": ['institution']
             },
             {
@@ -169,7 +173,15 @@ class BioStudiesConverter:
 
         converted_publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS) if publications else []
         converted_authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS) if contributors else []
+
+        BioStudiesConverter.__add_accno_to_authors(converted_authors)
+
         converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_FUNDINGS) if funders else []
 
         converted_project['section']['subsections'] = \
             converted_publications + converted_authors + converted_funders
+
+    @staticmethod
+    def __add_accno_to_authors(converted_authors):
+        for index, author in enumerate(converted_authors, start=1):
+            author['accno'] = 'a' + str(index)
