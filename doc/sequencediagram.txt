@@ -1,0 +1,51 @@
+
+title HCA Ingest to EBI Archives Flow
+
+# Webin REST Service
+
+# study
+Archiver->Ingest:get_project(uuid)
+Ingest->Archiver:project
+Archiver->Archiver:map_hca_entity_to_biostudies_obj()
+Archiver->Biostudies:register_study()
+Archiver<-Biostudies:study accession
+
+# sample
+Archiver->Ingest:get_biomaterials_and_processes()
+Ingest->Archiver: biomaterials, processes
+Archiver->Archiver:map_hca_entities_into_biosamples_obj()
+Archiver->Biosamples:register_samples()
+Archiver<-Biosamples:sample accessions
+
+# biostudies-biosamples linking
+Archiver->Biostudies:update study with sample accessions
+Archiver->Biosamples:update sample with study accession
+
+# data files upload
+Archiver->Webin Staging Area:upload data files
+activate Webin Staging Area
+Webin Staging Area->Archiver: complete
+deactivate Webin Staging Area
+
+# register ena metadata 
+Archiver->Archiver:map_hca_project_to_ena_study_xml()
+Archiver->ENA:submit_ena_study()
+activate ENA
+ENA->Archiver:study accession
+deactivate ENA
+
+Archiver->ENA:register_ena_samples()
+activate ENA
+ENA->Archiver:sample accession
+deactivate ENA
+
+Archiver->Ingest:get_submission_process_inputs_and_outputs()
+Archiver->Archiver:create_run_and_experiment_xml()
+Archiver->ENA:submit_run_and_experiment()
+activate ENA
+Archiver<-ENA: accessions
+deactivate ENA
+Archiver->Ingest:update_accessions()
+Archiver->Ingest: update_archive_status
+
+
