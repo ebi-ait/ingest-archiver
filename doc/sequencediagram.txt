@@ -33,7 +33,7 @@ Archiver->Ingest:get_biomaterials_and_processes()
 Ingest->Archiver: biomaterials, processes
 Archiver->Archiver:map_hca_entities_into_biosamples_obj()
 Archiver->Biosamples:register_samples()
-Archiver<-Biosamples:sample accessions
+Archiver<--Biosamples:sample accessions
 
 note over Archiver #cornsilk: biostudies-biosamples linking
 Archiver->Biostudies:update study with sample accessions
