@@ -2,60 +2,72 @@
 title HCA Ingest to EBI Archives Flow
 
 bottomparticipants
+lifelinestyle #gray:1:solid
 
 actor Wrangler
+participantgroup #bce8f1 ++**ingest
 participant Archiver
 participant "Ingest \nAPI" as Ingest
+end 
+
+participantgroup #75c8ec ++**BioStudies
 participant "BioStudies \nAPI" as Biostudies
+end
+
+participantgroup #b4d5d7 ++**BioSamples
 participant "BioSamples \nAPI" as Biosamples
+end 
+
+participantgroup #deebeb ++**ENA
 participant "ENA Staging \nArea" as ENAStage
 participant "ENA REST \nAPI" as ENA
+end 
 
 Wrangler->Archiver:archive(uuid)
 
-# study
+note over Archiver #cornsilk: study
 Archiver->Ingest:get_project(uuid)
-Ingest->Archiver:project
+Ingest-->Archiver:project
 Archiver->Archiver:map_hca_entity_to_biostudies_obj()
 Archiver->Biostudies:register_study()
-Archiver<-Biostudies:study accession
+Archiver<--Biostudies:study accession
 
-# sample
+note over Archiver #cornsilk:  sample
 Archiver->Ingest:get_biomaterials_and_processes()
-Ingest->Archiver: biomaterials, processes
+Archiver<--Ingest: biomaterials, processes
 Archiver->Archiver:map_hca_entities_into_biosamples_obj()
 Archiver->Biosamples:register_samples()
-Archiver<-Biosamples:sample accessions
+Archiver<--Biosamples:sample accessions
 
-# biostudies-biosamples linking
+note over Archiver #cornsilk: biostudies-biosamples linking
 Archiver->Biostudies:update study with sample accessions
 Archiver->Biosamples:update sample with study accession
 
-# data files upload
+note over Archiver #cornsilk:  data files upload
 Archiver->ENAStage:upload_data_files(uuid)
 activate ENAStage
-ENAStage->Archiver: complete
+ENAStage-->Archiver: complete
 deactivate ENAStage
 
-# register ena metadata 
-Archiver->Archiver:map_hca_project_to_ena_study_xml()
-Archiver->ENA:submit_ena_study()
+note over Archiver #cornsilk:  register ena metadata 
+Archiver->Archiver:map_hca_entities_to_ena_study_and_sample_xmls()
+Archiver->ENA:submit_ena_study_xml()
 activate ENA
-ENA->Archiver:study accession
+ENA-->Archiver:ENA study accession
 deactivate ENA
 
 Archiver->ENA:register_ena_samples()
 activate ENA
-ENA->Archiver:sample accession
+ENA-->Archiver:ENA sample accessions
 deactivate ENA
 
 Archiver->Ingest:get_submission_process_inputs_and_outputs()
 Archiver->Archiver:create_run_and_experiment_xml()
-Archiver->ENA:submit_run_and_experiment()
+Archiver->ENA:submit_run_and_experiment_xmls()
 activate ENA
-Archiver<-ENA: accessions
+ENA->ENA:ENA validation
+Archiver<--ENA: validation errors/accessions
 deactivate ENA
 Archiver->Ingest:update_accessions()
 Archiver->Ingest: update_archive_status
-
 
