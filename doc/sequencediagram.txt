@@ -1,7 +1,17 @@
 
 title HCA Ingest to EBI Archives Flow
 
-# Webin REST Service
+bottomparticipants
+
+actor Wrangler
+participant Archiver
+participant "Ingest \nAPI" as Ingest
+participant "BioStudies \nAPI" as Biostudies
+participant "BioSamples \nAPI" as Biosamples
+participant "ENA Staging \nArea" as ENAStage
+participant "ENA REST \nAPI" as ENA
+
+Wrangler->Archiver:archive(uuid)
 
 # study
 Archiver->Ingest:get_project(uuid)
@@ -22,10 +32,10 @@ Archiver->Biostudies:update study with sample accessions
 Archiver->Biosamples:update sample with study accession
 
 # data files upload
-Archiver->Webin Staging Area:upload data files
-activate Webin Staging Area
-Webin Staging Area->Archiver: complete
-deactivate Webin Staging Area
+Archiver->ENAStage:upload_data_files(uuid)
+activate ENAStage
+ENAStage->Archiver: complete
+deactivate ENAStage
 
 # register ena metadata 
 Archiver->Archiver:map_hca_project_to_ena_study_xml()
