@@ -16,7 +16,7 @@ Wrangler->Archiver:archive(uuid)
 
 note over Archiver #cornsilk: study
 Archiver->Ingest:get_project(uuid)
-Ingest->Archiver:project
+Ingest-->Archiver:project
 Archiver->Archiver:map_hca_entity_to_biostudies_obj()
 Archiver->Biostudies:register_study()
 Archiver<-Biostudies:study accession
