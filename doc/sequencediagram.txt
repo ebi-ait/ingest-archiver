@@ -21,7 +21,7 @@ Archiver->Archiver:map_hca_entity_to_biostudies_obj()
 Archiver->Biostudies:register_study()
 Archiver<-Biostudies:study accession
 
-# sample
+note over Archiver #cornsilk:  sample
 Archiver->Ingest:get_biomaterials_and_processes()
 Ingest->Archiver: biomaterials, processes
 Archiver->Archiver:map_hca_entities_into_biosamples_obj()
