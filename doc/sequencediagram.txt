@@ -61,7 +61,7 @@ Archiver->Ingest:get_submission_process_inputs_and_outputs()
 Archiver->Archiver:create_run_and_experiment_xml()
 Archiver->ENA:submit_run_and_experiment()
 activate ENA
-Archiver<-ENA: accessions
+Archiver<--ENA: accessions
 deactivate ENA
 Archiver->Ingest:update_accessions()
 Archiver->Ingest: update_archive_status
