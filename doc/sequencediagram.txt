@@ -47,7 +47,7 @@ deactivate ENA
 
 Archiver->ENA:register_ena_samples()
 activate ENA
-ENA->Archiver:sample accession
+ENA-->Archiver:sample accession
 deactivate ENA
 
 Archiver->Ingest:get_submission_process_inputs_and_outputs()
