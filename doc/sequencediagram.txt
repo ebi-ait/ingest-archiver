@@ -38,7 +38,7 @@ activate ENAStage
 ENAStage->Archiver: complete
 deactivate ENAStage
 
-# register ena metadata 
+note over Archiver #cornsilk:  register ena metadata 
 Archiver->Archiver:map_hca_project_to_ena_study_xml()
 Archiver->ENA:submit_ena_study()
 activate ENA
