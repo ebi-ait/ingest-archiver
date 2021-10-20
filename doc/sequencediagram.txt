@@ -2,6 +2,7 @@
 title HCA Ingest to EBI Archives Flow
 
 bottomparticipants
+lifelinestyle #gray:1:solid
 
 actor Wrangler
 participant Archiver
