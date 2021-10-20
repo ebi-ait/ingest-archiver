@@ -14,8 +14,10 @@ participantgroup #b4d5d7 ++**BioSamples
 participant "BioSamples \nAPI" as Biosamples
 end 
 
+participantgroup #deebeb ++**ENA
 participant "ENA Staging \nArea" as ENAStage
 participant "ENA REST \nAPI" as ENA
+end 
 
 Wrangler->Archiver:archive(uuid)
 
