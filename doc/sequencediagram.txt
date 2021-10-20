@@ -5,8 +5,10 @@ bottomparticipants
 lifelinestyle #gray:1:solid
 
 actor Wrangler
+participantgroup #bce8f1 ++**ingest
 participant Archiver
 participant "Ingest \nAPI" as Ingest
+end 
 participant "BioStudies \nAPI" as Biostudies
 participant "BioSamples \nAPI" as Biosamples
 participant "ENA Staging \nArea" as ENAStage
