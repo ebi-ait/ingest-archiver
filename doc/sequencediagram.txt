@@ -9,7 +9,11 @@ participantgroup #bce8f1 ++**ingest
 participant Archiver
 participant "Ingest \nAPI" as Ingest
 end 
+
+participantgroup #75c8ec ++**BioStudies
 participant "BioStudies \nAPI" as Biostudies
+end
+
 participantgroup #b4d5d7 ++**BioSamples
 participant "BioSamples \nAPI" as Biosamples
 end 
