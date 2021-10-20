@@ -32,7 +32,7 @@ note over Archiver #cornsilk: biostudies-biosamples linking
 Archiver->Biostudies:update study with sample accessions
 Archiver->Biosamples:update sample with study accession
 
-# data files upload
+note over Archiver #cornsilk:  data files upload
 Archiver->ENAStage:upload_data_files(uuid)
 activate ENAStage
 ENAStage->Archiver: complete
