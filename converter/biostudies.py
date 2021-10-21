@@ -108,10 +108,6 @@ PROJECT_SPEC_AUTHORS = {
                 "name": ['', default_to, "Phone"],
                 "value": ['phone']
             },
-            # {
-            #     "name": ['', default_to, "affiliation"],
-            #     "value": ['institution']
-            # },
             {
                 "name": ['', default_to, "Address"],
                 "value": ['address']
