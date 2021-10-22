@@ -46,7 +46,7 @@ Archiver->Biosamples:update sample with study accession
 note over Archiver #cornsilk:  data files upload
 Archiver->ENAStage:upload_data_files(uuid)
 activate ENAStage
-ENAStage-->Archiver: complete
+Archiver<--ENAStage: complete
 deactivate ENAStage
 
 note over Archiver #cornsilk:  register ena metadata 
