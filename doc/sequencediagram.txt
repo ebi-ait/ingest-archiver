@@ -53,7 +53,7 @@ note over Archiver #cornsilk:  register ena metadata
 Archiver->Archiver:map_hca_entities_to_ena_study_and_sample_xmls()
 Archiver->ENA:submit_ena_study_xml()
 activate ENA
-ENA-->Archiver:ENA study accession
+Archiver<--ENA:ENA study accession
 deactivate ENA
 
 Archiver->ENA:register_ena_samples()
