@@ -50,6 +50,7 @@
       },
       {
         "type": "Author",
+        "accno": "a1",
         "attributes": [
           {
             "name": "Name",
@@ -76,22 +77,23 @@
             "value": "+44 (0) 1223 762044"
           },
           {
-            "name": "affiliation",
-            "value": "Wellcome - MRC Cambridge Stem Cell Institute"
-          },
-          {
             "name": "Address",
             "value": "Jeffrey Cheah Biomedical Centre,\nPuddicombe Way, CB2 0AW, Cambridge"
           },
           {
             "name": "Orcid ID",
             "value": "0000-0001-0002-0003"
+          },
+          {
+            "name": "affiliation",
+            "reference": true,
+            "value": "o1"
           }
-        ],
-        "accno": "a1"
+        ]
       },
       {
         "type": "Author",
+        "accno": "a2",
         "attributes": [
           {
             "name": "Name",
@@ -118,19 +120,39 @@
             "value": "345678"
           },
           {
-            "name": "affiliation",
-            "value": "EMBL-EBI"
-          },
-          {
             "name": "Address",
             "value": "Wellcome Genome Campus, Cambridge, CB10 1SD"
           },
           {
             "name": "Orcid ID",
             "value": "0004-0005-006-0007"
+          },
+          {
+            "name": "affiliation",
+            "reference": true,
+            "value": "o2"
+          }
+        ]
+      },
+      {
+        "accno": "o1",
+        "attributes": [
+          {
+            "name": "Name",
+            "value": "Wellcome - MRC Cambridge Stem Cell Institute"
           }
         ],
-        "accno": "a2"
+        "type": "Organization"
+      },
+      {
+        "accno": "o2",
+        "attributes": [
+          {
+            "name": "Name",
+            "value": "EMBL-EBI"
+          }
+        ],
+        "type": "Organization"
       },
       {
         "type": "Funding",
