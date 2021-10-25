@@ -35,15 +35,32 @@ class DirectArchiver:
     def __archive(self, submission: HcaSubmission):
         ingest_entities_to_update = []
         if self.__biosamples_submitter:
-            biosamples = self.__biosamples_submitter.send_all_samples(submission)
-            ingest_entities_to_update.extend(biosamples.get(CREATED_ENTITY, []))
+            biosample_accessions = self.__archive_samples_to_biosamples(ingest_entities_to_update, submission)
         # TODO dcp-ingest-central/448 BST Test env is not exposed to outside of EBI VPN
         # if self.__biostudies_submitter:
-        #     biostudies = self.__biostudies_submitter.send_all_projects(submission)
-        #     ingest_entities_to_update.extend(biostudies.get(CREATED_ENTITY, []))
+        #     biostudies_accessions = self.__archive_project_to_biostudies(ingest_entities_to_update, submission)
+        #
+        # if self.__biosamples_submitter and self.__biostudies_submitter:
+        #     self.__exchange_sample_and_project_accessions(biosample_accessions, biostudies_accessions[0])
+
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
             self.__updater.update_entity(entity)
+
+    def __archive_project_to_biostudies(self, ingest_entities_to_update, submission):
+        biostudies, accessions = self.__biostudies_submitter.send_all_projects(submission)
+        ingest_entities_to_update.extend(biostudies.get(CREATED_ENTITY, []))
+        return accessions
+
+    def __archive_samples_to_biosamples(self, ingest_entities_to_update, submission):
+        biosamples, accessions = self.__biosamples_submitter.send_all_samples(submission)
+        ingest_entities_to_update.extend(biosamples.get(CREATED_ENTITY, []))
+        return accessions
+
+    def __exchange_sample_and_project_accessions(self, biosample_accessions: list, biostudies_accession):
+        biostudies_submission = \
+            self.__biostudies_submitter.update_submission_with_sample_accessions(biosample_accessions, biostudies_accession)
+        # TODO add biostudies accession to samples in ebi-ait/dcp-ingest-central#497
 
 
 def direct_archiver_from_params(
@@ -60,11 +77,11 @@ def direct_archiver_from_params(
     biosamples_converter = BioSamplesConverter(biosamples_domain)
     biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter)
 
-    biostudies_submitter = None
+    # biostudies_submitter = None
     # TODO when we solved the issue with BioStudies availability, then we have change this lines back
-    # biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
-    # biostudies_converter = BioStudiesConverter()
-    # biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter)
+    biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
+    biostudies_converter = BioStudiesConverter()
+    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter)
     return DirectArchiver(loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
                           biostudies_submitter=biostudies_submitter)

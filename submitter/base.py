@@ -20,11 +20,13 @@ class Submitter(metaclass=ABCMeta):
     def send_all_entities(self, submission: Submission, archive_type: str, error_key: str,
                           additional_attributes: dict = None) -> dict:
         response = {}
+        accessions = []
         hca_entity_type = ARCHIVE_TO_HCA_ENTITY_MAP[archive_type]
         for entity in submission.get_entities(hca_entity_type):
-            result = self.send_entity(entity, archive_type, error_key, additional_attributes)
+            result, accession = self.send_entity(entity, archive_type, error_key, additional_attributes)
             response.setdefault(result, []).append(entity)
-        return response
+            accessions.append(accession)
+        return response, accessions
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
                     other_attributes: dict = {}) -> str:
@@ -35,9 +37,10 @@ class Submitter(metaclass=ABCMeta):
         try:
             response = self._submit_to_archive(converted_entity)
             if 'accession' in response and not accession:
-                entity.add_accession(entity_type, response['accession'])
-                return CREATED_ENTITY
-            return UPDATED_ENTITY
+                accession = response.get('accession')
+                entity.add_accession(entity_type, accession)
+                return CREATED_ENTITY, accession
+            return UPDATED_ENTITY, accession
         except Exception as e:
             error_msg = f'{entity_type} Error: {e}'
             entity.add_error(error_key, error_msg)
