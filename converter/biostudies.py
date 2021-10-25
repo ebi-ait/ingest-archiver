@@ -1,6 +1,10 @@
 from json_converter.json_mapper import JsonMapper
 from json_converter.post_process import default_to
 
+ACCNO_PREFIX_FOR_ORGANIZATIONS = "o"
+
+ACCNO_PREFIX_FOR_AUTHORS = "a"
+
 PROJECT_SPEC_BASE = [
     {
         'name': ['', default_to, 'Project Core - Project Short Name'],
@@ -81,6 +85,10 @@ PROJECT_SPEC_AUTHORS = {
     "$on": 'contributors',
     "attributes": ['$array', [
             {
+                "name": ['', default_to, "Name"],
+                "value": ['name']
+            },
+            {
                 "name": ['', default_to, "First Name"],
                 "value": ['name', _parse_name, 0]
             },
@@ -101,10 +109,6 @@ PROJECT_SPEC_AUTHORS = {
                 "value": ['phone']
             },
             {
-                "name": ['', default_to, "Affiliation"],
-                "value": ['institution']
-            },
-            {
                 "name": ['', default_to, "Address"],
                 "value": ['address']
             },
@@ -117,12 +121,12 @@ PROJECT_SPEC_AUTHORS = {
     ]
 }
 
-PROJECT_SPEC_ORGANIZATIONS = {
-    "type": ['', default_to, "Organization"],
+PROJECT_SPEC_FUNDINGS = {
+    "type": ['', default_to, "Funding"],
     "$on": 'funders',
     "attributes": ['$array', [
             {
-                "name": ['', default_to, "Grant ID"],
+                "name": ['', default_to, "grant_id"],
                 "value": ['grant_id']
             },
             {
@@ -130,7 +134,7 @@ PROJECT_SPEC_ORGANIZATIONS = {
                 "value": ['grant_title']
             },
             {
-                "name": ['', default_to, "Organization"],
+                "name": ['', default_to, "Agency"],
                 "value": ['organization']
             },
     ],
@@ -168,8 +172,58 @@ class BioStudiesConverter:
             converted_project['section']['subsections'] = []
 
         converted_publications = JsonMapper(project_content).map(PROJECT_SPEC_PUBLICATIONS) if publications else []
+
+        converted_organizations = []
+
         converted_authors = JsonMapper(project_content).map(PROJECT_SPEC_AUTHORS) if contributors else []
-        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_ORGANIZATIONS) if funders else []
+        BioStudiesConverter.__add_accno(converted_authors, ACCNO_PREFIX_FOR_AUTHORS)
+        BioStudiesConverter.__add_affiliation(contributors, converted_authors, converted_organizations)
+
+        converted_funders = JsonMapper(project_content).map(PROJECT_SPEC_FUNDINGS) if funders else []
 
         converted_project['section']['subsections'] = \
-            converted_publications + converted_authors + converted_funders
+            converted_publications + converted_authors + converted_organizations + converted_funders
+
+    @staticmethod
+    def __add_accno(converted_authors, prefix):
+        for index, author in enumerate(converted_authors, start=1):
+            author['accno'] = prefix + str(index)
+
+    @staticmethod
+    def __add_affiliation(contributors: list, converted_authors: list, converted_organizations: list):
+        index = 1
+        for contributor in contributors:
+            affiliation = {}
+            if 'institution' in contributor:
+                author: dict = BioStudiesConverter.__get_author_by_name(contributor.get('name'), converted_authors)
+                affiliation['name'] = 'affiliation'
+                affiliation['reference'] = True
+                affiliation['value'] = 'o' + str(index)
+                author.get('attributes').append(affiliation)
+
+                converted_organizations.append(
+                    BioStudiesConverter.__add_new_organization(contributor.get('institution'), index))
+
+                index += 1
+
+    @staticmethod
+    def __get_author_by_name(contributor_name: str, authors: list):
+        for author in authors:
+            for attribute in author.get('attributes'):
+                if attribute.get('name') == 'Name' and attribute.get('value') == contributor_name:
+                    return author
+        return None
+
+    @staticmethod
+    def __add_new_organization(organization_name: str, index: int):
+        return \
+            {
+                'accno': ACCNO_PREFIX_FOR_ORGANIZATIONS + str(index),
+                'type': "Organization",
+                'attributes': [
+                    {
+                        'name': 'Name',
+                        'value': organization_name
+                    }
+                ]
+            }
