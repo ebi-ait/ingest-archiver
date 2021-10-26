@@ -11,6 +11,7 @@ from submission_broker.services.biostudies import BioStudies
 
 from submitter.biostudies import BioStudiesSubmitter
 from converter.biostudies import BioStudiesConverter
+from submitter.biostudies_submitter_service import BioStudiesSubmitterService
 
 
 class DirectArchiver:
@@ -41,7 +42,8 @@ class DirectArchiver:
         #     biostudies_accessions = self.__archive_project_to_biostudies(ingest_entities_to_update, submission)
         #
         # if self.__biosamples_submitter and self.__biostudies_submitter:
-        #     self.__exchange_sample_and_project_accessions(biosample_accessions, biostudies_accessions[0])
+        #     if (biosample_accessions != None) and (len(biosample_accessions) > 0):
+        #         self.__exchange_sample_and_project_accessions(biosample_accessions, biostudies_accessions[0])
 
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
@@ -81,7 +83,8 @@ def direct_archiver_from_params(
     # TODO when we solved the issue with BioStudies availability, then we have change this lines back
     biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
     biostudies_converter = BioStudiesConverter()
-    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter)
+    biostudies_submitter_service = BioStudiesSubmitterService()
+    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
     return DirectArchiver(loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
                           biostudies_submitter=biostudies_submitter)

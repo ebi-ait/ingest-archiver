@@ -15,7 +15,8 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         self.converter = MagicMock()
         self.empty_project = {}
         self.converter.convert = MagicMock(return_value=self.empty_project)
-        self.submitter = BioStudiesSubmitter(self.archive_client, self.converter)
+        self.submitter_service = MagicMock()
+        self.submitter = BioStudiesSubmitter(self.archive_client, self.converter, self.submitter_service)
         self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()
         self.archive_type = 'BioStudies'
