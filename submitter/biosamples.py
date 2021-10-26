@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 from converter.biosamples import BioSamplesConverter
 from submission_broker.submission.submission import Submission, Entity
 from submission_broker.services.biosamples import BioSamples, AapClient
@@ -13,12 +15,12 @@ class BioSamplesSubmitter(Submitter):
         self.__archive_client = archive_client
         self.__converter = converter
 
-    def send_all_samples(self, submission: Submission) -> dict:
+    def send_all_samples(self, submission: Submission) -> Tuple[dict, List[str]]:
         project_release_date = self.__get_project_release_date_from_submission(submission)
         other_attributes = {'release_date': project_release_date}
-        response = self.send_all_entities(submission, "BioSamples", ERROR_KEY, other_attributes)
+        response, accessions = self.send_all_entities(submission, "BioSamples", ERROR_KEY, other_attributes)
 
-        return response
+        return response, accessions
 
     def _submit_to_archive(self, converted_entity):
         response = self.__archive_client.send_sample(converted_entity)

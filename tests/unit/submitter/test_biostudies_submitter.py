@@ -29,7 +29,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
             make_ingest_entity(self.entity_type, random_id(), random_uuid())
         )
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         other_attributes = {}
 
         # Then
@@ -42,7 +42,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         self.submitter._submit_to_archive = MagicMock(return_value={'accession': self.biostudies_accession})
         test_case = self.submission.map_ingest_entity(make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(CREATED_ENTITY, result)
 
@@ -53,14 +53,16 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         test_case = self.submission.map_ingest_entity(
             make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(ERRORED_ENTITY, result)
         self.assertDictEqual(test_case.get_errors(), {self.error_key: [f'BioStudies Error: {error_msg}']})
 
     def test_send_all_projects_sorts_projects_into_results(self):
         # Given
-        self.submitter.send_entity = MagicMock(side_effect=[UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY])
+        self.submitter.send_entity = MagicMock(side_effect=[
+            [UPDATED_ENTITY, "1234"], [CREATED_ENTITY, "5678"], [ERRORED_ENTITY, "9012"]
+        ])
         entities = self.map_random_entities(self.submission, self.entity_type, 3)
         calls = []
         call_count = 0
@@ -69,7 +71,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
             calls.append(call(entity, self.archive_type, self.error_key, None))
 
         # When
-        result = self.submitter.send_all_projects(self.submission)
+        result, accessions = self.submitter.send_all_projects(self.submission)
 
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)

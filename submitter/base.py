@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABCMeta
+from typing import Tuple, List
 
 from submission_broker.submission.submission import Submission, Entity
 
@@ -18,7 +19,7 @@ class Submitter(metaclass=ABCMeta):
         self.converter = converter
 
     def send_all_entities(self, submission: Submission, archive_type: str, error_key: str,
-                          additional_attributes: dict = None) -> dict:
+                          additional_attributes: dict = None) -> Tuple[dict, List[str]]:
         response = {}
         accessions = []
         hca_entity_type = ARCHIVE_TO_HCA_ENTITY_MAP[archive_type]
@@ -29,7 +30,7 @@ class Submitter(metaclass=ABCMeta):
         return response, accessions
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
-                    other_attributes: dict = {}) -> str:
+                    other_attributes: dict = {}) -> Tuple[str, str]:
         accession = entity.get_accession(entity_type.capitalize())
         if accession is not None:
             other_attributes['accession'] = accession
@@ -44,7 +45,7 @@ class Submitter(metaclass=ABCMeta):
         except Exception as e:
             error_msg = f'{entity_type} Error: {e}'
             entity.add_error(error_key, error_msg)
-            return ERRORED_ENTITY
+            return ERRORED_ENTITY, accession
 
     @abstractmethod
     def _submit_to_archive(self, converted_entity):
