@@ -1,0 +1,62 @@
+{
+  "attributes": {
+    "content": {
+      "describedBy": "https://schema.humancellatlas.org/type/biomaterial/14.5.0/cell_line",
+      "schema_type": "biomaterial",
+      "biomaterial_core": {
+        "biomaterial_id": "HS_BM_2_cell_line",
+        "biomaterial_name": "Bone Marrow CD34+ stem/progenitor cells",
+        "ncbi_taxon_id": [
+          9606
+        ],
+        "biosamples_accession": "SAMEA1234567"
+      },
+      "supplier": "AllCells, LLC",
+      "catalog_number": "ABM022F",
+      "catalog_url": "https://www.allcells.com/products/bone-marrow-cd34-stem-progenitor-cells",
+      "type": "stem cell",
+      "sex": "male",
+      "is_living": "yes",
+      "cell_type": {
+        "ontology_label": "CD34-positive, CD38-negative hematopoietic stem cell",
+        "text": "CD34-positive, CD38-negative hematopoietic stem cell",
+        "ontology": "CL:0001024"
+      },
+      "date_established": "2016-08-17",
+      "genus_species": [
+        {
+          "text": "Homo sapiens",
+          "ontology": "NCBITaxon:9606",
+          "ontology_label": "Homo sapiens"
+        }
+      ],
+      "model_organ": {
+        "text": "bone marrow",
+        "ontology": "UBERON:0002371",
+        "ontology_label": "bone marrow"
+      },
+      "medical_history": {
+        "smoking_history": "20 cigarettes/day for 25 years, stopped 2000"
+      }
+    },
+    "submissionDate": "2019-07-18T21:12:39.770Z",
+    "updateDate": "2020-06-12T14:26:37.998Z",
+    "user": null,
+    "lastModifiedUser": "anonymousUser",
+    "type": "Biomaterial",
+    "uuid": {
+      "uuid": "501ba65c-0b04-430d-9aad-917935ee3c3c"
+    },
+    "events": [
+    ],
+    "firstDcpVersion": null,
+    "dcpVersion": "2020-03-05T14:39:16.763Z",
+    "contentLastModified": "2021-04-27T11:00:38.888707Z",
+    "accession": null,
+    "validationState": "Valid",
+    "validationErrors": [
+    ],
+    "isUpdate": false,
+    "linked": true
+  }
+}

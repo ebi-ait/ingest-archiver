@@ -31,10 +31,10 @@ class Submitter(metaclass=ABCMeta):
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
                     other_attributes: dict = {}) -> Tuple[str, str]:
-        accession = entity.get_accession(entity_type.capitalize())
+        accession = entity.get_accession(entity_type)
         if accession is not None:
             other_attributes['accession'] = accession
-        converted_entity = self.converter.convert(entity.attributes, other_attributes)
+        converted_entity = self.__convert_entity(entity, other_attributes)
         try:
             response = self._submit_to_archive(converted_entity)
             if 'accession' in response and not accession:
@@ -46,6 +46,9 @@ class Submitter(metaclass=ABCMeta):
             error_msg = f'{entity_type} Error: {e}'
             entity.add_error(error_key, error_msg)
             return ERRORED_ENTITY, accession
+
+    def __convert_entity(self, entity, other_attributes):
+        return self.converter.convert(entity.attributes, other_attributes)
 
     @abstractmethod
     def _submit_to_archive(self, converted_entity):

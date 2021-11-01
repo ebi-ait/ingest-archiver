@@ -9,6 +9,7 @@ from submitter.biosamples import BioSamplesSubmitter
 from submission_broker.services.biosamples import BioSamples, AapClient
 from submission_broker.services.biostudies import BioStudies
 
+from submitter.biosamples_submitter_service import BioSamplesSubmitterService
 from submitter.biostudies import BioStudiesSubmitter
 from converter.biostudies import BioStudiesConverter
 from submitter.biostudies_submitter_service import BioStudiesSubmitterService
@@ -17,7 +18,7 @@ from submitter.biostudies_submitter_service import BioStudiesSubmitterService
 class DirectArchiver:
     def __init__(self, loader: HcaLoader, updater: HcaUpdater,
                  biosamples_submitter: BioSamplesSubmitter = None,
-                 biostudies_submitter: BioStudiesSubmitter = None,):
+                 biostudies_submitter: BioStudiesSubmitter = None, ):
         self.__loader = loader
         self.__updater = updater
         self.__biosamples_submitter = biosamples_submitter
@@ -42,12 +43,17 @@ class DirectArchiver:
         #     biostudies_accessions = self.__archive_project_to_biostudies(ingest_entities_to_update, submission)
         #
         # if self.__biosamples_submitter and self.__biostudies_submitter:
-        #     if (biosample_accessions != None) and (len(biosample_accessions) > 0):
-        #         self.__exchange_sample_and_project_accessions(biosample_accessions, biostudies_accessions[0])
+        #     if self.__check_accessions_existence(biosample_accessions, biostudies_accessions):
+        #         self.__exchange_sample_and_project_accessions(submission, biosample_accessions, biostudies_accessions[0])
 
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
             self.__updater.update_entity(entity)
+
+    @staticmethod
+    def __check_accessions_existence(biosample_accessions, biostudies_accession):
+        return biosample_accessions is not None and len(biosample_accessions) > 0 and \
+                biostudies_accession is not None
 
     def __archive_project_to_biostudies(self, ingest_entities_to_update, submission):
         biostudies, accessions = self.__biostudies_submitter.send_all_projects(submission)
@@ -59,9 +65,11 @@ class DirectArchiver:
         ingest_entities_to_update.extend(biosamples.get(CREATED_ENTITY, []))
         return accessions
 
-    def __exchange_sample_and_project_accessions(self, biosample_accessions: list, biostudies_accession):
-        biostudies_submission = \
-            self.__biostudies_submitter.update_submission_with_sample_accessions(biosample_accessions, biostudies_accession)
+    def __exchange_sample_and_project_accessions(self, submission, biosample_accessions: list, biostudies_accession):
+        self.__biostudies_submitter.update_submission_with_sample_accessions(biosample_accessions,
+                                                                             biostudies_accession)
+        self.__biosamples_submitter.update_samples_with_biostudies_accession(submission, biosample_accessions,
+                                                                             biostudies_accession)
         # TODO add biostudies accession to samples in ebi-ait/dcp-ingest-central#497
 
 
@@ -77,14 +85,15 @@ def direct_archiver_from_params(
 
     biosamples_client = BioSamples(aap_client, biosamples_url)
     biosamples_converter = BioSamplesConverter(biosamples_domain)
-    biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter)
+    biosamples_submitter_service = BioSamplesSubmitterService(biosamples_client)
+    biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter, biosamples_submitter_service)
 
-    # biostudies_submitter = None
+    biostudies_submitter = None
     # TODO when we solved the issue with BioStudies availability, then we have change this lines back
-    biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
-    biostudies_converter = BioStudiesConverter()
-    biostudies_submitter_service = BioStudiesSubmitterService()
-    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
+    # biostudies_converter = BioStudiesConverter()
+    # biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
+    # biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
+    # biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
     return DirectArchiver(loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
                           biostudies_submitter=biostudies_submitter)

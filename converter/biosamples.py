@@ -51,6 +51,7 @@ class BioSamplesConverter:
         converted_attributes = JsonMapper(biomaterial).map(ATTRIBUTE_SPEC)
         for name, value in converted_attributes.items():
             sample.attributes.append(Attribute(name, value))
+        BioSamplesConverter.__add_external_references(sample, biomaterial)
         BioSamplesConverter.__add_project_attribute(sample)
 
     @staticmethod
@@ -61,6 +62,11 @@ class BioSamplesConverter:
                 value='Human Cell Atlas'
             )
         )
+
+    @staticmethod
+    def __add_external_references(sample: Sample, biomaterial: dict):
+        if 'externalReferences' in biomaterial:
+            sample.external_references.extend(biomaterial.get('externalReferences'))
 
     @staticmethod
     def __convert_datetime(datetime_str: str) -> datetime:
