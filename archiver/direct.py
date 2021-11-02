@@ -16,9 +16,10 @@ from submitter.biostudies_submitter_service import BioStudiesSubmitterService
 
 
 class DirectArchiver:
-    def __init__(self, loader: HcaLoader, updater: HcaUpdater,
+    def __init__(self, deployment_env: str, loader: HcaLoader, updater: HcaUpdater,
                  biosamples_submitter: BioSamplesSubmitter = None,
-                 biostudies_submitter: BioStudiesSubmitter = None, ):
+                 biostudies_submitter: BioStudiesSubmitter = None):
+        self.deployment_env = deployment_env
         self.__loader = loader
         self.__updater = updater
         self.__biosamples_submitter = biosamples_submitter
@@ -39,12 +40,12 @@ class DirectArchiver:
         if self.__biosamples_submitter:
             biosample_accessions = self.__archive_samples_to_biosamples(ingest_entities_to_update, submission)
         # TODO dcp-ingest-central/448 BST Test env is not exposed to outside of EBI VPN
-        # if self.__biostudies_submitter:
-        #     biostudies_accessions = self.__archive_project_to_biostudies(ingest_entities_to_update, submission)
-        #
-        # if self.__biosamples_submitter and self.__biostudies_submitter:
-        #     if self.__check_accessions_existence(biosample_accessions, biostudies_accessions):
-        #         self.__exchange_sample_and_project_accessions(submission, biosample_accessions, biostudies_accessions[0])
+        if self.__biostudies_submitter:
+            biostudies_accessions = self.__archive_project_to_biostudies(ingest_entities_to_update, submission)
+
+        if self.__biosamples_submitter and self.__biostudies_submitter:
+            if self.__check_accessions_existence(biosample_accessions, biostudies_accessions):
+                self.__exchange_sample_and_project_accessions(submission, biosample_accessions, biostudies_accessions[0])
 
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
@@ -76,7 +77,7 @@ class DirectArchiver:
 def direct_archiver_from_params(
         ingest_url: str,
         biosamples_url: str, biosamples_domain: str, aap_url: str, aap_user: str, aap_password: str,
-        biostudies_url: str, biostudies_username: str, biostudies_password: str
+        biostudies_url: str, biostudies_username: str, biostudies_password: str, deployment_env: str
 ) -> DirectArchiver:
     ingest_client = IngestApi(ingest_url)
     hca_loader = HcaLoader(ingest_client)
@@ -85,21 +86,21 @@ def direct_archiver_from_params(
 
     biosamples_client = BioSamples(aap_client, biosamples_url)
     biosamples_converter = BioSamplesConverter(biosamples_domain)
-    biosamples_submitter_service = BioSamplesSubmitterService(biosamples_client)
+    biosamples_submitter_service = BioSamplesSubmitterService(biosamples_client, deployment_env)
     biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter, biosamples_submitter_service)
 
-    biostudies_submitter = None
-    # TODO when we solved the issue with BioStudies availability, then we have change this lines back
-    # biostudies_converter = BioStudiesConverter()
-    # biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
-    # biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
-    # biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
-    return DirectArchiver(loader=hca_loader, updater=hca_updater,
+    if deployment_env.lower() not in ('dev', 'staging'):
+        # TODO when we solved the issue with BioStudies availability, then we can remove the above condition
+        biostudies_converter = BioStudiesConverter()
+        biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
+        biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
+        biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
+    return DirectArchiver(deployment_env=deployment_env, loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
                           biostudies_submitter=biostudies_submitter)
 
 
-def direct_archiver_from_config() -> DirectArchiver:
+def direct_archiver_from_config(deployment_env: str) -> DirectArchiver:
     params = {
         'ingest_url': config.INGEST_API_URL.strip('/'),
         'aap_url': config.AAP_API_URL.replace('/auth', ''),
@@ -110,5 +111,6 @@ def direct_archiver_from_config() -> DirectArchiver:
         'biostudies_url': config.BIOSTUDIES_URL,
         'biostudies_username': config.BIOSTUDIES_USERNAME,
         'biostudies_password': config.BIOSTUDIES_PASSWORD,
+        'deployment_env': deployment_env
     }
     return direct_archiver_from_params(**params)
