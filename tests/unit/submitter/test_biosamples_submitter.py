@@ -8,16 +8,19 @@ from biosamples_v4.models import Sample
 from hca.submission import HcaSubmission, Entity
 from submitter.base import UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY
 from submitter.biosamples import BioSamplesSubmitter, ERROR_KEY
+from submitter.biosamples_submitter_service import BioSamplesSubmitterService
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
 class TestBioSamplesSubmitter(unittest.TestCase):
     def setUp(self) -> None:
-        self.biosamples = MagicMock()
+        self.biosamples_client = MagicMock()
         self.converter = MagicMock()
         self.empty_sample = Sample(ncbi_taxon_id=9606)
         self.converter.convert = MagicMock(return_value=self.empty_sample)
-        self.submitter = BioSamplesSubmitter(self.biosamples, self.converter)
+        self.env = 'dev'
+        self.submitter_service = BioSamplesSubmitterService(self.biosamples_client, self.env)
+        self.submitter = BioSamplesSubmitter(self.biosamples_client, self.converter, self.submitter_service)
         self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()
         self.archive_type = 'BioSamples'

@@ -1,13 +1,12 @@
 import json
 import unittest
 from os.path import dirname
-from typing import Any
 from unittest.mock import MagicMock, Mock
 
 from submitter.biostudies_submitter_service import BioStudiesSubmitterService
 
 
-class TestBioStudiesSubmitterService(unittest.TestCase):
+class BioStudiesSubmitterServiceTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.archive_client = MagicMock()
