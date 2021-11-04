@@ -95,6 +95,8 @@ def direct_archiver_from_params(
         biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
         biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
         biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
+    else:
+        biostudies_submitter = None
     return DirectArchiver(deployment_env=deployment_env, loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
                           biostudies_submitter=biostudies_submitter)
