@@ -8,16 +8,19 @@ from biosamples_v4.models import Sample
 from hca.submission import HcaSubmission, Entity
 from submitter.base import UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY
 from submitter.biosamples import BioSamplesSubmitter, ERROR_KEY
+from submitter.biosamples_submitter_service import BioSamplesSubmitterService
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
 class TestBioSamplesSubmitter(unittest.TestCase):
     def setUp(self) -> None:
-        self.biosamples = MagicMock()
+        self.biosamples_client = MagicMock()
         self.converter = MagicMock()
         self.empty_sample = Sample(ncbi_taxon_id=9606)
         self.converter.convert = MagicMock(return_value=self.empty_sample)
-        self.submitter = BioSamplesSubmitter(self.biosamples, self.converter)
+        self.env = 'dev'
+        self.submitter_service = BioSamplesSubmitterService(self.biosamples_client, self.env)
+        self.submitter = BioSamplesSubmitter(self.biosamples_client, self.converter, self.submitter_service)
         self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()
         self.archive_type = 'BioSamples'
@@ -31,7 +34,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
             make_ingest_entity(self.entity_type, random_id(), random_uuid())
         )
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, {})
@@ -47,7 +50,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         additional_attributes = {'release_date': test_date}
 
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, additional_attributes)
@@ -63,7 +66,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         additional_attributes = {'accession': self.test_accession}
 
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, additional_attributes)
@@ -75,7 +78,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         self.submitter._submit_to_archive = MagicMock(return_value={'accession': self.test_accession})
         test_case = self.submission.map_ingest_entity(make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(CREATED_ENTITY, result)
 
@@ -86,14 +89,17 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         test_case = self.submission.map_ingest_entity(
             make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
-        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(ERRORED_ENTITY, result)
         self.assertDictEqual(test_case.get_errors(), {self.error_key: [f'BioSamples Error: {error_msg}']})
 
     def test_send_all_samples_sends_each_samples_with_project_release_date(self):
         # Given
-        self.submitter.send_entity = MagicMock(return_value=UPDATED_ENTITY)
+        self.submitter.send_entity = MagicMock(side_effect=[
+            [UPDATED_ENTITY, "1234"], [UPDATED_ENTITY, "5678"], [UPDATED_ENTITY, "9012"], [UPDATED_ENTITY, "3456"],
+            [UPDATED_ENTITY, "7890"]
+        ])
         test_date = datetime.now().isoformat()
         project_attributes = {
             'releaseDate': test_date
@@ -111,7 +117,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
             expected_result[UPDATED_ENTITY].append(entity)
 
         # When
-        result = self.submitter.send_all_samples(self.submission)
+        result, accessions = self.submitter.send_all_samples(self.submission)
 
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)
@@ -120,7 +126,9 @@ class TestBioSamplesSubmitter(unittest.TestCase):
 
     def test_send_all_samples_sorts_samples_into_results(self):
         # Given
-        self.submitter.send_entity = MagicMock(side_effect=[UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY])
+        self.submitter.send_entity = MagicMock(side_effect=[
+            [UPDATED_ENTITY, "1234"], [CREATED_ENTITY, "5678"], [ERRORED_ENTITY, "9012"]
+        ])
         biomaterials = self.map_random_biomaterials(self.submission, self.entity_type, 3)
         additional_attributes = {'release_date': None}
         calls = []
@@ -130,7 +138,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
             calls.append(call(entity, self.archive_type, self.error_key, additional_attributes))
 
         # When
-        result = self.submitter.send_all_samples(self.submission)
+        result, accessions = self.submitter.send_all_samples(self.submission)
 
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)
