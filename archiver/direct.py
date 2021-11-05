@@ -16,8 +16,7 @@ from submitter.biostudies_submitter_service import BioStudiesSubmitterService
 
 
 class DirectArchiver:
-    def __init__(self, loader: HcaLoader, updater: HcaUpdater,
-                 biosamples_submitter: BioSamplesSubmitter = None,
+    def __init__(self, loader: HcaLoader, updater: HcaUpdater, biosamples_submitter: BioSamplesSubmitter = None,
                  biostudies_submitter: BioStudiesSubmitter = None):
         self.__loader = loader
         self.__updater = updater
