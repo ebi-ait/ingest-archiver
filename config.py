@@ -47,7 +47,6 @@ ONTOLOGY_API_URL = os.environ.get('ONTOLOGY_API_URL', 'https://ontology.staging.
 DIRECT_SUBMISSION = os.environ.get('DIRECT_SUBMISSION', False)
 BIOSAMPLES_URL = os.environ.get('BIOSAMPLES_URL', 'https://wwwdev.ebi.ac.uk/biosamples')
 
-BIOSTUDIES_ENV = 'dev'
 BIOSTUDIES_URL = os.environ.get('BIOSTUDIES_API_URL', 'https://wwwdev.ebi.ac.uk/biostudies/submissions/api')
 BIOSTUDIES_STUDY_URL = os.environ.get('BIOSTUDIES_STUDY_URL', 'https://wwwdev.ebi.ac.uk/biostudies/studies/')
 BIOSTUDIES_USERNAME = os.environ.get('BIOSTUDIES_API_USERNAME')
