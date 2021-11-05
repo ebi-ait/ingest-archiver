@@ -18,8 +18,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         self.converter = MagicMock()
         self.empty_sample = Sample(ncbi_taxon_id=9606)
         self.converter.convert = MagicMock(return_value=self.empty_sample)
-        self.env = 'dev'
-        self.submitter_service = BioSamplesSubmitterService(self.biosamples_client, self.env)
+        self.submitter_service = BioSamplesSubmitterService(self.biosamples_client)
         self.submitter = BioSamplesSubmitter(self.biosamples_client, self.converter, self.submitter_service)
         self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()

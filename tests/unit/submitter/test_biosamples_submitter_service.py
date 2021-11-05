@@ -12,8 +12,7 @@ class BioSamplesSubmitterServiceTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.archive_client = MagicMock()
-        self.env = 'dev'
-        self.submitter_service = BioSamplesSubmitterService(self.archive_client, self.env)
+        self.submitter_service = BioSamplesSubmitterService(self.archive_client)
 
         with open(dirname(__file__) + '/../../resources/biomaterial_entity.json') as file:
             self.biomaterial: Entity = Entity('biomaterials', 0, attributes=json.load(file))
