@@ -37,7 +37,7 @@ class DirectArchiver:
         ingest_entities_to_update = []
         if self.__biosamples_submitter:
             biosample_accessions = self.__archive_samples_to_biosamples(ingest_entities_to_update, submission)
-        # TODO dcp-ingest-central/448 BST Test env is not exposed to outside of EBI VPN
+
         if self.__biostudies_submitter:
             biostudies_accessions = self.__archive_project_to_biostudies(ingest_entities_to_update, submission)
 
@@ -69,7 +69,6 @@ class DirectArchiver:
                                                                              biostudies_accession)
         self.__biosamples_submitter.update_samples_with_biostudies_accession(submission, biosample_accessions,
                                                                              biostudies_accession)
-        # TODO add biostudies accession to samples in ebi-ait/dcp-ingest-central#497
 
 
 def direct_archiver_from_params(
@@ -87,14 +86,10 @@ def direct_archiver_from_params(
     biosamples_submitter_service = BioSamplesSubmitterService(biosamples_client)
     biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter, biosamples_submitter_service)
 
-    # TODO when we solved the issue with BioStudies availability, then we can remove the above condition
-    if config.BIOSTUDIES_ENV == 'dev':
-        biostudies_converter = BioStudiesConverter()
-        biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
-        biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
-        biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
-    else:
-        biostudies_submitter = None
+    biostudies_converter = BioStudiesConverter()
+    biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
+    biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
+    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
 
     return DirectArchiver(loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
