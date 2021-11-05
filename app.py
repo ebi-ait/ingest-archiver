@@ -68,7 +68,6 @@ def archive():
     exclude_types = data.get('exclude_types')
     alias_prefix = data.get('alias_prefix')
     is_direct_archiving = data.get('is_direct_archiving')
-    deployment_env = data.get('deployment_env')
 
     if not is_direct_archiving:
         is_direct_archiving = config.DIRECT_SUBMISSION
@@ -80,7 +79,7 @@ def archive():
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
     if is_direct_archiving:
-        direct_archiver = direct_archiver_from_config(deployment_env)
+        direct_archiver = direct_archiver_from_config()
         submission = direct_archiver.archive_submission(submission_uuid)
         response = submission.as_dict(string_lists=True)
     else:
