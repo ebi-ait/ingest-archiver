@@ -1,4 +1,4 @@
-
+@startuml
 title HCA Ingest to EBI Archives Flow
 
 skinparam sequenceMessageAlign center
@@ -67,3 +67,4 @@ return "validation errors/accessions"
 Archiver->Ingest:update_accessions()
 Archiver->Ingest: update_archive_status
 
+@enduml
