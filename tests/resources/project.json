@@ -1,0 +1,211 @@
+{
+  "attributes": {
+    "content": {
+      "describedBy": "https://schema.humancellatlas.org/type/project/14.1.0/project",
+      "schema_type": "project",
+      "project_core": {
+        "project_short_name": "Adult_Nonmobilised_PB",
+        "project_title": "Transcriptomic characterisation of haematopoietic stem and progenitor cells from adult human homeostatic (non-mobilised) peripheral blood",
+        "project_description": "Haematopoietic stem and progenitor cells (HSPCs), the precursors of all blood cells, reside predominantly in the bone marrow. Yet, a  small proportion (<1%) of phenotypic HSPCs circulates through peripheral blood (PB) at any given time. To date, the detailed characterization of steady-state circulating HSPCs in adult humans remains very poor. Here, we analyse the single-cell composition of the adult human HSPC pool within non-mobilised PB from four healthy donors. 10x scRNA-seq of 22000 HSPCs from all four donors was paired with single-cell functional analysis using most immature haematopoietic stem cells and multipotent progenitors (HSC/MPPs). We find that long-term functional HSC/MPPs are very rare in non-mobilised PB, and that a large fraction of circulating HSPCs is biased towards the erythroid lineage. In particular, we detect the enrichment of a subset of exclusively erythroid/megakaryocyte-primed quiescent HSC-like cells within the phenotypic PB HSC/MPP compartment."
+      },
+      "contributors": [
+        {
+          "name": "Elisa,,Laurenti",
+          "email": "el422@cam.ac.uk",
+          "phone": "+44 (0) 1223 762044",
+          "institution": "Wellcome - MRC Cambridge Stem Cell Institute",
+          "laboratory": "Department of Haematology",
+          "address": "Jeffrey Cheah Biomedical Centre,\nPuddicombe Way, CB2 0AW, Cambridge",
+          "country": "UK",
+          "corresponding_contributor": true,
+          "project_role": {
+            "text": "principal investigator",
+            "ontology": "EFO:0009736",
+            "ontology_label": "principal investigator"
+          },
+          "orcid_id": "0000-0001-0002-0003"
+        },
+        {
+          "name": "Ami,,Day",
+          "email": "ami@ebi.ac.uk",
+          "phone": "345678",
+          "institution": "EMBL-EBI",
+          "laboratory": "Human Cell Atlas",
+          "address": "Wellcome Genome Campus, Cambridge, CB10 1SD",
+          "country": "UK",
+          "corresponding_contributor": false,
+          "project_role": {
+            "text": "Human Cell atlas Wrangler",
+            "ontology": "EFO:0009737",
+            "ontology_label": "data curator"
+          },
+          "orcid_id": "0004-0005-006-0007"
+        }
+      ],
+      "publications": [
+        {
+          "authors": [
+            "Stephenson E",
+            "Reynolds G",
+            "Botting RA",
+            "Calero-Nieto FJ",
+            "Morgan M",
+            "Tuong ZK",
+            "Bach K",
+            "Sungnak W",
+            "Worlock KB",
+            "Yoshida M",
+            "Kumasaka N",
+            "Kania K",
+            "Engelbert J",
+            "Olabi B",
+            "Spegarova JS",
+            "Wilson NK",
+            "Mende N",
+            "Jardine L",
+            "Gardner LC",
+            "Goh I",
+            "Horsfall D",
+            "McGrath J",
+            "Webb S",
+            "Mather MW",
+            "Lindeboom RG",
+            "Dann E",
+            "Huang N",
+            "Polanski K",
+            "Prigmore E",
+            "Gothe F",
+            "Scott J",
+            "Payne RP",
+            "Baker KF",
+            "Hanrath AT",
+            "Schim van der Loeff IC",
+            "Barr AS",
+            "Sanchez-Gonzalez A",
+            "Bergamaschi L",
+            "Mescia F",
+            "Barnes JL",
+            "Kilich E",
+            "Wilton Ad",
+            "Saigal A",
+            "Saleh A",
+            "Janes SM",
+            "Smith CM",
+            "Gopee N",
+            "Wilson C",
+            "Coupland P",
+            "Coxhead JM",
+            "Kiselev VY",
+            "Dongen Sv",
+            "Bacardit J",
+            "King HW",
+            "Rostron AJ",
+            "Simpson AJ",
+            "Hambleton S",
+            "Laurenti E",
+            "Lyons PA",
+            "Meyer KB",
+            "Nikolic MZ",
+            "Duncan CJ",
+            "Smith K",
+            "Teichmann SA",
+            "Clatworthy MR",
+            "Marioni JC",
+            "Gottgens B",
+            "Haniffa M",
+            ""
+          ],
+          "title": "Single-cell multi-omics analysis of the immune response in COVID-19",
+          "doi": "10.1038/s41591-021-01329-2",
+          "url": "https://www.nature.com/articles/s41591-021-01329-2#Sec8"
+        }
+      ],
+      "funders": [
+        {
+          "grant_title": "Cellular and molecular dynamics of healthy ageing in the human Haematopoietic Stem Cell Compartment",
+          "grant_id": "BB/P002293/1",
+          "organization": "Biotechnology and Biological Sciences Research Council (BBSRC)"
+        },
+        {
+          "grant_title": "Characterization of inflammation driven responses in human haematopoietic stem and progenitor cells",
+          "grant_id": "107630/Z/15/Z",
+          "organization": "Wellcome Trust"
+        }
+      ],
+      "biostudies_accessions": [
+        "S-SUBS10"
+      ],
+      "insdc_project_accessions": [
+        "ERP122459"
+      ]
+    },
+    "submissionDate": "2020-06-12T10:05:18.386Z",
+    "updateDate": "2021-01-20T16:16:18.840Z",
+    "user": "5ece3464ec0680746267e784",
+    "lastModifiedUser": "anonymousUser",
+    "type": "Project",
+    "uuid": {
+      "uuid": "fc55bd4a-8694-4a28-9a35-59a685bda323"
+    },
+    "events": [],
+    "firstDcpVersion": null,
+    "dcpVersion": "2020-06-12T10:05:18.386Z",
+    "contentLastModified": "2021-01-18T15:58:56.276Z",
+    "accession": null,
+    "validationState": "Valid",
+    "validationErrors": [],
+    "isUpdate": false,
+    "releaseDate": "2021-01-20T00:00:00Z",
+    "accessionDate": null,
+    "technology": null,
+    "organ": null,
+    "dataAccess": null,
+    "identifyingOrganisms": null,
+    "primaryWrangler": null,
+    "hasOpenSubmission": false,
+    "_links": {
+      "self": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f"
+      },
+      "project": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f",
+        "title": "A single project"
+      },
+      "processing": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f/processingEvent"
+      },
+      "draft": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f/draftEvent"
+      },
+      "bundleManifests": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f/bundleManifests",
+        "title": "Access or create bundle manifests (describing which submitted contents went into which bundle in the datastore)"
+      },
+      "supplementaryFiles": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f/supplementaryFiles"
+      },
+      "submissionEnvelopes": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f/submissionEnvelopes",
+        "title": "Access or create new submission envelopes"
+      },
+      "submissionEnvelope": {
+        "href": "https://api.ingest.archive.data.humancellatlas.org/projects/5ee3535e5e315a423810e20f/submissionEnvelope",
+        "title": "A single submission envelope"
+      }
+    }
+  },
+  "links": {
+    "submissionEnvelopes": [
+      "600715e4c9762f5f0de9fa67",
+      "5ee74a855e315a423810edf0"
+    ],
+    "bundleManifests": [
+      "60072fc8c9762f5f0de9fad5",
+      "60072fc8c9762f5f0de9fad6",
+      "5ee750265e315a423810ee41",
+      "5ee750265e315a423810ee44",
+      "5ee750265e315a423810ee43",
+      "5ee750265e315a423810ee42"
+    ]
+  }
+}

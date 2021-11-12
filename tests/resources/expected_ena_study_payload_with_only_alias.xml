@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<STUDY_SET>
+    <STUDY center_name="HCA" alias="Adult_Nonmobilised_PB_fc55bd4a-8694-4a28-9a35-59a685bda323">
+        <DESCRIPTOR>
+            <STUDY_TITLE>Transcriptomic characterisation of haematopoietic stem and progenitor cells from adult human homeostatic (non-mobilised) peripheral blood</STUDY_TITLE>
+            <STUDY_TYPE existing_study_type="Transcriptome Analysis"/>
+            <STUDY_DESCRIPTION>Haematopoietic stem and progenitor cells (HSPCs), the precursors of all blood cells, reside predominantly in the bone marrow. Yet, a  small proportion (&lt;1%) of phenotypic HSPCs circulates through peripheral blood (PB) at any given time. To date, the detailed characterization of steady-state circulating HSPCs in adult humans remains very poor. Here, we analyse the single-cell composition of the adult human HSPC pool within non-mobilised PB from four healthy donors. 10x scRNA-seq of 22000 HSPCs from all four donors was paired with single-cell functional analysis using most immature haematopoietic stem cells and multipotent progenitors (HSC/MPPs). We find that long-term functional HSC/MPPs are very rare in non-mobilised PB, and that a large fraction of circulating HSPCs is biased towards the erythroid lineage. In particular, we detect the enrichment of a subset of exclusively erythroid/megakaryocyte-primed quiescent HSC-like cells within the phenotypic PB HSC/MPP compartment.</STUDY_DESCRIPTION>
+        </DESCRIPTOR>
+        <STUDY_ATTRIBUTES>
+            <STUDY_ATTRIBUTE>
+                <TAG>uuid</TAG>
+                <VALUE>fc55bd4a-8694-4a28-9a35-59a685bda323</VALUE>
+            </STUDY_ATTRIBUTE>
+            <STUDY_ATTRIBUTE>
+                <TAG>project_short_name</TAG>
+                <VALUE>Adult_Nonmobilised_PB</VALUE>
+            </STUDY_ATTRIBUTE>
+        </STUDY_ATTRIBUTES>
+    </STUDY>
+</STUDY_SET>
