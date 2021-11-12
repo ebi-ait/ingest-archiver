@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Iterable
 from xml.etree.ElementTree import Element
 
@@ -12,28 +11,39 @@ class BaseEnaConverter:
         self.ena_type = ena_type
         self.xml_spec = xml_spec
 
-    def convert(self, entity: dict, xml_spec: dict = None) -> Element:
+    def convert(self, entity: dict, additional_attributes: dict = None) -> str:
         ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
-        if not xml_spec:
-            xml_spec = deepcopy(self.xml_spec)
-        # self.add_alias(xml_spec, entity)
-        xml_map = JsonMapper(entity).map(xml_spec)
+        self._add_alias_to_additional_attributes(entity, additional_attributes)
+        self.add_accession_and_alias(self.xml_spec, additional_attributes)
+        xml_map = JsonMapper(self._get_core_attributes(entity)).map(self.xml_spec)
         root_entity = etree.Element(self.ena_type.upper())
         ena_set.append(root_entity)
         self.add_children(parent=root_entity, children=xml_map)
-        # self.post_conversion(entity, root)
+        self.post_conversion(entity, root_entity)
         etree.indent(ena_set, space="    ")
         return self.convert_to_xml_str(ena_set)
 
-    def add_alias(self, spec: dict, entity: dict):
-        accession = entity.get_accession(f'ENA_{self.ena_type}')
+    @staticmethod
+    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
+        additional_attributes['alias'] =\
+            entity.get('content').get('project_core').get('project_short_name') + '_' + entity.get('uuid').get('uuid')
+
+    @staticmethod
+    def add_accession_and_alias(spec: dict, other_attributes: dict):
+        accession = other_attributes.get('accession')
         if accession:
             spec['@accession'] = ['', BaseEnaConverter.fixed_attribute, accession]
-        else:
-            spec['@alias'] = ['', BaseEnaConverter.fixed_attribute, entity.identifier.index]
+
+        alias = other_attributes.get('alias')
+        if alias:
+            spec['@alias'] = ['', BaseEnaConverter.fixed_attribute, alias]
 
     @staticmethod
     def post_conversion(entity: dict, xml_element: Element):
+        pass
+
+    @staticmethod
+    def _get_core_attributes(entity: dict) -> dict:
         pass
 
     @staticmethod
