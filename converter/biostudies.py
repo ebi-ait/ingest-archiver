@@ -1,3 +1,6 @@
+import json
+import logging
+
 from json_converter.json_mapper import JsonMapper
 from json_converter.post_process import default_to
 
@@ -150,8 +153,14 @@ class BioStudiesConverter:
         self.contributors = None
         self.funders = None
         self.publications = None
+        self.logger = logging.getLogger(__name__)
 
     def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
+        if hca_project:
+            self.logger.info(f'{json.dumps(hca_project)}')
+        else:
+            self.logger.info(f'hca_project is falsy')
+
         converted_project = JsonMapper(hca_project).map({
             'attributes': ['$array', PROJECT_SPEC_BASE, True],
             'section': PROJECT_SPEC_SECTION
