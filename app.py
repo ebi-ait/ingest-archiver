@@ -24,6 +24,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
 
 logging.getLogger('archiver').setLevel(logging.INFO)
 logging.getLogger('api').setLevel(logging.INFO)
+logging.getLogger('converter').setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
