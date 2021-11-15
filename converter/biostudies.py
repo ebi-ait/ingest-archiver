@@ -157,7 +157,8 @@ class BioStudiesConverter:
 
     def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
         if hca_project:
-            self.logger.info(f'{json.dumps(hca_project)}')
+            self.logger.info(f'hca_project: {json.dumps(hca_project)}')
+            self.logger.info(f'PROJECT_SPEC_SECTION: {json.dumps(PROJECT_SPEC_SECTION)}')
         else:
             self.logger.info(f'hca_project is falsy')
 
