@@ -27,7 +27,6 @@ def _parse_name(*args):
 class BioStudiesConverter:
 
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
         self.attributes = None
         self.contributors = None
         self.funders = None
@@ -148,13 +147,6 @@ class BioStudiesConverter:
         }
 
     def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
-        if hca_project:
-            self.logger.info(f'hca_project: {json.dumps(hca_project)}')
-            self.logger.info(f'PROJECT_SPEC_BASE: {self.project_spec_base}')
-            self.logger.info(f'PROJECT_SPEC_SECTION: {self.project_spec_section}')
-        else:
-            self.logger.info(f'hca_project is falsy')
-
         converted_project = JsonMapper(hca_project).map({
             'attributes': ['$array', self.project_spec_base, True],
             'section': self.project_spec_section
