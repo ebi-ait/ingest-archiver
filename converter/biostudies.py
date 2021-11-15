@@ -20,24 +20,6 @@ PROJECT_SPEC_BASE = [
     }
 ]
 
-PROJECT_SPEC_SECTION = {
-    "accno": ['', default_to, "PROJECT"],
-    "type": ['', default_to, "Study"],
-    "attributes": ['$array', [
-            {
-                "name": ['', default_to, "Title"],
-                "value": ['content.project_core.project_title']
-            },
-            {
-                "name": ['', default_to, "Description"],
-                "value": ['content.project_core.project_description']
-            }
-        ],
-        True
-    ]
-}
-
-
 def array_to_string(*args):
     value = ", ".join(args[0])
     return value
@@ -150,11 +132,27 @@ class BioStudiesConverter:
         self.contributors = None
         self.funders = None
         self.publications = None
+        self.project_spec_section = {
+            "accno": ['', default_to, "PROJECT"],
+            "type": ['', default_to, "Study"],
+            "attributes": ['$array', [
+                    {
+                        "name": ['', default_to, "Title"],
+                        "value": ['content.project_core.project_title']
+                    },
+                    {
+                        "name": ['', default_to, "Description"],
+                        "value": ['content.project_core.project_description']
+                    }
+                ],
+                True
+            ]
+        }
 
     def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
         converted_project = JsonMapper(hca_project).map({
             'attributes': ['$array', PROJECT_SPEC_BASE, True],
-            'section': PROJECT_SPEC_SECTION
+            'section': self.project_spec_section
             })
 
         project_content = hca_project['content'] if 'content' in hca_project else None
