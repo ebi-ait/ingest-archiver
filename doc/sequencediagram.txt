@@ -1,27 +1,27 @@
-
+@startuml
 title HCA Ingest to EBI Archives Flow
 
-bottomparticipants
-lifelinestyle #gray:1:solid
+skinparam sequenceMessageAlign center
 
 actor Wrangler
-participantgroup #bce8f1 ++**ingest
+
+box "Ingest Service" #bce8f1
 participant Archiver
 participant "Ingest \nAPI" as Ingest
-end 
+end box
 
-participantgroup #75c8ec ++**BioStudies
+box "BioStudies" #75c8ec
 participant "BioStudies \nAPI" as Biostudies
-end
+end box
 
-participantgroup #b4d5d7 ++**BioSamples
+box "BioSamples" #b4d5d7
 participant "BioSamples \nAPI" as Biosamples
-end 
+end box
 
-participantgroup #deebeb ++**ENA
+box "ENA" #deebeb
 participant "ENA Staging \nArea" as ENAStage
 participant "ENA REST \nAPI" as ENA
-end 
+end box
 
 Wrangler->Archiver:archive(uuid)
 
@@ -46,28 +46,25 @@ Archiver->Biosamples:update sample with study accession
 note over Archiver #cornsilk:  data files upload
 Archiver->ENAStage:upload_data_files(uuid)
 activate ENAStage
-Archiver<--ENAStage: complete
-deactivate ENAStage
+return complete
 
 note over Archiver #cornsilk:  register ena metadata 
 Archiver->Archiver:map_hca_entities_to_ena_study_and_sample_xmls()
 Archiver->ENA:submit_ena_study_xml()
 activate ENA
-Archiver<--ENA:ENA study accession
-deactivate ENA
+return "ENA study accession"
 
 Archiver->ENA:register_ena_samples()
 activate ENA
-ENA-->Archiver:ENA sample accessions
-deactivate ENA
+return "ENA sample accessions"
 
 Archiver->Ingest:get_submission_process_inputs_and_outputs()
 Archiver->Archiver:create_run_and_experiment_xml()
 Archiver->ENA:submit_run_and_experiment_xmls()
 activate ENA
 ENA->ENA:ENA validation
-Archiver<--ENA: validation errors/accessions
-deactivate ENA
+return "validation errors/accessions"
 Archiver->Ingest:update_accessions()
 Archiver->Ingest: update_archive_status
 
+@enduml

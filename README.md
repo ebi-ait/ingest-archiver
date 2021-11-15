@@ -249,6 +249,10 @@ or in the `REPORT.json` in the `submission-url` field (there will be several). F
 On success you will get the message `SUCCESSFULLY SUBMITTED`. You're done!
 
 
+# HCA Ingest to EBI Archives Flow
+
+![Ingest to EBI Archives Flow](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/ebi-ait/ingest-archiver/master/doc/sequencediagram.txt)
+
 # How to run the tests
 ## In Docker
 ```
