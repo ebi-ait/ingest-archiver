@@ -20,32 +20,8 @@ We need to skip uploading data files to DSP and instead upload directly to ENA s
 
 
 ### Upload via DSP
-```plantuml
-@startuml
-'title "Archiving Files to DSP"
-actor Wrangler
-participant "EBI Cluster" as Cluster
-participant "Archiver Service" as Archiver
+![Archiving Files to DSP](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/ebi-ait/ingest-archiver/prabh-t-patch-1/doc/dsp_upload.diag)
 
-Wrangler -> Cluster:login
-Cluster -> Cluster: create a working/project dir
-Cluster -> Archiver:get upload plan
-note over Cluster
-json containing 
-convert/upload info
-end note
-Archiver --> Cluster
-Cluster -> Quay.io: get file archiver img
-Quay.io --> Cluster: img
-Cluster -> Cluster: LSF job
-note right
-run file 
-archiver img
-end note
-Wrangler -> Archiver: check status
-Archiver --> Wrangler: complete / validation errors
-@enduml
-```
 
 ### LSF job
 The LSF job runs the Ingest file archiver (node app) image which does the following:
@@ -56,17 +32,8 @@ The LSF job runs the Ingest file archiver (node app) image which does the follow
     - the data goes to the DSP staging area in the cluster
     - a process in DSP then moves this data to ENA staging area
 
-```plantuml
-@startuml
-title "Ingest file archiver"
-participant "File Archiver" as FArchiver
+![Ingest file archiver](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/ebi-ait/ingest-archiver/prabh-t-patch-1/doc/ingest_file_archiver.diag)
 
-FArchiver -> S3:download
-S3 --> FArchiver: data files
-FArchiver -> FArchiver: fastq2bam conv
-FArchiver -> DSP: upload
-@enduml
-```
 
 The file archiver can be run on a local machine or have been run on the Wrangler EC2 instance as well in the past.
 
