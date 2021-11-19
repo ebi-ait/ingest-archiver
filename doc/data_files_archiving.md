@@ -77,9 +77,9 @@ FTP is relatlvely easy to use e.g. a simple Python or Java client can be written
 
 Any submission made to ENA needs to come from a registered Webin user. For e.g. registered DSP Webin user is Webin-XXXX. 
 
-Once we have the new email account, can you please also create a new Webin user account for HCA submissions to ENA? https://www.ebi.ac.uk/ena/submit/webin/accountInfo
+Once we have the new email account, a Webin user account for HCA submissions to ENA can be created at https://www.ebi.ac.uk/ena/submit/webin/accountInfo
 
-Once we have created a new account Rasko can make it a "broker" by filling in broker_name in ERAPRO submission_account table.
+Once we have the new Webin account, it has to be made a "broker" by filling in `broker_name` in ERAPRO submission_account table.
 
 
 Webin user upload area
