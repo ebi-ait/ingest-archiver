@@ -95,12 +95,7 @@ To distinguish between submissions from the different environments, a directory 
 <env>/<sub_uuid>
 ```
 
-For e.g. 
-```
-/dev/d6a3bb80-493a-11ec-81d3-0242ac130003
-```
-
-
+Run and experiment XMLs will have reference to files uploaded in the Webin upload area following the above structure, for e.g. `/dev/d6a3bb80-493a-11ec-81d3-0242ac130003/file.fastq.gz`.
 
 
 Push
