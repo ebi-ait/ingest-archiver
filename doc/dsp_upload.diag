@@ -1,0 +1,24 @@
+@startuml
+'title "Archiving Files to DSP"
+actor Wrangler
+participant "EBI Cluster" as Cluster
+participant "Archiver Service" as Archiver
+
+Wrangler -> Cluster:login
+Cluster -> Cluster: create a working/project dir
+Cluster -> Archiver:get upload plan
+note over Cluster
+json containing 
+convert/upload info
+end note
+Archiver --> Cluster
+Cluster -> Quay.io: get file archiver img
+Quay.io --> Cluster: img
+Cluster -> Cluster: LSF job
+note right
+run file 
+archiver img
+end note
+Wrangler -> Archiver: check status
+Archiver --> Wrangler: complete / validation errors
+@enduml
