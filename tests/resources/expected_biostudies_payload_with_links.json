@@ -54,7 +54,7 @@
         "attributes": [
           {
             "name": "Name",
-            "value": "Elisa,,Laurenti"
+            "value": "Elisa,Doe,Laurenti"
           },
           {
             "name": "First Name",
@@ -62,7 +62,7 @@
           },
           {
             "name": "Middle Initials",
-            "value": ""
+            "value": "D"
           },
           {
             "name": "Last Name",
@@ -102,10 +102,6 @@
           {
             "name": "First Name",
             "value": "Ami"
-          },
-          {
-            "name": "Middle Initials",
-            "value": ""
           },
           {
             "name": "Last Name",

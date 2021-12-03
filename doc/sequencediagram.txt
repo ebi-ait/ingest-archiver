@@ -1,0 +1,70 @@
+@startuml
+title HCA Ingest to EBI Archives Flow
+
+skinparam sequenceMessageAlign center
+
+actor Wrangler
+
+box "Ingest Service" #bce8f1
+participant Archiver
+participant "Ingest \nAPI" as Ingest
+end box
+
+box "BioStudies" #75c8ec
+participant "BioStudies \nAPI" as Biostudies
+end box
+
+box "BioSamples" #b4d5d7
+participant "BioSamples \nAPI" as Biosamples
+end box
+
+box "ENA" #deebeb
+participant "ENA Staging \nArea" as ENAStage
+participant "ENA REST \nAPI" as ENA
+end box
+
+Wrangler->Archiver:archive(uuid)
+
+note over Archiver #cornsilk: study
+Archiver->Ingest:get_project(uuid)
+Ingest-->Archiver:project
+Archiver->Archiver:map_hca_entity_to_biostudies_obj()
+Archiver->Biostudies:register_study()
+Archiver<--Biostudies:study accession
+
+note over Archiver #cornsilk:  sample
+Archiver->Ingest:get_biomaterials_and_processes()
+Archiver<--Ingest: biomaterials, processes
+Archiver->Archiver:map_hca_entities_into_biosamples_obj()
+Archiver->Biosamples:register_samples()
+Archiver<--Biosamples:sample accessions
+
+note over Archiver #cornsilk: biostudies-biosamples linking
+Archiver->Biostudies:update study with sample accessions
+Archiver->Biosamples:update sample with study accession
+
+note over Archiver #cornsilk:  data files upload
+Archiver->ENAStage:upload_data_files(uuid)
+activate ENAStage
+return complete
+
+note over Archiver #cornsilk:  register ena metadata 
+Archiver->Archiver:map_hca_entities_to_ena_study_and_sample_xmls()
+Archiver->ENA:submit_ena_study_xml()
+activate ENA
+return "ENA study accession"
+
+Archiver->ENA:register_ena_samples()
+activate ENA
+return "ENA sample accessions"
+
+Archiver->Ingest:get_submission_process_inputs_and_outputs()
+Archiver->Archiver:create_run_and_experiment_xml()
+Archiver->ENA:submit_run_and_experiment_xmls()
+activate ENA
+ENA->ENA:ENA validation
+return "validation errors/accessions"
+Archiver->Ingest:update_accessions()
+Archiver->Ingest: update_archive_status
+
+@enduml
