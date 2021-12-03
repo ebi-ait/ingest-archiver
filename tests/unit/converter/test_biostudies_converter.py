@@ -144,7 +144,7 @@ class TestBioStudiesConverter(unittest.TestCase):
 
     @staticmethod
     def __get_expected_payload(file_path: str):
-        with open(dirname(__file__) + file_path) as file:
+        with open("{0}{1}".format(dirname(__file__), file_path)) as file:
             expected_payload = json.load(file)
         return expected_payload
 

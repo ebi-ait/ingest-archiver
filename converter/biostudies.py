@@ -24,22 +24,22 @@ def _parse_name(*args):
 
 
 PUBLICATION_SPEC = {
-    "type": "Publication",
-    "on": 'publications',
-    "attributes_to_include": {
+    'type': 'Publication',
+    'on': 'publications',
+    'attributes_to_include': {
         'authors': "Authors",
         'title': "Title",
         'doi': 'doi',
         'url': 'URL'
     },
-    "attribute_handler": {
+    'attribute_handler': {
         'authors': array_to_string
     }
 }
 AUTHORS_SPEC = {
-    "type": "Author",
-    "on": 'contributors',
-    "attributes_to_include": {
+    'type': 'Author',
+    'on': 'contributors',
+    'attributes_to_include': {
         'name': 'Name',
         'first_name': 'First Name',
         'middle_initials': 'Middle Initials',
@@ -51,9 +51,9 @@ AUTHORS_SPEC = {
     }
 }
 FUNDING_SPEC = {
-    "type": "Funding",
-    "on": 'funders',
-    "attributes_to_include": {
+    'type': 'Funding',
+    'on': 'funders',
+    'attributes_to_include': {
         'grant_id': 'grant_id',
         'grant_title': 'Grant Title',
         'organization': 'Agency'
@@ -83,16 +83,16 @@ class BioStudiesConverter:
             }
         ]
         self.project_spec_section = {
-            "accno": ['', default_to, "PROJECT"],
-            "type": ['', default_to, "Study"],
-            "attributes": ['$array', [
+            'accno': ['', default_to, 'PROJECT'],
+            'type': ['', default_to, 'Study'],
+            'attributes': ['$array', [
                     {
-                        "name": ['', default_to, "Title"],
-                        "value": ['content.project_core.project_title']
+                        'name': ['', default_to, 'Title'],
+                        'value': ['content.project_core.project_title']
                     },
                     {
-                        "name": ['', default_to, "Description"],
-                        "value": ['content.project_core.project_description']
+                        'name': ['', default_to, 'Description'],
+                        'value': ['content.project_core.project_description']
                     }
                 ],
                 True
@@ -167,7 +167,7 @@ class BioStudiesConverter:
         return \
             {
                 'accno': ACCNO_PREFIX_FOR_ORGANIZATIONS + str(index),
-                'type': "Organization",
+                'type': 'Organization',
                 'attributes': [
                     {
                         'name': 'Name',
@@ -204,15 +204,15 @@ class BioStudiesConverter:
                         value = attribute_handler(value)
                     attribute_list.append(
                         {
-                            "name": attributes_to_include.get(attribute_key),
-                            "value": value
+                            'name': attributes_to_include.get(attribute_key),
+                            'value': value
                         }
                     )
             if len(attribute_list) > 0:
                 subsection_payload_element.update(
                     {
-                        "type": specification.get('type'),
-                        "attributes": attribute_list
+                        'type': specification.get('type'),
+                        'attributes': attribute_list
                     }
                 )
             subsection_type_list.append(subsection_payload_element)
