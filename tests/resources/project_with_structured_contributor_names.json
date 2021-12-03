@@ -10,7 +10,9 @@
       },
       "contributors": [
         {
-          "name": "Elisa,Doe,Laurenti",
+          "first_name": "Elisa",
+          "middle_initials": "D",
+          "last_name": "Laurenti",
           "email": "el422@cam.ac.uk",
           "phone": "+44 (0) 1223 762044",
           "institution": "Wellcome - MRC Cambridge Stem Cell Institute",
@@ -27,6 +29,8 @@
         },
         {
           "name": "Ami,,Day",
+          "middle_initials": "",
+          "last_name": "Day",
           "email": "ami@ebi.ac.uk",
           "phone": "345678",
           "institution": "EMBL-EBI",

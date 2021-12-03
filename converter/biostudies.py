@@ -1,14 +1,16 @@
+import copy
+
 from json_converter.json_mapper import JsonMapper
 from json_converter.post_process import default_to
 
 ACCNO_PREFIX_FOR_ORGANIZATIONS = "o"
-
 ACCNO_PREFIX_FOR_AUTHORS = "a"
 
 
 def array_to_string(*args):
     value = ", ".join(args[0])
     return value
+
 
 def _parse_name(*args):
     full_name = args[0]
@@ -19,6 +21,44 @@ def _parse_name(*args):
 
     name_element = full_name.split(',', 2)[position]
     return name_element[0] if name_element and position == 1 else name_element
+
+
+PUBLICATION_SPEC = {
+    'type': 'Publication',
+    'on': 'publications',
+    'attributes_to_include': {
+        'authors': "Authors",
+        'title': "Title",
+        'doi': 'doi',
+        'url': 'URL'
+    },
+    'attribute_handler': {
+        'authors': array_to_string
+    }
+}
+AUTHORS_SPEC = {
+    'type': 'Author',
+    'on': 'contributors',
+    'attributes_to_include': {
+        'name': 'Name',
+        'first_name': 'First Name',
+        'middle_initials': 'Middle Initials',
+        'last_name': 'Last Name',
+        'email': 'Email',
+        'phone': 'Phone',
+        'address': 'Address',
+        'orcid_id': 'Orcid ID'
+    }
+}
+FUNDING_SPEC = {
+    'type': 'Funding',
+    'on': 'funders',
+    'attributes_to_include': {
+        'grant_id': 'grant_id',
+        'grant_title': 'Grant Title',
+        'organization': 'Agency'
+    }
+}
 
 
 class BioStudiesConverter:
@@ -43,102 +83,18 @@ class BioStudiesConverter:
             }
         ]
         self.project_spec_section = {
-            "accno": ['', default_to, "PROJECT"],
-            "type": ['', default_to, "Study"],
-            "attributes": ['$array', [
+            'accno': ['', default_to, 'PROJECT'],
+            'type': ['', default_to, 'Study'],
+            'attributes': ['$array', [
                     {
-                        "name": ['', default_to, "Title"],
-                        "value": ['content.project_core.project_title']
+                        'name': ['', default_to, 'Title'],
+                        'value': ['content.project_core.project_title']
                     },
                     {
-                        "name": ['', default_to, "Description"],
-                        "value": ['content.project_core.project_description']
+                        'name': ['', default_to, 'Description'],
+                        'value': ['content.project_core.project_description']
                     }
                 ],
-                True
-            ]
-        }
-        self.project_spec_publications = {
-            "type": ['', default_to, "Publication"],
-            "$on": 'publications',
-            "attributes": ['$array', [
-                {
-                    "name": ['', default_to, "Authors"],
-                    "value": ['authors', array_to_string]
-                },
-                {
-                    "name": ['', default_to, "Title"],
-                    "value": ['title']
-                },
-                {
-                    "name": ['', default_to, "doi"],
-                    "value": ['doi']
-                },
-                {
-                    "name": ['', default_to, "URL"],
-                    "value": ['url']
-                }
-            ],
-                           True
-                           ]
-        }
-        self.project_spec_authors = {
-            "type": ['', default_to, "Author"],
-            "$on": 'contributors',
-            "attributes": ['$array', [
-                    {
-                        "name": ['', default_to, "Name"],
-                        "value": ['name']
-                    },
-                    {
-                        "name": ['', default_to, "First Name"],
-                        "value": ['name', _parse_name, 0]
-                    },
-                    {
-                        "name": ['', default_to, "Middle Initials"],
-                        "value": ['name', _parse_name, 1]
-                    },
-                    {
-                        "name": ['', default_to, "Last Name"],
-                        "value": ['name', _parse_name, 2]
-                    },
-                    {
-                        "name": ['', default_to, "Email"],
-                        "value": ['email']
-                    },
-                    {
-                        "name": ['', default_to, "Phone"],
-                        "value": ['phone']
-                    },
-                    {
-                        "name": ['', default_to, "Address"],
-                        "value": ['address']
-                    },
-                    {
-                        "name": ['', default_to, "Orcid ID"],
-                        "value": ['orcid_id']
-                    },
-            ],
-                True
-            ]
-        }
-        self.project_spec_fundings = {
-            "type": ['', default_to, "Funding"],
-            "$on": 'funders',
-            "attributes": ['$array', [
-                    {
-                        "name": ['', default_to, "grant_id"],
-                        "value": ['grant_id']
-                    },
-                    {
-                        "name": ['', default_to, "Grant Title"],
-                        "value": ['grant_title']
-                    },
-                    {
-                        "name": ['', default_to, "Agency"],
-                        "value": ['organization']
-                    },
-            ],
                 True
             ]
         }
@@ -162,15 +118,16 @@ class BioStudiesConverter:
         if contributors or funders or publications:
             converted_project['section']['subsections'] = []
 
-        converted_publications = JsonMapper(project_content).map(self.project_spec_publications) if publications else []
+        converted_publications = self.add_attributes_by_spec(PUBLICATION_SPEC, project_content)
 
         converted_organizations = []
 
-        converted_authors = JsonMapper(project_content).map(self.project_spec_authors) if contributors else []
+        project_content_with_structured_names = self.transform_author_names(project_content)
+        converted_authors = self.add_attributes_by_spec(AUTHORS_SPEC, project_content_with_structured_names) if contributors else []
         BioStudiesConverter.__add_accno(converted_authors, ACCNO_PREFIX_FOR_AUTHORS)
         BioStudiesConverter.__add_affiliation(contributors, converted_authors, converted_organizations)
 
-        converted_funders = JsonMapper(project_content).map(self.project_spec_fundings) if funders else []
+        converted_funders = self.add_attributes_by_spec(FUNDING_SPEC, project_content) if funders else []
 
         converted_project['section']['subsections'] = \
             converted_publications + converted_authors + converted_organizations + converted_funders
@@ -210,7 +167,7 @@ class BioStudiesConverter:
         return \
             {
                 'accno': ACCNO_PREFIX_FOR_ORGANIZATIONS + str(index),
-                'type': "Organization",
+                'type': 'Organization',
                 'attributes': [
                     {
                         'name': 'Name',
@@ -218,3 +175,69 @@ class BioStudiesConverter:
                     }
                 ]
             }
+
+    @staticmethod
+    def transform_author_names(project_content: dict) -> dict:
+        project_content_with_structured_name = copy.deepcopy(project_content)
+        contributors = project_content_with_structured_name.get('contributors')
+        contributor: dict
+        for contributor in contributors:
+            full_name = contributor.get('name')
+            structured_name = BioStudiesConverter.convert_full_name(full_name)
+            contributor.update(structured_name)
+
+        return project_content_with_structured_name
+
+    @staticmethod
+    def add_attributes_by_spec(specification: dict, project_content: dict):
+        subsection_type_list = []
+        iterate_on = specification.get('on')
+        attributes_to_include: dict = specification.get('attributes_to_include')
+        for entity in project_content.get(iterate_on):
+            subsection_payload_element = {}
+            attribute_list = []
+            for attribute_key in attributes_to_include:
+                if entity.get(attribute_key):
+                    attribute_handler = specification.get('attribute_handler', {}).get(attribute_key)
+                    value = entity.get(attribute_key)
+                    if attribute_handler:
+                        value = attribute_handler(value)
+                    attribute_list.append(
+                        {
+                            'name': attributes_to_include.get(attribute_key),
+                            'value': value
+                        }
+                    )
+            if len(attribute_list) > 0:
+                subsection_payload_element.update(
+                    {
+                        'type': specification.get('type'),
+                        'attributes': attribute_list
+                    }
+                )
+            subsection_type_list.append(subsection_payload_element)
+        return subsection_type_list
+
+    @staticmethod
+    def convert_full_name(full_name: str) -> dict:
+        if full_name is None:
+            return {}
+        name_parts = full_name.split(',', 2)
+
+        first_name = name_parts[0]
+        if len(name_parts) <= 2:
+            middle_initials = None
+            last_name = name_parts[1]
+        else:
+            middle_initials = name_parts[1][0] if name_parts[1] else None
+            last_name = name_parts[2]
+
+        structured_name = {
+            'first_name': first_name,
+            'last_name': last_name
+        }
+
+        if middle_initials:
+            structured_name['middle_initials'] = middle_initials
+
+        return structured_name
