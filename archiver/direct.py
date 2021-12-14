@@ -70,6 +70,29 @@ class DirectArchiver:
         self.__biosamples_submitter.update_samples_with_biostudies_accession(submission, biosample_accessions,
                                                                              biostudies_accession)
 
+    @staticmethod
+    def create_submitter_for_biosamples(aap_password, aap_url, aap_user, biosamples_domain, biosamples_url):
+        aap_client = AapClient(aap_user, aap_password, aap_url)
+        biosamples_client = BioSamples(aap_client, biosamples_url)
+        biosamples_converter = BioSamplesConverter(biosamples_domain)
+        biosamples_submitter_service = BioSamplesSubmitterService(biosamples_client)
+        biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter,
+                                                   biosamples_submitter_service)
+        return biosamples_submitter
+
+    @staticmethod
+    def create_submitter_for_biostudies(biostudies_url, biostudies_username, biostudies_password):
+        biostudies_converter = BioStudiesConverter()
+        biostudies_client = DirectArchiver.__create_biostudies_client(biostudies_password, biostudies_url, biostudies_username)
+        biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
+        biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter,
+                                                   biostudies_submitter_service)
+        return biostudies_submitter
+
+    @staticmethod
+    def __create_biostudies_client(biostudies_password, biostudies_url, biostudies_username):
+        return BioStudies(biostudies_url, biostudies_username, biostudies_password)
+
 
 def direct_archiver_from_params(
         ingest_url: str,
@@ -78,18 +101,14 @@ def direct_archiver_from_params(
 ) -> DirectArchiver:
     ingest_client = IngestApi(ingest_url)
     hca_loader = HcaLoader(ingest_client)
+
     hca_updater = HcaUpdater(ingest_client)
-    aap_client = AapClient(aap_user, aap_password, aap_url)
 
-    biosamples_client = BioSamples(aap_client, biosamples_url)
-    biosamples_converter = BioSamplesConverter(biosamples_domain)
-    biosamples_submitter_service = BioSamplesSubmitterService(biosamples_client)
-    biosamples_submitter = BioSamplesSubmitter(biosamples_client, biosamples_converter, biosamples_submitter_service)
+    biosamples_submitter = DirectArchiver.create_submitter_for_biosamples(aap_password, aap_url, aap_user,
+                                                                          biosamples_domain, biosamples_url)
 
-    biostudies_converter = BioStudiesConverter()
-    biostudies_client = BioStudies(biostudies_url, biostudies_username, biostudies_password)
-    biostudies_submitter_service = BioStudiesSubmitterService(biostudies_client)
-    biostudies_submitter = BioStudiesSubmitter(biostudies_client, biostudies_converter, biostudies_submitter_service)
+    biostudies_submitter = DirectArchiver.create_submitter_for_biostudies(biostudies_url, biostudies_username,
+                                                                          biostudies_password)
 
     return DirectArchiver(loader=hca_loader, updater=hca_updater,
                           biosamples_submitter=biosamples_submitter,
