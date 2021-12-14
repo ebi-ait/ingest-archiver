@@ -12,12 +12,12 @@ COPY converter ./converter
 COPY hca ./hca
 COPY submitter ./submitter
 COPY utils ./utils
-COPY config.py app.py requirements.txt ./
+COPY config.py archiver_app.py requirements.txt ./
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 EXPOSE 5000
 
-ENTRYPOINT ["python", "app.py"]
+ENTRYPOINT ["python", "archiver_app.py"]
 
