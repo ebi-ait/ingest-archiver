@@ -7,6 +7,7 @@ import time
 from http import HTTPStatus
 from functools import wraps
 
+from biostudiesclient.exceptions import RestErrorException
 from flask import Flask, Response
 from flask import jsonify
 from flask import request
@@ -69,6 +70,8 @@ def archive():
     alias_prefix = data.get('alias_prefix')
     is_direct_archiving = data.get('is_direct_archiving')
 
+    logger.info('Archiving started with UUID=%s', submission_uuid)
+
     if not is_direct_archiving:
         is_direct_archiving = config.DIRECT_SUBMISSION
 
@@ -79,9 +82,18 @@ def archive():
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
     if is_direct_archiving:
-        direct_archiver = direct_archiver_from_config()
-        submission = direct_archiver.archive_submission(submission_uuid)
-        response = submission.as_dict(string_lists=True)
+        try:
+            direct_archiver = direct_archiver_from_config()
+            submission = direct_archiver.archive_submission(submission_uuid)
+            response = submission.as_dict(string_lists=True)
+            logger.info('Archiving finished with UUID=%s', submission_uuid)
+        except RestErrorException as e:
+            log_error_message(e, submission_uuid)
+            response = {
+                'message': 'Archiving failed.',
+                'detailed_error_message': e.message,
+                'error_status_code': e.status_code
+            }
     else:
         ingest_api = IngestAPI(config.INGEST_API_URL)
         archiver = IngestArchiver(ingest_api=ingest_api,
@@ -98,6 +110,12 @@ def archive():
         }
 
     return jsonify(response)
+
+
+def log_error_message(exception, submission_uuid):
+    logger.error('Archiving submission with UUID=%s failed.', submission_uuid)
+    logger.error('Archive responded with status code: %s', exception.status_code)
+    logger.error('Archive responded with this error message: %s', exception.message)
 
 
 def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
