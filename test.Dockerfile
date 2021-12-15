@@ -13,7 +13,7 @@ COPY hca ./hca
 COPY submitter ./submitter
 COPY utils ./utils
 COPY tests ./tests
-COPY config.py app.py requirements.txt requirements-dev.txt ./
+COPY config.py archiver_app.py requirements.txt requirements-dev.txt ./
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements-dev.txt
