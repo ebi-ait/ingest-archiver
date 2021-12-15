@@ -5,23 +5,23 @@ from mock import MagicMock, call
 
 from hca.submission import HcaSubmission, Entity
 from submitter.base import UPDATED_ENTITY, CREATED_ENTITY, ERRORED_ENTITY
-from submitter.biostudies import BioStudiesSubmitter, ERROR_KEY
+from submitter.ena_study import EnaSubmitter, ERROR_KEY
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
-class TestBioStudiesSubmitter(unittest.TestCase):
+class TestEnaSubmitter(unittest.TestCase):
     def setUp(self) -> None:
         self.archive_client = MagicMock()
         self.converter = MagicMock()
-        self.empty_project = {}
-        self.converter.convert = MagicMock(return_value=self.empty_project)
+        self.empty_study = {}
+        self.converter.convert = MagicMock(return_value=self.empty_study)
         self.submitter_service = MagicMock()
-        self.submitter = BioStudiesSubmitter(self.archive_client, self.converter, self.submitter_service)
+        self.submitter = EnaSubmitter(self.archive_client, self.converter)
         self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()
-        self.archive_type = 'BioStudies'
+        self.archive_type = 'ENA'
         self.entity_type = 'projects'
-        self.biostudies_accession = 'BST_ACC_12345'
+        self.ena_study_accession = 'PRJ12345'
         self.error_key = ERROR_KEY
 
     def test_submit_project_converts_and_sends_project(self):
@@ -35,12 +35,12 @@ class TestBioStudiesSubmitter(unittest.TestCase):
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, other_attributes)
-        self.submitter._submit_to_archive.assert_called_once_with(self.empty_project)
+        self.submitter._submit_to_archive.assert_called_once_with(self.empty_study)
         self.assertEqual(UPDATED_ENTITY, result)
 
     def test_submit_project_return_creation(self):
         # Given
-        self.submitter._submit_to_archive = MagicMock(return_value={'accession': self.biostudies_accession})
+        self.submitter._submit_to_archive = MagicMock(return_value={'accession': self.ena_study_accession})
         test_case = self.submission.map_ingest_entity(make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
         result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
@@ -57,7 +57,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(ERRORED_ENTITY, result)
-        self.assertDictEqual(test_case.get_errors(), {self.error_key: [f'BioStudies Error: {error_msg}']})
+        self.assertDictEqual(test_case.get_errors(), {self.error_key: [f'ENA Error: {error_msg}']})
 
     def test_send_all_projects_sorts_projects_into_results(self):
         # Given
@@ -72,7 +72,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
             calls.append(call(entity, self.archive_type, self.error_key, {}))
 
         # When
-        result, accessions = self.submitter.send_all_projects(self.submission)
+        result, accessions = self.submitter.send_all_ena_entities(self.submission)
 
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)

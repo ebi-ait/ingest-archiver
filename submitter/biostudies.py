@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
 from submission_broker.services.biostudies import BioStudies
-from submission_broker.submission.submission import Submission, Entity
+from submission_broker.submission.submission import Submission
 
 from converter.biostudies import BioStudiesConverter
 from submitter.base import Submitter

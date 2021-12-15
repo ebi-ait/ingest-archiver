@@ -22,7 +22,7 @@ class EnaStudyConverterTest(unittest.TestCase):
         expected_payload = \
             self.__get_expected_payload('/../../../resources/expected_ena_study_payload_with_accession_and_alias.xml')
 
-        converted_payload = self.ena_study_converter.convert(self.project['attributes'], other_attributes)
+        converted_payload = self.ena_study_converter.convert(self.project['attributes'], other_attributes).decode("UTF-8")
 
         assert_that(converted_payload).is_equal_to(expected_payload)
 
@@ -32,7 +32,7 @@ class EnaStudyConverterTest(unittest.TestCase):
         expected_payload = \
             self.__get_expected_payload('/../../../resources/expected_ena_study_payload_with_only_alias.xml')
 
-        converted_payload = self.ena_study_converter.convert(self.project['attributes'], other_attributes)
+        converted_payload = self.ena_study_converter.convert(self.project['attributes'], other_attributes).decode("UTF-8")
 
         assert_that(converted_payload).is_equal_to(expected_payload)
 
