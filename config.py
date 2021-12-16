@@ -51,6 +51,6 @@ BIOSTUDIES_URL = os.environ.get('BIOSTUDIES_API_URL', 'https://wwwdev.ebi.ac.uk/
 BIOSTUDIES_STUDY_URL = os.environ.get('BIOSTUDIES_STUDY_URL', 'https://wwwdev.ebi.ac.uk/biostudies/studies/')
 BIOSTUDIES_USERNAME = os.environ.get('BIOSTUDIES_API_USERNAME')
 BIOSTUDIES_PASSWORD = os.environ.get('BIOSTUDIES_API_PASSWORD')
-ENA_API_URL = os.environ.get('ENA_API_URL', 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/')
+ENA_WEBIN_API_URL = os.environ.get('ENA_WEBIN_API_URL', 'https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/')
 ENA_WEBIN_USERNAME = os.environ.get('ENA_WEBIN_USERNAME')
 ENA_WEBIN_PASSWORD = os.environ.get('ENA_WEBIN_PASSWORD')

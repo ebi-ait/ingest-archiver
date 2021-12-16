@@ -147,7 +147,7 @@ def direct_archiver_from_config() -> DirectArchiver:
         'biostudies_url': config.BIOSTUDIES_URL,
         'biostudies_username': config.BIOSTUDIES_USERNAME,
         'biostudies_password': config.BIOSTUDIES_PASSWORD,
-        'ena_api_url': config.ENA_API_URL,
+        'ena_api_url': config.ENA_WEBIN_API_URL,
         'ena_webin_username': config.ENA_WEBIN_USERNAME,
         'ena_webin_password': config.ENA_WEBIN_PASSWORD
     }
