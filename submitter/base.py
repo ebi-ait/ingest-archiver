@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABCMeta
+from datetime import datetime
 from typing import Tuple, List
 
 from submission_broker.submission.submission import Submission, Entity
@@ -9,7 +10,8 @@ ERRORED_ENTITY = 'ERRORED'
 
 ARCHIVE_TO_HCA_ENTITY_MAP = {
     'BioSamples': 'biomaterials',
-    'BioStudies': 'projects'
+    'BioStudies': 'projects',
+    'ENA': 'projects'
 }
 
 
@@ -17,17 +19,24 @@ class Submitter(metaclass=ABCMeta):
     def __init__(self, archive_client, converter):
         self.archive_client = archive_client
         self.converter = converter
+        self.release_date = None
 
     def send_all_entities(self, submission: Submission, archive_type: str, error_key: str,
-                          additional_attributes: dict = None) -> Tuple[dict, List[str]]:
+                          additional_attributes: dict = {}) -> Tuple[dict, List[str]]:
         response = {}
         accessions = []
         hca_entity_type = ARCHIVE_TO_HCA_ENTITY_MAP[archive_type]
         for entity in submission.get_entities(hca_entity_type):
+            if archive_type == 'ENA' and hca_entity_type == 'projects':
+                self.__set_release_date_from_project(entity)
             result, accession = self.send_entity(entity, archive_type, error_key, additional_attributes)
             response.setdefault(result, []).append(entity)
             accessions.append(accession)
         return response, accessions
+
+    def __set_release_date_from_project(self, entity):
+        release_date = entity.attributes.get('releaseDate')
+        self.release_date = datetime.strptime(release_date, "%Y-%m-%dT%H:%M:%SZ").date().strftime('%d-%m-%Y')
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
                     other_attributes: dict = {}) -> Tuple[str, str]:

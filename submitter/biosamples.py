@@ -1,8 +1,8 @@
 from typing import Tuple, List
 
 from converter.biosamples import BioSamplesConverter
-from submission_broker.submission.submission import Submission, Entity
-from submission_broker.services.biosamples import BioSamples, AapClient
+from submission_broker.submission.submission import Submission
+from submission_broker.services.biosamples import BioSamples
 
 from submitter.base import Submitter
 from submitter.biosamples_submitter_service import BioSamplesSubmitterService
