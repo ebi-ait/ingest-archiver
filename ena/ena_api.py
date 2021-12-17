@@ -16,7 +16,7 @@ SUBMIT_ACTIONS = ['ADD', 'MODIFY']
 
 class EnaApi:
     def __init__(self, ingest_api: IngestAPI, url: str = None):
-        self.url = url or os.environ.get('ENA_API_URL')
+        self.url = url or os.environ.get('ENA_WEBIN_API_URL')
         self.user = os.environ.get('ENA_USER')
         self.password = os.environ.get('ENA_PASSWORD')
 
@@ -76,7 +76,7 @@ class EnaApi:
 
     def _require_env_vars(self):
         if not self.url:
-            raise Error('The ENA_API_URL be set in environment variables.')
+            raise Error('The ENA_WEBIN_API_URL be set in environment variables.')
         if not all([self.user, self.password]):
             raise Error('The ENA_USER, ENA_PASSWORD must be set in environment variables.')
 

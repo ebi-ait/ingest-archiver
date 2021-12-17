@@ -11,7 +11,7 @@ class BaseEnaConverter:
         self.ena_type = ena_type
         self.xml_spec = xml_spec
 
-    def convert(self, entity: dict, additional_attributes: dict = None) -> str:
+    def convert(self, entity: dict, additional_attributes: dict = {}):
         ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
         self._add_alias_to_additional_attributes(entity, additional_attributes)
         self.add_accession_and_alias(self.xml_spec, additional_attributes)
@@ -88,4 +88,4 @@ class BaseEnaConverter:
 
     @staticmethod
     def convert_to_xml_str(element: Element) -> str:
-        return etree.tostring(element, xml_declaration=True, pretty_print=True, encoding="UTF-8").decode("UTF-8")
+        return etree.tostring(element, xml_declaration=True, pretty_print=True, encoding="UTF-8")

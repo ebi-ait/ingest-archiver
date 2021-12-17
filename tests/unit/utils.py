@@ -10,7 +10,7 @@ def make_ingest_entity(ingest_type: str,
                        extra_links=None
                        ) -> dict:
     if not attributes:
-        attributes = {}
+        attributes = {'releaseDate': '2020-01-01T11:22:33Z'}
     if ingest_uuid:
         attributes['uuid'] = {'uuid': ingest_uuid}
     entity_uri = f'https://test_case.org/{ingest_type}/{ingest_index}'
