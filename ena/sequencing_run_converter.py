@@ -9,6 +9,7 @@ from archiver.archiver import Manifest
 # Add logic in checking the lib prep protocol
 READ_TYPES = {
     'index1': ['sample_barcode'],
+    'index2': ['sample_barcode'],
     'read1': [
         'cell_barcode',
         'umi_barcode'
@@ -108,7 +109,7 @@ class SequencingRunConverter:
     def _group_files_by_lane_index(self, files):
         lanes = {}
         for file in files:
-            lane_index = file.get('lane_index')
+            lane_index = file.get('lane_index', 1)
             if lane_index not in lanes:
                 lanes[lane_index] = []
             lanes[lane_index].append(file)
