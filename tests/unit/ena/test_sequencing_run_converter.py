@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from unittest import TestCase
@@ -151,7 +152,7 @@ class TestSequencingRunDataConverter(TestCase):
         expected_file = f'{self.expected_dir}/sample_add_run.xml'
         expected = load_xml_dict(expected_file)
 
-        self.assertEqual(actual, expected)
+        self.assertEqual(json.loads(json.dumps(actual)), json.loads(json.dumps(expected)))
 
     def test_convert_sequencing_run_data_to_xml_tree__multiple_runs(self):
         # given
@@ -169,7 +170,8 @@ class TestSequencingRunDataConverter(TestCase):
         expected_file = f'{self.expected_dir}/sample_add_multiple_runs.xml'
         expected = load_xml_dict(expected_file)
 
-        self.assertEqual(actual, expected)
+        # convert load_xml_dict output from xmltodict.parse to be unordered dict for assert comparison
+        self.assertEqual(json.loads(json.dumps(actual)), json.loads(json.dumps(expected)))
 
     def test_load_md5_file(self):
         # when
