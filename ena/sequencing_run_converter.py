@@ -132,7 +132,7 @@ class SequencingRunConverter:
 
         checksum = self._get_checksum(filename, md5)
         read_index = manifest_file['content']['read_index']
-        lane_index = manifest_file['content']['lane_index']
+        lane_index = manifest_file['content'].get('lane_index')
 
         file = {
             'url': manifest_file['_links']['self']['href'],
