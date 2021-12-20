@@ -9,6 +9,11 @@ from ena.sequencing_run_converter import SequencingRunConverter
 from ena.util import load_json, load_xml_dict, write_xml
 
 
+# for converting load_xml_dict output from xmltodict.parse to be unordered dict for assert comparisons
+def to_unordered_dict(ordered_dict: dict):
+    return json.loads(json.dumps(ordered_dict))
+
+
 class TestSequencingRunDataConverter(TestCase):
     def setUp(self) -> None:
         self.ingest_api = MagicMock()
@@ -152,7 +157,7 @@ class TestSequencingRunDataConverter(TestCase):
         expected_file = f'{self.expected_dir}/sample_add_run.xml'
         expected = load_xml_dict(expected_file)
 
-        self.assertEqual(json.loads(json.dumps(actual)), json.loads(json.dumps(expected)))
+        self.assertEqual(to_unordered_dict(actual), to_unordered_dict(expected))
 
     def test_convert_sequencing_run_data_to_xml_tree__multiple_runs(self):
         # given
@@ -170,8 +175,7 @@ class TestSequencingRunDataConverter(TestCase):
         expected_file = f'{self.expected_dir}/sample_add_multiple_runs.xml'
         expected = load_xml_dict(expected_file)
 
-        # convert load_xml_dict output from xmltodict.parse to be unordered dict for assert comparison
-        self.assertEqual(json.loads(json.dumps(actual)), json.loads(json.dumps(expected)))
+        self.assertEqual(to_unordered_dict(actual), to_unordered_dict(expected))
 
     def test_load_md5_file(self):
         # when
@@ -180,3 +184,4 @@ class TestSequencingRunDataConverter(TestCase):
         # then
         expected = load_json(f'{self.expected_dir}/md5.json')
         self.assertEqual(md5, expected)
+
