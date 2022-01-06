@@ -77,10 +77,6 @@ class BioStudiesConverter:
             {
                 'name': ['', default_to, 'HCA Project UUID'],
                 'value': ['uuid.uuid']
-            },
-            {
-                'name': ['', default_to, 'ReleaseDate'],
-                'value': ['releaseDate']
             }
         ]
         self.project_spec_section = {
@@ -101,19 +97,29 @@ class BioStudiesConverter:
         }
 
     def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
-        if hca_project.get('releaseDate') is None:
-            self.__set_release_date(hca_project)
-
         converted_project = JsonMapper(hca_project).map({
             'attributes': ['$array', self.project_spec_base, True],
             'section': self.project_spec_section
             })
+
+        self.add_release_date(converted_project, hca_project)
 
         project_content = hca_project['content'] if 'content' in hca_project else None
         if project_content:
             self.__add_subsections_to_project(converted_project, project_content)
 
         return converted_project
+
+    @staticmethod
+    def add_release_date(converted_project, hca_project):
+        release_date = hca_project.get('releaseDate')
+        if release_date:
+            converted_project.get('attributes').append(
+                {
+                    'name': 'ReleaseDate',
+                    'value': release_date
+                }
+            )
 
     @staticmethod
     def __set_release_date(hca_project: dict):

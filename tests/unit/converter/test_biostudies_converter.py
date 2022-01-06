@@ -24,6 +24,19 @@ class TestBioStudiesConverter(unittest.TestCase):
         self.assertEqual(json.dumps(expected_payload, sort_keys=True, indent=2),
                          json.dumps(converted_payload, sort_keys=True, indent=2))
 
+    def test_given_ingest_project_converts_correct_biostudies_payload(self):
+        self.maxDiff = None
+        attributes = self.project.get('attributes')
+        attributes.update({'releaseDate': None})
+
+        expected_payload = \
+            self.__get_expected_payload('/../../resources/expected_biostudies_payload_without_release_date.json')
+
+        converted_payload = self.biostudies_converter.convert(self.project['attributes'])
+
+        self.assertEqual(json.dumps(expected_payload, sort_keys=True, indent=2),
+                         json.dumps(converted_payload, sort_keys=True, indent=2))
+
     def test_given_ingest_project_converts_project_twice_should_return_correct_biostudies_payload(self):
         self.maxDiff = None
         expected_payload = self.__get_expected_payload('/../../resources/expected_biostudies_payload.json')
