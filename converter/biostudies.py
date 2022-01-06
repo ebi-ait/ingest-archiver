@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 from json_converter.json_mapper import JsonMapper
 from json_converter.post_process import default_to
@@ -100,6 +101,9 @@ class BioStudiesConverter:
         }
 
     def convert(self, hca_project: dict, additional_attributes: dict = None) -> dict:
+        if hca_project.get('releaseDate') is None:
+            self.__set_release_date(hca_project)
+
         converted_project = JsonMapper(hca_project).map({
             'attributes': ['$array', self.project_spec_base, True],
             'section': self.project_spec_section
@@ -110,6 +114,10 @@ class BioStudiesConverter:
             self.__add_subsections_to_project(converted_project, project_content)
 
         return converted_project
+
+    @staticmethod
+    def __set_release_date(hca_project: dict):
+        hca_project.update({'releaseDate': datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")})
 
     def __add_subsections_to_project(self, converted_project, project_content):
         contributors = project_content.get('contributors')
