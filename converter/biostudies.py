@@ -121,10 +121,6 @@ class BioStudiesConverter:
                 }
             )
 
-    @staticmethod
-    def __set_release_date(hca_project: dict):
-        hca_project.update({'releaseDate': datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")})
-
     def __add_subsections_to_project(self, converted_project, project_content):
         contributors = project_content.get('contributors')
         funders = project_content.get('funders')

@@ -1,4 +1,5 @@
 import config
+from archiver import first_element_or_self
 from converter.ena.ena_study import EnaStudyConverter
 
 from hca.loader import HcaLoader, IngestApi
@@ -54,7 +55,8 @@ class DirectArchiver:
 
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
-            self.__updater.update_entity(entity)
+            # TODO There is a bug here. We have to investigate this later when we set the response accession into ingest
+            # self.__updater.update_entity(entity)
 
         accessions = self.__archive_accessions(biosample_accessions, biostudies_accessions, ena_accessions)
 
@@ -89,8 +91,7 @@ class DirectArchiver:
         return ena_accessions
 
     def __exchange_sample_and_project_accessions(self, submission, biosample_accessions: list, biostudies_accession):
-        if isinstance(biostudies_accession, list):
-            biostudies_accession = biostudies_accession[0]
+        biostudies_accession = first_element_or_self(biostudies_accession)
         self.__biostudies_submitter.update_submission_with_sample_accessions(biosample_accessions,
                                                                              biostudies_accession)
         self.__biosamples_submitter.update_samples_with_biostudies_accession(submission, biosample_accessions,
