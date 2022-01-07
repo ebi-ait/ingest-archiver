@@ -44,7 +44,7 @@ class Submitter(metaclass=ABCMeta):
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
                     other_attributes: dict = {}) -> Tuple[str, str]:
-        accession = first_element_or_self(self.__get_accession(entity, entity_type))
+        accession = self.__get_accession(entity, entity_type)
 
         if accession is not None:
             other_attributes['accession'] = accession
@@ -62,7 +62,7 @@ class Submitter(metaclass=ABCMeta):
             return ERRORED_ENTITY, accession
 
     def __get_accession(self, entity, entity_type):
-        accession = entity.get_accession(entity_type)
+        accession = first_element_or_self(entity.get_accession(entity_type))
         # TODO We have to do it because of our inconsistant schema.
         # This should be moved to submission_broker when we set the accession
         if isinstance(accession, list):
