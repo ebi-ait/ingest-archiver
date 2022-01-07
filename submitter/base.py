@@ -4,6 +4,8 @@ from typing import Tuple, List
 
 from submission_broker.submission.submission import Submission, Entity
 
+from archiver import first_element_or_self
+
 CREATED_ENTITY = 'CREATED'
 UPDATED_ENTITY = 'UPDATED'
 ERRORED_ENTITY = 'ERRORED'
@@ -42,7 +44,7 @@ class Submitter(metaclass=ABCMeta):
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
                     other_attributes: dict = {}) -> Tuple[str, str]:
-        accession = self.__get_accession(entity, entity_type)
+        accession = first_element_or_self(self.__get_accession(entity, entity_type))
 
         if accession is not None:
             other_attributes['accession'] = accession
