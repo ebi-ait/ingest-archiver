@@ -34,8 +34,8 @@ class DirectArchiver:
 
     def archive_submission(self, submission_uuid: str) -> HcaSubmission:
         hca_submission = self.__loader.get_submission(submission_uuid=submission_uuid)
-        self.__archive(hca_submission)
-        return hca_submission
+        accessions = self.__archive(hca_submission)
+        return accessions
 
     def __archive(self, submission: HcaSubmission):
         ingest_entities_to_update = []
@@ -50,11 +50,23 @@ class DirectArchiver:
                 self.__exchange_sample_and_project_accessions(submission, biosample_accessions, biostudies_accessions[0])
 
         if self.__ena_submitter:
-            self.__archive_ena_entities(ingest_entities_to_update, submission)
+            ena_accessions = self.__archive_ena_entities(ingest_entities_to_update, submission)
 
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
             self.__updater.update_entity(entity)
+
+        accessions = self.__archive_accessions(biosample_accessions, biostudies_accessions, ena_accessions)
+
+        return accessions
+
+    @staticmethod
+    def __archive_accessions(biosample_accessions, biostudies_accession, ena_accessions):
+        return {
+            'biosamples_accessions': biosample_accessions,
+            'biostudies_accessions': biostudies_accession,
+            'ena_accessions': ena_accessions
+        }
 
     @staticmethod
     def __check_accessions_existence(biosample_accessions, biostudies_accession):
@@ -77,6 +89,8 @@ class DirectArchiver:
         return ena_accessions
 
     def __exchange_sample_and_project_accessions(self, submission, biosample_accessions: list, biostudies_accession):
+        if isinstance(biostudies_accession, list):
+            biostudies_accession = biostudies_accession[0]
         self.__biostudies_submitter.update_submission_with_sample_accessions(biosample_accessions,
                                                                              biostudies_accession)
         self.__biosamples_submitter.update_samples_with_biostudies_accession(submission, biosample_accessions,
