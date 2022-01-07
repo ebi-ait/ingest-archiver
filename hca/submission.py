@@ -42,10 +42,7 @@ class HcaSubmission(Submission):
 
     def add_accessions_to_attributes(self, entity: Entity):
         for service, mapping_list in self._accession_spec.items():
-            if service == 'BioSamples':
-                accession = entity.get_accession(service)
-            else:
-                accession = [entity.get_accession(service)]
+            accession = entity.get_accession(service)
 
             if accession:
                 location_list = mapping_list[0]
