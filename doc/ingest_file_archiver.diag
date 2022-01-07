@@ -1,0 +1,9 @@
+@startuml
+title "Ingest file archiver"
+participant "File Archiver" as FArchiver
+
+FArchiver -> S3:download
+S3 --> FArchiver: data files
+FArchiver -> FArchiver: fastq2bam conv
+FArchiver -> DSP: upload
+@enduml
