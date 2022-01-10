@@ -3,9 +3,17 @@
 There is a script to trigger the direct archiver under the repository's root folder: `submit_to_archives.py`.
 It needs the `submission_UUID` as the input parameter.
 
-There is 1 mandatory configuration parameter, too.
+There is a mandatory configuration parameter, too.
 You need to setup an environment variable for `ARCHIVER_API_KEY`. You can get this value from AWS Secret Manager.
 It is under the `ingest/archiver/wrangler/secrets` secret storage.
+You can get the above value from AWS Secret Manager with this command line action for dev environment.
+
+`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .dev_archiver_api_key; echo -e`
+
+You can use the above command for staging and production with the replacement of `.dev_archiver_api_key` in the command.
+
+- For staging: `staging_archiver_api_key`
+- For production: `prod_archiver_api_key`
 
 There is one optional configuration parameter.
 - ENVIRONMENT, possible values: `dev`, `staging`, `prod`, the default value is `dev`.
