@@ -38,11 +38,11 @@ def setup_archive_urls():
     global BIOSTUDIES_STUDY_URL, BIOSAMPLES_SAMPLE_URL, ENA_WEBIN_BASE_URL
     if ENVIRONMENT == 'prod':
         BIOSTUDIES_STUDY_URL = 'https://www.ebi.ac.uk/biostudies/studies/'
-        BIOSAMPLES_SAMPLE_URL = 'https://www.ebi.ac.uk/biosamples'
+        BIOSAMPLES_SAMPLE_URL = 'https://www.ebi.ac.uk/biosamples/samples'
         ENA_WEBIN_BASE_URL = 'https://www.ebi.ac.uk/ena/submit/webin/report/studies/'
     else:
         BIOSTUDIES_STUDY_URL = 'https://wwwdev.ebi.ac.uk/biostudies/studies/'
-        BIOSAMPLES_SAMPLE_URL = 'https://wwwdev.ebi.ac.uk/biosamples'
+        BIOSAMPLES_SAMPLE_URL = 'https://wwwdev.ebi.ac.uk/biosamples/samples'
         ENA_WEBIN_BASE_URL = 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/studies/'
 
 
