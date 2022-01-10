@@ -40,7 +40,8 @@ class Submitter(metaclass=ABCMeta):
 
     def __set_release_date_from_project(self, entity):
         release_date = entity.attributes.get('releaseDate')
-        self.release_date = datetime.strptime(release_date, "%Y-%m-%dT%H:%M:%SZ").date().strftime('%d-%m-%Y')
+        if release_date:
+            self.release_date = datetime.strptime(release_date, "%Y-%m-%dT%H:%M:%SZ").date().strftime('%d-%m-%Y')
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
                     other_attributes: dict = {}) -> Tuple[str, str]:
