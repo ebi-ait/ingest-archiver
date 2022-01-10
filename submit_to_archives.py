@@ -24,7 +24,9 @@ def setup_logger():
 
 
 def get_index_page():
-    if ENVIRONMENT != 'prod':
+    if ENVIRONMENT == 'local':
+        root_page = 'http://localhost:5000/'
+    elif ENVIRONMENT != 'prod':
         root_page = f'https://archiver.ingest.{ENVIRONMENT}.archive.data.humancellatlas.org/'
     else:
         root_page = f'https://archiver.ingest.archive.data.humancellatlas.org/'
@@ -97,7 +99,6 @@ if __name__ == "__main__":
 
     if not check_archiver_service_availability():
         raise SystemExit('Archiver is not running. Please, execute it to be able to use this application.')
-
 
     submission_uuid = args.submission_uuid
     payload = create_archiving_payload()
