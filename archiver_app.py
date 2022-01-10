@@ -84,15 +84,14 @@ def archive():
     if is_direct_archiving:
         try:
             direct_archiver = direct_archiver_from_config()
-            submission = direct_archiver.archive_submission(submission_uuid)
-            response = submission.as_dict(string_lists=True)
+            response = direct_archiver.archive_submission(submission_uuid)
             logger.info('Archiving finished with UUID=%s', submission_uuid)
-        except RestErrorException as e:
-            log_error_message(e, submission_uuid)
+        except RestErrorException as rest_error:
+            log_error_message(rest_error, submission_uuid)
             response = {
                 'message': 'Archiving failed.',
-                'detailed_error_message': e.message,
-                'error_status_code': e.status_code
+                'detailed_error_message': rest_error.message,
+                'error_status_code': rest_error.status_code
             }
     else:
         ingest_api = IngestAPI(config.INGEST_API_URL)

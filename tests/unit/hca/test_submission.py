@@ -67,7 +67,7 @@ class TestHcaSubmission(unittest.TestCase):
     def test_attributes_set_correctly_when_biostudies_accession_is_added_to_attributes(self):
         # When
         random_accession = random_id()
-        self.test_entity.add_accession('BioStudies', random_accession)
+        self.test_entity.add_accession('BioStudies', [random_accession])
         self.submission.add_accessions_to_attributes(self.test_entity)
 
         # Then

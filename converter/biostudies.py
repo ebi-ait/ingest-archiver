@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 from json_converter.json_mapper import JsonMapper
 from json_converter.post_process import default_to
@@ -76,10 +77,6 @@ class BioStudiesConverter:
             {
                 'name': ['', default_to, 'HCA Project UUID'],
                 'value': ['uuid.uuid']
-            },
-            {
-                'name': ['', default_to, 'ReleaseDate'],
-                'value': ['releaseDate']
             }
         ]
         self.project_spec_section = {
@@ -105,11 +102,24 @@ class BioStudiesConverter:
             'section': self.project_spec_section
             })
 
+        self.add_release_date(converted_project, hca_project)
+
         project_content = hca_project['content'] if 'content' in hca_project else None
         if project_content:
             self.__add_subsections_to_project(converted_project, project_content)
 
         return converted_project
+
+    @staticmethod
+    def add_release_date(converted_project, hca_project):
+        release_date = hca_project.get('releaseDate')
+        if release_date:
+            converted_project.get('attributes').append(
+                {
+                    'name': 'ReleaseDate',
+                    'value': release_date
+                }
+            )
 
     def __add_subsections_to_project(self, converted_project, project_content):
         contributors = project_content.get('contributors')

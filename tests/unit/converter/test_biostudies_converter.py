@@ -21,8 +21,19 @@ class TestBioStudiesConverter(unittest.TestCase):
 
         converted_payload = self.biostudies_converter.convert(self.project['attributes'])
 
-        self.assertEqual(json.dumps(expected_payload, sort_keys=True, indent=2),
-                         json.dumps(converted_payload, sort_keys=True, indent=2))
+        assert_that(expected_payload).is_equal_to(converted_payload)
+
+    def test_given_ingest_project_converts_correct_biostudies_payload_when_release_date_missing(self):
+        self.maxDiff = None
+        attributes = self.project.get('attributes')
+        attributes.update({'releaseDate': None})
+
+        expected_payload = \
+            self.__get_expected_payload('/../../resources/expected_biostudies_payload_without_release_date.json')
+
+        converted_payload = self.biostudies_converter.convert(self.project['attributes'])
+
+        assert_that(expected_payload).is_equal_to(converted_payload)
 
     def test_given_ingest_project_converts_project_twice_should_return_correct_biostudies_payload(self):
         self.maxDiff = None
@@ -32,8 +43,7 @@ class TestBioStudiesConverter(unittest.TestCase):
         self.biostudies_converter.convert(self.project['attributes'])
         converted_payload = biostudies_converter2.convert(self.project['attributes'])
 
-        self.assertEqual(json.dumps(expected_payload, sort_keys=True, indent=2),
-                         json.dumps(converted_payload, sort_keys=True, indent=2))
+        assert_that(expected_payload).is_equal_to(converted_payload)
 
     def test_convert_full_name_with_middle_initials_returns_3_name_parts(self):
         full_name = "Joe,Doe,Smith"
