@@ -66,7 +66,7 @@ class DirectArchiver:
     def __archive_accessions(biosample_accessions, biostudies_accession, ena_accessions):
         return {
             'biosamples_accessions': biosample_accessions,
-            'biostudies_accessions': biostudies_accession,
+            'biostudies_accession': first_element_or_self(biostudies_accession),
             'ena_accessions': ena_accessions
         }
 

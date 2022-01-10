@@ -4,6 +4,8 @@ from typing import Tuple, List
 
 from submission_broker.submission.submission import Submission, Entity
 
+from archiver import first_element_or_self
+
 CREATED_ENTITY = 'CREATED'
 UPDATED_ENTITY = 'UPDATED'
 ERRORED_ENTITY = 'ERRORED'
@@ -60,7 +62,7 @@ class Submitter(metaclass=ABCMeta):
             return ERRORED_ENTITY, accession
 
     def __get_accession(self, entity, entity_type):
-        accession = entity.get_accession(entity_type)
+        accession = first_element_or_self(entity.get_accession(entity_type))
         # TODO We have to do it because of our inconsistant schema.
         # This should be moved to submission_broker when we set the accession
         if isinstance(accession, list):
