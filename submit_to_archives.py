@@ -7,14 +7,8 @@ import requests
 from http import HTTPStatus
 from colorlog import ColoredFormatter
 
-import config
-
-
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev')
 PATH_TO_DIRECT_ARCHIVING = 'archiveSubmissions'
-BIOSTUDIES_STUDY_URL = config.BIOSTUDIES_STUDY_URL
-BIOSAMPLES_SAMPLE_URL = config.BIOSAMPLES_URL
-ENA_WEBIN_BASE_URL = config.ENA_WEBIN_BROWSER_BASE_URL
 
 
 def setup_logger():
@@ -36,6 +30,18 @@ def get_index_page():
         root_page = f'https://archiver.ingest.archive.data.humancellatlas.org/'
 
     return root_page
+
+
+def setup_archive_urls():
+    global BIOSTUDIES_STUDY_URL, BIOSAMPLES_SAMPLE_URL, ENA_WEBIN_BASE_URL
+    if ENVIRONMENT == 'prod':
+        BIOSTUDIES_STUDY_URL = 'https://www.ebi.ac.uk/biostudies/studies/'
+        BIOSAMPLES_SAMPLE_URL = 'https://www.ebi.ac.uk/biosamples'
+        ENA_WEBIN_BASE_URL = 'https://www.ebi.ac.uk/ena/submit/webin/report/studies/'
+    else:
+        BIOSTUDIES_STUDY_URL = 'https://wwwdev.ebi.ac.uk/biostudies/studies/'
+        BIOSAMPLES_SAMPLE_URL = 'https://wwwdev.ebi.ac.uk/biosamples'
+        ENA_WEBIN_BASE_URL = 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/studies/'
 
 
 def check_archiver_service_availability():
@@ -67,7 +73,7 @@ def process_archiver_response():
     submitted_samples_in_biosamples =\
         [f'{BIOSAMPLES_SAMPLE_URL}/{sample_accession}' for sample_accession in response_text.get('biosamples_accessions')]
     submitted_project_in_biostudies =\
-        [f'{BIOSTUDIES_STUDY_URL}{biostudies_accession}' for biostudies_accession in response_text.get('biostudies_accessions')]
+        [f'{BIOSTUDIES_STUDY_URL}{response_text.get("biostudies_accession")}']
     submitted_entities_in_ena =\
         [f'{ENA_WEBIN_BASE_URL}{ena_accession}' for ena_accession in response_text.get('ena_accessions')]
     return {
@@ -87,16 +93,20 @@ if __name__ == "__main__":
 
     archiver_root = get_index_page()
 
+    setup_archive_urls()
+
     if not check_archiver_service_availability():
         raise SystemExit('Archiver is not running. Please, execute it to be able to use this application.')
 
-    logger.info(
-        f"Archiving has started in {ENVIRONMENT} environment. This could take some minutes. Please, be patience.")
 
     submission_uuid = args.submission_uuid
     payload = create_archiving_payload()
 
     header = get_header()
+
+    logger.info(
+        f"Archiving has started in {ENVIRONMENT} environment for submission: {submission_uuid}."
+        f" This could take some time. Please, be patience.")
 
     archiver_response = requests.post(archiver_root + PATH_TO_DIRECT_ARCHIVING,
                                       json=payload,
