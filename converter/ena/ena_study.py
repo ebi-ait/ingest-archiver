@@ -27,19 +27,16 @@ class EnaStudyConverter(BaseEnaConverter):
         attributes = etree.SubElement(xml_element, 'STUDY_ATTRIBUTES')
         for key in ADDITIONAL_ATTRIBUTE_KEYS:
             key_list: list = key.split('.')
-            value: str = EnaStudyConverter.__get_value_by_key_path(entity, key_list)
+            value: str = EnaStudyConverter._get_value_by_key_path(entity, key_list)
             if value:
                 BaseEnaConverter.make_attribute(
                     attributes, 'STUDY_ATTRIBUTE', key_list[-1], value)
 
     @staticmethod
-    def _get_core_attributes(entity: dict) -> dict:
-        return entity.get('content').get('project_core')
+    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
+        additional_attributes['alias'] =\
+            entity.get('content').get('project_core').get('project_short_name') + '_' + entity.get('uuid').get('uuid')
 
     @staticmethod
-    def __get_value_by_key_path(entity: dict, key_path: list) -> str:
-        value = entity
-        for key in key_path:
-            value = value[key]
-
-        return value
+    def _get_core_attributes(entity: dict) -> dict:
+        return entity.get('content').get('project_core')
