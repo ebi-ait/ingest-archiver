@@ -6,6 +6,7 @@
       "biomaterial_core": {
         "biomaterial_id": "HS_BM_2_cell_line",
         "biomaterial_name": "Bone Marrow CD34+ stem/progenitor cells",
+        "biomaterial_description": "This is a dummy donor cell line",
         "ncbi_taxon_id": [
           9606
         ],

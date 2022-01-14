@@ -24,11 +24,6 @@ class BaseEnaConverter:
         return self.convert_to_xml_str(ena_set)
 
     @staticmethod
-    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
-        additional_attributes['alias'] =\
-            entity.get('content').get('project_core').get('project_short_name') + '_' + entity.get('uuid').get('uuid')
-
-    @staticmethod
     def add_accession_and_alias(spec: dict, other_attributes: dict):
         accession = other_attributes.get('accession')
         if accession:
@@ -39,12 +34,24 @@ class BaseEnaConverter:
             spec['@alias'] = ['', BaseEnaConverter.fixed_attribute, alias]
 
     @staticmethod
+    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
+        pass
+
+    @staticmethod
     def post_conversion(entity: dict, xml_element: Element):
         pass
 
     @staticmethod
     def _get_core_attributes(entity: dict) -> dict:
         pass
+
+    @staticmethod
+    def _get_value_by_key_path(entity: dict, key_path: list) -> str:
+        value = entity
+        for key in key_path:
+            value = value[key]
+
+        return value
 
     @staticmethod
     def add_children(parent: Element, children: dict):
@@ -89,3 +96,11 @@ class BaseEnaConverter:
     @staticmethod
     def convert_to_xml_str(element: Element) -> str:
         return etree.tostring(element, xml_declaration=True, pretty_print=True, encoding="UTF-8")
+
+    @staticmethod
+    def get_scientific_name(args):
+        return args[0].get('ontology_label', None)
+
+    @staticmethod
+    def get_taxon_id(args):
+        return args[0]
