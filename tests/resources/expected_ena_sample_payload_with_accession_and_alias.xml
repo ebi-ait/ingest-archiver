@@ -9,32 +9,32 @@
         <DESCRIPTION>This is a dummy donor cell line</DESCRIPTION>
         <SAMPLE_ATTRIBUTES>
             <SAMPLE_ATTRIBUTE>
-                <TAG>supplier</TAG>
-                <VALUE>AllCells, LLC</VALUE>
+                <TAG>HCA Biomaterial Type</TAG>
+                <VALUE>cell_line</VALUE>
             </SAMPLE_ATTRIBUTE>
             <SAMPLE_ATTRIBUTE>
-                <TAG>catalog_number</TAG>
-                <VALUE>ABM022F</VALUE>
+                <TAG>Biomaterial Core - Biomaterial Id</TAG>
+                <VALUE>HS_BM_2_cell_line</VALUE>
             </SAMPLE_ATTRIBUTE>
             <SAMPLE_ATTRIBUTE>
-                <TAG>catalog_url</TAG>
-                <VALUE>https://www.allcells.com/products/bone-marrow-cd34-stem-progenitor-cells</VALUE>
+                <TAG>HCA Biomaterial UUID</TAG>
+                <VALUE>501ba65c-0b04-430d-9aad-917935ee3c3c</VALUE>
             </SAMPLE_ATTRIBUTE>
             <SAMPLE_ATTRIBUTE>
-                <TAG>type</TAG>
-                <VALUE>stem cell</VALUE>
-            </SAMPLE_ATTRIBUTE>
-            <SAMPLE_ATTRIBUTE>
-                <TAG>sex</TAG>
-                <VALUE>male</VALUE>
-            </SAMPLE_ATTRIBUTE>
-            <SAMPLE_ATTRIBUTE>
-                <TAG>is_living</TAG>
+                <TAG>Is Living</TAG>
                 <VALUE>yes</VALUE>
             </SAMPLE_ATTRIBUTE>
             <SAMPLE_ATTRIBUTE>
-                <TAG>date_established</TAG>
-                <VALUE>2016-08-17</VALUE>
+                <TAG>Medical History - Smoking History</TAG>
+                <VALUE>20 cigarettes/day for 25 years, stopped 2000</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>Sex</TAG>
+                <VALUE>male</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>project</TAG>
+                <VALUE>Human Cell Atlas</VALUE>
             </SAMPLE_ATTRIBUTE>
         </SAMPLE_ATTRIBUTES>
     </SAMPLE>
