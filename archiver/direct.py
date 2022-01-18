@@ -55,8 +55,7 @@ class DirectArchiver:
 
         for entity in ingest_entities_to_update:
             submission.add_accessions_to_attributes(entity)
-            # TODO There is a bug here. We have to investigate this later when we set the response accession into ingest
-            # self.__updater.update_entity(entity)
+            self.__updater.update_entity(entity)
 
         accessions = self.__archive_accessions(biosample_accessions, biostudies_accessions, ena_accessions)
 

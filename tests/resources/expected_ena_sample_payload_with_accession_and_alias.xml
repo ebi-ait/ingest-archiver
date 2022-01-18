@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SAMPLE_SET>
+    <SAMPLE center_name="HCA" accession="ERS123456" alias="HS_BM_2_cell_line_501ba65c-0b04-430d-9aad-917935ee3c3c">
+        <TITLE>Bone Marrow CD34+ stem/progenitor cells</TITLE>
+        <SAMPLE_NAME>
+            <TAXON_ID>9606</TAXON_ID>
+            <SCIENTIFIC_NAME>Homo sapiens</SCIENTIFIC_NAME>
+        </SAMPLE_NAME>
+        <DESCRIPTION>This is a dummy donor cell line</DESCRIPTION>
+        <SAMPLE_ATTRIBUTES>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>HCA Biomaterial Type</TAG>
+                <VALUE>cell_line</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>Biomaterial Core - Biomaterial Id</TAG>
+                <VALUE>HS_BM_2_cell_line</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>HCA Biomaterial UUID</TAG>
+                <VALUE>501ba65c-0b04-430d-9aad-917935ee3c3c</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>Is Living</TAG>
+                <VALUE>yes</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>Medical History - Smoking History</TAG>
+                <VALUE>20 cigarettes/day for 25 years, stopped 2000</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>Sex</TAG>
+                <VALUE>male</VALUE>
+            </SAMPLE_ATTRIBUTE>
+            <SAMPLE_ATTRIBUTE>
+                <TAG>project</TAG>
+                <VALUE>Human Cell Atlas</VALUE>
+            </SAMPLE_ATTRIBUTE>
+        </SAMPLE_ATTRIBUTES>
+    </SAMPLE>
+</SAMPLE_SET>
