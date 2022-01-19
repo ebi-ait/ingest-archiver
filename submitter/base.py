@@ -36,6 +36,7 @@ class Submitter(metaclass=ABCMeta):
             result, accession = self.send_entity(entity, archive_type, error_key, additional_attributes)
             response.setdefault(result, []).append(entity)
             accessions.append(accession)
+            additional_attributes.pop('accession', None)
         return response, accessions
 
     def __set_release_date_from_project(self, entity):
@@ -44,8 +45,11 @@ class Submitter(metaclass=ABCMeta):
             self.release_date = datetime.strptime(release_date, "%Y-%m-%dT%H:%M:%SZ").date().strftime('%d-%m-%Y')
 
     def send_entity(self, entity: Entity, entity_type: str, error_key: str,
-                    other_attributes: dict = {}) -> Tuple[str, str]:
+                    other_attributes: dict = None) -> Tuple[str, str]:
         accession = self.__get_accession(entity, entity_type)
+
+        if other_attributes is None:
+            other_attributes = {}
 
         if accession is not None:
             other_attributes['accession'] = accession
