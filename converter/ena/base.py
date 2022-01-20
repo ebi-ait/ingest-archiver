@@ -9,7 +9,10 @@ class BaseEnaConverter:
         self.ena_type = ena_type
         self.xml_spec = xml_spec
 
-    def convert(self, entity: dict, additional_attributes: dict = {}):
+    def convert(self, entity: dict, additional_attributes: dict = None):
+        if additional_attributes is None:
+            additional_attributes = {}
+
         ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
         self._add_alias_to_additional_attributes(entity, additional_attributes)
         self._add_accession_and_alias(self.xml_spec, additional_attributes)
