@@ -1,7 +1,7 @@
 import csv
-import json
 import os
-from urllib.request import urlopen
+
+import requests
 
 
 class SchemaProcessor:
@@ -33,10 +33,9 @@ class SchemaProcessor:
 
     @staticmethod
     def __load_schema(schema_path):
-        with urlopen(schema_path) as response:
-            data_json = json.loads(response.read())
-
-        return data_json
+        response = requests.get(schema_path)
+        response.raise_for_status()
+        return response.json()
 
     @staticmethod
     def __get_ref(attribute_value):
