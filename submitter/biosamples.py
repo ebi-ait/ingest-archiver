@@ -1,9 +1,9 @@
-from typing import Tuple, List
-
 from converter.biosamples import BioSamplesConverter
 from submission_broker.submission.submission import Submission
 from submission_broker.services.biosamples import BioSamples
 
+from hca.submission import HcaSubmission
+from hca.updater import HcaUpdater
 from submitter.base import Submitter
 from submitter.biosamples_submitter_service import BioSamplesSubmitterService
 
@@ -12,17 +12,17 @@ ERROR_KEY = 'content.biomaterial_core.biosamples_accession'
 
 class BioSamplesSubmitter(Submitter):
     def __init__(self, archive_client: BioSamples, converter: BioSamplesConverter,
-                 submitter_service: BioSamplesSubmitterService):
-        super().__init__(archive_client, converter)
+                 submitter_service: BioSamplesSubmitterService, updater: HcaUpdater):
+        super().__init__(archive_client, converter, updater)
         self.__archive_client = archive_client
         self.__converter = converter
         self.__submitter_service = submitter_service
 
-    def send_all_samples(self, submission: Submission) -> Tuple[dict, List[str]]:
+    def send_all_samples(self, submission: HcaSubmission) -> dict:
         additional_attributes = self.__create_additional_attributes(submission)
-        response, accessions = self.send_all_entities(submission, "BioSamples", ERROR_KEY, additional_attributes)
+        response = self.send_all_entities(submission, "BioSamples", ERROR_KEY, additional_attributes)
 
-        return response, accessions
+        return response
 
     def update_samples_with_biostudies_accession(self, submission, biosample_accessions, biostudies_accession):
         for entity in submission.get_entities('biomaterials'):

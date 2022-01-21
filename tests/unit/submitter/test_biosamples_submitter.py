@@ -16,10 +16,11 @@ class TestBioSamplesSubmitter(unittest.TestCase):
     def setUp(self) -> None:
         self.biosamples_client = MagicMock()
         self.converter = MagicMock()
+        self.updater = MagicMock()
         self.empty_sample = Sample(ncbi_taxon_id=9606)
         self.converter.convert = MagicMock(return_value=self.empty_sample)
         self.submitter_service = BioSamplesSubmitterService(self.biosamples_client)
-        self.submitter = BioSamplesSubmitter(self.biosamples_client, self.converter, self.submitter_service)
+        self.submitter = BioSamplesSubmitter(self.biosamples_client, self.converter, self.submitter_service, self.updater)
         self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()
         self.archive_type = 'BioSamples'
@@ -33,7 +34,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
             make_ingest_entity(self.entity_type, random_id(), random_uuid())
         )
         # When
-        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, {})
@@ -49,7 +50,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         additional_attributes = {'release_date': test_date}
 
         # When
-        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
+        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, additional_attributes)
@@ -65,7 +66,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         additional_attributes = {'accession': self.test_accession}
 
         # When
-        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
+        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key, additional_attributes)
 
         # Then
         self.converter.convert.assert_called_once_with(test_case.attributes, additional_attributes)
@@ -77,7 +78,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         self.submitter._submit_to_archive = MagicMock(return_value={'accession': self.test_accession})
         test_case = self.submission.map_ingest_entity(make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
-        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(CREATED_ENTITY, result)
 
@@ -88,7 +89,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         test_case = self.submission.map_ingest_entity(
             make_ingest_entity(self.entity_type, random_id(), random_uuid()))
         # When
-        result, accession = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
+        result = self.submitter.send_entity(test_case, self.archive_type, self.error_key)
         # Then
         self.assertEqual(ERRORED_ENTITY, result)
         self.assertDictEqual(test_case.get_errors(), {self.error_key: [f'BioSamples Error: {error_msg}']})
@@ -116,7 +117,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
             expected_result[UPDATED_ENTITY].append(entity)
 
         # When
-        result, accessions = self.submitter.send_all_samples(self.submission)
+        result = self.submitter.send_all_samples(self.submission)
 
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)
@@ -137,7 +138,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
             calls.append(call(entity, self.archive_type, self.error_key, additional_attributes))
 
         # When
-        result, accessions = self.submitter.send_all_samples(self.submission)
+        result = self.submitter.send_all_samples(self.submission)
 
         # Then
         self.submitter.send_entity.assert_has_calls(calls, any_order=True)

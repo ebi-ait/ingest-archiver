@@ -11,10 +11,12 @@ from biostudiesclient.exceptions import RestErrorException
 from flask import Flask, Response
 from flask import jsonify
 from flask import request
+from requests import HTTPError
 
 import config
 from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
+from archiver import ArchiveException
 from archiver.archiver import IngestArchiver, ArchiveSubmission, ArchiveEntityMap
 from archiver.direct import direct_archiver_from_config
 
@@ -84,15 +86,35 @@ def archive():
     if is_direct_archiving:
         try:
             direct_archiver = direct_archiver_from_config()
-            response = direct_archiver.archive_submission(submission_uuid)
+            archives_response = direct_archiver.archive_submission(submission_uuid)
             logger.info('Archiving finished with UUID=%s', submission_uuid)
-        except RestErrorException as rest_error:
+        except Exception as rest_error:
             log_error_message(rest_error, submission_uuid)
-            response = {
-                'message': 'Archiving failed.',
-                'detailed_error_message': rest_error.message,
-                'error_status_code': rest_error.status_code
+            archives_response = {
+                'message': 'Archiving failed.'
             }
+            if isinstance(rest_error, ArchiveException):
+              archives_response.update(
+                  {
+                      'detailed_error_message': rest_error.message,
+                      'error_status_code': rest_error.status_code,
+                      'archive': rest_error.archive_name
+                  }
+              )
+            elif isinstance(rest_error, RestErrorException):
+                archives_response.update(
+                    {
+                        'detailed_error_message': rest_error.message,
+                        'error_status_code': rest_error.status_code
+                    }
+                )
+            elif isinstance(rest_error, HTTPError):
+                archives_response.update(
+                    {
+                        'detailed_error_message': rest_error.response.text,
+                        'error_status_code': rest_error.response.status_code
+                    }
+                )
     else:
         ingest_api = IngestAPI(config.INGEST_API_URL)
         archiver = IngestArchiver(ingest_api=ingest_api,
@@ -104,17 +126,21 @@ def archive():
                                   args=(ingest_api, archiver, submission_uuid))
         thread.start()
 
-        response = {
+        archives_response = {
             'message': 'successfully triggered!'
         }
 
-    return jsonify(response)
+    return jsonify(archives_response)
 
 
 def log_error_message(exception, submission_uuid):
     logger.error('Archiving submission with UUID=%s failed.', submission_uuid)
-    logger.error('Archive responded with status code: %s', exception.status_code)
-    logger.error('Archive responded with this error message: %s', exception.message)
+    if isinstance(exception, RestErrorException):
+        logger.error('Archive responded with status code: %s', exception.status_code)
+        logger.error('Archive responded with this error message: %s', exception.message)
+    elif isinstance(exception, HTTPError):
+        logger.error('Archive responded with status code: %s', exception.response.status_code)
+        logger.error('Archive responded with this error message: %s', exception.response.text)
 
 
 def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
