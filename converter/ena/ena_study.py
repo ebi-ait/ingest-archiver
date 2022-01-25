@@ -33,10 +33,5 @@ class EnaStudyConverter(BaseEnaConverter):
                     attributes, 'STUDY_ATTRIBUTE', key_list[-1], value)
 
     @staticmethod
-    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
-        additional_attributes['alias'] =\
-            entity.get('content').get('project_core').get('project_short_name') + '_' + entity.get('uuid').get('uuid')
-
-    @staticmethod
     def _get_entity_content(entity: dict) -> dict:
         return entity.get('content').get('project_core')

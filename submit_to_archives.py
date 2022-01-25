@@ -35,20 +35,26 @@ def get_index_page():
 
 
 def setup_archive_urls():
-    global ARCHIVE_URLS, BIOSTUDIES_STUDY_URL, BIOSAMPLES_SAMPLE_URL, ENA_WEBIN_BASE_URL
+    global ENA_URL_PART_BY_ENTITY_TYPE, ARCHIVE_URLS, BIOSTUDIES_STUDY_URL, BIOSAMPLES_SAMPLE_URL, ENA_WEBIN_BASE_URL
     if ENVIRONMENT == 'prod':
-        BIOSTUDIES_STUDY_URL = 'https://www.ebi.ac.uk/biostudies/studies/'
+        BIOSTUDIES_STUDY_URL = 'https://www.ebi.ac.uk/biostudies/studies'
         BIOSAMPLES_SAMPLE_URL = 'https://www.ebi.ac.uk/biosamples/samples'
-        ENA_WEBIN_BASE_URL = 'https://www.ebi.ac.uk/ena/submit/webin/report/studies/'
+        ENA_WEBIN_BASE_URL = 'https://www.ebi.ac.uk/ena/submit/webin/report/{entities}'
     else:
-        BIOSTUDIES_STUDY_URL = 'https://wwwdev.ebi.ac.uk/biostudies/studies/'
+        BIOSTUDIES_STUDY_URL = 'https://wwwdev.ebi.ac.uk/biostudies/studies'
         BIOSAMPLES_SAMPLE_URL = 'https://wwwdev.ebi.ac.uk/biosamples/samples'
-        ENA_WEBIN_BASE_URL = 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/studies/'
+        ENA_WEBIN_BASE_URL = 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/{entities}'
 
     ARCHIVE_URLS = {
         'biosamples': BIOSAMPLES_SAMPLE_URL,
         'biostudies': BIOSTUDIES_STUDY_URL,
         'ena': ENA_WEBIN_BASE_URL
+    }
+
+    ENA_URL_PART_BY_ENTITY_TYPE = {
+        'sample': 'samples',
+        'study': 'studies',
+        'run': 'runs'
     }
 
 
@@ -83,9 +89,12 @@ def process_archiver_response():
     for archive_name, archived_items in response_text.items():
         archive_result = {}
         for status, results in archived_items.items():
-            base_url = ARCHIVE_URLS[archive_name]
             data = []
             for result_data in results:
+                base_url = ARCHIVE_URLS[archive_name]
+                if archive_name == 'ena':
+                    url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[result_data.get('entity_type')]
+                    base_url = base_url.format(entities=url_entities_part)
                 if status != 'ERRORED':
                     data.append(f'{base_url}/{result_data.get("accession")}')
                 else:

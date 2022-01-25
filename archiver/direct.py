@@ -48,9 +48,9 @@ class DirectArchiver:
             biosamples_responses = self.__archive_samples_to_biosamples(submission)
             archives_responses['biosamples'] = biosamples_responses
 
-        if self.__biostudies_submitter:
-            biostudies_responses = self.__archive_project_to_biostudies(submission)
-            archives_responses['biostudies'] = biostudies_responses
+        # if self.__biostudies_submitter:
+        #     biostudies_responses = self.__archive_project_to_biostudies(submission)
+        #     archives_responses['biostudies'] = biostudies_responses
 
         # TODO fix this with the refactored code
         # if self.__biosamples_submitter and self.__biostudies_submitter:
@@ -79,7 +79,6 @@ class DirectArchiver:
     def __archive_project_to_biostudies(self, submission):
         biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
         self.__jsonify_archive_response(biostudies_responses)
-        # ingest_entities_to_update.extend(biostudies_responses.get(CREATED_ENTITY, []))
         return biostudies_responses
 
     def __archive_samples_to_biosamples(self, submission):

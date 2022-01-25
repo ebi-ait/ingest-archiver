@@ -8,21 +8,20 @@ class BaseEnaConverter:
     def __init__(self, ena_type: str, xml_spec: dict):
         self.ena_type = ena_type
         self.xml_spec = xml_spec
+        self.ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
 
     def convert(self, entity: dict, additional_attributes: dict = None):
         if additional_attributes is None:
             additional_attributes = {}
 
-        ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
-        self._add_alias_to_additional_attributes(entity, additional_attributes)
         self._add_accession_and_alias(self.xml_spec, additional_attributes)
         xml_map = JsonMapper(self._get_entity_content(entity)).map(self.xml_spec)
         root_entity = etree.Element(self.ena_type.upper())
-        ena_set.append(root_entity)
+        self.ena_set.append(root_entity)
         self.__add_children(parent=root_entity, children=xml_map)
         self._post_conversion(entity, root_entity)
-        etree.indent(ena_set, space="    ")
-        return self.__convert_to_xml_str(ena_set)
+
+        return
 
     @staticmethod
     def _add_accession_and_alias(spec: dict, other_attributes: dict):
@@ -50,7 +49,9 @@ class BaseEnaConverter:
     def _get_value_by_key_path(entity: dict, key_path: list) -> str:
         value = entity
         for key in key_path:
-            value = value[key]
+            value = value.get(key, None)
+            if value is None:
+                return value
 
         return value
 
@@ -87,7 +88,7 @@ class BaseEnaConverter:
         return value
 
     @staticmethod
-    def __convert_to_xml_str(element: Element) -> str:
+    def convert_to_xml_str(element: Element) -> str:
         return etree.tostring(element, xml_declaration=True, pretty_print=True, encoding="UTF-8")
 
     @staticmethod

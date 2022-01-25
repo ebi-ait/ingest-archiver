@@ -51,10 +51,5 @@ class EnaSampleConverter(BaseEnaConverter):
             attributes, 'SAMPLE_ATTRIBUTE', 'project', 'Human Cell Atlas')
 
     @staticmethod
-    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
-        additional_attributes['alias'] = \
-            entity.get('content').get('biomaterial_core').get('biomaterial_id') + '_' + entity.get('uuid').get('uuid')
-
-    @staticmethod
     def _get_entity_content(entity: dict) -> dict:
         return entity.get('content')
