@@ -8,7 +8,7 @@ class BaseEnaConverter:
     def __init__(self, ena_type: str, xml_spec: dict):
         self.ena_type = ena_type
         self.xml_spec = xml_spec
-        self.ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
+        self.ena_set: Element = None
 
     def convert(self, entity: dict, additional_attributes: dict = None):
         if additional_attributes is None:
@@ -22,6 +22,9 @@ class BaseEnaConverter:
         self._post_conversion(entity, root_entity)
 
         return
+
+    def init_ena_set(self):
+        self.ena_set = etree.XML(f'<{self.ena_type.upper()}_SET />')
 
     @staticmethod
     def _add_accession_and_alias(spec: dict, other_attributes: dict):
@@ -87,9 +90,13 @@ class BaseEnaConverter:
         value = args[1]
         return value
 
-    @staticmethod
-    def convert_to_xml_str(element: Element) -> str:
-        return etree.tostring(element, xml_declaration=True, pretty_print=True, encoding="UTF-8")
+    def convert_entity_to_xml_str(self) -> str:
+        converted_ena_entity = self.ena_set
+        if len(converted_ena_entity) < 1:
+            return ''
+        etree.indent(converted_ena_entity, space="    ")
+
+        return etree.tostring(converted_ena_entity, xml_declaration=True, pretty_print=True, encoding="UTF-8")
 
     @staticmethod
     def _get_scientific_name(args):

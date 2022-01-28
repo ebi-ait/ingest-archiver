@@ -1,10 +1,10 @@
 import logging
+from typing import List
 
 from biostudiesclient.exceptions import RestErrorException
 
 import config
-from archiver import first_element_or_self
-from converter.ena.ena_study import EnaStudyConverter
+from archiver import first_element_or_self, ArchiveException
 
 from hca.loader import HcaLoader, IngestApi
 from hca.submission import HcaSubmission
@@ -44,52 +44,41 @@ class DirectArchiver:
 
     def __archive(self, submission: HcaSubmission):
         archives_responses = {}
+        biosamples_responses = {}
+        biostudies_responses = {}
         if self.__biosamples_submitter:
-            biosamples_responses = self.__archive_samples_to_biosamples(submission)
+            biosamples_responses = self.__biosamples_submitter.send_all_samples(submission)
+            self.__jsonify_archive_response(biosamples_responses)
             archives_responses['biosamples'] = biosamples_responses
 
-        # if self.__biostudies_submitter:
-        #     biostudies_responses = self.__archive_project_to_biostudies(submission)
-        #     archives_responses['biostudies'] = biostudies_responses
+        if self.__biostudies_submitter:
+            biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
+            self.__jsonify_archive_response(biostudies_responses)
+            archives_responses['biostudies'] = biostudies_responses
 
-        # TODO fix this with the refactored code
-        # if self.__biosamples_submitter and self.__biostudies_submitter:
-        #     if self.__check_accessions_existence(biosamples_responses, biostudies_accessions):
-        #         self.__exchange_sample_and_project_accessions(submission, biosamples_responses, biostudies_accessions[0])
+        if self.__biosamples_submitter and self.__biostudies_submitter:
+            biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses)
+            biostudies_accessions = self.__get_accessions_from_responses(biostudies_responses)
+            if self.__check_accessions_existence(biosamples_accessions, biostudies_accessions):
+                self.__exchange_sample_and_project_accessions(submission, biosamples_accessions, biostudies_accessions[0])
 
         if self.__ena_submitter:
-            ena_responses = self.__archive_ena_entities(submission)
+            ena_responses = self.__ena_submitter.send_all_ena_entities(submission)
+            self.__jsonify_archive_response(ena_responses)
             archives_responses['ena'] = ena_responses
 
         return archives_responses
 
     @staticmethod
-    def __archive_accessions(biosample_accessions, biostudies_accession, ena_accessions):
-        return {
-            'biosamples_accessions': biosample_accessions,
-            'biostudies_accession': first_element_or_self(biostudies_accession),
-            'ena_accessions': ena_accessions
-        }
+    def __get_accessions_from_responses(responses: dict) -> List[str]:
+        accessions = [archive_data.get('data', {}).get('accession', '') for archive_data in responses.get('CREATED', [])]
+
+        return accessions
 
     @staticmethod
     def __check_accessions_existence(biosample_accessions, biostudies_accession):
         return biosample_accessions is not None and len(biosample_accessions) > 0 and \
                 biostudies_accession is not None
-
-    def __archive_project_to_biostudies(self, submission):
-        biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
-        self.__jsonify_archive_response(biostudies_responses)
-        return biostudies_responses
-
-    def __archive_samples_to_biosamples(self, submission):
-        biosamples_responses = self.__biosamples_submitter.send_all_samples(submission)
-        self.__jsonify_archive_response(biosamples_responses)
-        return biosamples_responses
-
-    def __archive_ena_entities(self, submission):
-        ena_responses = self.__ena_submitter.send_all_ena_entities(submission)
-        self.__jsonify_archive_response(ena_responses)
-        return ena_responses
 
     @staticmethod
     def __jsonify_archive_response(archive_responses):
@@ -130,8 +119,7 @@ class DirectArchiver:
     @staticmethod
     def create_submitter_for_ena(ena_api_url, ena_api_username, ena_webin_password, hca_updater):
         ena_client = Ena(ena_api_url, ena_api_username, ena_webin_password)
-        ena_study_converter = EnaStudyConverter()
-        return EnaSubmitter(ena_client, ena_study_converter, hca_updater)
+        return EnaSubmitter(ena_client, hca_updater)
 
 
 def direct_archiver_from_params(
@@ -153,8 +141,7 @@ def direct_archiver_from_params(
                                                                               biostudies_password, hca_updater)
     except RestErrorException as rest_error:
         logger.error(f'Something went wrong with BioStudies service. Status code: {rest_error.status_code}, message: {rest_error.message}')
-        biostudies_submitter = None
-        # raise ArchiveException(rest_error.message, rest_error.status_code, 'BioStudies archive')
+        raise ArchiveException(rest_error.message, rest_error.status_code, 'BioStudies archive')
 
     ena_submitter = \
         DirectArchiver.create_submitter_for_ena(ena_api_url, ena_webin_username, ena_webin_password, hca_updater)

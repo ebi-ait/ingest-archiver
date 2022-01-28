@@ -34,4 +34,4 @@ class EnaStudyConverter(BaseEnaConverter):
 
     @staticmethod
     def _get_entity_content(entity: dict) -> dict:
-        return entity.get('content').get('project_core')
+        return entity.get('content', {}).get('project_core', {})

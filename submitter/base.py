@@ -1,17 +1,15 @@
 from abc import abstractmethod, ABCMeta
 from datetime import datetime
-from typing import Tuple, List, Union
+from typing import Tuple, List
 
-from lxml import etree
 
-from submission_broker.submission.submission import Entity, Submission
+from submission_broker.submission.submission import Entity
 from converter.biosamples import BioSamplesConverter
 from converter.biostudies import BioStudiesConverter
 from converter.ena.ena_study import EnaStudyConverter
 from converter.ena.ena_sample import EnaSampleConverter
-from converter.ena.base import BaseEnaConverter
 
-from archiver import first_element_or_self, ArchiveResponse
+from archiver import first_element_or_self, ArchiveResponse, ConvertedEntity
 from hca.submission import HcaSubmission
 
 CREATED_ENTITY = 'CREATED'
@@ -40,7 +38,7 @@ class Submitter(metaclass=ABCMeta):
         self.updater = updater
 
     def convert_all_entities(self, submission: HcaSubmission, archive_type: str, additional_attributes: dict = None)\
-            -> List[Union[Tuple[dict, bool, str], Tuple[str, bool, str]]]:
+            -> List[ConvertedEntity]:
         if additional_attributes is None:
             additional_attributes = {}
         hca_entity_types = ARCHIVE_TO_HCA_ENTITY_MAP[archive_type]
@@ -49,6 +47,7 @@ class Submitter(metaclass=ABCMeta):
             is_update = False
             if archive_type == 'ENA':
                 self.converter = CONVERTERS_BY_ARCHIVE_TYPES[f'{archive_type}_{hca_entity_type}']
+                self.converter.init_ena_set()
             for entity in submission.get_entities(hca_entity_type):
                 uuid = entity.attributes.get('uuid', {}).get('uuid', '')
                 additional_attributes['alias'] = uuid
@@ -61,14 +60,15 @@ class Submitter(metaclass=ABCMeta):
                 additional_attributes.pop('accession', None)
                 additional_attributes.pop('alias', None)
                 if archive_type != 'ENA':
-                    converted_entities.append((converted_entity, is_update, hca_entity_type))
+                    converted_entities.append(
+                        ConvertedEntity(data=converted_entity, is_update=is_update, hca_entity_type=hca_entity_type))
                     is_update = False
             if archive_type == 'ENA':
-                ena_converter: BaseEnaConverter = self.converter
-                converted_ena_entity = ena_converter.ena_set
-                etree.indent(converted_ena_entity, space="    ")
-                converted_ena_xml = ena_converter.convert_to_xml_str(converted_ena_entity)
-                converted_entities.append((converted_ena_xml, is_update, hca_entity_type))
+                converted_ena_xml = self.converter.convert_entity_to_xml_str()
+                if len(converted_ena_xml) < 1:
+                    break
+                converted_entities.append(
+                    ConvertedEntity(data=converted_ena_xml, is_update=is_update, hca_entity_type=hca_entity_type))
         return converted_entities
 
     def send_all_entities(self, converted_entities, archive_type: str):
@@ -76,18 +76,25 @@ class Submitter(metaclass=ABCMeta):
         if archive_type == 'ENA':
             responses_from_archive = self._submit_to_archive(converted_entities)
         else:
-            for converted_entity, is_update, entity_type in converted_entities:
-                archive_response = self._submit_to_archive(converted_entity)
-                responses_from_archive.append((archive_response, is_update, entity_type))
+            for converted_entity in converted_entities:
+                archive_response: dict = self._submit_to_archive(converted_entity)
+                responses_from_archive.append(archive_response)
 
         return responses_from_archive
 
-    def process_responses(self, submission: Submission, responses, error_key):
+    def process_responses(self, submission: HcaSubmission, responses, error_key, archive_type):
         responses_from_archive = {}
+        response: ArchiveResponse
         for response in responses:
-            result, archive_response = self.__process_response(submission, response, error_key)
-            # submission.add_accessions_to_attributes(entity)
-            # self.updater.update_entity(entity)
+            result, archive_response = self.__process_response(response)
+            accession = response.data.get('accession')
+            if accession:
+                entity_type = response.entity_type
+                uuid = response.data.get('uuid')
+                entity = submission.get_entity_by_uuid(entity_type, uuid)
+                entity.add_accession(archive_type, accession)
+                submission.add_accessions_to_attributes(entity)
+                # self.updater.update_entity(entity)
 
             responses_from_archive.setdefault(result, []).append(archive_response)
         return responses_from_archive
@@ -106,21 +113,15 @@ class Submitter(metaclass=ABCMeta):
         converted_entity = self.converter.convert(entity.attributes, other_attributes)
         return converted_entity
 
-    def __process_response(self, submission: Submission, response, error_key: str) \
-            -> Tuple[str, ArchiveResponse]:
-        archive_response = response[0]
-        entity_type = response[2]
+    def __process_response(self, response: ArchiveResponse) -> Tuple[str, ArchiveResponse]:
+        archive_response = response.data
         if 'error_messages' in archive_response:
-            error_messages = archive_response.get('error_messages')
-            accession = '' #TODO
-            return ERRORED_ENTITY, ArchiveResponse(entity_type, accession, error_messages)
+            return ERRORED_ENTITY, response
         else:
-            is_update = response[1]
-            accession = archive_response.get('accession')
-            if is_update:
-                return UPDATED_ENTITY, ArchiveResponse(entity_type, accession)
+            if response.is_update:
+                return UPDATED_ENTITY, response
             else:
-                return CREATED_ENTITY, ArchiveResponse(entity_type, accession)
+                return CREATED_ENTITY, response
 
     @staticmethod
     def __get_accession(entity, entity_type):

@@ -1,8 +1,8 @@
-from typing import Tuple
+from typing import Tuple, List
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from converter.ena.ena_study import EnaStudyConverter
+from archiver import ArchiveResponse, ConvertedEntity
 from hca.submission import HcaSubmission
 from hca.updater import HcaUpdater
 from submitter.base import Submitter
@@ -12,29 +12,34 @@ ARCHIVE_TYPE = "ENA"
 
 ERROR_KEY = 'content.project_core.ena_study_accession'
 
+HCA_TYPE_BY_ENA_TYPE = {
+    'STUDY': 'projects',
+    'SAMPLE': 'biomaterials'
+}
+
 
 class EnaSubmitter(Submitter):
-    def __init__(self, archive_client: Ena, converter: EnaStudyConverter, updater: HcaUpdater):
-        super().__init__(archive_client, converter, updater)
+    def __init__(self, archive_client: Ena, updater: HcaUpdater):
+        super().__init__(archive_client, None, updater)
         self.__archive_client = archive_client
-        self.__converter = converter
 
     def send_all_ena_entities(self, submission: HcaSubmission) -> dict:
         converted_entities = self.convert_all_entities(submission, ARCHIVE_TYPE)
         responses = self.send_all_entities(converted_entities, ARCHIVE_TYPE)
-        processed_responses = self.process_responses(submission, responses, ERROR_KEY)
+        processed_responses = self.process_responses(submission, responses, ERROR_KEY, ARCHIVE_TYPE)
 
         return processed_responses
 
-    def _submit_to_archive(self, converted_entities: Tuple[dict, bool, str]):
+    def _submit_to_archive(self, converted_entities: List[ConvertedEntity]):
         ena_files = {}
-        for converted_entity, is_update, entity_type in converted_entities:
+        for converted_entity in converted_entities:
+            entity_type = converted_entity.hca_entity_type
             if entity_type == 'projects':
-                ena_files['STUDY'] = ('STUDY.xml', converted_entity)
+                ena_files['STUDY'] = ('STUDY.xml', converted_entity.data)
             elif entity_type == 'biomaterials':
-                ena_files['SAMPLE'] = ('SAMPLE.xml', converted_entity)
+                ena_files['SAMPLE'] = ('SAMPLE.xml', converted_entity.data)
 
-            if is_update:
+            if converted_entity.is_update:
                 ena_action = EnaAction.MODIFY
             else:
                 ena_action = EnaAction.ADD
@@ -49,25 +54,35 @@ class EnaSubmitter(Submitter):
     @staticmethod
     def __process_response(response: Element):
         success = response.attrib.get('success')
+        ena_types = ['STUDY', 'SAMPLE']
         processed_response = []
+        is_update = False
         if success == 'true':
-            ena_types = ['STUDY', 'SAMPLE']
-            is_update = False
             for action in response.findall('ACTIONS'):
                 if action.text in ['ADD', 'MODIFY']:
                     is_update = action.text == 'MODIFY'
                     break
             for ena_type in ena_types:
                 for entity in response.findall(ena_type):
+                    data = {"accession": entity.attrib.get('accession'), 'uuid': entity.attrib.get('alias')}
+                    entity_type = HCA_TYPE_BY_ENA_TYPE.get(ena_type, '')
                     processed_response.append(
-                        ({"accession": entity.attrib.get('accession')}, is_update, ena_type.lower())
+                        ArchiveResponse(entity_type=entity_type, data=data, is_update=is_update)
                     )
         else:
-            messages = []
-            for message in response.find('MESSAGES'):
-                messages.append(f'{message.tag}: {message.text}')
-            processed_response.append(
-                ({'error_messages': messages}, False, 'study')
-            )
+            for ena_type in ena_types:
+                for entity in response.findall(ena_type):
+                    ena_entity_uuid: str = entity.attrib.get('alias')
+                    messages = []
+                    for message in response.find('MESSAGES'):
+                        error_message: str = message.text
+                        if ena_entity_uuid not in error_message:
+                            continue
+                        messages.append(f'{message.tag}: {error_message}')
+                    data = {'error_messages': messages, 'uuid': ena_entity_uuid}
+                    entity_type = 'projects'
+                    processed_response.append(
+                        ArchiveResponse(entity_type=entity_type, data=data, is_update=is_update)
+                    )
 
         return processed_response

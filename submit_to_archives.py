@@ -52,9 +52,8 @@ def setup_archive_urls():
     }
 
     ENA_URL_PART_BY_ENTITY_TYPE = {
-        'sample': 'samples',
-        'study': 'studies',
-        'run': 'runs'
+        'biomaterials': 'samples',
+        'projects': 'studies'
     }
 
 
@@ -95,10 +94,21 @@ def process_archiver_response():
                 if archive_name == 'ena':
                     url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[result_data.get('entity_type')]
                     base_url = base_url.format(entities=url_entities_part)
+                archive_response = result_data.get('data', {})
                 if status != 'ERRORED':
-                    data.append(f'{base_url}/{result_data.get("accession")}')
+                    data.append(
+                        {
+                            'uuid': f'{archive_response.get("uuid")}',
+                            'url': f'{base_url}/{archive_response.get("accession")}'
+                        }
+                    )
                 else:
-                    data.append(result_data)
+                    data.append(
+                        {
+                            'uuid': f'{archive_response.get("uuid")}',
+                            'error_details': result_data
+                        }
+                    )
             archive_result[f'{status} entities in {archive_name}'] = data
         output[archive_name] = archive_result
 
