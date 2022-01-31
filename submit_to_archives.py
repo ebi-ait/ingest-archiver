@@ -82,37 +82,44 @@ def get_header():
 
 
 def process_archiver_response():
-    response_text = response_json
-
     output = {}
-    for archive_name, archived_items in response_text.items():
-        archive_result = {}
-        for status, results in archived_items.items():
-            data = []
-            for result_data in results:
-                base_url = ARCHIVE_URLS[archive_name]
-                if archive_name == 'ena':
-                    url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[result_data.get('entity_type')]
-                    base_url = base_url.format(entities=url_entities_part)
-                archive_response = result_data.get('data', {})
-                if status != 'ERRORED':
-                    data.append(
-                        {
-                            'uuid': f'{archive_response.get("uuid")}',
-                            'url': f'{base_url}/{archive_response.get("accession")}'
-                        }
-                    )
-                else:
-                    data.append(
-                        {
-                            'uuid': f'{archive_response.get("uuid")}',
-                            'error_details': result_data
-                        }
-                    )
-            archive_result[f'{status} entities in {archive_name}'] = data
-        output[archive_name] = archive_result
+    for archive_name, archived_items in response_json.items():
+        output[archive_name] = populate_response_by_archive_name(archive_name, archived_items)
 
     return output
+
+
+def populate_response_by_archive_name(archive_name, archived_items):
+    archive_result = {}
+    for status, results in archived_items.items():
+        data = []
+        get_response_data_from_archive(archive_name, data, results, status)
+        archive_result[f'{status} entities in {archive_name}'] = data
+
+    return archive_result
+
+
+def get_response_data_from_archive(archive_name, data, results, status):
+    for result_data in results:
+        base_url = ARCHIVE_URLS[archive_name]
+        if archive_name == 'ena':
+            url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[result_data.get('entity_type')]
+            base_url = base_url.format(entities=url_entities_part)
+        archive_response = result_data.get('data', {})
+        if status != 'ERRORED':
+            data.append(
+                {
+                    'uuid': f'{archive_response.get("uuid")}',
+                    'url': f'{base_url}/{archive_response.get("accession")}'
+                }
+            )
+        else:
+            data.append(
+                {
+                    'uuid': f'{archive_response.get("uuid")}',
+                    'error_details': result_data
+                }
+            )
 
 
 if __name__ == "__main__":
