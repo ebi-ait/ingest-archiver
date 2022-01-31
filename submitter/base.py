@@ -94,7 +94,7 @@ class Submitter(metaclass=ABCMeta):
                 entity = submission.get_entity_by_uuid(entity_type, uuid)
                 entity.add_accession(archive_type, accession)
                 submission.add_accessions_to_attributes(entity)
-                # self.updater.update_entity(entity)
+                self.updater.update_entity(entity)
 
             responses_from_archive.setdefault(result, []).append(archive_response)
         return responses_from_archive
