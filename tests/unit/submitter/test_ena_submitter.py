@@ -22,12 +22,10 @@ class TestEnaSubmitter(unittest.TestCase):
         self.submitter = EnaSubmitter(self.archive_client, self.updater)
         self.submitter.converter = self.converter
         self.submitter.converter.init_ena_set()
-        # self.submitter._submit_to_archive = MagicMock()
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'ENA'
         self.entity_type = 'projects'
         self.ena_study_accession = 'PRJ12345'
-        # self.error_key = ERROR_KEY
         self.additional_parameters = {}
 
         self.project_uuid = random_uuid()

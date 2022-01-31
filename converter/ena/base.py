@@ -11,8 +11,10 @@ class BaseEnaConverter:
         self.ena_type = ena_type
         self.xml_spec = xml_spec
         self.ena_set: Element = None
+        self.__init_is_update()
 
     def convert(self, entity: dict, additional_attributes: dict = None):
+        self.__init_is_update()
         if additional_attributes is None:
             additional_attributes = {}
 
@@ -25,13 +27,16 @@ class BaseEnaConverter:
 
         return
 
+    def __init_is_update(self):
+        self.is_update = False
+
     def init_ena_set(self):
         self.ena_set = etree.XML(f'<{self.ena_type.upper()}_SET />')
 
-    @staticmethod
-    def _add_accession_and_alias(spec: dict, other_attributes: dict):
+    def _add_accession_and_alias(self, spec: dict, other_attributes: dict):
         accession = other_attributes.get('accession')
         if accession:
+            self.is_update = True
             spec['@accession'] = ['', fixed_attribute, accession]
 
         alias = other_attributes.get('alias')

@@ -44,32 +44,50 @@ class Submitter(metaclass=ABCMeta):
         hca_entity_types = ARCHIVE_TO_HCA_ENTITY_MAP[archive_type]
         converted_entities = []
         for hca_entity_type in hca_entity_types:
-            is_update = False
             if archive_type == 'ENA':
-                self.converter = CONVERTERS_BY_ARCHIVE_TYPES[f'{archive_type}_{hca_entity_type}']
-                self.converter.init_ena_set()
-            for entity in submission.get_entities(hca_entity_type):
-                uuid = entity.attributes.get('uuid', {}).get('uuid', '')
-                additional_attributes['alias'] = uuid
-                if archive_type == 'ENA' and hca_entity_type == 'projects':
-                    self.__set_release_date_from_project(entity)
-                accession = self.__get_accession(entity, archive_type)
-                if accession:
-                    is_update = True
-                converted_entity = self.__convert_entity(entity, accession, additional_attributes)
-                additional_attributes.pop('accession', None)
-                additional_attributes.pop('alias', None)
-                if archive_type != 'ENA':
+                self.__setup_converter_for_ena(archive_type, hca_entity_type)
+            converted_entities.extend(self.__convert_entities_by_hca_type(additional_attributes, archive_type,
+                                                                     hca_entity_type, submission))
+            if archive_type == 'ENA':
+                xml_entity_str = self.converter.convert_entity_to_xml_str()
+                if xml_entity_str:
                     converted_entities.append(
-                        ConvertedEntity(data=converted_entity, is_update=is_update, hca_entity_type=hca_entity_type))
-                    is_update = False
-            if archive_type == 'ENA':
-                converted_ena_xml = self.converter.convert_entity_to_xml_str()
-                if len(converted_ena_xml) < 1:
-                    break
-                converted_entities.append(
-                    ConvertedEntity(data=converted_ena_xml, is_update=is_update, hca_entity_type=hca_entity_type))
+                        ConvertedEntity(data=xml_entity_str,
+                                        is_update=self.converter.is_update,
+                                        hca_entity_type=hca_entity_type))
         return converted_entities
+
+    def __convert_entities_by_hca_type(self, additional_attributes, archive_type, hca_entity_type,
+                                       submission):
+        converted_entities = []
+        for entity in submission.get_entities(hca_entity_type):
+            is_update = False
+            self.__add_uuid_to_additional_attributes(additional_attributes, entity)
+            if archive_type == 'ENA':
+                self.__set_release_date_from_project(entity)
+            accession = self.__get_accession(entity, archive_type)
+            if accession:
+                is_update = True
+            converted_entity = self.__convert_entity(entity, accession, additional_attributes)
+            if archive_type != 'ENA':
+                converted_entities.append(
+                    ConvertedEntity(data=converted_entity, is_update=is_update, hca_entity_type=hca_entity_type))
+            self.__cleanup_additional_attributes(additional_attributes)
+        return converted_entities
+
+    def __setup_converter_for_ena(self, archive_type, hca_entity_type):
+        self.converter = CONVERTERS_BY_ARCHIVE_TYPES[f'{archive_type}_{hca_entity_type}']
+        self.converter.init_ena_set()
+
+    @staticmethod
+    def __add_uuid_to_additional_attributes(additional_attributes, entity):
+        uuid = entity.attributes.get('uuid', {}).get('uuid', '')
+        additional_attributes['alias'] = uuid
+
+    @staticmethod
+    def __cleanup_additional_attributes(additional_attributes):
+        additional_attributes.pop('accession', None)
+        additional_attributes.pop('alias', None)
 
     def send_all_entities(self, converted_entities, archive_type: str):
         responses_from_archive = []
@@ -100,9 +118,10 @@ class Submitter(metaclass=ABCMeta):
         return responses_from_archive
 
     def __set_release_date_from_project(self, entity):
-        release_date = entity.attributes.get('releaseDate')
-        if release_date:
-            self.release_date = datetime.strptime(release_date, "%Y-%m-%dT%H:%M:%SZ").date().strftime('%d-%m-%Y')
+        if entity.identifier.entity_type == 'projects':
+            release_date = entity.attributes.get('releaseDate')
+            if release_date:
+                self.release_date = datetime.strptime(release_date, "%Y-%m-%dT%H:%M:%SZ").date().strftime('%d-%m-%Y')
 
     def __convert_entity(self, entity: Entity, accession: str = None, other_attributes: dict = None) -> dict:
         if other_attributes is None:
