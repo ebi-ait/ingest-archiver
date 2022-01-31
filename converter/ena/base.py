@@ -3,6 +3,8 @@ from xml.etree.ElementTree import Element
 from json_converter.json_mapper import JsonMapper
 from lxml import etree
 
+from converter import fixed_attribute, get_concrete_type
+
 
 class BaseEnaConverter:
     def __init__(self, ena_type: str, xml_spec: dict):
@@ -30,11 +32,11 @@ class BaseEnaConverter:
     def _add_accession_and_alias(spec: dict, other_attributes: dict):
         accession = other_attributes.get('accession')
         if accession:
-            spec['@accession'] = ['', BaseEnaConverter._fixed_attribute, accession]
+            spec['@accession'] = ['', fixed_attribute, accession]
 
         alias = other_attributes.get('alias')
         if alias:
-            spec['@alias'] = ['', BaseEnaConverter._fixed_attribute, alias]
+            spec['@alias'] = ['', fixed_attribute, alias]
 
     @staticmethod
     def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
@@ -47,16 +49,6 @@ class BaseEnaConverter:
     @staticmethod
     def _get_entity_content(entity: dict) -> dict:
         pass
-
-    @staticmethod
-    def _get_value_by_key_path(entity: dict, key_path: list) -> str:
-        value = entity
-        for key in key_path:
-            value = value.get(key, None)
-            if value is None:
-                return value
-
-        return value
 
     @staticmethod
     def __add_children(parent: Element, children: dict):
@@ -85,11 +77,6 @@ class BaseEnaConverter:
         attribute_value = etree.SubElement(attribute, value_name)
         attribute_value.text = value
 
-    @staticmethod
-    def _fixed_attribute(*args):
-        value = args[1]
-        return value
-
     def convert_entity_to_xml_str(self) -> str:
         converted_ena_entity = self.ena_set
         if len(converted_ena_entity) < 1:
@@ -109,10 +96,5 @@ class BaseEnaConverter:
     @staticmethod
     def _derive_concrete_type(*args):
         schema_url = args[0]
-        concrete_type = BaseEnaConverter._get_concrete_type(schema_url)
-        return concrete_type
-
-    @staticmethod
-    def _get_concrete_type(schema_url):
-        concrete_type = schema_url.split('/')[-1]
+        concrete_type = get_concrete_type(schema_url)
         return concrete_type

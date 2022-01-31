@@ -2,12 +2,9 @@ from datetime import datetime
 
 from biosamples_v4.models import Sample, Attribute
 from json_converter.json_mapper import JsonMapper
+
+from . import get_concrete_type
 from .errors import MissingBioSamplesDomain
-
-
-def get_concrete_type(schema_url):
-    concrete_type = schema_url.split('/')[-1]
-    return concrete_type
 
 
 ATTRIBUTE_SPEC = {
