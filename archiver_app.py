@@ -84,37 +84,23 @@ def archive():
         return response_json(HTTPStatus.BAD_REQUEST, error)
 
     if is_direct_archiving:
+        archives_response = {}
         try:
             direct_archiver = direct_archiver_from_config()
             archives_response = direct_archiver.archive_submission(submission_uuid)
             logger.info('Archiving finished with UUID=%s', submission_uuid)
-        except Exception as rest_error:
-            log_error_message(rest_error, submission_uuid)
-            archives_response = {
-                'message': 'Archiving failed.'
-            }
-            if isinstance(rest_error, ArchiveException):
-              archives_response.update(
-                  {
-                      'detailed_error_message': rest_error.message,
-                      'error_status_code': rest_error.status_code,
-                      'archive': rest_error.archive_name
-                  }
-              )
-            elif isinstance(rest_error, RestErrorException):
-                archives_response.update(
-                    {
-                        'detailed_error_message': rest_error.message,
-                        'error_status_code': rest_error.status_code
-                    }
-                )
-            elif isinstance(rest_error, HTTPError):
-                archives_response.update(
-                    {
-                        'detailed_error_message': rest_error.response.text,
-                        'error_status_code': rest_error.response.status_code
-                    }
-                )
+        except ArchiveException as rest_error:
+            archives_response.update(
+                __assemble_error_archive_response(
+                    rest_error.message, rest_error.status_code, submission_uuid, rest_error.archive_name))
+        except RestErrorException as rest_error:
+            archives_response.update(
+                __assemble_error_archive_response(
+                    rest_error.message, rest_error.status_code, submission_uuid))
+        except HTTPError as rest_error:
+            archives_response.update(
+                __assemble_error_archive_response(
+                    rest_error.response.text, rest_error.response.status_code, submission_uuid))
     else:
         ingest_api = IngestAPI(config.INGEST_API_URL)
         archiver = IngestArchiver(ingest_api=ingest_api,
@@ -133,14 +119,24 @@ def archive():
     return jsonify(archives_response)
 
 
-def log_error_message(exception, submission_uuid):
+def __assemble_error_archive_response(error_message, status_code, submission_uuid, archive_name: str = None):
+    log_error_message(error_message, status_code, submission_uuid)
+    response = {
+        'message': 'Archiving failed.',
+        'detailed_error_message': error_message,
+        'error_status_code': status_code
+    }
+
+    if archive_name:
+        response.update({'archive': archive_name})
+
+    return response
+
+
+def log_error_message(error_message, status_code, submission_uuid):
     logger.error('Archiving submission with UUID=%s failed.', submission_uuid)
-    if isinstance(exception, RestErrorException):
-        logger.error('Archive responded with status code: %s', exception.status_code)
-        logger.error('Archive responded with this error message: %s', exception.message)
-    elif isinstance(exception, HTTPError):
-        logger.error('Archive responded with status code: %s', exception.response.status_code)
-        logger.error('Archive responded with this error message: %s', exception.response.text)
+    logger.error('Archive responded with status code: %s', status_code)
+    logger.error('Archive responded with this error message: %s', error_message)
 
 
 def async_archive(ingest_api: IngestAPI, archiver: IngestArchiver, submission_uuid: str):
