@@ -18,8 +18,8 @@ from submitter.biosamples_submitter_service import BioSamplesSubmitterService
 from submitter.biostudies import BioStudiesSubmitter
 from converter.biostudies import BioStudiesConverter
 from submitter.biostudies_submitter_service import BioStudiesSubmitterService
-from submitter.ena import Ena
-from submitter.ena_study import EnaSubmitter
+from submitter.ena_submitter_service import Ena
+from submitter.ena import EnaSubmitter
 
 
 class DirectArchiver:

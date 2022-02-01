@@ -6,7 +6,7 @@ from mock import MagicMock
 
 from archiver import ConvertedEntity
 from hca.submission import HcaSubmission
-from submitter.ena_study import EnaSubmitter
+from submitter.ena import EnaSubmitter
 from tests.unit.submitter import create_archive_response
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
