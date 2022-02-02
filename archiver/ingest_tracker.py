@@ -1,6 +1,6 @@
 from typing import List
 
-from ingest.importer.submission import EntityMap
+from ingest.importer.submission.entity_map import EntityMap
 
 from api.ingest import IngestAPI
 from archiver.submission import ArchiveEntity, ArchiveSubmission
