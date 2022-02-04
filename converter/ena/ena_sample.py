@@ -2,6 +2,7 @@ from xml.etree.ElementTree import Element
 
 from lxml import etree
 
+from converter import get_value_by_key_path, fixed_attribute
 from converter.ena.base import BaseEnaConverter
 
 
@@ -18,7 +19,7 @@ class EnaSampleConverter(BaseEnaConverter):
 
     def __init__(self):
         sample_spec = {
-            '@center_name': ['', BaseEnaConverter._fixed_attribute, 'HCA'],
+            '@center_name': ['', fixed_attribute, 'HCA'],
             'TITLE': ['biomaterial_core.biomaterial_name'],
             'SAMPLE_NAME': {
                 'TAXON_ID': ['biomaterial_core.ncbi_taxon_id', BaseEnaConverter._get_taxon_id],
@@ -33,7 +34,7 @@ class EnaSampleConverter(BaseEnaConverter):
         EnaSampleConverter.__add_sample_type_as_attribute(attributes, entity)
         for hca_name, ena_name in HCA_TO_ENA_SAMPLE_ATTRIBUTES.items():
             key_list: list = hca_name.split('.')
-            value: str = self._get_value_by_key_path(entity, key_list)
+            value: str = get_value_by_key_path(entity, key_list)
             if value:
                 BaseEnaConverter._make_attribute(
                     attributes, 'SAMPLE_ATTRIBUTE', ena_name, value)
@@ -49,11 +50,6 @@ class EnaSampleConverter(BaseEnaConverter):
     def __add_project_name_as_attribute(attributes):
         BaseEnaConverter._make_attribute(
             attributes, 'SAMPLE_ATTRIBUTE', 'project', 'Human Cell Atlas')
-
-    @staticmethod
-    def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
-        additional_attributes['alias'] = \
-            entity.get('content').get('biomaterial_core').get('biomaterial_id') + '_' + entity.get('uuid').get('uuid')
 
     @staticmethod
     def _get_entity_content(entity: dict) -> dict:

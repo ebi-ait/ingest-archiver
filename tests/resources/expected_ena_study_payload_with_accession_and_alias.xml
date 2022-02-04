@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <STUDY_SET>
-    <STUDY center_name="HCA" accession="SRP000123" alias="Adult_Nonmobilised_PB_fc55bd4a-8694-4a28-9a35-59a685bda323">
+    <STUDY center_name="HCA" accession="SRP000123" alias="fc55bd4a-8694-4a28-9a35-59a685bda323">
         <DESCRIPTOR>
             <STUDY_TITLE>Transcriptomic characterisation of haematopoietic stem and progenitor cells from adult human homeostatic (non-mobilised) peripheral blood</STUDY_TITLE>
             <STUDY_TYPE existing_study_type="Transcriptome Analysis"/>

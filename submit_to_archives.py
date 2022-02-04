@@ -35,15 +35,26 @@ def get_index_page():
 
 
 def setup_archive_urls():
-    global BIOSTUDIES_STUDY_URL, BIOSAMPLES_SAMPLE_URL, ENA_WEBIN_BASE_URL
+    global ENA_URL_PART_BY_ENTITY_TYPE, ARCHIVE_URLS, BIOSTUDIES_STUDY_URL, BIOSAMPLES_SAMPLE_URL, ENA_WEBIN_BASE_URL
     if ENVIRONMENT == 'prod':
-        BIOSTUDIES_STUDY_URL = 'https://www.ebi.ac.uk/biostudies/studies/'
+        BIOSTUDIES_STUDY_URL = 'https://www.ebi.ac.uk/biostudies/studies'
         BIOSAMPLES_SAMPLE_URL = 'https://www.ebi.ac.uk/biosamples/samples'
-        ENA_WEBIN_BASE_URL = 'https://www.ebi.ac.uk/ena/submit/webin/report/studies/'
+        ENA_WEBIN_BASE_URL = 'https://www.ebi.ac.uk/ena/submit/webin/report/{entities}'
     else:
-        BIOSTUDIES_STUDY_URL = 'https://wwwdev.ebi.ac.uk/biostudies/studies/'
+        BIOSTUDIES_STUDY_URL = 'https://wwwdev.ebi.ac.uk/biostudies/studies'
         BIOSAMPLES_SAMPLE_URL = 'https://wwwdev.ebi.ac.uk/biosamples/samples'
-        ENA_WEBIN_BASE_URL = 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/studies/'
+        ENA_WEBIN_BASE_URL = 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/{entities}'
+
+    ARCHIVE_URLS = {
+        'biosamples': BIOSAMPLES_SAMPLE_URL,
+        'biostudies': BIOSTUDIES_STUDY_URL,
+        'ena': ENA_WEBIN_BASE_URL
+    }
+
+    ENA_URL_PART_BY_ENTITY_TYPE = {
+        'biomaterials': 'samples',
+        'projects': 'studies'
+    }
 
 
 def check_archiver_service_availability():
@@ -71,18 +82,44 @@ def get_header():
 
 
 def process_archiver_response():
-    response_text = archiver_response.json()
-    submitted_samples_in_biosamples =\
-        [f'{BIOSAMPLES_SAMPLE_URL}/{sample_accession}' for sample_accession in response_text.get('biosamples_accessions')]
-    submitted_project_in_biostudies =\
-        [f'{BIOSTUDIES_STUDY_URL}{response_text.get("biostudies_accession")}']
-    submitted_entities_in_ena =\
-        [f'{ENA_WEBIN_BASE_URL}{ena_accession}' for ena_accession in response_text.get('ena_accessions')]
-    return {
-        'Submitted samples in BioSamples': submitted_samples_in_biosamples,
-        'Submitted studies in BioStudies': submitted_project_in_biostudies,
-        'Submitted entities in ENA': submitted_entities_in_ena
-    }
+    output = {}
+    for archive_name, archived_items in response_json.items():
+        output[archive_name] = populate_response_by_archive_name(archive_name, archived_items)
+
+    return output
+
+
+def populate_response_by_archive_name(archive_name, archived_items):
+    archive_result = {}
+    for status, results in archived_items.items():
+        data = []
+        get_response_data_from_archive(archive_name, data, results, status)
+        archive_result[f'{status} entities in {archive_name}'] = data
+
+    return archive_result
+
+
+def get_response_data_from_archive(archive_name, data, results, status):
+    for result_data in results:
+        base_url = ARCHIVE_URLS[archive_name]
+        if archive_name == 'ena':
+            url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[result_data.get('entity_type')]
+            base_url = base_url.format(entities=url_entities_part)
+        archive_response = result_data.get('data', {})
+        if status != 'ERRORED':
+            data.append(
+                {
+                    'uuid': f'{archive_response.get("uuid")}',
+                    'url': f'{base_url}/{archive_response.get("accession")}'
+                }
+            )
+        else:
+            data.append(
+                {
+                    'uuid': f'{archive_response.get("uuid")}',
+                    'error_details': result_data
+                }
+            )
 
 
 if __name__ == "__main__":
@@ -113,7 +150,13 @@ if __name__ == "__main__":
                                       json=payload,
                                       headers=header)
 
-    logger.info(f'Response: {archiver_response.json()}')
+    response_json = archiver_response.json()
+
+    logger.info(f'Response: {response_json}')
+
+    if response_json.get('message', None) is not None:
+        logger.error("Something went wrong while sending data/metadata to archives.")
+        exit(1)
 
     archiver_response_with_urls = process_archiver_response()
 
