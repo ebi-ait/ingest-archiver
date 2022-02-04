@@ -3,36 +3,45 @@ from xml.etree.ElementTree import Element
 from json_converter.json_mapper import JsonMapper
 from lxml import etree
 
+from converter import fixed_attribute, get_concrete_type
+
 
 class BaseEnaConverter:
     def __init__(self, ena_type: str, xml_spec: dict):
         self.ena_type = ena_type
         self.xml_spec = xml_spec
+        self.ena_set: Element = None
+        self.__init_is_update()
 
     def convert(self, entity: dict, additional_attributes: dict = None):
+        self.__init_is_update()
         if additional_attributes is None:
             additional_attributes = {}
 
-        ena_set: Element = etree.XML(f'<{self.ena_type.upper()}_SET />')
-        self._add_alias_to_additional_attributes(entity, additional_attributes)
         self._add_accession_and_alias(self.xml_spec, additional_attributes)
         xml_map = JsonMapper(self._get_entity_content(entity)).map(self.xml_spec)
         root_entity = etree.Element(self.ena_type.upper())
-        ena_set.append(root_entity)
+        self.ena_set.append(root_entity)
         self.__add_children(parent=root_entity, children=xml_map)
         self._post_conversion(entity, root_entity)
-        etree.indent(ena_set, space="    ")
-        return self.__convert_to_xml_str(ena_set)
 
-    @staticmethod
-    def _add_accession_and_alias(spec: dict, other_attributes: dict):
+        return
+
+    def __init_is_update(self):
+        self.is_update = False
+
+    def init_ena_set(self):
+        self.ena_set = etree.XML(f'<{self.ena_type.upper()}_SET />')
+
+    def _add_accession_and_alias(self, spec: dict, other_attributes: dict):
         accession = other_attributes.get('accession')
         if accession:
-            spec['@accession'] = ['', BaseEnaConverter._fixed_attribute, accession]
+            self.is_update = True
+            spec['@accession'] = ['', fixed_attribute, accession]
 
         alias = other_attributes.get('alias')
         if alias:
-            spec['@alias'] = ['', BaseEnaConverter._fixed_attribute, alias]
+            spec['@alias'] = ['', fixed_attribute, alias]
 
     @staticmethod
     def _add_alias_to_additional_attributes(entity: dict, additional_attributes: dict):
@@ -45,14 +54,6 @@ class BaseEnaConverter:
     @staticmethod
     def _get_entity_content(entity: dict) -> dict:
         pass
-
-    @staticmethod
-    def _get_value_by_key_path(entity: dict, key_path: list) -> str:
-        value = entity
-        for key in key_path:
-            value = value[key]
-
-        return value
 
     @staticmethod
     def __add_children(parent: Element, children: dict):
@@ -81,14 +82,13 @@ class BaseEnaConverter:
         attribute_value = etree.SubElement(attribute, value_name)
         attribute_value.text = value
 
-    @staticmethod
-    def _fixed_attribute(*args):
-        value = args[1]
-        return value
+    def convert_entity_to_xml_str(self) -> str:
+        converted_ena_entity = self.ena_set
+        if len(converted_ena_entity) < 1:
+            return ''
+        etree.indent(converted_ena_entity, space="    ")
 
-    @staticmethod
-    def __convert_to_xml_str(element: Element) -> str:
-        return etree.tostring(element, xml_declaration=True, pretty_print=True, encoding="UTF-8")
+        return etree.tostring(converted_ena_entity, xml_declaration=True, pretty_print=True, encoding="UTF-8")
 
     @staticmethod
     def _get_scientific_name(args):
@@ -101,10 +101,5 @@ class BaseEnaConverter:
     @staticmethod
     def _derive_concrete_type(*args):
         schema_url = args[0]
-        concrete_type = BaseEnaConverter._get_concrete_type(schema_url)
-        return concrete_type
-
-    @staticmethod
-    def _get_concrete_type(schema_url):
-        concrete_type = schema_url.split('/')[-1]
+        concrete_type = get_concrete_type(schema_url)
         return concrete_type

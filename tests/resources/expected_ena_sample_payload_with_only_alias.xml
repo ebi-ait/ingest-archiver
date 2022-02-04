@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SAMPLE_SET>
-    <SAMPLE center_name="HCA" alias="HS_BM_2_cell_line_501ba65c-0b04-430d-9aad-917935ee3c3c">
+    <SAMPLE center_name="HCA" alias="501ba65c-0b04-430d-9aad-917935ee3c3c">
         <TITLE>Bone Marrow CD34+ stem/progenitor cells</TITLE>
         <SAMPLE_NAME>
             <TAXON_ID>9606</TAXON_ID>

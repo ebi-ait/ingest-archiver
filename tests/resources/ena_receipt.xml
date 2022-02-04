@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<RECEIPT receiptDate="2014-12-02T16:06:20.871Z" success="true">
+    <STUDY accession="ERP12345" alias="study_1" status="PRIVATE"/>
+    <SUBMISSION accession="ERA390457" alias="submission_1"/>
+    <ACTIONS>ADD</ACTIONS>
+</RECEIPT>
+

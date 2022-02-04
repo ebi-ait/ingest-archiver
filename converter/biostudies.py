@@ -4,24 +4,10 @@ from datetime import datetime
 from json_converter.json_mapper import JsonMapper
 from json_converter.post_process import default_to
 
+from converter import array_to_string
+
 ACCNO_PREFIX_FOR_ORGANIZATIONS = "o"
 ACCNO_PREFIX_FOR_AUTHORS = "a"
-
-
-def array_to_string(*args):
-    value = ", ".join(args[0])
-    return value
-
-
-def _parse_name(*args):
-    full_name = args[0]
-    position = args[1]
-
-    if not full_name:
-        return None
-
-    name_element = full_name.split(',', 2)[position]
-    return name_element[0] if name_element and position == 1 else name_element
 
 
 PUBLICATION_SPEC = {
