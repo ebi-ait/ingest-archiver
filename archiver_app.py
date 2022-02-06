@@ -18,7 +18,10 @@ from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
 from archiver import ArchiveException
 from archiver.archiver import IngestArchiver, ArchiveSubmission, ArchiveEntityMap
+from archiver.data_archiver import DataArchiver
 from archiver.direct import direct_archiver_from_config
+from kombu import Connection, Exchange, Producer
+
 
 format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
          '%(lineno)s %(funcName)s(): %(message)s'
@@ -117,6 +120,18 @@ def archive():
         }
 
     return jsonify(archives_response)
+
+
+@app.route("/archiveSubmissions/data", methods=['POST'])
+@require_apikey
+def archive_data():
+    conn = Connection(config.RABBITMQ_URL)
+    channel = conn.channel()
+    exchange = Exchange(config.RABBITMQ_DATA_ARCHIVER_EXCHANGE, type='topic')
+    producer = Producer(exchange=exchange, channel=channel, routing_key=config.RABBITMQ_DATA_ARCHIVER_ROUTING_KEY)
+
+    response = DataArchiver(producer).handle_request(request.get_json())
+    return jsonify(response)
 
 
 def __assemble_error_archive_response(error_message, status_code, submission_uuid, archive_name: str = None):

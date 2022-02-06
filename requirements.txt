@@ -13,3 +13,4 @@ mock~=4.0.3
 -e git+https://github.com/ebi-ait/ingest-client.git@7fd3c25#egg=hca_ingest
 lxml~=4.6.3
 colorlog~=6.6.0
+kombu==5.2.2
