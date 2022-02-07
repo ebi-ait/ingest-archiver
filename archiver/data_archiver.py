@@ -1,6 +1,7 @@
 import logging
 from jsonschema import validate, ValidationError
-from kombu import Producer
+from kombu import Connection, Exchange, Producer
+import config
 
 class DataArchiver:
 
@@ -8,15 +9,15 @@ class DataArchiver:
     REQUEST_SUCCESSFUL = 'Data archiving request triggered successfully'
     REQUEST_FAILED = 'Data archiving request failed'
 
-    def __init__(self, producer):
+    def __init__(self, msg_broker):
         self.logger = logging.getLogger(__name__)
-        self.producer = producer
+        self.msg_broker = msg_broker
 
-    def handle_request(self, req):
+    def send_request(self, req):
         try:
             validate(instance=req, schema=DataArchiver.data_archiver_request_format())
             self.logger.info(f'Received data archiving request: {req}')
-            self.producer.publish(req, retry=True)
+            self.msg_broker.send(req)
             return {'message': DataArchiver.REQUEST_SUCCESSFUL}
 
         except ValidationError as e:
@@ -37,3 +38,17 @@ class DataArchiver:
             },
             "required": ["sub_uuid"]
         }
+
+class DataArchiverMessageBroker:
+
+    def __init__(self):
+        self.conn = Connection(config.RABBITMQ_URL)
+        self.channel = self.conn.channel()
+        self.exchange = Exchange(config.RABBITMQ_DATA_ARCHIVER_EXCHANGE, type='topic')
+        self.producer = Producer(exchange=self.exchange, channel=self.channel, routing_key=config.RABBITMQ_DATA_ARCHIVER_ROUTING_KEY)
+
+    def send(self, msg):
+        self.producer.publish(msg, retry=True)
+
+    def receive(self):
+        pass
