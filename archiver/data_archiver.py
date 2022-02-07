@@ -40,6 +40,12 @@ class DataArchiver:
         }
 
 class DataArchiverMessageBroker:
+    RETRY_POLICY = {
+        'interval_start': 0,
+        'interval_step': 2,
+        'interval_max': 30,
+        'max_retries': 60
+    }
 
     def __init__(self):
         self.conn = Connection(config.RABBITMQ_URL)
@@ -48,7 +54,4 @@ class DataArchiverMessageBroker:
         self.producer = Producer(exchange=self.exchange, channel=self.channel, routing_key=config.RABBITMQ_DATA_ARCHIVER_ROUTING_KEY)
 
     def send(self, msg):
-        self.producer.publish(msg, retry=True)
-
-    def receive(self):
-        pass
+        self.producer.publish(msg, retry=True, retry_policy=DataArchiverMessageBroker.RETRY_POLICY)
