@@ -45,6 +45,18 @@ from converter.ena.classes.sra_experiment import (
     TypeLibrarySource,
     TypeLibraryStrategy,
 )
+from converter.ena.classes.sra_run import (
+    FileReadType,
+    FileAsciiOffset,
+    FileChecksumMethod,
+    FileFiletype,
+    FileQualityEncoding,
+    FileQualityScoringSystem,
+    Run,
+    RunSet,
+    RunSetType,
+    RunType,
+)
 
 __all__ = [
     "AttributeType",
@@ -90,4 +102,14 @@ __all__ = [
     "TypeLibrarySelection",
     "TypeLibrarySource",
     "TypeLibraryStrategy",
+	"FileReadType",
+    "FileAsciiOffset",
+    "FileChecksumMethod",
+    "FileFiletype",
+    "FileQualityEncoding",
+    "FileQualityScoringSystem",
+    "Run",
+    "RunSet",
+    "RunSetType",
+    "RunType",
 ]
