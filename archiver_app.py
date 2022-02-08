@@ -18,7 +18,9 @@ from api.dsp import DataSubmissionPortal
 from api.ingest import IngestAPI
 from archiver import ArchiveException
 from archiver.archiver import IngestArchiver, ArchiveSubmission, ArchiveEntityMap
+from archiver.data_archiver import DataArchiver, DataArchiverMessageBroker
 from archiver.direct import direct_archiver_from_config
+
 
 format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
          '%(lineno)s %(funcName)s(): %(message)s'
@@ -117,6 +119,14 @@ def archive():
         }
 
     return jsonify(archives_response)
+
+
+@app.route("/archiveSubmissions/data", methods=['POST'])
+@require_apikey
+def archive_data():
+    message_broker = DataArchiverMessageBroker()
+    response = DataArchiver(message_broker).send_request(request.get_json())
+    return jsonify(response)
 
 
 def __assemble_error_archive_response(error_message, status_code, submission_uuid, archive_name: str = None):
