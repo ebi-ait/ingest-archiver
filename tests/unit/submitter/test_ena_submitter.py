@@ -25,12 +25,13 @@ class TestEnaSubmitter(unittest.TestCase):
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'ENA'
         self.entity_type = 'projects'
+        self.entity_schema_type = 'project'
         self.ena_study_accession = 'PRJ12345'
         self.additional_parameters = {}
 
         self.project_uuid = random_uuid()
         self.entity = self.submission.map_ingest_entity(
-            make_ingest_entity(self.entity_type, random_id(), self.project_uuid)
+            make_ingest_entity(self.entity_type, self.entity_schema_type, random_id(), self.project_uuid)
         )
 
     def test_when_convert_project_without_accession_returns_project_for_creation(self):

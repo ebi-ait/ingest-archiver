@@ -27,8 +27,9 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'BioSamples'
         self.entity_type = 'biomaterials'
+        self.entity_schema_type = 'biomaterial'
         self.entity = self.submission.map_ingest_entity(
-            make_ingest_entity(self.entity_type, random_id(), random_uuid())
+            make_ingest_entity(self.entity_type, self.entity_schema_type, random_id(), random_uuid())
         )
         self.additional_parameters = {}
 

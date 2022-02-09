@@ -9,8 +9,12 @@ class HcaSubmission(Submission):
         self.__uuid_map = {}
         self.__regex = re.compile(r'/(?P<entity_type>\w+)/(?P<entity_id>\w+)$')
         self._accession_spec = {
-            'BioSamples': ['content.biomaterial_core.biosamples_accession'],
-            'BioStudies': ['content.biostudies_accessions']
+            'BioSamples': {
+                'biomaterials': ['content.biomaterial_core.biosamples_accession']
+            },
+            'BioStudies': {
+                'projects': ['content.biostudies_accessions']
+            }
         }
         super().__init__(collider)
 
@@ -41,18 +45,19 @@ class HcaSubmission(Submission):
         return False
 
     def add_accessions_to_attributes(self, entity: Entity):
-        for service, mapping_list in self._accession_spec.items():
+        for service, accession_by_entity_type in self._accession_spec.items():
             accession = entity.get_accession(service)
 
             if accession:
-                location_list = mapping_list[0]
-                attributes = entity.attributes
-                locations = location_list.split('.')
-                while len(locations) > 1:
-                    location = locations.pop(0)
-                    attributes.setdefault(location, {})
-                    attributes = attributes[location]
-                attributes[locations[0]] = accession
+                for entity_type, accession_location in accession_by_entity_type.items():
+                    location_list = accession_location[0]
+                    attributes = entity.attributes
+                    locations = location_list.split('.')
+                    while len(locations) > 1:
+                        location = locations.pop(0)
+                        attributes.setdefault(location, {})
+                        attributes = attributes[location]
+                    attributes[locations[0]] = accession
 
     def __get_entity_key(self, entity_attributes: dict) -> [str, str]:
         entity_uri = HcaSubmission.get_link(entity_attributes, 'self')
@@ -63,8 +68,9 @@ class HcaSubmission(Submission):
 
     def _get_accessions_from_attributes(self, entity: Entity):
         accessions = JsonMapper(entity.attributes).map(self._accession_spec)
-        for service, accession in accessions.items():
-            entity.add_accession(service, accession)
+        for service, accession_by_entity_type in accessions.items():
+            for entity_type, accession in accession_by_entity_type:
+                entity.add_accession(service, accession)
 
     @staticmethod
     def get_uuid(entity_attributes: dict) -> str:

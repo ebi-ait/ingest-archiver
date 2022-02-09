@@ -10,7 +10,8 @@ class TestHcaSubmission(unittest.TestCase):
         self.test_type = random_id()
         self.test_id = random_id()
         self.test_uuid = random_uuid()
-        self.test_case = make_ingest_entity(self.test_type, self.test_id, self.test_uuid)
+        self.entity_schema_type = 'project'
+        self.test_case = make_ingest_entity(self.test_type, self.entity_schema_type, self.test_id, self.test_uuid)
         self.submission = HcaSubmission()
         # When
         self.test_entity = self.submission.map_ingest_entity(self.test_case)
@@ -46,7 +47,7 @@ class TestHcaSubmission(unittest.TestCase):
     def test_duplication_entity_with_differing_content_is_ignored(self):
         # Given
         ignored_uuid = random_uuid()
-        duplicate_test_case = make_ingest_entity(self.test_type, self.test_id, ignored_uuid)
+        duplicate_test_case = make_ingest_entity(self.test_type, self.entity_schema_type, self.test_id, ignored_uuid)
         # When
         duplicate_entity = self.submission.map_ingest_entity(duplicate_test_case)
         # Then
