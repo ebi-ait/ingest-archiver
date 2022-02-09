@@ -5,10 +5,7 @@ from submission_broker.submission.submission import Submission, Entity, HandleCo
 
 
 class HcaSubmission(Submission):
-    def __init__(self, collider: HandleCollision = None):
-        self.__uuid_map = {}
-        self.__regex = re.compile(r'/(?P<entity_type>\w+)/(?P<entity_id>\w+)$')
-        self._accession_spec = {
+    _accession_spec = {
             'BioSamples': {
                 'biomaterials': ['content.biomaterial_core.biosamples_accession']
             },
@@ -16,6 +13,10 @@ class HcaSubmission(Submission):
                 'projects': ['content.biostudies_accessions']
             }
         }
+
+    def __init__(self, collider: HandleCollision = None):
+        self.__uuid_map = {}
+        self.__regex = re.compile(r'/(?P<entity_type>\w+)/(?P<entity_id>\w+)$')
         super().__init__(collider)
 
     def map_ingest_entity(self, entity_attributes: dict) -> Entity:
@@ -80,3 +81,11 @@ class HcaSubmission(Submission):
     def get_link(entity_attributes: dict, link_name: str) -> str:
         link = entity_attributes['_links'][link_name]
         return link['href'].rsplit("{")[0] if link else ''
+
+    @staticmethod
+    def get_all_accession_spec():
+        return HcaSubmission._accession_spec
+
+    @staticmethod
+    def get_accession_spec_by_archive(archive_name: str):
+        return HcaSubmission._accession_spec.get(archive_name)

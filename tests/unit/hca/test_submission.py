@@ -58,23 +58,38 @@ class TestHcaSubmission(unittest.TestCase):
     def test_attributes_set_correctly_when_biosamples_accession_is_added_to_attributes(self):
         # When
         random_accession = random_id()
-        self.test_entity.add_accession('BioSamples', random_accession)
+        archive_name = 'BioSamples'
+        entity_type = 'biomaterials'
+        self.test_entity.add_accession(archive_name, random_accession)
         self.submission.add_accessions_to_attributes(self.test_entity)
+        accession_spec = self.submission.get_accession_spec_by_archive(archive_name)
+        accession_location = accession_spec.get(entity_type)[0].split('.')
 
         # Then
-        acc = self.test_entity.attributes['content']['biomaterial_core']['biosamples_accession']
-        self.assertEqual(random_accession, acc)
+        accession = self.__get_accession_from_entity_attributes(accession_location)
+        self.assertEqual(random_accession, accession)
 
     def test_attributes_set_correctly_when_biostudies_accession_is_added_to_attributes(self):
         # When
         random_accession = random_id()
-        self.test_entity.add_accession('BioStudies', [random_accession])
+        archive_name = 'BioStudies'
+        entity_type = 'projects'
+        self.test_entity.add_accession(archive_name, [random_accession])
         self.submission.add_accessions_to_attributes(self.test_entity)
+        accession_spec = self.submission.get_accession_spec_by_archive(archive_name)
+        accession_location = accession_spec.get(entity_type)[0].split('.')
 
         # Then
-        acc = self.test_entity.attributes['content']['biostudies_accessions']
-        self.assertEqual(len(acc), 1)
-        self.assertEqual(random_accession, acc[0])
+        accession = self.__get_accession_from_entity_attributes(accession_location)
+        self.assertEqual(len(accession), 1)
+        self.assertEqual(random_accession, accession[0])
+
+    def __get_accession_from_entity_attributes(self, accession_location):
+        value = self.test_entity.attributes
+        for location in accession_location:
+            value = value.get(location, {})
+        accession = value
+        return accession
 
 
 if __name__ == '__main__':
