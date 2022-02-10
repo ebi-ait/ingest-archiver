@@ -1,4 +1,6 @@
+import sys
 import logging
+import functools
 import requests
 from converter.ena.classes.sra_common import IdentifierType, PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentType, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
@@ -13,62 +15,72 @@ INGEST_API='http://localhost:8080'
 
 class EnaExperiment:
 
-    def __init__(self, input_biomaterial, assay_process, lib_prep_protocol, sequencing_protocol, output_files):
-        self.input_biomaterial = input_biomaterial
-        self.assay_process = assay_process
-        self.lib_prep_protocol = lib_prep_protocol
-        self.sequencing_protocol = sequencing_protocol
-        self.output_files = output_files
+    def __init__(self):
+        hca_submission = HcaSubmission('76283647-9b00-4651-9224-18a4db2b7b29')
+        self.submission = hca_submission.submission
+        self.assays = hca_submission.submission["assays"]
+        for assay in self.assays:
+            self.create(assay)
 
-    def create(self):
+    def create(self, assay):
         experiment = Experiment()
         experiment_attributes = Experiment.ExperimentAttributes()
 
-        experiment.alias = self.sequencing_protocol["content"]["protocol_core"]["protocol_id"]
-        experiment.title = self.sequencing_protocol["content"]["protocol_core"]["protocol_name"]
-        experiment_attributes.__setattr__('description', self.sequencing_protocol["content"]["protocol_core"]["protocol_description"])
+        sequencing_protocol = assay["sequencing_protocol"]
+        library_preparation_protocol = assay["library_preparation_protocol"]
+        input_biomaterials = assay["input_biomaterials"]
+
+        experiment.alias = sequencing_protocol["content"]["protocol_core"]["protocol_id"]
+        experiment.title = sequencing_protocol["content"]["protocol_core"]["protocol_name"]
+        experiment_attributes.__setattr__('description', sequencing_protocol["content"]["protocol_core"]["protocol_description"])
 
         experiment.design = LibraryType()
         experiment.design.library_descriptor = LibraryDescriptorType()
         experiment.design.library_descriptor.library_strategy = TypeLibraryStrategy.OTHER
         experiment.design.library_descriptor.library_source = TypeLibrarySource.TRANSCRIPTOMIC_SINGLE_CELL
-        experiment.design.library_descriptor.library_selection = self.ena_library_selection()
-        experiment.design.library_descriptor.library_layout = self.ena_library_layout()
-        experiment.design.design_description = 'unspecified'
-        experiment.design.library_descriptor.library_name = self.input_biomaterial["content"]["biomaterial_core"]["biomaterial_id"]
+        experiment.design.library_descriptor.library_selection = self.ena_library_selection(library_preparation_protocol)
+        experiment.design.library_descriptor.library_layout = self.ena_library_layout(sequencing_protocol)
+        experiment.design.design_description = ''
+        experiment.design.library_descriptor.library_name = '' # self.input_biomaterial["content"]["biomaterial_core"]["biomaterial_id"]
 
         experiment.design.sample_descriptor = SampleDescriptorType()
-        experiment.design.sample_descriptor.accession = self.input_biomaterial["content"]["biomaterial_core"]["biosamples_accession"]
+        experiment.design.sample_descriptor.accession = '' # self.input_biomaterial["content"]["biomaterial_core"]["biosamples_accession"]
 
         experiment.study_ref = RefObjectType()
-        experiment.study_ref.accession = self.project["content"]["insdc_project_accessions"][0]
+        experiment.study_ref.accession = self.submission["project"]["content"]["insdc_project_accessions"][0] if 'project' in self.submission else ''
 
-        experiment.platform = self.ena_platform_type()
+        experiment.platform = self.ena_platform_type(sequencing_protocol)
 
         experiment.experiment_attributes = experiment_attributes
 
-    def ena_library_layout(self):
+        config = SerializerConfig(pretty_print=True)
+        serializer = XmlSerializer(config=config)
+        print(serializer.render(experiment))
+
+        print("--------------------")
+
+    def ena_library_selection(self, library_preparation_protocol):
+        if library_preparation_protocol["content"]["primer"]:
+            return HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(library_preparation_protocol["content"]["primer"], None)
+
+    def ena_library_layout(self, sequencing_protocol):
         library_layout = LibraryDescriptorType.LibraryLayout()
-        if self.sequencing_protocol["content"]["paired_end"]:
+        if sequencing_protocol["content"]["paired_end"]:
             library_layout.paired = LibraryDescriptorType.LibraryLayout.Paired()
             library_layout.paired.nominal_length = 0
             library_layout.paired.nominal_sdev = 0
         else:
-            library_layout.single = object()
+            library_layout.single = ''
         return library_layout
 
-    def ena_library_selection(self):
-        if self.lib_prep_protocol["content"]["primer"]:
-            return HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(self.lib_prep_protocol["content"]["primer"], None)
-
-
-    def ena_platform_type(self):
+    def ena_platform_type(self, sequencing_protocol):
         platform_type = PlatformType()
-        if self.sequencing_protocol["content"]["instrument_manufacturer_model"]:
-            instrument_manufacturer_model = self.sequencing_protocol["content"]["instrument_manufacturer_model"]["text"]
+        if sequencing_protocol["content"]["instrument_manufacturer_model"]:
+            instrument_manufacturer_model = sequencing_protocol["content"]["instrument_manufacturer_model"]["text"]
 
             platform_type.illumina = PlatformType.Illumina()
-            platform_type.illumina.instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model, None)
+            print(sequencing_protocol["content"]["instrument_manufacturer_model"])
+            platform_type.illumina.instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
 
         return platform_type
 
@@ -99,20 +111,47 @@ class HcaEnaMapping:
         'hiseq x five': TypeIlluminaModel.HI_SEQ_X_FIVE,
         'illumina hiseq 3000': TypeIlluminaModel.ILLUMINA_HI_SEQ_3000,
         'illumina hiseq 4000': TypeIlluminaModel.ILLUMINA_HI_SEQ_4000,
-        'nextseq 550': TypeIlluminaModel.NEXT_SEQ_550
+        'nextseq 550': TypeIlluminaModel.NEXT_SEQ_550,
+        'illumina novaseq 6000': TypeIlluminaModel.ILLUMINA_NOVA_SEQ_6000,
     }
 
 # get all submissions processes
 # check has inputBiomaterials and derivedFiles and protocols = seq_
+from typing import List
+import json
+def handle_exception(f):
+    @functools.wraps(f)
+    def error(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except KeyError as e:
+            logging.error(f'KeyError: source entity does not contain key: {str(e)}')
+        except Exception as e:
+            logging.error(f'HcaSubmission exception: {str(e)}')
+    return error
 
 class HcaSubmission:
-    submission: any
-    project: any
-    biomaterials: list
-    processes: list
-    protocols: list
-    files: list
-
+    """
+    Assay:
+    [Biomaterial]  --> |   Process  |  -->  [File]
+                       |     |      |
+                       |     v      |
+                       | [Protocol] |
+    "submission": {
+        ...
+        "project": ...
+        "assays": [
+            {
+                ... # process
+                "sequencing_protocol": {...},
+                "library_preparation_protocol": {...},
+                "input_biomaterials": [...],
+                "derived_files": [...]
+            },
+            ...
+        ]
+    }
+    """
     session = requests.Session()
     # headers = {
     #     'Content-type': 'application/json',
@@ -121,87 +160,104 @@ class HcaSubmission:
     headers = { 'Content-type': 'application/json' }
 
     def __init__(self, uuid):
+        self.logger = logging.getLogger(__name__)
         self.uuid = uuid
         self.get_submission()
 
+    @handle_exception
     def get_submission(self):
         url = f'{INGEST_API}/submissionEnvelopes/search/findByUuidUuid?uuid={self.uuid}'
         response = self.session.get(url, headers=self.headers)
         self.submission = None
 
-        assays = []
-
         if response.ok:
             self.submission = response.json()
 
             # get project
-
-            # get protocols
-            self.processes = self.get_entities('processes')
-            for process in self.processes:
-                print(process['content']['process_core']['process_id'])
-
-                is_assay = True
-
-                process["protocols"] = self.session.get(process["_links"]["protocols"]["href"], headers=self.headers).json()
-
-                if '_embedded' in process["protocols"]:
-                    correct_protocol = True
-                    for protocol in process["protocols"]["_embedded"]["protocols"]:
-                       described_by = protocol["content"]["describedBy"]
-                       if described_by.endswith('sequencing_protocol') or described_by.endswith('library_preparation_protocol'):
-                           continue
-                       else:
-                           is_assay = False
-
-                if is_assay:
-                    print(f"Has got sequencing / library preparation protocols")
+            projects = self.get_submission_entities('projects')
+            if projects:
+                if len(projects) == 1:
+                    self.submission["project"] = projects[0]
+                    self.logger.info(f'Project UUID {self.submission["project"]["uuid"]["uuid"]}.')
                 else:
-                    print('Not assay process')
-                    continue
+                    self.logger.info(f'Multiple projects linked to submission {self.uuid}.')
+            else:
+                self.logger.info(f'No project linked to submission {self.uuid}. Sequencing Experiment requires a study accession.')
 
-                process["inputBiomaterials"] = self.session.get(process["_links"]["inputBiomaterials"]["href"], headers=self.headers).json()
+        self.get_assays()
 
-                if '_embedded' in process["inputBiomaterials"] and len(process["inputBiomaterials"]["_embedded"]["biomaterials"]) > 0:
-                    print('Has got input biomaterials')
-                else:
-                    print('Not assay process')
-                    continue
+    def get_assays(self):
+        assays = []
+        # get processes
+        processes = self.get_submission_entities('processes')
+        num_processes = len(processes)
+        self.logger.info(f'{num_processes} processes in submission.')
 
-                process["derivedFiles"] = self.session.get(process["_links"]["derivedFiles"]["href"], headers=self.headers).json()
-                if '_embedded' in process["derivedFiles"] and len(process["derivedFiles"]["_embedded"]["files"]) > 0:
-                    print('Has got derived files')
-                else:
-                    print('Not assay process')
-                    continue
+        for index, process in enumerate(processes):
 
-                process["derivedBiomaterials"] = self.session.get(process["_links"]["derivedBiomaterials"]["href"], headers=self.headers).json()
-                if '_embedded' in process["derivedBiomaterials"] and len(
-                        process["derivedBiomaterials"]["_embedded"]["biomaterials"]) > 0:
-                    print('XXX Has got derived biomaterials')
-                    is_assay = False
+            self.logger.info(f"{index+1}/{num_processes} Checking {process['content']['process_core']['process_id']}")
 
-                process["inputFiles"] = self.session.get(process["_links"]["inputFiles"]["href"], headers=self.headers).json()
-                if '_embedded' in process["inputFiles"] and len(
-                        process["inputFiles"]["_embedded"]["files"]) > 0:
-                    print('XXX Has got input files')
-                    is_assay = False
+            protocols = self.get_all_entities(process["_links"]["protocols"]["href"], 'protocols', [])
+            sequencing_protocol = None
+            library_preparation_protocol = None
 
+            for protocol in protocols:
+               described_by = protocol["content"]["describedBy"]
+               if described_by.endswith('sequencing_protocol'):
+                   sequencing_protocol = protocol
+               elif described_by.endswith('library_preparation_protocol'):
+                   library_preparation_protocol = protocol
 
+            if sequencing_protocol or library_preparation_protocol:
+                self.logger.info(f'Process has sequencing and library preparation protocols.')
+                process["sequencing_protocol"] = sequencing_protocol
+                process["library_preparation_protocol"] = library_preparation_protocol
+            else:
+                self.logger.info(f'No sequencing and library preparation protocols found.')
+                continue
 
-                if is_assay:
-                    assays.append(process)
+            # get input biomaterials
+            input_biomaterials = self.get_all_entities(process["_links"]["inputBiomaterials"]["href"], 'biomaterials', [])
 
-            print(f"Number of assay processes: {len(assays)}")
-            print(assays)
+            if input_biomaterials:
+                self.logger.info(f'Process has input biomaterials.')
+                process["input_biomaterials"] = input_biomaterials
+            else:
+                self.logger.info(f'No input biomaterials found.')
+                continue
 
+            # get derived files
+            derived_files = self.get_all_entities(process["_links"]["derivedFiles"]["href"], 'files', [])
 
+            if derived_files:
+                self.logger.info(f'Process has derived files.')
+                process["derived_files"] = derived_files
+            else:
+                self.logger.info(f'No derived files found.')
+                continue
 
-    def get_entities(self, entity_type):
+            # rule out unexpected in/output
+            derived_biomaterials = self.get_all_entities(process["_links"]["derivedBiomaterials"]["href"], 'biomaterials', [])
+            if derived_biomaterials:
+                self.logger.info('Process has derived biomaterials.')
+                continue
+
+            input_files = self.get_all_entities(process["_links"]["inputFiles"]["href"], 'files', [])
+            if input_files:
+                self.logger.info('Process has input files')
+                continue
+
+            if process["sequencing_protocol"] and process["library_preparation_protocol"] and process["input_biomaterials"] and process["derived_files"]:
+                assays.append(process)
+
+        self.logger.info(f'{len(assays)} assay processes found.')
+        self.submission["assays"] = assays
+
+    def get_submission_entities(self, entity_type):
         if self.submission:
             url = self.get_link(self.submission, entity_type)
             if url:
-                return self._get_all(url, entity_type)
+                return self.get_all_entities(url, entity_type, [])
         return []
 
     def get_link(self, json, entity):
@@ -210,21 +266,27 @@ class HcaSubmission:
         except KeyError:
             return None
 
-    def _get_all(self, url, entity_type):
+    def get_all_entities(self, url, entity_type, entities=[]):
         response = self.session.get(url, headers=self.headers)
         response.raise_for_status()
         if "_embedded" in response.json():
-            for entity in response.json()["_embedded"][entity_type]:
-                yield entity
-            while "next" in response.json()["_links"]:
-                r = self.session.get(response.json()["_links"]["next"]["href"], headers=self.headers)
-                for entity in r.json()["_embedded"][entity_type]:
-                    yield entity
+            entities += response.json()["_embedded"][entity_type]
+
+            if "next" in  response.json()["_links"]:
+                url = response.json()["_links"]["next"]["href"]
+                self.get_all_entities(url, entity_type, entities)
+        return entities
 
 
+format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
+         '%(lineno)s %(funcName)s(): %(message)s'
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                    format=format)
 
 if __name__ == "__main__":
-    sub = HcaSubmission('76283647-9b00-4651-9224-18a4db2b7b29')
+    #sub = HcaSubmission('8f44d9bb-527c-4d1d-b259-ee9ac62e11b6')
+    #sub = HcaSubmission('76283647-9b00-4651-9224-18a4db2b7b29')
+    EnaExperiment()
 
     #config = SerializerConfig(pretty_print=True)
     #serializer = XmlSerializer(config=config)
