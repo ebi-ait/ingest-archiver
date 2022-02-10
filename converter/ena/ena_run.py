@@ -1,18 +1,8 @@
-import sys
 import logging
-import functools
-import requests
-
-from converter.ena.classes import Run, RunType, FileFiletype
+from config import ENA_FTP_DIR
+from converter.ena.classes import Run, RunType, FileFiletype, RunSet, AttributeType
 from converter.ena.classes.sra_common import IdentifierType, PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentType, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
-
-from xsdata.formats.dataclass.serializers import XmlSerializer
-from xsdata.formats.dataclass.serializers.config import SerializerConfig
-
-
-#INGEST_API='https://api.ingest.archive.data.humancellatlas.org'
-INGEST_API='http://localhost:8080'
 
 
 class EnaRun:
@@ -20,44 +10,62 @@ class EnaRun:
     FILE_CHECKSUM_METHOD = 'MD5'
     SEQUENCE_FILE_TYPES = ['fq', 'fastq', 'fq.gz', 'fastq.gz']
 
-    def __init__(self, input_biomaterial, assay_process, lib_prep_protocol, sequencing_protocol, output_files):
-        self.input_biomaterial = input_biomaterial
-        self.assay_process = assay_process
-        self.lib_prep_protocol = lib_prep_protocol
-        self.sequencing_protocol = sequencing_protocol
-        self.output_files = output_files
+    def __init__(self, hca_data):
+        self.logger = logging.getLogger(__name__)
+        self.submission = hca_data.submission
+        self.assays = hca_data.submission["assays"]
 
-    def create(self):
+        self.ena_upload_area_path = f'{ENA_FTP_DIR}/{self.submission["uuid"]["uuid"]}/'
+
+    def run_set(self):
+        run_set = RunSet()
+        for assay in self.assays:
+            run_set.run.append(self.run(assay))
+
+        return run_set
+
+    def run(self, assay):
+
+        sequencing_protocol = assay["sequencing_protocol"]
+        library_preparation_protocol = assay["library_preparation_protocol"]
+        derived_files = assay["derived_files"]
+
         run = Run()
-        run.title = self.assay_process["content"]["process_core"]["process_name"]
-        run_attributes = Run.RunAttributes()
-        run_attributes.__setattr__('description', self.assay_process["content"]["protocol_core"]["protocol_description"])
+        run.run_attributes = Run.RunAttributes()
+        run.run_attributes.run_attribute.append(AttributeType(tag="Description", value=sequencing_protocol["content"]["protocol_core"]["protocol_description"]))
+
+        run.title = assay["content"]["process_core"]["process_id"]
         run.experiment_ref = RefObjectType()
         run.experiment_ref.accession = ''
-        run.alias = self.assay_process["content"]["uuid"]
+        run.alias = assay["uuid"]["uuid"]
 
         run.data_block = RunType.DataBlock()
         run.data_block.files = RunType.DataBlock.Files()
-        file = RunType.DataBlock.Files.File()
-        file.filename = output_file["file_core.file_name"]
 
-        hca_file_format = output_file["file_core.file_format"]
-        if hca_file_format in EnaRun.SEQUENCE_FILE_TYPES:
-            file.filetype = FileFiletype.FASTQ
-        else:
-            error(f'Unexpected file format: {hca_file_format}')
+        for index, derived_file in enumerate(derived_files):
+            file = RunType.DataBlock.Files.File()
+            file.filename = self.ena_upload_area_path + derived_file["content"]["file_core"]["file_name"]
 
-        file.checksum_method = EnaRun.FILE_CHECKSUM_METHOD
+            hca_file_format = derived_file["content"]["file_core"]["format"]
+            if hca_file_format in EnaRun.SEQUENCE_FILE_TYPES:
+                file.filetype = FileFiletype.FASTQ
+            else:
+                self.logger.error(f'Unexpected file format: {hca_file_format}')
 
-        if output_file["archive.md5"]:
-            file.checksum = output_file["archive.md5"]
-        else:
-            error(f'File has not been archived (no md5 generated)')
+            file.checksum_method = EnaRun.FILE_CHECKSUM_METHOD
 
-        file.__setattr__("Read Index", "content.read_index")
-        file.__setattr__("HCA File UUID", "dataFileUuid")
+            if 'archiveResult' in derived_file and 'md5' in derived_file["archiveResult"]:
+                file.checksum = derived_file["archiveResult"]["md5"]
+            else:
+                file.checksum = 'MISSING MD5'
+                self.logger.warning(f'File has not been archived (no md5 generated)')
 
-        run.data_block.files.file.append()
+            #file.__setattr__("Read Index", "content.read_index")
+            #file.__setattr__("HCA File UUID", "dataFileUuid")
 
-        run.run_attributes = run_attributes
-        pass
+            # TODO
+            #if compressed
+
+            run.data_block.files.file.append(file)
+
+        return run
