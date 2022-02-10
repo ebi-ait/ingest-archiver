@@ -27,7 +27,7 @@ class EnaRun:
     def run(self, assay):
 
         sequencing_protocol = assay["sequencing_protocol"]
-        library_preparation_protocol = assay["library_preparation_protocol"]
+        #library_preparation_protocol = assay["library_preparation_protocol"]
         derived_files = assay["derived_files"]
 
         run = Run()
@@ -57,7 +57,7 @@ class EnaRun:
             if 'archiveResult' in derived_file and 'md5' in derived_file["archiveResult"]:
                 file.checksum = derived_file["archiveResult"]["md5"]
             else:
-                file.checksum = 'MISSING MD5'
+                file.checksum = 'MISSING_MD5'
                 self.logger.warning(f'File has not been archived (no md5 generated)')
 
             #file.__setattr__("Read Index", "content.read_index")
