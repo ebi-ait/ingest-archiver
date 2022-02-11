@@ -11,6 +11,13 @@ class HcaSubmission(Submission):
             },
             'BioStudies': {
                 'projects': ['content.biostudies_accessions']
+            },
+            'ENA': {
+                'projects': ['content.insdc_project_accessions'],
+                'study': ['content.insdc_study_accessions'],
+                'biomaterials': ['content.biomaterial_core.insdc_sample_accession'],
+                'processes': ['content.insdc_experiment'],
+                'files': ['content.insdc_run_accessions']
             }
         }
 
@@ -45,20 +52,24 @@ class HcaSubmission(Submission):
             return True
         return False
 
-    def add_accessions_to_attributes(self, entity: Entity):
-        for service, accession_by_entity_type in self._accession_spec.items():
-            accession = entity.get_accession(service)
+    def add_accessions_to_attributes(self, entity: Entity, archive_type: str, entity_type: str):
+        accession = entity.get_accession(archive_type)
 
-            if accession:
-                for entity_type, accession_location in accession_by_entity_type.items():
-                    location_list = accession_location[0]
-                    attributes = entity.attributes
-                    locations = location_list.split('.')
-                    while len(locations) > 1:
-                        location = locations.pop(0)
-                        attributes.setdefault(location, {})
-                        attributes = attributes[location]
-                    attributes[locations[0]] = accession
+        if accession:
+            accession_by_entity_type = self._accession_spec.get(archive_type)
+            accession_location = accession_by_entity_type.get(entity_type)
+            if accession_location:
+                self.__set_accession_by_attribute_location(accession, accession_location, entity)
+
+    def __set_accession_by_attribute_location(self, accession, accession_location, entity):
+        location_list = accession_location[0]
+        attributes = entity.attributes
+        locations = location_list.split('.')
+        while len(locations) > 1:
+            location = locations.pop(0)
+            attributes.setdefault(location, {})
+            attributes = attributes[location]
+        attributes[locations[0]] = accession
 
     def __get_entity_key(self, entity_attributes: dict) -> [str, str]:
         entity_uri = HcaSubmission.get_link(entity_attributes, 'self')
@@ -70,7 +81,7 @@ class HcaSubmission(Submission):
     def _get_accessions_from_attributes(self, entity: Entity):
         accessions = JsonMapper(entity.attributes).map(self._accession_spec)
         for service, accession_by_entity_type in accessions.items():
-            for entity_type, accession in accession_by_entity_type:
+            for entity_type, accession in accession_by_entity_type.items():
                 entity.add_accession(service, accession)
 
     @staticmethod
