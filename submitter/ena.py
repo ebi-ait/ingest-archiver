@@ -54,7 +54,7 @@ class EnaSubmitter(Submitter):
     @staticmethod
     def __process_response(response: Element):
         success = response.attrib.get('success')
-        ena_types = ['SUBMISSION', 'STUDY', 'SAMPLE']
+        ena_types = ['STUDY', 'SAMPLE']
         processed_response = []
         if success == 'true':
             is_update = EnaSubmitter.__is_update_request(response)
@@ -62,6 +62,7 @@ class EnaSubmitter(Submitter):
                 EnaSubmitter.__gather_accession_and_uuid_from_response(ena_type, is_update, processed_response,
                                                                        response)
         else:
+            ena_types.append('SUBMISSION')
             for ena_type in ena_types:
                 EnaSubmitter.__get_failure_response_by_entity(ena_type, processed_response, response)
 
