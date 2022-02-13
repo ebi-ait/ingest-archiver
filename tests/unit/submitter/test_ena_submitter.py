@@ -100,9 +100,10 @@ class TestEnaSubmitter(unittest.TestCase):
         assert_that(processed_responses_from_archive.get('UPDATED')).is_equal_to(archive_responses)
 
     def test_processing_archive_response_from_sample_update_add_result_for_updated(self):
-        payload = {'error_messages': ['Dummy error message'], 'accession': 'ERP12345', 'uuid': self.project_uuid}
+        payload = {'accession': 'ERP12345', 'uuid': self.project_uuid}
         archive_response = \
-            create_archive_response(payload, self.entity_type, is_update=True)
+            create_archive_response(payload, self.entity_type, is_update=True,
+                                    error_messages='Dummy error message')
         archive_responses = [archive_response]
         processed_responses_from_archive =\
             self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
