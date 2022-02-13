@@ -49,7 +49,7 @@ class BioSamplesConverter:
         accession = existing_accession if existing_accession and len(existing_accession) > 0\
             else biomaterial_core.get('biosamples_accession')
 
-        if len(accession) > 0:
+        if accession and len(accession) > 0:
             return accession
         else:
             return None
