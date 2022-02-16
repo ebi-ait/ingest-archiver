@@ -7,7 +7,7 @@ from hca.submission import HcaSubmission
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
-class MyTestCase(unittest.TestCase):
+class AccessionMapperTest(unittest.TestCase):
     def setUp(self) -> None:
         self.entity_type_1 = 'projects'
         self.test_id1 = random_id()
