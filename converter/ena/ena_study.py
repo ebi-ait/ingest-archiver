@@ -5,7 +5,7 @@ from lxml import etree
 from converter import get_value_by_key_path, fixed_attribute
 from converter.ena.base import BaseEnaConverter
 
-ADDITIONAL_ATTRIBUTE_KEYS = ['uuid.uuid', 'content.project_core.project_short_name', 'technology']
+ADDITIONAL_ATTRIBUTE_KEYS = ['uuid.uuid', 'content.project_core.project_short_name']
 
 
 class EnaStudyConverter(BaseEnaConverter):

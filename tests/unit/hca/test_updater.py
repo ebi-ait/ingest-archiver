@@ -83,11 +83,13 @@ class TestHcaUpdater(unittest.TestCase):
             entity_type: str = None
     ):
         entity_list = []
+        entity_schema_type = 'project'
         for i in range(0, entity_count):
             entity_list.append(
                 submission.map_ingest_entity(
                     make_ingest_entity(
                         entity_type if entity_type else random_id(),
+                        entity_schema_type,
                         random_id(),
                         random_uuid()
                     )

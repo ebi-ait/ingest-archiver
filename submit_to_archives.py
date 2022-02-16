@@ -103,8 +103,10 @@ def get_response_data_from_archive(archive_name, data, results, status):
     for result_data in results:
         base_url = ARCHIVE_URLS[archive_name]
         if archive_name == 'ena':
-            url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[result_data.get('entity_type')]
-            base_url = base_url.format(entities=url_entities_part)
+            entity_type = result_data.get('entity_type')
+            if entity_type:
+                url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[entity_type]
+                base_url = base_url.format(entities=url_entities_part)
         archive_response = result_data.get('data', {})
         if status != 'ERRORED':
             data.append(
@@ -117,7 +119,7 @@ def get_response_data_from_archive(archive_name, data, results, status):
             data.append(
                 {
                     'uuid': f'{archive_response.get("uuid")}',
-                    'error_details': result_data
+                    'error_details': result_data.get('error_messages')
                 }
             )
 

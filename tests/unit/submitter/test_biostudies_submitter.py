@@ -25,11 +25,12 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'BioStudies'
         self.entity_type = 'projects'
+        self.entity_schema_type = 'project'
         self.biostudies_accession = 'BST_ACC_12345'
         self.additional_parameters = {}
 
         self.entity = self.submission.map_ingest_entity(
-            make_ingest_entity(self.entity_type, random_id(), random_uuid())
+            make_ingest_entity(self.entity_type, self.entity_schema_type, random_id(), random_uuid())
         )
 
     def test_when_convert_project_without_accession_returns_project_for_creation(self):
