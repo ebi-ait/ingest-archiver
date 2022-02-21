@@ -15,7 +15,7 @@ class TestEnaRun(unittest.TestCase):
         hca_data_valid = HcaData('uuid')
         hca_data_valid.submission = EnaRunTestData.submission()
 
-        run = EnaRun(hca_data_valid).run(hca_data_valid.submission["assays"][0])
+        run = EnaRun(hca_data_valid).create(hca_data_valid.submission["assays"][0])
         generated_xml = self.serializer.render(run)
 
         self.assertEqual(generated_xml, EnaRunTestData.xml())
@@ -27,7 +27,7 @@ class TestEnaRun(unittest.TestCase):
         del hca_data_no_sub_uuid.submission["uuid"]
 
         with self.assertRaises(KeyError):
-            EnaRun(hca_data_no_sub_uuid).run(hca_data_no_sub_uuid.submission["assays"][0])
+            EnaRun(hca_data_no_sub_uuid).create(hca_data_no_sub_uuid.submission["assays"][0])
 
 
 class EnaRunTestData:

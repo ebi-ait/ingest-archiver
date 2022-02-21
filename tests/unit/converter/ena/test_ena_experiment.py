@@ -15,7 +15,7 @@ class TestEnaExperiment(unittest.TestCase):
         hca_data_valid = HcaData('uuid')
         hca_data_valid.submission = EnaExperimentTestData.submission()
 
-        experiment = EnaExperiment(hca_data_valid).experiment(hca_data_valid.submission["assays"][0])
+        experiment = EnaExperiment(hca_data_valid).create(hca_data_valid.submission["assays"][0])
         generated_xml = self.serializer.render(experiment)
 
         self.assertEqual(generated_xml, EnaExperimentTestData.xml())
@@ -24,10 +24,10 @@ class TestEnaExperiment(unittest.TestCase):
     def test_invalid_experiment_keyerror(self):
         hca_data_no_project_content = HcaData('uuid')
         hca_data_no_project_content.submission = EnaExperimentTestData.submission()
-        del hca_data_no_project_content.submission["project"]["content"]
+        del hca_data_no_project_content.submission["assays"][0]["sequencing_protocol"]
 
         with self.assertRaises(KeyError):
-            EnaExperiment(hca_data_no_project_content).experiment(hca_data_no_project_content.submission["assays"][0])
+            EnaExperiment(hca_data_no_project_content).create(hca_data_no_project_content.submission["assays"][0])
 
 
 class EnaExperimentTestData:
@@ -93,8 +93,8 @@ class EnaExperimentTestData:
     <SAMPLE_DESCRIPTOR accession="{EnaExperimentTestData.biomat_acc}"/>
     <LIBRARY_DESCRIPTOR>
       <LIBRARY_NAME>{EnaExperimentTestData.biomat_id}</LIBRARY_NAME>
-      <LIBRARY_STRATEGY>{TypeLibraryStrategy.OTHER}</LIBRARY_STRATEGY>
-      <LIBRARY_SOURCE>{TypeLibrarySource.TRANSCRIPTOMIC_SINGLE_CELL}</LIBRARY_SOURCE>
+      <LIBRARY_STRATEGY>{TypeLibraryStrategy.OTHER.value}</LIBRARY_STRATEGY>
+      <LIBRARY_SOURCE>{TypeLibrarySource.TRANSCRIPTOMIC_SINGLE_CELL.value}</LIBRARY_SOURCE>
       <LIBRARY_SELECTION>{HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(EnaExperimentTestData.lib_prep_primer).value}</LIBRARY_SELECTION>
       <LIBRARY_LAYOUT>
         <PAIRED NOMINAL_LENGTH="0" NOMINAL_SDEV="0"/>

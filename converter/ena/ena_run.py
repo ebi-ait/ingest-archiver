@@ -1,9 +1,8 @@
 import logging
 from config import ENA_FTP_DIR
 from converter.ena.classes import Run, RunType, FileFiletype, RunSet, AttributeType
-from converter.ena.classes.sra_common import IdentifierType, PlatformType, RefObjectType, TypeIlluminaModel
-from converter.ena.classes.sra_experiment import Experiment, ExperimentType, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
-from converter.ena.ena import EnaModel
+from converter.ena.classes.sra_common import RefObjectType
+from converter.ena.base import EnaModel
 
 
 class EnaRun(EnaModel):

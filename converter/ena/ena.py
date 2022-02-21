@@ -1,23 +1,10 @@
-import sys
 import logging
 import functools
-from abc import ABC, abstractmethod
 from api.ingest import IngestAPI
 from converter.ena.ena_experiment import EnaExperiment
 from converter.ena.ena_run import EnaRun
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
-
-
-class EnaModel(ABC):
-
-    @abstractmethod
-    def create_set(self) -> None:
-        pass
-
-    @abstractmethod
-    def create(self) -> None:
-        pass
 
 
 class EnaArchive:
@@ -202,8 +189,3 @@ class HcaData(IngestAPI):
                 url = response.json()["_links"]["next"]["href"]
                 self.get_all_entities(url, entity_type, entities)
         return entities
-
-format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
-         '%(lineno)s %(funcName)s(): %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=format)
