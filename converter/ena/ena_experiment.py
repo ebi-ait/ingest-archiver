@@ -1,22 +1,23 @@
 from converter.ena.classes import AttributeType
 from converter.ena.classes.sra_common import PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentSet, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
+from converter.ena.ena import EnaModel
 
 
-class EnaExperiment:
+class EnaExperiment(EnaEntity):
 
     def __init__(self, hca_data):
         self.submission = hca_data.submission
         self.assays = hca_data.submission["assays"]
 
-    def experiment_set(self):
+    def create_set(self):
         experiment_set = ExperimentSet()
         for assay in self.assays:
-            experiment_set.experiment.append(self.experiment(assay))
+            experiment_set.experiment.append(self.create(assay))
 
         return experiment_set
 
-    def experiment(self, assay):
+    def create(self, assay):
 
         sequencing_protocol = assay["sequencing_protocol"]
         library_preparation_protocol = assay["library_preparation_protocol"]

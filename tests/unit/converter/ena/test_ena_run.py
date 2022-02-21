@@ -18,9 +18,6 @@ class TestEnaRun(unittest.TestCase):
         run = EnaRun(hca_data_valid).run(hca_data_valid.submission["assays"][0])
         generated_xml = self.serializer.render(run)
 
-        #print(f'/{generated_xml}/')
-        #print(f'/{EnaRunTestData.xml()}/')
-
         self.assertEqual(generated_xml, EnaRunTestData.xml())
 
 

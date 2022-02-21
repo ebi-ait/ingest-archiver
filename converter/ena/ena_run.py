@@ -3,9 +3,10 @@ from config import ENA_FTP_DIR
 from converter.ena.classes import Run, RunType, FileFiletype, RunSet, AttributeType
 from converter.ena.classes.sra_common import IdentifierType, PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentType, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
+from converter.ena.ena import EnaModel
 
 
-class EnaRun:
+class EnaRun(EnaModel):
 
     FILE_CHECKSUM_METHOD = 'MD5'
     SEQUENCE_FILE_TYPES = ['fq', 'fastq', 'fq.gz', 'fastq.gz']
@@ -17,14 +18,14 @@ class EnaRun:
 
         self.ena_upload_area_path = f'{ENA_FTP_DIR}/{self.submission["uuid"]["uuid"]}/'
 
-    def run_set(self):
+    def create_set(self):
         run_set = RunSet()
         for assay in self.assays:
-            run_set.run.append(self.run(assay))
+            run_set.run.append(self.create(assay))
 
         return run_set
 
-    def run(self, assay):
+    def create(self, assay):
 
         sequencing_protocol = assay["sequencing_protocol"]
         #library_preparation_protocol = assay["library_preparation_protocol"]
@@ -59,12 +60,6 @@ class EnaRun:
             else:
                 file.checksum = 'MISSING_MD5'
                 self.logger.warning(f'File has not been archived (no md5 generated)')
-
-            #file.__setattr__("Read Index", "content.read_index")
-            #file.__setattr__("HCA File UUID", "dataFileUuid")
-
-            # TODO
-            #if compressed
 
             run.data_block.files.file.append(file)
 

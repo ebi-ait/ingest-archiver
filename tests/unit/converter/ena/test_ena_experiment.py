@@ -1,5 +1,6 @@
 import unittest
 
+from converter.ena.classes import TypeLibraryStrategy, TypeLibrarySource
 from converter.ena.ena import HcaData
 from converter.ena.ena_experiment import EnaExperiment, HcaEnaMapping
 from xsdata.formats.dataclass.serializers import XmlSerializer
@@ -92,8 +93,8 @@ class EnaExperimentTestData:
     <SAMPLE_DESCRIPTOR accession="{EnaExperimentTestData.biomat_acc}"/>
     <LIBRARY_DESCRIPTOR>
       <LIBRARY_NAME>{EnaExperimentTestData.biomat_id}</LIBRARY_NAME>
-      <LIBRARY_STRATEGY>OTHER</LIBRARY_STRATEGY>
-      <LIBRARY_SOURCE>TRANSCRIPTOMIC SINGLE CELL</LIBRARY_SOURCE>
+      <LIBRARY_STRATEGY>{TypeLibraryStrategy.OTHER}</LIBRARY_STRATEGY>
+      <LIBRARY_SOURCE>{TypeLibrarySource.TRANSCRIPTOMIC_SINGLE_CELL}</LIBRARY_SOURCE>
       <LIBRARY_SELECTION>{HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(EnaExperimentTestData.lib_prep_primer).value}</LIBRARY_SELECTION>
       <LIBRARY_LAYOUT>
         <PAIRED NOMINAL_LENGTH="0" NOMINAL_SDEV="0"/>

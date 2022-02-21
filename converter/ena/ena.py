@@ -1,11 +1,23 @@
 import sys
 import logging
 import functools
+from abc import ABC, abstractmethod
 from api.ingest import IngestAPI
 from converter.ena.ena_experiment import EnaExperiment
 from converter.ena.ena_run import EnaRun
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
+
+
+class EnaModel(ABC):
+
+    @abstractmethod
+    def create_set(self) -> None:
+        pass
+
+    @abstractmethod
+    def create(self) -> None:
+        pass
 
 
 class EnaArchive:
@@ -18,10 +30,10 @@ class EnaArchive:
         config = SerializerConfig(pretty_print=True)
         serializer = XmlSerializer(config=config)
 
-        experiment_set = EnaExperiment(self.data).experiment_set()
+        experiment_set = EnaExperiment(self.data).create_set()
         print(serializer.render(experiment_set))
 
-        run_set = EnaRun(self.data).run_set()
+        run_set = EnaRun(self.data).create_set()
         print(serializer.render(run_set))
 
 
@@ -93,63 +105,40 @@ class HcaData(IngestAPI):
         # get processes
         processes = self.get_submission_entities('processes')
         num_processes = len(processes)
-        self.logger.info(f'{num_processes} processes in submission.')
+        self.logger.debug(f'{num_processes} processes in submission.')
 
         for index, process in enumerate(processes):
 
             self.logger.info(
                 f"{index + 1}/{num_processes} Checking {process['content']['process_core']['process_id']}")
+            # assay process protocol checks
+            sequencing_protocol, library_preparation_protocol = self.get_sequencing_and_library_preparation_protocols(process)
 
-            protocols = self.get_all_entities(process["_links"]["protocols"]["href"], 'protocols', [])
-            sequencing_protocol = None
-            library_preparation_protocol = None
-
-            for protocol in protocols:
-                described_by = protocol["content"]["describedBy"]
-                if described_by.endswith('sequencing_protocol'):
-                    sequencing_protocol = protocol
-                elif described_by.endswith('library_preparation_protocol'):
-                    library_preparation_protocol = protocol
-
-            if sequencing_protocol or library_preparation_protocol:
-                self.logger.info(f'Process has sequencing and library preparation protocols.')
-                process["sequencing_protocol"] = sequencing_protocol
-                process["library_preparation_protocol"] = library_preparation_protocol
-            else:
+            if not sequencing_protocol and not library_preparation_protocol:
                 self.logger.info(f'No sequencing and library preparation protocols found.')
                 continue
 
-            # get input biomaterials
-            input_biomaterials = self.get_all_entities(process["_links"]["inputBiomaterials"]["href"],
-                                                       'biomaterials', [])
+            process["sequencing_protocol"] = sequencing_protocol
+            process["library_preparation_protocol"] = library_preparation_protocol
 
-            if input_biomaterials:
-                self.logger.info(f'Process has input biomaterials.')
-                process["input_biomaterials"] = input_biomaterials
-            else:
+            # assay process input and output checks
+            process["input_biomaterials"] = self.get_input_biomaterials(process)
+            if not process["input_biomaterials"]:
                 self.logger.info(f'No input biomaterials found.')
                 continue
 
-            # get derived files
-            derived_files = self.get_all_entities(process["_links"]["derivedFiles"]["href"], 'files', [])
-
-            if derived_files:
-                self.logger.info(f'Process has derived files.')
-                process["derived_files"] = derived_files
-            else:
+            process["derived_files"] = self.get_derived_files(process)
+            if not process["derived_files"]:
                 self.logger.info(f'No derived files found.')
                 continue
 
             # rule out unexpected in/output
-            derived_biomaterials = self.get_all_entities(process["_links"]["derivedBiomaterials"]["href"],
-                                                         'biomaterials', [])
-            if derived_biomaterials:
-                self.logger.info('Process has derived biomaterials.')
+            if self.has_derived_biomaterials(process):
+                self.logger.info('Not assay: has derived biomaterials.')
                 continue
 
-            input_files = self.get_all_entities(process["_links"]["inputFiles"]["href"], 'files', [])
-            if input_files:
-                self.logger.info('Process has input files')
+            if self.has_input_files(process):
+                self.logger.info('Not assay: has input files.')
                 continue
 
             if process["sequencing_protocol"] and process["library_preparation_protocol"] and process[
@@ -158,6 +147,36 @@ class HcaData(IngestAPI):
 
         self.logger.info(f'{len(assays)} assay processes found.')
         self.submission["assays"] = assays
+
+    def get_input_biomaterials(self, process):
+        input_biomaterials = self.get_all_entities(process["_links"]["inputBiomaterials"]["href"],
+                                                   'biomaterials', [])
+        return input_biomaterials
+
+    def get_derived_files(self, process):
+        derived_files = self.get_all_entities(process["_links"]["derivedFiles"]["href"], 'files', [])
+        return derived_files
+
+    def has_derived_biomaterials(self, process):
+        derived_biomaterials = self.get_all_entities(process["_links"]["derivedBiomaterials"]["href"],
+                                                     'biomaterials', [])
+        return True if derived_biomaterials else False
+
+    def has_input_files(self, process):
+        input_files = self.get_all_entities(process["_links"]["inputFiles"]["href"], 'files', [])
+        return True if input_files else False
+
+    def get_sequencing_and_library_preparation_protocols(self, process):
+        protocols = self.get_all_entities(process["_links"]["protocols"]["href"], 'protocols', [])
+        sequencing_protocol = None
+        library_preparation_protocol = None
+        for protocol in protocols:
+            described_by = protocol["content"]["describedBy"]
+            if described_by.endswith('sequencing_protocol'):
+                sequencing_protocol = protocol
+            elif described_by.endswith('library_preparation_protocol'):
+                library_preparation_protocol = protocol
+        return sequencing_protocol, library_preparation_protocol
 
     def get_submission_entities(self, entity_type):
         if self.submission:
@@ -170,6 +189,7 @@ class HcaData(IngestAPI):
         try:
             return json["_links"][entity]["href"]
         except KeyError:
+            self.logger.error(f"No href link for entity {entity}")
             return None
 
     def get_all_entities(self, url, entity_type, entities=[]):
@@ -187,6 +207,3 @@ format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
          '%(lineno)s %(funcName)s(): %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format=format)
-
-if __name__ == "__main__":
-    ena = EnaArchive(uuid="76283647-9b00-4651-9224-18a4db2b7b29") # 8f44d9bb-527c-4d1d-b259-ee9ac62e11b6
