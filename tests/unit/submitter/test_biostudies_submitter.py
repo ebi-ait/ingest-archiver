@@ -95,6 +95,16 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         assert_that(processed_responses_from_archive).contains('UPDATED')
         assert_that(processed_responses_from_archive.get('UPDATED')).is_equal_to(archive_responses)
 
+    def test_when_accessions_are_empty_then_submission_wont_changed(self):
+        biosample_accessions = []
+        biostudies_accession = []
+        ena_accessions = []
+
+        self.submitter.update_submission_with_archive_accessions(
+            biosample_accessions, biostudies_accession, ena_accessions)
+
+        assert not self.submitter_service.get_biostudies_payload_by_accession.called
+
     @staticmethod
     def __get_expected_payload(file_path: str):
         with open("{0}{1}".format(dirname(__file__), file_path)) as file:
