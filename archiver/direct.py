@@ -46,6 +46,7 @@ class DirectArchiver:
         archives_responses = {}
         biosamples_responses = {}
         biostudies_responses = {}
+        ena_responses = {}
         if self.__biosamples_submitter:
             biosamples_responses = self.__biosamples_submitter.send_all_samples(submission)
             self.__jsonify_archive_response(biosamples_responses)
@@ -56,16 +57,17 @@ class DirectArchiver:
             self.__jsonify_archive_response(biostudies_responses)
             archives_responses['biostudies'] = biostudies_responses
 
-        if self.__biosamples_submitter and self.__biostudies_submitter:
-            biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses)
-            biostudies_accessions = self.__get_accessions_from_responses(biostudies_responses)
-            if self.__check_accessions_existence(biosamples_accessions, biostudies_accessions):
-                self.__exchange_sample_and_project_accessions(submission, biosamples_accessions, biostudies_accessions[0])
-
         if self.__ena_submitter:
             ena_responses = self.__ena_submitter.send_all_ena_entities(submission)
             self.__jsonify_archive_response(ena_responses)
             archives_responses['ena'] = ena_responses
+
+        if self.__biosamples_submitter and self.__biostudies_submitter:
+            biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses)
+            biostudies_accessions = self.__get_accessions_from_responses(biostudies_responses)
+            ena_accessions = self.__get_accessions_from_responses(ena_responses)
+            self.__exchange_archive_accessions(submission, biosamples_accessions,
+                                               biostudies_accessions, ena_accessions)
 
         return archives_responses
 
@@ -76,20 +78,16 @@ class DirectArchiver:
         return accessions
 
     @staticmethod
-    def __check_accessions_existence(biosample_accessions, biostudies_accession):
-        return biosample_accessions is not None and len(biosample_accessions) > 0 and \
-                biostudies_accession is not None
-
-    @staticmethod
     def __jsonify_archive_response(archive_responses):
         for response_type, items in archive_responses.items():
             for index, response in enumerate(items):
                 items[index] = response.__dict__
 
-    def __exchange_sample_and_project_accessions(self, submission, biosample_accessions: list, biostudies_accession):
+    def __exchange_archive_accessions(self, submission, biosample_accessions: List[str], biostudies_accession,
+                                      ena_accessions: List[str]):
         biostudies_accession = first_element_or_self(biostudies_accession)
-        self.__biostudies_submitter.update_submission_with_sample_accessions(biosample_accessions,
-                                                                             biostudies_accession)
+        self.__biostudies_submitter.update_submission_with_archive_accessions(biosample_accessions,
+                                                                              biostudies_accession, ena_accessions)
         self.__biosamples_submitter.update_samples_with_biostudies_accession(submission, biosample_accessions,
                                                                              biostudies_accession)
 
