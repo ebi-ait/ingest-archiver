@@ -25,12 +25,13 @@ class TestEnaSubmitter(unittest.TestCase):
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'ENA'
         self.entity_type = 'projects'
+        self.entity_schema_type = 'project'
         self.ena_study_accession = 'PRJ12345'
         self.additional_parameters = {}
 
         self.project_uuid = random_uuid()
         self.entity = self.submission.map_ingest_entity(
-            make_ingest_entity(self.entity_type, random_id(), self.project_uuid)
+            make_ingest_entity(self.entity_type, self.entity_schema_type, random_id(), self.project_uuid)
         )
 
     def test_when_convert_project_without_accession_returns_project_for_creation(self):
@@ -99,9 +100,10 @@ class TestEnaSubmitter(unittest.TestCase):
         assert_that(processed_responses_from_archive.get('UPDATED')).is_equal_to(archive_responses)
 
     def test_processing_archive_response_from_sample_update_add_result_for_updated(self):
-        payload = {'error_messages': ['Dummy error message'], 'accession': 'ERP12345', 'uuid': self.project_uuid}
+        payload = {'accession': 'ERP12345', 'uuid': self.project_uuid}
         archive_response = \
-            create_archive_response(payload, self.entity_type, is_update=True)
+            create_archive_response(payload, self.entity_type, is_update=True,
+                                    error_messages='Dummy error message')
         archive_responses = [archive_response]
         processed_responses_from_archive =\
             self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
