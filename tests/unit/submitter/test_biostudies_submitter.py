@@ -25,11 +25,12 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'BioStudies'
         self.entity_type = 'projects'
+        self.entity_schema_type = 'project'
         self.biostudies_accession = 'BST_ACC_12345'
         self.additional_parameters = {}
 
         self.entity = self.submission.map_ingest_entity(
-            make_ingest_entity(self.entity_type, random_id(), random_uuid())
+            make_ingest_entity(self.entity_type, self.entity_schema_type, random_id(), random_uuid())
         )
 
     def test_when_convert_project_without_accession_returns_project_for_creation(self):
@@ -93,6 +94,16 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         assert_that(len(processed_responses_from_archive)).is_equal_to(1)
         assert_that(processed_responses_from_archive).contains('UPDATED')
         assert_that(processed_responses_from_archive.get('UPDATED')).is_equal_to(archive_responses)
+
+    def test_when_accessions_are_empty_then_submission_wont_changed(self):
+        biosample_accessions = []
+        biostudies_accession = []
+        ena_accessions = []
+
+        self.submitter.update_submission_with_archive_accessions(
+            biosample_accessions, biostudies_accession, ena_accessions)
+
+        assert not self.submitter_service.get_biostudies_payload_by_accession.called
 
     @staticmethod
     def __get_expected_payload(file_path: str):

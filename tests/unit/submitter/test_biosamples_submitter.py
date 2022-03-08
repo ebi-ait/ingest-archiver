@@ -27,8 +27,9 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         self.submission = HcaSubmission()
         self.ARCHIVE_TYPE = 'BioSamples'
         self.entity_type = 'biomaterials'
+        self.entity_schema_type = 'biomaterial'
         self.entity = self.submission.map_ingest_entity(
-            make_ingest_entity(self.entity_type, random_id(), random_uuid())
+            make_ingest_entity(self.entity_type, self.entity_schema_type, random_id(), random_uuid())
         )
         self.additional_parameters = {}
 
@@ -107,11 +108,14 @@ class TestBioSamplesSubmitter(unittest.TestCase):
 
     def test_processing_archive_response_from_sample_update_add_result_for_updated(self):
         archive_response_1 = \
-            create_archive_response({'error_messages': ['Dummy error message']}, self.entity_type, is_update=True)
+            create_archive_response({'uuid': '12345678'}, self.entity_type, is_update=True,
+                                    error_messages='Dummy error message')
         archive_response_2 = \
-            create_archive_response({'error_messages': ['Another dummy error message']}, self.entity_type, is_update=True)
+            create_archive_response({'uuid': '12345678'}, self.entity_type, is_update=True,
+                                    error_messages='Another dummy error message')
         archive_response_3 = \
-            create_archive_response({'error_messages': ['Yet another dummy error message']}, self.entity_type, is_update=True)
+            create_archive_response({'uuid': 'abcd1234'}, self.entity_type, is_update=True,
+                                    error_messages='Another dummy error message')
 
         archive_responses = [archive_response_1, archive_response_2, archive_response_3]
         processed_responses_from_archive =\

@@ -1,4 +1,5 @@
 from submission_broker.services.biostudies import BioStudies
+from typing import List
 
 from archiver import ArchiveResponse, ConvertedEntity
 from converter.biostudies import BioStudiesConverter
@@ -27,12 +28,35 @@ class BioStudiesSubmitter(Submitter):
 
         return processed_responses
 
-    def update_submission_with_sample_accessions(self, biosample_accessions: list, biostudies_accession):
-        biostudies_submission = \
-            self.__submitter_service.update_submission_with_sample_accessions(biosample_accessions, biostudies_accession)
+    def update_submission_with_archive_accessions(self, biosample_accessions: List[str], biostudies_accession,
+                                                  ena_accessions: List[str]):
+        if not BioStudiesSubmitter.__has_accessions(biosample_accessions, ena_accessions):
+            return
+
+        biostudies_submission = self.__submitter_service.get_biostudies_payload_by_accession(biostudies_accession).json
+
+        self.__update_submission_with_biosamples_accessions(biosample_accessions, biostudies_submission)
+        self.__update_submission_with_ena_accessions(ena_accessions, biostudies_submission)
         self.__archive_client.send_submission(biostudies_submission)
 
-        return biostudies_submission
+    def __update_submission_with_biosamples_accessions(self, biosample_accessions, biostudies_submission):
+        self.__submitter_service.update_submission_with_accessions_by_type(
+            biostudies_submission, biosample_accessions, BioStudiesSubmitterService.BIOSAMPLE_LINK_TYPE)
+
+    def __update_submission_with_ena_accessions(self, ena_accessions, biostudies_submission):
+        self.__submitter_service.update_submission_with_accessions_by_type(
+            biostudies_submission, ena_accessions, BioStudiesSubmitterService.ENA_LINK_TYPE)
+
+    @staticmethod
+    def __has_accessions(biosample_accessions, ena_accessions) -> bool:
+        if BioStudiesSubmitter.__has_accession(biosample_accessions)\
+                or BioStudiesSubmitter.__has_accession(ena_accessions):
+            return True
+        return False
+
+    @staticmethod
+    def __has_accession(accessions) -> bool:
+        return accessions is not None and len(accessions) > 0
 
     def _submit_to_archive(self, converted_entity: ConvertedEntity):
         data = {'accession': self.__archive_client.send_submission(converted_entity.data)}

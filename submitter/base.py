@@ -111,7 +111,7 @@ class Submitter(metaclass=ABCMeta):
                 uuid = response.data.get('uuid')
                 entity = submission.get_entity_by_uuid(entity_type, uuid)
                 entity.add_accession(archive_type, accession)
-                submission.add_accessions_to_attributes(entity)
+                submission.add_accessions_to_attributes(entity, archive_type, entity_type)
                 self.updater.update_entity(entity)
 
             responses_from_archive.setdefault(result, []).append(archive_response)
@@ -133,8 +133,7 @@ class Submitter(metaclass=ABCMeta):
         return converted_entity
 
     def __process_response(self, response: ArchiveResponse) -> Tuple[str, ArchiveResponse]:
-        archive_response = response.data
-        if 'error_messages' in archive_response:
+        if response.error_messages:
             return ERRORED_ENTITY, response
         else:
             if response.is_update:

@@ -62,6 +62,7 @@ class EnaSubmitter(Submitter):
                 EnaSubmitter.__gather_accession_and_uuid_from_response(ena_type, is_update, processed_response,
                                                                        response)
         else:
+            ena_types.append('SUBMISSION')
             for ena_type in ena_types:
                 EnaSubmitter.__get_failure_response_by_entity(ena_type, processed_response, response)
 
@@ -90,10 +91,10 @@ class EnaSubmitter(Submitter):
         for entity in response.findall(ena_type):
             ena_entity_uuid: str = entity.attrib.get('alias')
             messages: list = EnaSubmitter.__get_messages_from_response(ena_entity_uuid, response)
-            data = {'error_messages': messages, 'uuid': ena_entity_uuid}
+            data = {'uuid': ena_entity_uuid}
             entity_type = HCA_TYPE_BY_ENA_TYPE.get(ena_type, '')
             processed_response.append(
-                ArchiveResponse(entity_type=entity_type, data=data, is_update=False)
+                ArchiveResponse(entity_type=entity_type, data=data, error_messages=messages, is_update=False)
             )
 
     @staticmethod
@@ -101,8 +102,6 @@ class EnaSubmitter(Submitter):
         messages = []
         for message in response.find('MESSAGES'):
             error_message: str = message.text
-            if ena_entity_uuid not in error_message:
-                continue
             messages.append(f'{message.tag}: {error_message}')
 
         return messages
