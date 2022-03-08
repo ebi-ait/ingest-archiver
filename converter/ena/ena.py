@@ -80,12 +80,14 @@ class HcaData(IngestAPI):
                     self.submission["project"] = projects[0]
                     self.logger.info(f'Project UUID {self.submission["project"]["uuid"]["uuid"]}.')
                 else:
-                    self.logger.info(f'Multiple projects linked to submission {self.uuid}.')
+                    self.logger.debug(f'Multiple projects linked to submission {self.uuid}.')
             else:
-                self.logger.info(
+                self.logger.debug(
                     f'No project linked to submission {self.uuid}. Sequencing Experiment requires a study accession.')
 
-        self.get_assays()
+            self.get_assays()
+        else:
+            self.logger.debug(f"Invalid response: {response.status_code}")
 
     def get_assays(self):
         assays = []

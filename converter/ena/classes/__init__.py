@@ -1,3 +1,10 @@
+# Classese in this module is generated from the ENA experiment and run
+# XSDs using the xsdata package.
+# The XSDs are in the xsd module. They are downloaded from ENA documentation page:
+# https://ena-docs.readthedocs.io/en/latest/submit/reads/programmatic.html
+# The instructions to install, use and generate the models using xsdata is here:
+# https://xsdata.readthedocs.io/en/latest/
+
 from converter.ena.classes.sra_common import (
     AttributeType,
     BasecallMatchEdge,
