@@ -15,4 +15,5 @@ lxml~=4.6.3
 colorlog~=6.6.0
 kombu>=5.1
 jsonschema>=2.6
+xsdata==22.1
 MarkupSafe==2.0.1

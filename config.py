@@ -58,3 +58,5 @@ ENA_WEBIN_API_URL = os.environ.get('ENA_WEBIN_API_URL', 'https://wwwdev.ebi.ac.u
 ENA_WEBIN_USERNAME = os.environ.get('ENA_WEBIN_USERNAME')
 ENA_WEBIN_PASSWORD = os.environ.get('ENA_WEBIN_PASSWORD')
 ENA_WEBIN_BROWSER_BASE_URL = os.environ.get('ENA_WEBIN_BROWSER_BASE_URL', 'https://wwwdev.ebi.ac.uk/ena/submit/webin/report/studies/')
+
+ENA_FTP_DIR = os.environ.get('ENA_FTP_DIR', 'dev')

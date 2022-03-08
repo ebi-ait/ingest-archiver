@@ -1,5 +1,5 @@
 from xml.etree.ElementTree import Element
-
+from abc import ABC, abstractmethod
 from json_converter.json_mapper import JsonMapper
 from lxml import etree
 
@@ -103,3 +103,14 @@ class BaseEnaConverter:
         schema_url = args[0]
         concrete_type = get_concrete_type(schema_url)
         return concrete_type
+
+
+class EnaModel(ABC):
+
+    @abstractmethod
+    def create_set(self):
+        pass
+
+    @abstractmethod
+    def create(self):
+        pass
