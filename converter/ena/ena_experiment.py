@@ -45,22 +45,31 @@ class EnaExperiment(EnaModel):
         experiment.design.sample_descriptor.accession = sample_accession
 
         experiment.study_ref = RefObjectType()
-        experiment.study_ref.accession = self.submission["project"]["content"]["insdc_project_accessions"][0] if 'project' in self.submission else ''
+        study_accession = None
+        if "project" in self.submission: # check needed as some submissions still seem not to be linked to a project
+            if "content" in self.submission["project"] and "insdc_project_accessions" in self.submission["project"]["content"]:
+                accessions = self.submission["project"]["content"]["insdc_project_accessions"]
+                for accession in accessions:
+                    if accession.startswith("ERP") or accession.startswith("PRJ"):
+                        study_accession = accession
+                        break
+
+        experiment.study_ref.accession = study_accession
 
         experiment.platform = self.ena_platform_type(sequencing_protocol)
         return experiment
 
     def ena_library_name_and_accession(self, input_biomaterials):
-        library_name = ""
-        sample_accession = ""
-        sep = ", "
+        # unlikely to have multiple biomaterial inputs it is still possible, ena takes one accession only, so
+        # use accepted ERS or SAM accession only.
+        library_name = None
+        sample_accession = None
         for input_biomaterial in input_biomaterials:
-            library_name += input_biomaterial["content"]["biomaterial_core"]["biomaterial_id"] + sep
-            sample_accession += input_biomaterial["content"]["biomaterial_core"]["biosamples_accession"] + sep
-
-        library_name = library_name.rsplit(sep, 1)[0] if library_name.endswith(sep) else library_name
-        sample_accession = sample_accession.rsplit(sep, 1)[0] if sample_accession.endswith(sep) else sample_accession
-
+            biosamples_accession = input_biomaterial["content"]["biomaterial_core"]["biosamples_accession"]
+            if biosamples_accession.startswith("ERS") or biosamples_accession.startswith("SAM"):
+                sample_accession = biosamples_accession
+                library_name = input_biomaterial["content"]["biomaterial_core"]["biomaterial_id"]
+                break
         return library_name, sample_accession
 
     def ena_library_selection(self, library_preparation_protocol):

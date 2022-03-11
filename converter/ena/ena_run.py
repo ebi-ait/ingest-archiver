@@ -36,7 +36,14 @@ class EnaRun(EnaModel):
 
         run.title = assay["content"]["process_core"]["process_id"]
         run.experiment_ref = RefObjectType()
-        run.experiment_ref.accession = ''
+
+        # If the run is submitted at the same time as the experiment then the accession attribute can’t be used to refer
+        # to the experiment as the experiment accession has not been assigned yet.
+        if "accession" in assay and assay["accession"]:
+            run.experiment_ref.accession = assay["accession"]
+        else:
+            run.experiment_ref.refname = sequencing_protocol["content"]["protocol_core"]["protocol_id"] # experiment alias
+
         run.alias = assay["uuid"]["uuid"]
 
         run.data_block = RunType.DataBlock()

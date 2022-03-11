@@ -1,14 +1,30 @@
+import os
+import io
+import requests
 import logging
 import functools
+from enum import Enum
 from api.ingest import IngestAPI
+from converter.ena.classes import Receipt
 from converter.ena.ena_experiment import EnaExperiment
 from converter.ena.ena_run import EnaRun
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
+from xsdata.formats.dataclass.parsers import XmlParser
 
+class XMLType(Enum):
+    STUDY='STUDY',
+    SAMPLE='SAMPLE',
+    EXPERIMENT='EXPERIMENT',
+    RUN='RUN'
 
 class EnaArchive:
     def __init__(self, uuid):
+        self.ena_url = os.environ.get('ENA_WEBIN_API_URL')
+        self.ena_user = os.environ.get('ENA_USER')
+        self.ena_password = os.environ.get('ENA_PASSWORD')
+        self.session = requests.Session()
+
         self.uuid = uuid
         self.data = HcaData(uuid).get()
         self.convert()
@@ -22,6 +38,29 @@ class EnaArchive:
 
         run_set = EnaRun(self.data).create_set()
         print(serializer.render(run_set))
+
+    def convert_and_submit(self):
+        config = SerializerConfig(pretty_print=True)
+        serializer = XmlSerializer(config=config)
+
+        experiment_set = EnaExperiment(self.data).create_set()
+        experiments = serializer.render(experiment_set)
+        self.post_experiments(experiments)
+
+        run_set = EnaRun(self.data).create_set()
+        runs = (serializer.render(run_set))
+        self.post_runs(runs)
+
+
+    def post_xml(self, xml_type:XMLType, xml:any, update=False):
+        action = 'ADD' # default
+        if update:
+            action='MODIFY'
+
+        response=self.session.post(self.ena_url, files={xml_type.name: xml}, data={'ACTION': action}, auth=(self.ena_user, self.ena_password))
+        receipt_xml = response.text
+        return receipt_xml
+
 
 
 def handle_exception(f):

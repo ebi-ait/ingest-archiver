@@ -34,6 +34,7 @@ class EnaRunTestData:
     sub_uuid = "sub_uuid"
     process_id = "process_id"
     process_uuid = "process_uuid"
+    protocol_id = "seq_protocol_1_id"
     protocol_desc = "seq_protocol_1 desc"
     file_name_1 = "file1.fq"
     file_format_1 = "fastq"
@@ -53,6 +54,7 @@ class EnaRunTestData:
                     "content":
                         {
                             "protocol_core": {
+                                "protocol_id": EnaRunTestData.protocol_id,
                                 "protocol_description": EnaRunTestData.protocol_desc
                             }
                         }
@@ -84,7 +86,7 @@ class EnaRunTestData:
         return f"""<?xml version="1.0" encoding="UTF-8"?>
 <RUN alias="{EnaRunTestData.process_uuid}">
   <TITLE>{EnaRunTestData.process_id}</TITLE>
-  <EXPERIMENT_REF accession=""/>
+  <EXPERIMENT_REF refname="{EnaRunTestData.protocol_id}"/>
   <DATA_BLOCK>
     <FILES>
       <FILE filename="{ENA_FTP_DIR}/{EnaRunTestData.sub_uuid}/{EnaRunTestData.file_name_1}" filetype="{FileFiletype.FASTQ.value}" checksum_method="MD5" checksum="{EnaRunTestData.file_md5_1}"/>
@@ -99,3 +101,5 @@ class EnaRunTestData:
   </RUN_ATTRIBUTES>
 </RUN>
 """
+
+
