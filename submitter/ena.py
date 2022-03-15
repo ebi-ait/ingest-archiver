@@ -13,8 +13,7 @@ ARCHIVE_TYPE = "ENA"
 ERROR_KEY = 'content.project_core.ena_study_accession'
 
 HCA_TYPE_BY_ENA_TYPE = {
-    'STUDY': 'projects',
-    'SAMPLE': 'biomaterials'
+    'STUDY': 'projects'
 }
 
 
@@ -36,33 +35,28 @@ class EnaSubmitter(Submitter):
             entity_type = converted_entity.hca_entity_type
             if entity_type == 'projects':
                 ena_files['STUDY'] = ('STUDY.xml', converted_entity.data)
-            elif entity_type == 'biomaterials':
-                ena_files['SAMPLE'] = ('SAMPLE.xml', converted_entity.data)
 
+            ena_action = EnaAction.ADD
             if converted_entity.is_update:
                 ena_action = EnaAction.MODIFY
-            else:
-                ena_action = EnaAction.ADD
 
         response = self.__archive_client.send_submission(
             ena_files, ena_action, self.release_date, 'HCA')
 
         response_xml = ElementTree.fromstring(response.decode('utf-8'))
 
-        return self.__process_response(response_xml)
+        return self.__process_xml_response(response_xml)
 
     @staticmethod
-    def __process_response(response: Element):
+    def __process_xml_response(response: Element):
         success = response.attrib.get('success')
-        ena_types = ['STUDY', 'SAMPLE']
         processed_response = []
         if success == 'true':
             is_update = EnaSubmitter.__is_update_request(response)
-            for ena_type in ena_types:
-                EnaSubmitter.__gather_accession_and_uuid_from_response(ena_type, is_update, processed_response,
+            EnaSubmitter.__gather_accession_and_uuid_from_response('STUDY', is_update, processed_response,
                                                                        response)
         else:
-            ena_types.append('SUBMISSION')
+            ena_types = ['STUDY', 'SUBMISSION']
             for ena_type in ena_types:
                 EnaSubmitter.__get_failure_response_by_entity(ena_type, processed_response, response)
 
@@ -90,7 +84,7 @@ class EnaSubmitter(Submitter):
     def __get_failure_response_by_entity(ena_type, processed_response, response):
         for entity in response.findall(ena_type):
             ena_entity_uuid: str = entity.attrib.get('alias')
-            messages: list = EnaSubmitter.__get_messages_from_response(ena_entity_uuid, response)
+            messages: list = EnaSubmitter.__get_messages_from_response(response)
             data = {'uuid': ena_entity_uuid}
             entity_type = HCA_TYPE_BY_ENA_TYPE.get(ena_type, '')
             processed_response.append(
@@ -98,7 +92,7 @@ class EnaSubmitter(Submitter):
             )
 
     @staticmethod
-    def __get_messages_from_response(ena_entity_uuid, response) -> List:
+    def __get_messages_from_response(response) -> List:
         messages = []
         for message in response.find('MESSAGES'):
             error_message: str = message.text
