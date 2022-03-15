@@ -7,7 +7,6 @@ from submission_broker.submission.submission import Entity
 from converter.biosamples import BioSamplesConverter
 from converter.biostudies import BioStudiesConverter
 from converter.ena.ena_study import EnaStudyConverter
-from converter.ena.ena_sample import EnaSampleConverter
 
 from archiver import first_element_or_self, ArchiveResponse, ConvertedEntity
 from hca.submission import HcaSubmission
@@ -19,14 +18,13 @@ ERRORED_ENTITY = 'ERRORED'
 ARCHIVE_TO_HCA_ENTITY_MAP = {
     'BioSamples': ['biomaterials'],
     'BioStudies': ['projects'],
-    'ENA': ['projects', 'biomaterials']
+    'ENA': ['projects']
 }
 
 CONVERTERS_BY_ARCHIVE_TYPES = {
     'BioSamples_biomaterials': BioSamplesConverter(),
     'BioStudies_projects': BioStudiesConverter(),
-    'ENA_projects': EnaStudyConverter(),
-    'ENA_biomaterials': EnaSampleConverter()
+    'ENA_projects': EnaStudyConverter()
 }
 
 
