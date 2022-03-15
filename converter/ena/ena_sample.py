@@ -30,6 +30,9 @@ class EnaSampleConverter(BaseEnaConverter):
         super().__init__(ena_type='Sample', xml_spec=sample_spec)
 
     def _post_conversion(self, entity: dict, xml_element: Element):
+        identifiers = etree.SubElement(xml_element, 'IDENTIFIERS')
+        EnaSampleConverter.__add_biosamples_accession(identifiers, entity)
+
         attributes = etree.SubElement(xml_element, 'SAMPLE_ATTRIBUTES')
         EnaSampleConverter.__add_sample_type_as_attribute(attributes, entity)
         for hca_name, ena_name in HCA_TO_ENA_SAMPLE_ATTRIBUTES.items():
@@ -39,6 +42,12 @@ class EnaSampleConverter(BaseEnaConverter):
                 BaseEnaConverter._make_attribute(
                     attributes, 'SAMPLE_ATTRIBUTE', ena_name, value)
         EnaSampleConverter.__add_project_name_as_attribute(attributes)
+
+    @staticmethod
+    def __add_biosamples_accession(identifiers, entity):
+        biosamples_accession = entity.get('content', {}).get('biomaterial_core', {}).get('biosamples_accession')
+        external_id = etree.SubElement(identifiers, 'EXTERNAL_ID', {'namespace': 'BioSample'})
+        external_id.text = biosamples_accession
 
     @staticmethod
     def __add_sample_type_as_attribute(attributes, entity):
