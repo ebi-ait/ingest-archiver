@@ -1,3 +1,4 @@
+from copy import deepcopy
 from xml.etree.ElementTree import Element
 
 from lxml import etree
@@ -7,21 +8,25 @@ from converter.ena.base import BaseEnaConverter
 
 ADDITIONAL_ATTRIBUTE_KEYS = ['uuid.uuid', 'content.project_core.project_short_name']
 
+STUDY_SPEC = {
+    '@center_name': ['', fixed_attribute, 'HCA'],
+    'DESCRIPTOR': {
+        'STUDY_TITLE': ['project_title'],
+        'STUDY_TYPE': {
+            '@existing_study_type': ['', fixed_attribute, 'Transcriptome Analysis']
+        },
+        'STUDY_DESCRIPTION': ['project_description']
+    }
+}
+
 
 class EnaStudyConverter(BaseEnaConverter):
 
     def __init__(self):
-        study_spec = {
-            '@center_name': ['', fixed_attribute, 'HCA'],
-            'DESCRIPTOR': {
-                'STUDY_TITLE': ['project_title'],
-                'STUDY_TYPE': {
-                    '@existing_study_type': ['', fixed_attribute, 'Transcriptome Analysis']
-                },
-                'STUDY_DESCRIPTION': ['project_description']
-            }
-        }
-        super().__init__(ena_type='Study', xml_spec=study_spec)
+        super().__init__(ena_type='Study')
+
+    def init_xml_spec(self):
+        self.xml_spec = deepcopy(STUDY_SPEC)
 
     @staticmethod
     def _post_conversion(entity: dict, xml_element: Element):
