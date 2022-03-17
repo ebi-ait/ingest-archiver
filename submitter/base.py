@@ -63,6 +63,7 @@ class Submitter(metaclass=ABCMeta):
             self.__add_uuid_to_additional_attributes(additional_attributes, entity)
             if archive_type == 'ENA':
                 self.__set_release_date_from_project(entity)
+                self.converter.init_xml_spec()
             accession = self.__get_accession(entity, archive_type)
             if accession:
                 is_update = True

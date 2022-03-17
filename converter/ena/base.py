@@ -7,9 +7,9 @@ from converter import fixed_attribute, get_concrete_type
 
 
 class BaseEnaConverter:
-    def __init__(self, ena_type: str, xml_spec: dict):
+    def __init__(self, ena_type: str):
         self.ena_type = ena_type
-        self.xml_spec = xml_spec
+        self.xml_spec = None
         self.ena_set: Element = None
         self.__init_is_update()
 
@@ -32,6 +32,9 @@ class BaseEnaConverter:
 
     def init_ena_set(self):
         self.ena_set = etree.XML(f'<{self.ena_type.upper()}_SET />')
+
+    def init_xml_spec(self):
+        pass
 
     def _add_accession_and_alias(self, spec: dict, other_attributes: dict):
         accession = other_attributes.get('accession')
