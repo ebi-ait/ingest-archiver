@@ -15,6 +15,7 @@ class EnaStudyConverterTest(unittest.TestCase):
 
         self.ena_study_converter = EnaStudyConverter()
         self.ena_study_converter.init_ena_set()
+        self.ena_study_converter.init_xml_spec()
 
     def test_given_valid_ingest_project_accession_can_convert_to_ena_study(self):
         other_attributes = {
