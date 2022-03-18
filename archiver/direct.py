@@ -73,12 +73,7 @@ class DirectArchiver:
 
     @staticmethod
     def __get_accessions_from_responses(responses: dict) -> List[str]:
-        accessions: list =\
-            [archive_data.get('data', {}).get('accession', '') for archive_data in responses.get('CREATED', [])]
-        accessions.extend(
-            [archive_data.get('data', {}).get('accession', '') for archive_data in responses.get('UPDATED', [])])
-
-        return accessions
+        return [archive_data.get('data', {}).get('accession', '') for archive_data in responses]
 
     @staticmethod
     def __jsonify_archive_response(archive_responses):
