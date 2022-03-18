@@ -13,7 +13,8 @@ ARCHIVE_TYPE = "ENA"
 ERROR_KEY = 'content.project_core.ena_study_accession'
 
 HCA_TYPE_BY_ENA_TYPE = {
-    'STUDY': 'projects'
+    'STUDY': 'projects',
+    'SUBMISSION': 'ENA submission'
 }
 
 
@@ -37,7 +38,7 @@ class EnaSubmitter(Submitter):
                 ena_files['STUDY'] = ('STUDY.xml', converted_entity.data)
 
             ena_action = EnaAction.ADD
-            if converted_entity.is_update:
+            if converted_entity.updated:
                 ena_action = EnaAction.MODIFY
 
         response = self.__archive_client.send_submission(

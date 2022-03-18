@@ -20,7 +20,7 @@ class ArchiveException(Exception):
 class ConvertedEntity:
     def __init__(self, data, is_update: bool, hca_entity_type: str):
         self.data = data
-        self.is_update = is_update
+        self.updated = is_update
         self.hca_entity_type = hca_entity_type
 
 
@@ -29,5 +29,5 @@ class ArchiveResponse:
     def __init__(self, entity_type: str, data: dict, is_update: bool, error_messages: List[str] = None):
         self.entity_type = entity_type
         self.data = data
-        self.is_update = is_update
+        self.updated = is_update
         self.error_messages = error_messages

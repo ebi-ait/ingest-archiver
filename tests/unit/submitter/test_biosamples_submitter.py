@@ -40,7 +40,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         assert_that(len(converted_samples)).is_equal_to(1)
 
         converted_entity: ConvertedEntity = converted_samples[0]
-        is_create = not converted_entity.is_update
+        is_create = not converted_entity.updated
 
         assert_that(converted_entity.data.accession).is_equal_to(None)
         assert_that(is_create).is_true()
@@ -57,7 +57,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         assert_that(len(converted_samples)).is_equal_to(1)
 
         converted_entity: ConvertedEntity = converted_samples[0]
-        is_update = converted_entity.is_update
+        is_update = converted_entity.updated
 
         assert_that(converted_entity.data.accession).is_equal_to(accession)
         assert_that(is_update).is_true()
@@ -80,9 +80,9 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         for archive_response in archive_responses:
             assert_that(archive_response.data).is_not_none()
             assert_that(archive_response.entity_type).is_equal_to(self.entity_type)
-            assert_that(archive_response.is_update).is_equal_to(is_update)
+            assert_that(archive_response.updated).is_equal_to(is_update)
 
-    def test_processing_archive_response_from_sample_creation_add_result_for_created(self):
+    def test_processing_archive_response_from_sample_creation_results_same_number_of_result(self):
         archive_response_1 = create_archive_response({'name': 'empty', 'taxId': 9606, 'uuid': ''}, self.entity_type)
         archive_response_2 = create_archive_response({'name': 'test1', 'taxId': 9606, 'uuid': ''}, self.entity_type)
         archive_response_3 = create_archive_response({'name': 'test2', 'taxId': 9606, 'uuid': ''}, self.entity_type)
@@ -90,11 +90,10 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         processed_responses_from_archive =\
             self.biosamples_submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
 
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).contains('CREATED')
-        assert_that(processed_responses_from_archive.get('CREATED')).is_equal_to(archive_responses)
+        assert_that(len(processed_responses_from_archive)).is_equal_to(3)
+        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
 
-    def test_processing_archive_response_from_sample_update_add_result_for_updated(self):
+    def test_processing_archive_response_from_sample_update_results_same_number_of_result(self):
         archive_response_1 = create_archive_response({'name': 'empty', 'taxId': 9606, 'uuid': ''}, self.entity_type, is_update=True)
         archive_response_2 = create_archive_response({'name': 'test1', 'taxId': 9606, 'uuid': ''}, self.entity_type, is_update=True)
         archive_response_3 = create_archive_response({'name': 'test2', 'taxId': 9606, 'uuid': ''}, self.entity_type, is_update=True)
@@ -102,11 +101,10 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         processed_responses_from_archive =\
             self.biosamples_submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
 
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).contains('UPDATED')
-        assert_that(processed_responses_from_archive.get('UPDATED')).is_equal_to(archive_responses)
+        assert_that(len(processed_responses_from_archive)).is_equal_to(3)
+        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
 
-    def test_processing_archive_response_from_sample_update_add_result_for_updated(self):
+    def test_processing_archive_response_with_error_results_same_number_of_result(self):
         archive_response_1 = \
             create_archive_response({'uuid': '12345678'}, self.entity_type, is_update=True,
                                     error_messages='Dummy error message')
@@ -121,9 +119,8 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         processed_responses_from_archive =\
             self.biosamples_submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
 
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).contains('ERRORED')
-        assert_that(processed_responses_from_archive.get('ERRORED')).is_equal_to(archive_responses)
+        assert_that(len(processed_responses_from_archive)).is_equal_to(3)
+        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
 
 
 if __name__ == '__main__':

@@ -51,7 +51,7 @@ class Submitter(metaclass=ABCMeta):
                 if xml_entity_str:
                     converted_entities.append(
                         ConvertedEntity(data=xml_entity_str,
-                                        is_update=self.converter.is_update,
+                                        is_update=self.converter.updated,
                                         hca_entity_type=hca_entity_type))
         return converted_entities
 
@@ -100,12 +100,11 @@ class Submitter(metaclass=ABCMeta):
         return responses_from_archive
 
     def process_responses(self, submission: HcaSubmission, responses, error_key, archive_type):
-        responses_from_archive = {}
+        responses_from_archive = []
         response: ArchiveResponse
         for response in responses:
-            result, archive_response = self.__process_response(response)
             accession = response.data.get('accession')
-            if accession:
+            if accession and not response.updated:
                 entity_type = response.entity_type
                 uuid = response.data.get('uuid')
                 entity = submission.get_entity_by_uuid(entity_type, uuid)
@@ -113,7 +112,7 @@ class Submitter(metaclass=ABCMeta):
                 submission.add_accessions_to_attributes(entity, archive_type, entity_type)
                 self.updater.update_entity(entity)
 
-            responses_from_archive.setdefault(result, []).append(archive_response)
+            responses_from_archive.append(response)
         return responses_from_archive
 
     def __set_release_date_from_project(self, entity):
@@ -135,7 +134,7 @@ class Submitter(metaclass=ABCMeta):
         if response.error_messages:
             return ERRORED_ENTITY, response
         else:
-            if response.is_update:
+            if response.updated:
                 return UPDATED_ENTITY, response
             else:
                 return CREATED_ENTITY, response

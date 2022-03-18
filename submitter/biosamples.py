@@ -49,7 +49,7 @@ class BioSamplesSubmitter(Submitter):
 
         response = \
             ArchiveResponse(
-                entity_type=converted_entity.hca_entity_type, data=data, is_update=converted_entity.is_update)
+                entity_type=converted_entity.hca_entity_type, data=data, is_update=converted_entity.updated)
         return response
 
     def __create_additional_attributes(self, submission):

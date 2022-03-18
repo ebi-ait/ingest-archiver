@@ -28,7 +28,7 @@ class BaseEnaConverter:
         return
 
     def __init_is_update(self):
-        self.is_update = False
+        self.updated = False
 
     def init_ena_set(self):
         self.ena_set = etree.XML(f'<{self.ena_type.upper()}_SET />')
@@ -39,7 +39,7 @@ class BaseEnaConverter:
     def _add_accession_and_alias(self, spec: dict, other_attributes: dict):
         accession = other_attributes.get('accession')
         if accession:
-            self.is_update = True
+            self.updated = True
             spec['@accession'] = ['', fixed_attribute, accession]
 
         alias = other_attributes.get('alias')
