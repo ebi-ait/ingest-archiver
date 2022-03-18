@@ -84,44 +84,41 @@ def get_header():
 def process_archiver_response():
     output = {}
     for archive_name, archived_items in response_json.items():
-        output[archive_name] = populate_response_by_archive_name(archive_name, archived_items)
+        output[f'{archive_name} archive'] = get_response_data_from_archive(archive_name, archived_items)
 
     return output
 
 
-def populate_response_by_archive_name(archive_name, archived_items):
-    archive_result = {}
-    for status, results in archived_items.items():
-        data = []
-        get_response_data_from_archive(archive_name, data, results, status)
-        archive_result[f'{status} entities in {archive_name}'] = data
-
-    return archive_result
-
-
-def get_response_data_from_archive(archive_name, data, results, status):
+def get_response_data_from_archive(archive_name, results):
+    data = {}
     for result_data in results:
         base_url = ARCHIVE_URLS[archive_name]
-        if archive_name == 'ena':
-            entity_type = result_data.get('entity_type')
+        entity_type = result_data.get('entity_type', 'unknown entity type')
+        error_messages = result_data.get('error_messages')
+        if archive_name == 'ena' and not error_messages:
             if entity_type:
                 url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[entity_type]
                 base_url = base_url.format(entities=url_entities_part)
         archive_response = result_data.get('data', {})
-        if status != 'ERRORED':
-            data.append(
+        if not error_messages:
+            accession = archive_response.get('accession')
+            data.setdefault(entity_type, []).append(
                 {
-                    'uuid': f'{archive_response.get("uuid")}',
-                    'url': f'{base_url}/{archive_response.get("accession")}'
+                    'uuid': archive_response.get('uuid'),
+                    'accession': accession,
+                    'updated': result_data.get('updated'),
+                    'url': f'{base_url}/{accession}'
                 }
             )
         else:
-            data.append(
+            data.setdefault(entity_type, []).append(
                 {
-                    'uuid': f'{archive_response.get("uuid")}',
-                    'error_details': result_data.get('error_messages')
+                    'uuid': archive_response.get('uuid'),
+                    'error_details': error_messages
                 }
             )
+
+    return data
 
 
 if __name__ == "__main__":

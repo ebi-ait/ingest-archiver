@@ -40,7 +40,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         assert_that(len(converted_projects)).is_equal_to(1)
 
         converted_entity: ConvertedEntity = converted_projects[0]
-        is_create = not converted_entity.is_update
+        is_create = not converted_entity.updated
 
         assert_that(is_create).is_true()
 
@@ -53,7 +53,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         assert_that(len(converted_projects)).is_equal_to(1)
 
         converted_entity: ConvertedEntity = converted_projects[0]
-        is_update = converted_entity.is_update
+        is_update = converted_entity.updated
 
         assert_that(is_update).is_true()
 
@@ -71,9 +71,9 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         for archive_response in archive_responses:
             assert_that(archive_response.data).is_not_none()
             assert_that(archive_response.entity_type).is_equal_to(self.entity_type)
-            assert_that(archive_response.is_update).is_equal_to(is_update)
+            assert_that(archive_response.updated).is_equal_to(is_update)
 
-    def test_processing_archive_response_from_project_creation_add_result_for_created(self):
+    def test_processing_archive_response_from_project_creation_results_same_number_of_result(self):
         payload = self.__get_expected_payload('/../../resources/expected_biostudies_payload.json')
         archive_response = create_archive_response(payload, self.entity_type)
         archive_responses = [archive_response]
@@ -81,10 +81,9 @@ class TestBioStudiesSubmitter(unittest.TestCase):
             self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
 
         assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).contains('CREATED')
-        assert_that(processed_responses_from_archive.get('CREATED')).is_equal_to(archive_responses)
+        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
 
-    def test_processing_archive_response_from_sample_update_add_result_for_updated(self):
+    def test_processing_archive_response_from_sample_update_results_same_number_of_result(self):
         payload = self.__get_expected_payload('/../../resources/expected_biostudies_payload.json')
         archive_response = create_archive_response(payload, self.entity_type, is_update=True)
         archive_responses = [archive_response]
@@ -92,8 +91,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
             self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
 
         assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).contains('UPDATED')
-        assert_that(processed_responses_from_archive.get('UPDATED')).is_equal_to(archive_responses)
+        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
 
     def test_when_accessions_are_empty_then_submission_wont_changed(self):
         biosample_accessions = []

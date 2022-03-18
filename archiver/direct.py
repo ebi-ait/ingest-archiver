@@ -82,9 +82,8 @@ class DirectArchiver:
 
     @staticmethod
     def __jsonify_archive_response(archive_responses):
-        for response_type, items in archive_responses.items():
-            for index, response in enumerate(items):
-                items[index] = response.__dict__
+        for index, response in enumerate(archive_responses):
+            archive_responses[index] = response.__dict__
 
     def __exchange_archive_accessions(self, submission, biosample_accessions: List[str], biostudies_accession,
                                       ena_accessions: List[str]):
