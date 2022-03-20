@@ -9,6 +9,7 @@ from archiver import first_element_or_self, ArchiveException
 from hca.loader import HcaLoader, IngestApi
 from hca.submission import HcaSubmission
 from hca.updater import HcaUpdater
+from hca.assay import AssayData
 from converter.biosamples import BioSamplesConverter
 from submitter.biosamples import BioSamplesSubmitter
 from submission_broker.services.biosamples import BioSamples, AapClient
@@ -20,6 +21,12 @@ from converter.biostudies import BioStudiesConverter
 from submitter.biostudies_submitter_service import BioStudiesSubmitterService
 from submitter.ena_submitter_service import Ena
 from submitter.ena import EnaSubmitter
+
+from converter.ena.ena_experiment import EnaExperiment
+from converter.ena.ena_run import EnaRun
+from xsdata.formats.dataclass.serializers import XmlSerializer
+from xsdata.formats.dataclass.serializers.config import SerializerConfig
+from config import ENA_WEBIN_API_URL, ENA_WEBIN_USERNAME, ENA_WEBIN_PASSWORD
 
 
 class DirectArchiver:
@@ -69,7 +76,58 @@ class DirectArchiver:
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
 
+        # archive ENA experiments and runs from HCA assays
+        archives_responses['ena']['assays'] = []
+
+        # get assay data
+        assay_data = AssayData('uuid').load()
+        assays = assay_data["assays"]
+        project = assay_data["project"]
+        project_ref = None
+        submission = assay_data["submission"]
+
+        for assay in assays:
+            result = {}
+            result['process_uuid'] = None
+            # experiment_accession, err = EnaExperiment().archive()
+            result['experiment_accession'] = None
+            # run_accession = EnaRun().archive()
+            result['run_accession'] = None
+            archives_responses['ena']['assays'].append(result)
+            pass
+
         return archives_responses
+
+    def test(self):
+        response = {
+            'biosamples': {
+                'error': None,
+                'accessions': []
+            },
+            'biostudies': {
+                'error': None,
+                'accessions': []
+            },
+            'ena': {
+                'study': {
+                    'error': None,
+                    'accessions': []
+                },
+                'experiments': {
+                    'errors': None,
+                    'accessions': []
+                },
+                'run': {
+                    'errors': None,
+                    'accessions': []
+                },
+                'files': {
+                    'errors': None,
+                    'accessions': []
+                }
+            }
+        }
+
 
     @staticmethod
     def __get_accessions_from_responses(responses: dict) -> List[str]:

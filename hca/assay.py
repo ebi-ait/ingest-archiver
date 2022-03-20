@@ -1,82 +1,8 @@
-import os
-import io
-import requests
 import logging
 import functools
-from enum import Enum
 from api.ingest import IngestAPI
-from converter.ena.classes import Receipt
-from converter.ena.ena_experiment import EnaExperiment
-from converter.ena.ena_run import EnaRun
-from xsdata.formats.dataclass.serializers import XmlSerializer
-from xsdata.formats.dataclass.serializers.config import SerializerConfig
-from xsdata.formats.dataclass.parsers import XmlParser
 
-class XMLType(Enum):
-    STUDY='STUDY',
-    SAMPLE='SAMPLE',
-    EXPERIMENT='EXPERIMENT',
-    RUN='RUN'
-
-class EnaArchive:
-    def __init__(self, uuid):
-        self.ena_url = os.environ.get('ENA_WEBIN_API_URL')
-        self.ena_user = os.environ.get('ENA_USER')
-        self.ena_password = os.environ.get('ENA_PASSWORD')
-        self.session = requests.Session()
-
-        self.uuid = uuid
-        self.data = HcaData(uuid).get()
-        self.convert()
-
-    def convert(self):
-        config = SerializerConfig(pretty_print=True)
-        serializer = XmlSerializer(config=config)
-
-        experiment_set = EnaExperiment(self.data).create_set()
-        print(serializer.render(experiment_set))
-
-        run_set = EnaRun(self.data).create_set()
-        print(serializer.render(run_set))
-
-    def convert_and_submit(self):
-        config = SerializerConfig(pretty_print=True)
-        serializer = XmlSerializer(config=config)
-
-        experiment_set = EnaExperiment(self.data).create_set()
-        experiments = serializer.render(experiment_set)
-        self.post_experiments(experiments)
-
-        run_set = EnaRun(self.data).create_set()
-        runs = (serializer.render(run_set))
-        self.post_runs(runs)
-
-
-    def post_xml(self, xml_type:XMLType, xml:any, update=False):
-        action = 'ADD' # default
-        if update:
-            action='MODIFY'
-
-        response=self.session.post(self.ena_url, files={xml_type.name: xml}, data={'ACTION': action}, auth=(self.ena_user, self.ena_password))
-        receipt_xml = response.text
-        return receipt_xml
-
-
-
-def handle_exception(f):
-    @functools.wraps(f)
-    def error(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except KeyError as e:
-            logging.error(f'HcaData KeyError: source entity does not contain key: {str(e)}')
-        except Exception as e:
-            logging.error(f'HcaData Exception: {str(e)}')
-
-    return error
-
-
-class HcaData(IngestAPI):
+class AssayData(IngestAPI):
     """
     Assay:
     [Biomaterial]  --> |   Process  |  -->  [File]
@@ -102,31 +28,30 @@ class HcaData(IngestAPI):
         IngestAPI.__init__(self)
         self.logger = logging.getLogger(__name__)
         self.uuid = uuid
+        self.submission = self.get_submission_by_uuid(uuid)
+        self.project = self.get_project()
+        self.study_accession = self.get_study_accession()
+        self.assays = self.get_assays()
 
-    @handle_exception
-    def get(self):
-        url = f'{self.url}/submissionEnvelopes/search/findByUuidUuid?uuid={self.uuid}'
-        response = self.session.get(url, headers=self.headers)
-        self.submission = None
-
-        if response.ok:
-            self.submission = response.json()
-
-            # get project
-            projects = self.get_submission_entities('projects')
-            if projects:
-                if len(projects) == 1:
-                    self.submission["project"] = projects[0]
-                    self.logger.info(f'Project UUID {self.submission["project"]["uuid"]["uuid"]}.')
-                else:
-                    self.logger.debug(f'Multiple projects linked to submission {self.uuid}.')
+    def get_project(self):
+        projects = self.get_submission_entities('projects')
+        if projects:
+            if len(projects) == 1:
+                return projects[0]
             else:
-                self.logger.debug(
-                    f'No project linked to submission {self.uuid}. Sequencing Experiment requires a study accession.')
-
-            self.get_assays()
+                raise Exception(f'Multiple projects linked to submission {self.uuid}.')
         else:
-            self.logger.debug(f"Invalid response: {response.status_code}")
+            raise Exception(f'No project linked to submission {self.uuid}.')
+
+    def get_study_accession(self):
+        try:
+            accessions = self.project["content"]["insdc_project_accessions"]
+            for accession in accessions:
+                if accession.startswith("ERP") or accession.startswith("PRJ"):
+                    return accession
+            raise Exception
+        except:
+            raise Exception('Sequencing Experiment requires a study accession.')
 
     def get_assays(self):
         assays = []
@@ -174,7 +99,7 @@ class HcaData(IngestAPI):
                 assays.append(process)
 
         self.logger.info(f'{len(assays)} assay processes found.')
-        self.submission["assays"] = assays
+        return assays
 
     def get_input_biomaterials(self, process):
         input_biomaterials = self.get_all_entities(process["_links"]["inputBiomaterials"]["href"],

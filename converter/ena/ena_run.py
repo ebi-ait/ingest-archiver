@@ -10,10 +10,10 @@ class EnaRun(EnaModel):
     FILE_CHECKSUM_METHOD = 'MD5'
     SEQUENCE_FILE_TYPES = ['fq', 'fastq', 'fq.gz', 'fastq.gz']
 
-    def __init__(self, hca_data):
+    def __init__(self, assay_data):
         self.logger = logging.getLogger(__name__)
-        self.submission = hca_data.submission
-        self.assays = hca_data.submission["assays"]
+        self.submission = assay_data.submission
+        self.assays = assay_data.submission["assays"]
 
         self.ena_upload_area_path = f'{ENA_FTP_DIR}/{self.submission["uuid"]["uuid"]}/'
 

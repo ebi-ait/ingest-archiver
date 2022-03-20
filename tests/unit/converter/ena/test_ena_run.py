@@ -1,8 +1,8 @@
 import unittest
 
 from config import ENA_FTP_DIR
+from hca.assay import HcaAssay
 from converter.ena.classes import FileFiletype
-from converter.ena.ena import HcaData
 from converter.ena.ena_run import EnaRun
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
@@ -12,22 +12,22 @@ class TestEnaRun(unittest.TestCase):
     serializer = XmlSerializer(config=SerializerConfig(pretty_print=True))
 
     def test_valid_run(self):
-        hca_data_valid = HcaData('uuid')
-        hca_data_valid.submission = EnaRunTestData.submission()
+        hca_assay_valid = HcaAssay('uuid')
+        hca_assay_valid.submission = EnaRunTestData.submission()
 
-        run = EnaRun(hca_data_valid).create(hca_data_valid.submission["assays"][0])
+        run = EnaRun(hca_assay_valid).create(hca_assay_valid.submission["assays"][0])
         generated_xml = self.serializer.render(run)
 
         self.assertEqual(generated_xml, EnaRunTestData.xml())
 
 
     def test_invalid_run_keyerror(self):
-        hca_data_no_sub_uuid = HcaData('uuid')
-        hca_data_no_sub_uuid.submission = EnaRunTestData.submission()
-        del hca_data_no_sub_uuid.submission["uuid"]
+        hca_assay_no_sub_uuid = HcaAssay('uuid')
+        hca_assay_no_sub_uuid.submission = EnaRunTestData.submission()
+        del hca_assay_no_sub_uuid.submission["uuid"]
 
         with self.assertRaises(KeyError):
-            EnaRun(hca_data_no_sub_uuid).create(hca_data_no_sub_uuid.submission["assays"][0])
+            EnaRun(hca_assay_no_sub_uuid).create(hca_assay_no_sub_uuid.submission["assays"][0])
 
 
 class EnaRunTestData:

@@ -1,7 +1,7 @@
 import unittest
 
+from hca.assay import AssayData
 from converter.ena.classes import TypeLibraryStrategy, TypeLibrarySource
-from converter.ena.ena import HcaData
 from converter.ena.ena_experiment import EnaExperiment, HcaEnaMapping
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
@@ -12,22 +12,22 @@ class TestEnaExperiment(unittest.TestCase):
     serializer = XmlSerializer(config=config)
 
     def test_valid_experiment(self):
-        hca_data_valid = HcaData('uuid')
-        hca_data_valid.submission = EnaExperimentTestData.submission()
+        assay_data_valid = AssayData('uuid')
+        assay_data_valid.submission = EnaExperimentTestData.submission()
 
-        experiment = EnaExperiment(hca_data_valid).create(hca_data_valid.submission["assays"][0])
+        experiment = EnaExperiment(assay_data_valid).create(assay_data_valid.submission["assays"][0])
         generated_xml = self.serializer.render(experiment)
 
         self.assertEqual(generated_xml, EnaExperimentTestData.xml())
 
 
     def test_invalid_experiment_keyerror(self):
-        hca_data_no_project_content = HcaData('uuid')
-        hca_data_no_project_content.submission = EnaExperimentTestData.submission()
-        del hca_data_no_project_content.submission["assays"][0]["sequencing_protocol"]
+        hca_assay_no_project_content = HcaAssay('uuid')
+        hca_assay_no_project_content.submission = EnaExperimentTestData.submission()
+        del hca_assay_no_project_content.submission["assays"][0]["sequencing_protocol"]
 
         with self.assertRaises(KeyError):
-            EnaExperiment(hca_data_no_project_content).create(hca_data_no_project_content.submission["assays"][0])
+            EnaExperiment(hca_assay_no_project_content).create(hca_assay_no_project_content.submission["assays"][0])
 
 
 class EnaExperimentTestData:

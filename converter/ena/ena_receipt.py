@@ -1,7 +1,7 @@
 from xsdata.formats.dataclass.parsers import XmlParser
 
 from converter.ena.classes import Receipt
-from converter.ena.ena import XMLType
+from converter.ena.base import XMLType
 
 
 class EnaReceipt:
@@ -14,7 +14,7 @@ class EnaReceipt:
         errors, accessions = [], []
         if self.receipt.success:
             ids = []
-            if self.xml_type == XMLType.STUDY:
+            if self.xml_type == XMLType.PROJECT:
                 ids = self.receipt.project
             elif self.xml_type == XMLType.SAMPLE:
                 ids = self.receipt.sample

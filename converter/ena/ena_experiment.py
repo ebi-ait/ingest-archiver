@@ -6,18 +6,28 @@ from converter.ena.base import EnaModel
 
 class EnaExperiment(EnaModel):
 
-    def __init__(self, hca_data):
-        self.submission = hca_data.submission
-        self.assays = hca_data.submission["assays"]
+    def __init__(self, project_accession):
+        self.project_accession = project_accession
 
-    def create_set(self):
+    def archive(self, assay):
+        #exp = create()
+        #if exp has accession -> MODIFY, else ADD
+        #receipt = submit(exp)
+        #accession = process_receipt(receipt)
+        #update_ingest(accession)
+        return process_url, ena_accession
+
+
+    def create_set(self, assays):
         experiment_set = ExperimentSet()
-        for assay in self.assays:
+        for assay in assays:
             experiment_set.experiment.append(self.create(assay))
 
         return experiment_set
 
     def create(self, assay):
+
+        experiment_accession = assay["content"]["insdc_experiment"]["insdc_experiment_accession"] = None
 
         sequencing_protocol = assay["sequencing_protocol"]
         library_preparation_protocol = assay["library_preparation_protocol"]
@@ -45,16 +55,7 @@ class EnaExperiment(EnaModel):
         experiment.design.sample_descriptor.accession = sample_accession
 
         experiment.study_ref = RefObjectType()
-        study_accession = None
-        if "project" in self.submission: # check needed as some submissions still seem not to be linked to a project
-            if "content" in self.submission["project"] and "insdc_project_accessions" in self.submission["project"]["content"]:
-                accessions = self.submission["project"]["content"]["insdc_project_accessions"]
-                for accession in accessions:
-                    if accession.startswith("ERP") or accession.startswith("PRJ"):
-                        study_accession = accession
-                        break
-
-        experiment.study_ref.accession = study_accession
+        experiment.study_ref.accession = self.project_accession
 
         experiment.platform = self.ena_platform_type(sequencing_protocol)
         return experiment

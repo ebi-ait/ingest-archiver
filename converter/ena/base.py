@@ -2,8 +2,13 @@ from xml.etree.ElementTree import Element
 from abc import ABC, abstractmethod
 from json_converter.json_mapper import JsonMapper
 from lxml import etree
+from enum import Enum
+import requests
+from xsdata.formats.dataclass.serializers import XmlSerializer
+from xsdata.formats.dataclass.serializers.config import SerializerConfig
 
 from converter import fixed_attribute, get_concrete_type
+from config import ENA_WEBIN_API_URL, ENA_WEBIN_USERNAME, ENA_WEBIN_PASSWORD
 
 
 class BaseEnaConverter:
@@ -105,7 +110,19 @@ class BaseEnaConverter:
         return concrete_type
 
 
+class XMLType(Enum):
+    PROJECT='PROJECT',
+    SAMPLE='SAMPLE',
+    EXPERIMENT='EXPERIMENT',
+    RUN='RUN'
+
+
 class EnaModel(ABC):
+
+    PROJECT_ACCESSION_PREFIX="PRJ"
+    SAMPLE_ACCESSION_PREFIX="ERS"
+    EXPERIMENT_ACCESSION_PREFIX="ERX"
+    RUN_ACCESSION_PREFIX="ERR"
 
     @abstractmethod
     def create_set(self):
@@ -114,3 +131,16 @@ class EnaModel(ABC):
     @abstractmethod
     def create(self):
         pass
+
+    @staticmethod
+    def xml_str(model):
+        config = SerializerConfig(pretty_print=True)
+        serializer = XmlSerializer(config=config)
+        return serializer.render(model)
+
+    @staticmethod
+    def post(xml_type:XMLType, xml:any, update=False):
+        action = 'MODIFY' if update else 'ADD' # default
+        response=requests.post(ENA_WEBIN_API_URL, files={xml_type.name: xml}, data={'ACTION': action}, auth=(ENA_WEBIN_USERNAME, ENA_WEBIN_PASSWORD))
+        receipt_xml = response.text
+        return receipt_xml

@@ -1,7 +1,7 @@
 import unittest
 
 from converter.ena.classes import ReceiptActions
-from converter.ena.ena import XMLType
+from converter.ena.base import XMLType
 from converter.ena.ena_receipt import EnaReceipt
 
 
