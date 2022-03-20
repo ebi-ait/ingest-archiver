@@ -8,7 +8,7 @@ from converter.ena.ena_receipt import EnaReceipt
 class TestEnaReceipt(unittest.TestCase):
 
     def test_project_receipt(self):
-        ena_receipt = EnaReceipt(XMLType.STUDY, None, EnaReceiptTestData.PROJECT_RECEIPT)
+        ena_receipt = EnaReceipt(XMLType.PROJECT, None, EnaReceiptTestData.PROJECT_RECEIPT)
         errors, accessions = ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
         self.assertFalse(errors)
@@ -17,7 +17,7 @@ class TestEnaReceipt(unittest.TestCase):
         self.assertTrue((accessions[0][1]).startswith('PRJ'))
 
     def test_project_receipt_with_error(self):
-        ena_receipt = EnaReceipt(XMLType.STUDY, None, EnaReceiptTestData.PROJECT_RECEIPT_ERROR)
+        ena_receipt = EnaReceipt(XMLType.PROJECT, None, EnaReceiptTestData.PROJECT_RECEIPT_ERROR)
         errors, accessions = ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
         self.assertTrue(errors)
@@ -92,6 +92,21 @@ class TestEnaReceipt(unittest.TestCase):
         self.assertTrue(errors)
         self.assertFalse(accessions)
         self.assertTrue('already exists' in errors[0])
+
+    def test_run_receipt(self):
+        ena_receipt = EnaReceipt(XMLType.RUN, None, EnaReceiptTestData.RUN_RECEIPT)
+        errors, accessions = ena_receipt.process_receipt()
+        self.assertTrue(ena_receipt.receipt.success)
+        self.assertFalse(errors)
+        self.assertEqual(accessions[0][0], 'run_1')
+        self.assertTrue((accessions[0][1]).startswith('ERR'))
+
+    def test_run_receipt_error(self):
+        ena_receipt = EnaReceipt(XMLType.RUN, None, EnaReceiptTestData.RUN_RECEIPT_ERROR)
+        errors, accessions = ena_receipt.process_receipt()
+        self.assertFalse(ena_receipt.receipt.success)
+        self.assertTrue(errors)
+        self.assertFalse(accessions)
 
 
 class EnaReceiptTestData:
@@ -224,4 +239,23 @@ class EnaReceiptTestData:
 </RECEIPT>
     """
 
+    RUN_RECEIPT="""<RECEIPT receiptDate="2022-03-19T22:19:48.943Z" submissionFile="submission-USI_1647728388943.xml" success="true">
+     <RUN accession="ERR9322097" alias="run_1" status="PRIVATE"/>
+     <SUBMISSION accession="ERA10439822" alias="SUBMISSION-19-03-2022-22:19:48:797"/>
+     <MESSAGES>
+          <INFO>This submission is a TEST submission and will be discarded within 24 hours</INFO>
+     </MESSAGES>
+     <ACTIONS>ADD</ACTIONS>
+</RECEIPT>
+    """
 
+    RUN_RECEIPT_ERROR="""<RECEIPT receiptDate="2022-03-19T21:57:43.879Z" submissionFile="submission-USI_1647727063879.xml" success="false">
+     <RUN alias="run_1" status="PRIVATE"/>
+     <SUBMISSION alias="SUBMISSION-19-03-2022-21:57:43:836"/>
+     <MESSAGES>
+          <ERROR>In run, alias:"project_1647727061_run_1", accession:"". File size(bytes) for file_2.fastq.gz :  is null</ERROR>
+          <INFO>This submission is a TEST submission and will be discarded within 24 hours</INFO>
+     </MESSAGES>
+     <ACTIONS>ADD</ACTIONS>
+</RECEIPT>
+    """
