@@ -1,39 +1,39 @@
 import logging
-import functools
 from api.ingest import IngestAPI
+import sys
 
-class AssayData(IngestAPI):
+class AssayData:
     """
     Assay:
     [Biomaterial]  --> |   Process  |  -->  [File]
                        |     |      |
                        |     v      |
                        | [Protocol] |
-    "submission": {
+    "submission": {...}
+    "project": {...}
+    "assays": [
+        {
+            ... # process
+            "sequencing_protocol": {...},
+            "library_preparation_protocol": {...},
+            "input_biomaterials": [...],
+            "derived_files": [...]
+        },
         ...
-        "project": ...
-        "assays": [
-            {
-                ... # process
-                "sequencing_protocol": {...},
-                "library_preparation_protocol": {...},
-                "input_biomaterials": [...],
-                "derived_files": [...]
-            },
-            ...
-        ]
-    }
+    ]
     """
-    def __init__(self, uuid):
-        IngestAPI.__init__(self)
+    def __init__(self, ingest_api: IngestAPI, uuid: str):
         self.logger = logging.getLogger(__name__)
+        self.ingest_api = ingest_api
         self.uuid = uuid
-        self.submission = self.get_submission_by_uuid(uuid)
-        self.project = self.get_project()
-        self.study_accession = self.get_study_accession()
-        self.assays = self.get_assays()
 
-    def get_project(self):
+    def load(self):
+        self.submission = self.ingest_api.get_submission_by_uuid(self.uuid)
+        self.project = self.get_submission_project()
+        self.study_accession = self.get_study_accession()
+        self.assays = self.get_submission_assays()
+
+    def get_submission_project(self):
         projects = self.get_submission_entities('projects')
         if projects:
             if len(projects) == 1:
@@ -53,7 +53,7 @@ class AssayData(IngestAPI):
         except:
             raise Exception('Sequencing Experiment requires a study accession.')
 
-    def get_assays(self):
+    def get_submission_assays(self):
         assays = []
         # get processes
         processes = self.get_submission_entities('processes')
@@ -146,12 +146,11 @@ class AssayData(IngestAPI):
             return None
 
     def get_all_entities(self, url, entity_type, entities=[]):
-        response = self.session.get(url, headers=self.headers)
-        response.raise_for_status()
-        if "_embedded" in response.json():
-            entities += response.json()["_embedded"][entity_type]
+        response_json = self.ingest_api.get(url)
+        if "_embedded" in response_json:
+            entities += response_json["_embedded"][entity_type]
 
-            if "next" in response.json()["_links"]:
-                url = response.json()["_links"]["next"]["href"]
+            if "next" in response_json["_links"]:
+                url = response_json["_links"]["next"]["href"]
                 self.get_all_entities(url, entity_type, entities)
         return entities
