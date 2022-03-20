@@ -1,7 +1,7 @@
 import unittest
 
 from config import ENA_FTP_DIR
-from hca.assay import HcaAssay
+from hca.assay import AssayData
 from converter.ena.classes import FileFiletype
 from converter.ena.ena_run import EnaRun
 from xsdata.formats.dataclass.serializers import XmlSerializer
@@ -12,22 +12,19 @@ class TestEnaRun(unittest.TestCase):
     serializer = XmlSerializer(config=SerializerConfig(pretty_print=True))
 
     def test_valid_run(self):
-        hca_assay_valid = HcaAssay('uuid')
-        hca_assay_valid.submission = EnaRunTestData.submission()
-
-        run = EnaRun(hca_assay_valid).create(hca_assay_valid.submission["assays"][0])
+        assay_data = EnaRunTestData.test_assay_data()
+        run = EnaRun(EnaRunTestData.protocol_id).create(assay_data.assays[0])
         generated_xml = self.serializer.render(run)
 
         self.assertEqual(generated_xml, EnaRunTestData.xml())
 
 
     def test_invalid_run_keyerror(self):
-        hca_assay_no_sub_uuid = HcaAssay('uuid')
-        hca_assay_no_sub_uuid.submission = EnaRunTestData.submission()
-        del hca_assay_no_sub_uuid.submission["uuid"]
+        assay_data = EnaRunTestData.test_assay_data()
+        del assay_data.assays[0]["sequencing_protocol"]
 
         with self.assertRaises(KeyError):
-            EnaRun(hca_assay_no_sub_uuid).create(hca_assay_no_sub_uuid.submission["assays"][0])
+            EnaRun(EnaRunTestData.protocol_id).create(assay_data.assays[0])
 
 
 class EnaRunTestData:
@@ -38,59 +35,67 @@ class EnaRunTestData:
     protocol_desc = "seq_protocol_1 desc"
     file_name_1 = "file1.fq"
     file_format_1 = "fastq"
-    file_md5_1 = "test_md5"
+    file_md5_1 = "md5_1"
     file_name_2 = "file2.fq"
     file_format_2 = "fq"
-    file_md5_2 = "MISSING_MD5"
+    file_md5_2 = "md5_2"
 
     @staticmethod
-    def submission():
-        return {
-            "uuid" : { "uuid": EnaRunTestData.sub_uuid },
-            "assays": [
-            {   "content": { "process_core": { "process_id": EnaRunTestData.process_id } },
-                "uuid": {"uuid": EnaRunTestData.process_uuid },
-                "sequencing_protocol": {
-                    "content":
-                        {
-                            "protocol_core": {
-                                "protocol_id": EnaRunTestData.protocol_id,
-                                "protocol_description": EnaRunTestData.protocol_desc
-                            }
-                        }
-                },
-                "derived_files": [{
-                    "content":
-                        {
-                            "file_core": {
-                                "file_name": EnaRunTestData.file_name_1,
-                                "format": EnaRunTestData.file_format_1
-                            }
-                        },
-                    "archiveResult": { "md5" : EnaRunTestData.file_md5_1 }
-                }, {
-                    "content":
-                        {
-                            "file_core": {
-                                "file_name": EnaRunTestData.file_name_2,
-                                "format": EnaRunTestData.file_format_2
-                            }
-                        }
-                }]
-            }
-        ]
-        }
+    def test_assay_data():
+        assay_data = AssayData(None, EnaRunTestData.sub_uuid)
+        assay_data.assays = [
+            {"content": {"process_core": {"process_id": EnaRunTestData.process_id}},
+             "uuid": {"uuid": EnaRunTestData.process_uuid},
+             "sequencing_protocol": {
+                 "content":
+                     {
+                         "protocol_core": {
+                             "protocol_id": EnaRunTestData.protocol_id,
+                             "protocol_description": EnaRunTestData.protocol_desc
+                         }
+                     }
+             },
+             "derived_files": [{
+                 "content":
+                     {
+                         "file_core": {
+                             "file_name": EnaRunTestData.file_name_1,
+                             "format": EnaRunTestData.file_format_1
+                         }
+                     },
+                 "fileArchiveResult": {
+                     "md5": EnaRunTestData.file_md5_1,
+                     "enaUploadPath": EnaRunTestData.file_name_1,
+                     "error": None
+                 }
+             }, {
+                 "content":
+                     {
+                         "file_core": {
+                             "file_name": EnaRunTestData.file_name_2,
+                             "format": EnaRunTestData.file_format_2
+                         }
+                     },
+                 "fileArchiveResult": {
+                     "md5": EnaRunTestData.file_md5_2,
+                     "enaUploadPath": EnaRunTestData.file_name_2,
+                     "error": None
+                 }
+             }
+             ]
+             }]
+        return assay_data
 
     @staticmethod
     def xml():
         return f"""<?xml version="1.0" encoding="UTF-8"?>
-<RUN alias="{EnaRunTestData.process_uuid}">
+<RUN alias="{EnaRunTestData.protocol_id}">
   <TITLE>{EnaRunTestData.process_id}</TITLE>
-  <EXPERIMENT_REF refname="{EnaRunTestData.protocol_id}"/>
+  <EXPERIMENT_REF accession="{EnaRunTestData.protocol_id}"/>
   <DATA_BLOCK>
     <FILES>
-      <FILE filename="{ENA_FTP_DIR}/{EnaRunTestData.sub_uuid}/{EnaRunTestData.file_name_1}" filetype="{FileFiletype.FASTQ.value}" checksum_method="MD5" checksum="{EnaRunTestData.file_md5_1}"/>
-      <FILE filename="{ENA_FTP_DIR}/{EnaRunTestData.sub_uuid}/{EnaRunTestData.file_name_2}" filetype="{FileFiletype.FASTQ.value}" checksum_method="MD5" checksum="{EnaRunTestData.file_md5_2}"/>
+      <FILE filename="{EnaRunTestData.file_name_1}" filetype="{FileFiletype.FASTQ.value}" checksum_method="MD5" checksum="{EnaRunTestData.file_md5_1}"/>
+      <FILE filename="{EnaRunTestData.file_name_2}" filetype="{FileFiletype.FASTQ.value}" checksum_method="MD5" checksum="{EnaRunTestData.file_md5_2}"/>
     </FILES>
   </DATA_BLOCK>
   <RUN_ATTRIBUTES>

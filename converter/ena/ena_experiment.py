@@ -6,8 +6,8 @@ from converter.ena.base import EnaModel
 
 class EnaExperiment(EnaModel):
 
-    def __init__(self, project_accession):
-        self.project_accession = project_accession
+    def __init__(self, study_ref):
+        self.study_ref = study_ref
 
     def archive(self, assay):
         #exp = create()
@@ -27,8 +27,6 @@ class EnaExperiment(EnaModel):
 
     def create(self, assay):
 
-        experiment_accession = assay["content"]["insdc_experiment"]["insdc_experiment_accession"] = None
-
         sequencing_protocol = assay["sequencing_protocol"]
         library_preparation_protocol = assay["library_preparation_protocol"]
         input_biomaterials = assay["input_biomaterials"]
@@ -37,7 +35,11 @@ class EnaExperiment(EnaModel):
         experiment.experiment_attributes = Experiment.ExperimentAttributes()
         experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=sequencing_protocol["content"]["protocol_core"]["protocol_description"]))
 
-        experiment.alias = sequencing_protocol["content"]["protocol_core"]["protocol_id"]
+        experiment_accession = self.get_experiment_accession(assay)
+        if experiment_accession:
+            experiment.accession = experiment_accession
+        else:
+            experiment.alias = sequencing_protocol["content"]["protocol_core"]["protocol_id"]
         experiment.title = sequencing_protocol["content"]["protocol_core"]["protocol_name"]
 
         experiment.design = LibraryType()
@@ -55,10 +57,19 @@ class EnaExperiment(EnaModel):
         experiment.design.sample_descriptor.accession = sample_accession
 
         experiment.study_ref = RefObjectType()
-        experiment.study_ref.accession = self.project_accession
+        experiment.study_ref.accession = self.study_ref
 
         experiment.platform = self.ena_platform_type(sequencing_protocol)
         return experiment
+
+    def get_experiment_accession(self, assay):
+        experiment_accession = None
+        try:
+            experiment_accession = assay["content"]["insdc_experiment"]["insdc_experiment_accession"]
+        except KeyError:
+            pass # not accessioned (i.e archived) yet.
+        return experiment_accession
+
 
     def ena_library_name_and_accession(self, input_biomaterials):
         # unlikely to have multiple biomaterial inputs it is still possible, ena takes one accession only, so
