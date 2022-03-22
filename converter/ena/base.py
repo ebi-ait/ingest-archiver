@@ -117,6 +117,10 @@ class XMLType(Enum):
     RUN='RUN'
 
 
+class EnaArchiveException(Exception):
+    pass
+
+
 class EnaModel(ABC):
 
     PROJECT_ACCESSION_PREFIX="PRJ"
