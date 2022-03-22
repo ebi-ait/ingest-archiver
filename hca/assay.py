@@ -154,3 +154,30 @@ class AssayData:
                 url = response_json["_links"]["next"]["href"]
                 self.get_all_entities(url, entity_type, entities)
         return entities
+
+    def update_ingest_process_insdc_experiment_accession(self, process_uuid, experiment_accession):
+        process_content_patch = {
+            "content": {
+                "insdc_experiment": {
+                    "insdc_experiment_accession": experiment_accession
+                }
+            }
+        }
+        self.ingest_api.patch_entity_by_id('process', process_uuid, process_content_patch)
+
+    def update_ingest_file_insdc_run_accessions(self, file_uuid, run_accessions):
+        file_content_patch = {
+            "content": {
+                "insdc_run_accessions": run_accessions
+            }
+        }
+        self.ingest_api.patch_entity_by_id('file', file_uuid, file_content_patch)
+
+if __name__ == "__main__":
+    logging.getLogger('ingest-data-archiver').setLevel(logging.INFO)
+
+    format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
+             '%(lineno)s %(funcName)s(): %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=format)
+    AssayData(IngestAPI(), '7e02989b-7855-4a87-ae62-d5e361454222')

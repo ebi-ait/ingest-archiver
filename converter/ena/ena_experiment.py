@@ -2,6 +2,7 @@ from converter.ena.classes import AttributeType
 from converter.ena.classes.sra_common import PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentSet, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
 from converter.ena.base import EnaModel
+from converter.ena.ena_receipt import EnaReceipt
 
 
 class EnaExperiment(EnaModel):
@@ -10,13 +11,13 @@ class EnaExperiment(EnaModel):
         self.study_ref = study_ref
 
     def archive(self, assay):
-        #exp = create()
-        #if exp has accession -> MODIFY, else ADD
-        #receipt = submit(exp)
-        #accession = process_receipt(receipt)
-        #update_ingest(accession)
-        return process_url, ena_accession
-
+        experiment = self.create(assay)
+        input_xml = self.xml_str(experiment)
+        receipt_xml = self.post(XMLType.EXPERIMENT, input_xml, update=True if experiment.accession else False)
+        accessions = EnaReceipt(XMLType.EXPERIMENT, input_xml, receipt_xml).process_receipt()
+        if accessions and len(accessions) == 1:
+            return accessions[0]
+        raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):
         experiment_set = ExperimentSet()

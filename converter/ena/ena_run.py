@@ -2,7 +2,8 @@ import logging
 from config import ENA_FTP_DIR
 from converter.ena.classes import Run, RunType, FileFiletype, RunSet, AttributeType
 from converter.ena.classes.sra_common import RefObjectType
-from converter.ena.base import EnaModel
+from converter.ena.base import EnaModel, XMLType, EnaArchiveException
+from converter.ena.ena_receipt import EnaReceipt
 
 
 class EnaRun(EnaModel):
@@ -12,6 +13,17 @@ class EnaRun(EnaModel):
 
     def __init__(self, experiment_ref):
         self.experiment_ref = experiment_ref
+
+    # Todo: extract function to parent class
+    def archive(self, assay):
+        run = self.create(assay)
+        input_xml = self.xml_str(run)
+        receipt_xml = self.post(XMLType.RUN, input_xml, update=True if run.accession else False)
+        accessions = EnaReceipt(XMLType.RUN, input_xml, receipt_xml).process_receipt()
+        if accessions and len(accessions) == 1:
+            return accessions[0]
+        raise EnaArchiveException('Ena archive no accession returned.')
+
 
     def archive(self, assay):
         #exp = create()

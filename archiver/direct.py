@@ -76,57 +76,46 @@ class DirectArchiver:
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
 
-        # archive ENA experiments and runs from HCA assays
-        archives_responses['ena']['assays'] = []
-
-        # get assay data
-        assay_data = AssayData('uuid').load()
-        assays = assay_data["assays"]
-        project = assay_data["project"]
-        project_ref = None
-        submission = assay_data["submission"]
-
-        for assay in assays:
-            result = {}
-            result['process_uuid'] = None
-            # experiment_accession, err = EnaExperiment().archive()
-            result['experiment_accession'] = None
-            # run_accession = EnaRun().archive()
-            result['run_accession'] = None
-            archives_responses['ena']['assays'].append(result)
-            pass
+            self.archive_ena_experiments_and_runs(archives_responses)
 
         return archives_responses
 
-    def test(self):
-        response = {
-            'biosamples': {
-                'error': None,
-                'accessions': []
-            },
-            'biostudies': {
-                'error': None,
-                'accessions': []
-            },
-            'ena': {
-                'study': {
-                    'error': None,
-                    'accessions': []
-                },
-                'experiments': {
-                    'errors': None,
-                    'accessions': []
-                },
-                'run': {
-                    'errors': None,
-                    'accessions': []
-                },
-                'files': {
-                    'errors': None,
-                    'accessions': []
-                }
-            }
-        }
+    def archive_ena_experiments_and_runs(self, archives_responses):
+        # archive ENA experiments and runs from HCA assays
+        archives_responses['ena']['experiments'] = []
+        archives_responses['ena']['runs'] = []
+
+        # get assay data
+        data = AssayData('uuid')
+        data.load()
+        study_ref = data.get_study_accession()
+
+        for assay in data.assays:
+            # archive experiment
+            ena_experiment = EnaExperiment(study_ref)
+            experiment_accession = ena_experiment.archive(assay)
+            process_uuid = assay["uuid"]["uuid"]
+            data.update_ingest_process_insdc_experiment_accession(process_uuid, experiment_accession)
+
+            archives_responses['ena']['experiments'].append({
+                "process_uuid": process_uuid,
+                "experiment_accession": experiment_accession
+            })
+
+            # archive run
+            ena_run = EnaRun(experiment_accession)
+            run_accession = ena_run.archive(assay)
+            files = []
+            for file in assay["derived_files"]:
+                file_uuid = file["uuid"]["uuid"]
+                files.append(file_uuid)
+                data.update_ingest_file_insdc_run_accessions(file_uuid, run_accession)
+
+            archives_responses['ena']['runs'].append({
+                "process_uuid": process_uuid,
+                "run_accession": run_accession,
+                "files": files
+            })
 
 
     @staticmethod
