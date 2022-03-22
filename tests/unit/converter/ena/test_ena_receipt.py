@@ -1,7 +1,7 @@
 import unittest
 
 from converter.ena.classes import ReceiptActions
-from converter.ena.base import XMLType
+from converter.ena.base import XMLType, EnaArchiveException
 from converter.ena.ena_receipt import EnaReceipt
 
 
@@ -9,104 +9,93 @@ class TestEnaReceipt(unittest.TestCase):
 
     def test_project_receipt(self):
         ena_receipt = EnaReceipt(XMLType.PROJECT, None, EnaReceiptTestData.PROJECT_RECEIPT)
-        errors, accessions = ena_receipt.process_receipt()
+        accessions = ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
-        self.assertFalse(errors)
         self.assertTrue(accessions)
         self.assertEqual(accessions[0][0], 'project_1')
         self.assertTrue((accessions[0][1]).startswith('PRJ'))
 
     def test_project_receipt_with_error(self):
         ena_receipt = EnaReceipt(XMLType.PROJECT, None, EnaReceiptTestData.PROJECT_RECEIPT_ERROR)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
-        self.assertFalse(accessions)
-        self.assertTrue("already exists" in errors[0])
+        self.assertTrue("already exists" in str(context.exception))
 
     def test_sample_receipt(self):
         ena_receipt = EnaReceipt(XMLType.SAMPLE, None, EnaReceiptTestData.SAMPLE_RECEIPT)
-        errors, accessions = ena_receipt.process_receipt()
+        accessions = ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
-        self.assertFalse(errors)
         self.assertTrue(accessions)
         self.assertEqual(accessions[0][0], 'sample_1')
         self.assertTrue((accessions[0][1]).startswith('ERS'))
 
     def test_sample_receipt_with_error(self):
         ena_receipt = EnaReceipt(XMLType.SAMPLE, None, EnaReceiptTestData.SAMPLE_RECEIPT_ERROR)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
-        self.assertFalse(accessions)
-        self.assertTrue("already exists" in errors[0])
+        self.assertTrue("already exists" in str(context.exception))
 
     def test_sample_receipt_modify(self):
         ena_receipt = EnaReceipt(XMLType.SAMPLE, None, EnaReceiptTestData.SAMPLE_RECEIPT_MODIFY)
-        errors, accessions = ena_receipt.process_receipt()
+        ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
         self.assertTrue(ena_receipt.receipt.actions)
         self.assertEqual(ena_receipt.receipt.actions[0], ReceiptActions.MODIFY)
 
     def test_samples_receipt(self):
         ena_receipt = EnaReceipt(XMLType.SAMPLE, None, EnaReceiptTestData.SAMPLES_RECEIPT)
-        errors, accessions = ena_receipt.process_receipt()
+        accessions = ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
-        self.assertFalse(errors)
         self.assertTrue(len(accessions) > 1)
 
     def test_samples_receipt_errors(self):
         ena_receipt = EnaReceipt(XMLType.SAMPLE, None, EnaReceiptTestData.SAMPLES_RECEIPT_ERROR)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
 
     def test_experiment_receipt(self):
         ena_receipt = EnaReceipt(XMLType.EXPERIMENT, None, EnaReceiptTestData.EXPERIMENT_RECEIPT)
-        errors, accessions = ena_receipt.process_receipt()
+        accessions = ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
-        self.assertFalse(errors)
         self.assertEqual(accessions[0][0], 'seq_protocol_1')
         self.assertTrue((accessions[0][1]).startswith('ERX'))
 
     def test_experiment_receipt_error_ref_study_not_found(self):
         ena_receipt = EnaReceipt(XMLType.EXPERIMENT, None, EnaReceiptTestData.EXPERIMENT_RECEIPT_ERROR_1)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
-        self.assertFalse(accessions)
-        self.assertTrue('Failed to find referenced study' in errors[0])
+        self.assertTrue('Failed to find referenced study' in str(context.exception))
 
     def test_experiment_receipt_error_ref_sample_not_found(self):
         ena_receipt = EnaReceipt(XMLType.EXPERIMENT, None, EnaReceiptTestData.EXPERIMENT_RECEIPT_ERROR_2)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
-        self.assertFalse(accessions)
-        self.assertTrue('Failed to find referenced sample' in errors[0])
+        self.assertTrue('Failed to find referenced sample' in str(context.exception))
 
     def test_experiment_receipt_error_already_exists(self):
         ena_receipt = EnaReceipt(XMLType.EXPERIMENT, None, EnaReceiptTestData.EXPERIMENT_RECEIPT_ERROR_3)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
-        self.assertFalse(accessions)
-        self.assertTrue('already exists' in errors[0])
+        self.assertTrue('already exists' in str(context.exception))
 
     def test_run_receipt(self):
         ena_receipt = EnaReceipt(XMLType.RUN, None, EnaReceiptTestData.RUN_RECEIPT)
-        errors, accessions = ena_receipt.process_receipt()
+        accessions = ena_receipt.process_receipt()
         self.assertTrue(ena_receipt.receipt.success)
-        self.assertFalse(errors)
         self.assertEqual(accessions[0][0], 'run_1')
         self.assertTrue((accessions[0][1]).startswith('ERR'))
 
     def test_run_receipt_error(self):
         ena_receipt = EnaReceipt(XMLType.RUN, None, EnaReceiptTestData.RUN_RECEIPT_ERROR)
-        errors, accessions = ena_receipt.process_receipt()
+        with self.assertRaises(EnaArchiveException) as context:
+            ena_receipt.process_receipt()
         self.assertFalse(ena_receipt.receipt.success)
-        self.assertTrue(errors)
-        self.assertFalse(accessions)
 
 
 class EnaReceiptTestData:
