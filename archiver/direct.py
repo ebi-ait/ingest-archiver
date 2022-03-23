@@ -24,9 +24,6 @@ from submitter.ena import EnaSubmitter
 
 from converter.ena.ena_experiment import EnaExperiment
 from converter.ena.ena_run import EnaRun
-from xsdata.formats.dataclass.serializers import XmlSerializer
-from xsdata.formats.dataclass.serializers.config import SerializerConfig
-from config import ENA_WEBIN_API_URL, ENA_WEBIN_USERNAME, ENA_WEBIN_PASSWORD
 
 
 class DirectArchiver:

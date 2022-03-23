@@ -172,12 +172,3 @@ class AssayData:
             }
         }
         self.ingest_api.patch_entity_by_id('file', file_uuid, file_content_patch)
-
-if __name__ == "__main__":
-    logging.getLogger('ingest-data-archiver').setLevel(logging.INFO)
-
-    format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
-             '%(lineno)s %(funcName)s(): %(message)s'
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                        format=format)
-    AssayData(IngestAPI(), '7e02989b-7855-4a87-ae62-d5e361454222')
