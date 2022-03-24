@@ -1,5 +1,38 @@
 # How to test/trigger the direct archiver
 
+## Data files archive
+Before proceeding to the metadata archiving, the sequence files first need to be archived.
+This can be triggered by sending a HTTP POST request to the `/archiveSubmissions/data` endpoint of the ingest archiver.
+
+Follow the steps:
+1. Select the correct Archiver endpoint (`ingest_archiver_url`) depending on the environment
+    - dev - https://archiver.ingest.dev.archive.data.humancellatlas.org
+    - staging - https://archiver.ingest.staging.archive.data.humancellatlas.org
+    - prod - https://archiver.ingest.archive.data.humancellatlas.org
+    
+2. Get the Archiver API key (`archiver_api_key`).
+```
+aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .{env}_archiver_api_key
+```
+Replace `{env}` with `dev`, `staging` or `prod` in the command above.
+
+3. Trigger the data archive request
+```
+curl -X POST {ingest_archiver_url}/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:{archiver_api_key}" -d '{"sub_uuid": "{sub_uuid}"}'
+```
+
+Where `sub_uuid` refers to the submission UUID for which sequence data files are to be archived.
+
+4. Check the data archive result.
+
+```
+curl -X GET {ingest_archiver_url}/archiveSubmissions/data/<sub_uuid>' -H "Api-Key:{archiver_api_key}" 
+```
+Only proceed to metadata archive if all data files are successful archived. This may take a while for large submission so please be patient and check regularly until all files are archived.
+
+## Metadata archive
+
+
 There is a script to trigger the direct archiver under the repository's root folder: `submit_to_archives.py`.
 It needs the `submission_UUID` as the input parameter.
 

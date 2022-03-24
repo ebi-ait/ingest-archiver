@@ -1,7 +1,7 @@
 import unittest
 
+from hca.assay import AssayData
 from converter.ena.classes import TypeLibraryStrategy, TypeLibrarySource
-from converter.ena.ena import HcaData
 from converter.ena.ena_experiment import EnaExperiment, HcaEnaMapping
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
@@ -12,22 +12,20 @@ class TestEnaExperiment(unittest.TestCase):
     serializer = XmlSerializer(config=config)
 
     def test_valid_experiment(self):
-        hca_data_valid = HcaData('uuid')
-        hca_data_valid.submission = EnaExperimentTestData.submission()
+        assay_data = EnaExperimentTestData.test_assay_data()
 
-        experiment = EnaExperiment(hca_data_valid).create(hca_data_valid.submission["assays"][0])
+        experiment = EnaExperiment(EnaExperimentTestData.project_acc).create(assay_data.assays[0])
         generated_xml = self.serializer.render(experiment)
 
         self.assertEqual(generated_xml, EnaExperimentTestData.xml())
 
 
     def test_invalid_experiment_keyerror(self):
-        hca_data_no_project_content = HcaData('uuid')
-        hca_data_no_project_content.submission = EnaExperimentTestData.submission()
-        del hca_data_no_project_content.submission["assays"][0]["sequencing_protocol"]
+        assay_data = EnaExperimentTestData.test_assay_data()
+        del assay_data.assays[0]["sequencing_protocol"]
 
         with self.assertRaises(KeyError):
-            EnaExperiment(hca_data_no_project_content).create(hca_data_no_project_content.submission["assays"][0])
+            EnaExperiment(EnaExperimentTestData.project_acc).create(assay_data.assays[0])
 
 
 class EnaExperimentTestData:
@@ -42,12 +40,13 @@ class EnaExperimentTestData:
     biomat_acc = "SAM007"
 
     @staticmethod
-    def submission():
-        return {"project": {
+    def test_assay_data():
+        assay_data = AssayData(None, 'uuid')
+        assay_data.project = {
             "content": {
                 "insdc_project_accessions": [ EnaExperimentTestData.project_acc ]
-            }},
-            "assays": [
+            }}
+        assay_data.assays = [
             {
                 "sequencing_protocol": {
                     "content":
@@ -80,7 +79,7 @@ class EnaExperimentTestData:
                 }]
             }
         ]
-        }
+        return assay_data
 
     @staticmethod
     def xml():

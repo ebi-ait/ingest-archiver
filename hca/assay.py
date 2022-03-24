@@ -1,95 +1,59 @@
 import logging
-import functools
 from api.ingest import IngestAPI
-from converter.ena.ena_experiment import EnaExperiment
-from converter.ena.ena_run import EnaRun
-from xsdata.formats.dataclass.serializers import XmlSerializer
-from xsdata.formats.dataclass.serializers.config import SerializerConfig
+import sys
 
-
-class EnaArchive:
-    def __init__(self, uuid):
-        self.uuid = uuid
-        self.data = HcaData(uuid).get()
-        self.convert()
-
-    def convert(self):
-        config = SerializerConfig(pretty_print=True)
-        serializer = XmlSerializer(config=config)
-
-        experiment_set = EnaExperiment(self.data).create_set()
-        print(serializer.render(experiment_set))
-
-        run_set = EnaRun(self.data).create_set()
-        print(serializer.render(run_set))
-
-
-def handle_exception(f):
-    @functools.wraps(f)
-    def error(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except KeyError as e:
-            logging.error(f'HcaData KeyError: source entity does not contain key: {str(e)}')
-        except Exception as e:
-            logging.error(f'HcaData Exception: {str(e)}')
-
-    return error
-
-
-class HcaData(IngestAPI):
+class AssayData:
     """
     Assay:
     [Biomaterial]  --> |   Process  |  -->  [File]
                        |     |      |
                        |     v      |
                        | [Protocol] |
-    "submission": {
+    "submission": {...}
+    "project": {...}
+    "assays": [
+        {
+            ... # process
+            "sequencing_protocol": {...},
+            "library_preparation_protocol": {...},
+            "input_biomaterials": [...],
+            "derived_files": [...]
+        },
         ...
-        "project": ...
-        "assays": [
-            {
-                ... # process
-                "sequencing_protocol": {...},
-                "library_preparation_protocol": {...},
-                "input_biomaterials": [...],
-                "derived_files": [...]
-            },
-            ...
-        ]
-    }
+    ]
     """
-    def __init__(self, uuid):
-        IngestAPI.__init__(self)
+    def __init__(self, ingest_api: IngestAPI, uuid: str):
         self.logger = logging.getLogger(__name__)
+        self.ingest_api = ingest_api
         self.uuid = uuid
 
-    @handle_exception
-    def get(self):
-        url = f'{self.url}/submissionEnvelopes/search/findByUuidUuid?uuid={self.uuid}'
-        response = self.session.get(url, headers=self.headers)
-        self.submission = None
+    def load(self):
+        self.submission = self.ingest_api.get_submission_by_uuid(self.uuid)
+        self.project = self.get_submission_project()
+        self.study_accession = self.get_study_accession()
+        self.assays = self.get_submission_assays()
 
-        if response.ok:
-            self.submission = response.json()
-
-            # get project
-            projects = self.get_submission_entities('projects')
-            if projects:
-                if len(projects) == 1:
-                    self.submission["project"] = projects[0]
-                    self.logger.info(f'Project UUID {self.submission["project"]["uuid"]["uuid"]}.')
-                else:
-                    self.logger.debug(f'Multiple projects linked to submission {self.uuid}.')
+    def get_submission_project(self):
+        projects = self.get_submission_entities('projects')
+        if projects:
+            if len(projects) == 1:
+                return projects[0]
             else:
-                self.logger.debug(
-                    f'No project linked to submission {self.uuid}. Sequencing Experiment requires a study accession.')
-
-            self.get_assays()
+                raise Exception(f'Multiple projects linked to submission {self.uuid}.')
         else:
-            self.logger.debug(f"Invalid response: {response.status_code}")
+            raise Exception(f'No project linked to submission {self.uuid}.')
 
-    def get_assays(self):
+    def get_study_accession(self):
+        try:
+            accessions = self.project["content"]["insdc_project_accessions"]
+            for accession in accessions:
+                if accession.startswith("ERP") or accession.startswith("PRJ"):
+                    return accession
+            raise Exception
+        except:
+            raise Exception('Sequencing Experiment requires a study accession.')
+
+    def get_submission_assays(self):
         assays = []
         # get processes
         processes = self.get_submission_entities('processes')
@@ -135,7 +99,7 @@ class HcaData(IngestAPI):
                 assays.append(process)
 
         self.logger.info(f'{len(assays)} assay processes found.')
-        self.submission["assays"] = assays
+        return assays
 
     def get_input_biomaterials(self, process):
         input_biomaterials = self.get_all_entities(process["_links"]["inputBiomaterials"]["href"],
@@ -182,12 +146,29 @@ class HcaData(IngestAPI):
             return None
 
     def get_all_entities(self, url, entity_type, entities=[]):
-        response = self.session.get(url, headers=self.headers)
-        response.raise_for_status()
-        if "_embedded" in response.json():
-            entities += response.json()["_embedded"][entity_type]
+        response_json = self.ingest_api.get(url)
+        if "_embedded" in response_json:
+            entities += response_json["_embedded"][entity_type]
 
-            if "next" in response.json()["_links"]:
-                url = response.json()["_links"]["next"]["href"]
+            if "next" in response_json["_links"]:
+                url = response_json["_links"]["next"]["href"]
                 self.get_all_entities(url, entity_type, entities)
         return entities
+
+    def update_ingest_process_insdc_experiment_accession(self, process_uuid, experiment_accession):
+        process_content_patch = {
+            "content": {
+                "insdc_experiment": {
+                    "insdc_experiment_accession": experiment_accession
+                }
+            }
+        }
+        self.ingest_api.patch_entity_by_id('process', process_uuid, process_content_patch)
+
+    def update_ingest_file_insdc_run_accessions(self, file_uuid, run_accessions):
+        file_content_patch = {
+            "content": {
+                "insdc_run_accessions": run_accessions
+            }
+        }
+        self.ingest_api.patch_entity_by_id('file', file_uuid, file_content_patch)

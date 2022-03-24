@@ -64,6 +64,22 @@ from converter.ena.classes.sra_run import (
     RunSetType,
     RunType,
 )
+from converter.ena.classes.sra_receipt import (
+    ExtIdType,
+    Id,
+    IdStatus,
+    Receipt,
+    ReceiptActions,
+)
+from converter.ena.classes.sra_submission import (
+    AddSchema,
+    ModifySchema,
+    Submission,
+    SubmissionSet,
+    SubmissionSetType,
+    SubmissionType,
+    ValidateSchema,
+)
 
 __all__ = [
     "AttributeType",
@@ -119,4 +135,16 @@ __all__ = [
     "RunSet",
     "RunSetType",
     "RunType",
+    "ExtIdType",
+    "Id",
+    "IdStatus",
+    "Receipt",
+    "ReceiptActions",
+    "AddSchema",
+    "ModifySchema",
+    "Submission",
+    "SubmissionSet",
+    "SubmissionSetType",
+    "SubmissionType",
+    "ValidateSchema",
 ]

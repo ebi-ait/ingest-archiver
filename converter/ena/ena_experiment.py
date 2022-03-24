@@ -2,17 +2,26 @@ from converter.ena.classes import AttributeType
 from converter.ena.classes.sra_common import PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentSet, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
 from converter.ena.base import EnaModel
+from converter.ena.ena_receipt import EnaReceipt
 
 
 class EnaExperiment(EnaModel):
 
-    def __init__(self, hca_data):
-        self.submission = hca_data.submission
-        self.assays = hca_data.submission["assays"]
+    def __init__(self, study_ref):
+        self.study_ref = study_ref
 
-    def create_set(self):
+    def archive(self, assay):
+        experiment = self.create(assay)
+        input_xml = self.xml_str(experiment)
+        receipt_xml = self.post(XMLType.EXPERIMENT, input_xml, update=True if experiment.accession else False)
+        accessions = EnaReceipt(XMLType.EXPERIMENT, input_xml, receipt_xml).process_receipt()
+        if accessions and len(accessions) == 1:
+            return accessions[0]
+        raise EnaArchiveException('Ena archive no accession returned.')
+
+    def create_set(self, assays):
         experiment_set = ExperimentSet()
-        for assay in self.assays:
+        for assay in assays:
             experiment_set.experiment.append(self.create(assay))
 
         return experiment_set
@@ -27,7 +36,11 @@ class EnaExperiment(EnaModel):
         experiment.experiment_attributes = Experiment.ExperimentAttributes()
         experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=sequencing_protocol["content"]["protocol_core"]["protocol_description"]))
 
-        experiment.alias = sequencing_protocol["content"]["protocol_core"]["protocol_id"]
+        experiment_accession = self.get_experiment_accession(assay)
+        if experiment_accession:
+            experiment.accession = experiment_accession
+        else:
+            experiment.alias = sequencing_protocol["content"]["protocol_core"]["protocol_id"]
         experiment.title = sequencing_protocol["content"]["protocol_core"]["protocol_name"]
 
         experiment.design = LibraryType()
@@ -45,22 +58,31 @@ class EnaExperiment(EnaModel):
         experiment.design.sample_descriptor.accession = sample_accession
 
         experiment.study_ref = RefObjectType()
-        experiment.study_ref.accession = self.submission["project"]["content"]["insdc_project_accessions"][0] if 'project' in self.submission else ''
+        experiment.study_ref.accession = self.study_ref
 
         experiment.platform = self.ena_platform_type(sequencing_protocol)
         return experiment
 
+    def get_experiment_accession(self, assay):
+        experiment_accession = None
+        try:
+            experiment_accession = assay["content"]["insdc_experiment"]["insdc_experiment_accession"]
+        except KeyError:
+            pass # not accessioned (i.e archived) yet.
+        return experiment_accession
+
+
     def ena_library_name_and_accession(self, input_biomaterials):
-        library_name = ""
-        sample_accession = ""
-        sep = ", "
+        # unlikely to have multiple biomaterial inputs it is still possible, ena takes one accession only, so
+        # use accepted ERS or SAM accession only.
+        library_name = None
+        sample_accession = None
         for input_biomaterial in input_biomaterials:
-            library_name += input_biomaterial["content"]["biomaterial_core"]["biomaterial_id"] + sep
-            sample_accession += input_biomaterial["content"]["biomaterial_core"]["biosamples_accession"] + sep
-
-        library_name = library_name.rsplit(sep, 1)[0] if library_name.endswith(sep) else library_name
-        sample_accession = sample_accession.rsplit(sep, 1)[0] if sample_accession.endswith(sep) else sample_accession
-
+            biosamples_accession = input_biomaterial["content"]["biomaterial_core"]["biosamples_accession"]
+            if biosamples_accession.startswith("ERS") or biosamples_accession.startswith("SAM"):
+                sample_accession = biosamples_accession
+                library_name = input_biomaterial["content"]["biomaterial_core"]["biomaterial_id"]
+                break
         return library_name, sample_accession
 
     def ena_library_selection(self, library_preparation_protocol):
