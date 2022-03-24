@@ -1,8 +1,16 @@
+from operator import attrgetter
 from xsdata.formats.dataclass.parsers import XmlParser
 
 from converter.ena.classes import Receipt
 from converter.ena.base import XMLType, EnaArchiveException
 
+
+id_getters = {
+   XMLType.PROJECT: attrgetter('project'),
+   XMLType.SAMPLE: attrgetter('sample'),
+   XMLType.EXPERIMENT: attrgetter('experiment'),
+   XMLType.RUN: attrgetter('run'),
+}
 
 class EnaReceipt:
     def __init__(self, xml_type: XMLType, input_xml, receipt_xml:str):
@@ -13,16 +21,7 @@ class EnaReceipt:
     def process_receipt(self):
         accessions = []
         if self.receipt.success:
-            ids = []
-            if self.xml_type == XMLType.PROJECT:
-                ids = self.receipt.project
-            elif self.xml_type == XMLType.SAMPLE:
-                ids = self.receipt.sample
-            elif self.xml_type == XMLType.EXPERIMENT:
-                ids = self.receipt.experiment
-            elif self.xml_type == XMLType.RUN:
-                ids = self.receipt.run
-
+            ids = id_getters[self.xml_type](self.receipt)
             for id in ids:
                 # Todo: extract biosample accession for sample, instead of internal ena sample accession
                 accessions.append((id.alias, id.accession))

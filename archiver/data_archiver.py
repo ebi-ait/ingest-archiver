@@ -21,11 +21,11 @@ class DataArchiver:
             return {'message': DataArchiver.REQUEST_SUCCESSFUL}
 
         except ValidationError as e:
-            self.logger.error(f'{DataArchiver.INVALID_REQUEST}: {str(e)}')
+            self.logger.debug(f'{DataArchiver.INVALID_REQUEST}: {str(e)}')
             return {'message': DataArchiver.INVALID_REQUEST}
 
         except Exception as e:
-            self.logger.error(f'{DataArchiver.REQUEST_FAILED}: {str(e)}')
+            self.logger.debug(f'{DataArchiver.REQUEST_FAILED}: {str(e)}')
             return { 'message' : DataArchiver.REQUEST_FAILED}
 
     @staticmethod
