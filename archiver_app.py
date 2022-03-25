@@ -134,8 +134,8 @@ def archive_data_result(submission_uuid):
     ingest_api = IngestAPI(config.INGEST_API_URL)
     submission = ingest_api.get_submission_by_uuid(submission_uuid)
     files = list(ingest_api.get_related_entity(submission, 'files', 'files'))
-    sequence_files = filter(lambda f: f['content']['describedBy'].endswith('sequence_file'), files)
-    file_archive_results = map(file_archive_result, sequence_files)
+    sequence_files = list(filter(lambda f: f['content']['describedBy'].endswith('sequence_file'), files))
+    file_archive_results = list(map(file_archive_result, sequence_files))
     response = {
         'message': 'Data archiving result',
         'sub_uuid': submission_uuid,
