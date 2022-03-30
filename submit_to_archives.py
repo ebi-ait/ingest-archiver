@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
         logger.info(f'Response: {response_json}')
 
-        if response_json.get('message', None) is not None:
+        if response_json.get('message'):
             logger.error(ERROR_MESSAGE_WENT_WRONG)
             exit(1)
 
