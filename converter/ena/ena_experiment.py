@@ -1,8 +1,9 @@
 from converter.ena.classes import AttributeType
 from converter.ena.classes.sra_common import PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentSet, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
-from converter.ena.base import EnaModel
+from converter.ena.base import EnaModel, XMLType
 from converter.ena.ena_receipt import EnaReceipt
+import logging
 
 
 class EnaExperiment(EnaModel):
@@ -34,7 +35,11 @@ class EnaExperiment(EnaModel):
 
         experiment = Experiment()
         experiment.experiment_attributes = Experiment.ExperimentAttributes()
-        experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=sequencing_protocol["content"]["protocol_core"]["protocol_description"]))
+        try:
+            protocol_desc = sequencing_protocol["content"]["protocol_core"]["protocol_description"]
+            experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=protocol_desc))
+        except KeyError:
+            logging.warning('No protocol description')
 
         experiment_accession = self.get_experiment_accession(assay)
         if experiment_accession:
@@ -103,9 +108,15 @@ class EnaExperiment(EnaModel):
         platform_type = PlatformType()
         if sequencing_protocol["content"]["instrument_manufacturer_model"]:
             instrument_manufacturer_model = sequencing_protocol["content"]["instrument_manufacturer_model"]["text"]
+            instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
+            if not instrument_model:
+                instrument_manufacturer_model = sequencing_protocol["content"]["instrument_manufacturer_model"]["ontology_label"]
+                instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
+            if not instrument_model:
+                instrument_model = TypeIlluminaModel.UNSPECIFIED
 
             platform_type.illumina = PlatformType.Illumina()
-            platform_type.illumina.instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
+            platform_type.illumina.instrument_model = instrument_model
 
         return platform_type
 
