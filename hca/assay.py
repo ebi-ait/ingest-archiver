@@ -34,7 +34,7 @@ class AssayData:
         self.assays = self.get_submission_assays()
 
     def get_submission_project(self):
-        projects = self.get_submission_entities('projects')
+        projects = self.get_all_entities(self.submission["_links"]["relatedProjects"]["href"], 'projects', [])
         if projects:
             if len(projects) == 1:
                 return projects[0]
