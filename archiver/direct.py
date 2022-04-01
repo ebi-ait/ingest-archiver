@@ -24,6 +24,7 @@ from submitter.ena import EnaSubmitter
 
 from converter.ena.ena_experiment import EnaExperiment
 from converter.ena.ena_run import EnaRun
+from api.ingest import IngestAPI
 
 
 class DirectArchiver:
@@ -43,10 +44,10 @@ class DirectArchiver:
 
     def archive_submission(self, submission_uuid: str) -> dict:
         hca_submission = self.__loader.get_submission(submission_uuid=submission_uuid)
-        archives_response = self.__archive(hca_submission)
+        archives_response = self.__archive(hca_submission, submission_uuid)
         return archives_response
 
-    def __archive(self, submission: HcaSubmission):
+    def __archive(self, submission: HcaSubmission, sub_uuid=None):
         archives_responses = {}
         biosamples_responses = {}
         biostudies_responses = {}
@@ -72,18 +73,18 @@ class DirectArchiver:
             ena_accessions = self.__get_accessions_from_responses(ena_responses)
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
-
-        self.__archive_ena_experiments_and_runs(archives_responses)
+        if sub_uuid:
+            self.__archive_ena_experiments_and_runs(sub_uuid, archives_responses)
 
         return archives_responses
 
-    def __archive_ena_experiments_and_runs(self, archives_responses):
+    def __archive_ena_experiments_and_runs(self, sub_uuid, archives_responses):
         # archive ENA experiments and runs from HCA assays
-        archives_responses['ena']['experiments'] = []
-        archives_responses['ena']['runs'] = []
+        archives_responses['ena_experiments'] = []
+        archives_responses['ena_runs'] = []
 
         # get assay data
-        data = AssayData('uuid')
+        data = AssayData(IngestAPI(), sub_uuid)
         data.load()
         study_ref = data.get_study_accession()
 
@@ -98,7 +99,7 @@ class DirectArchiver:
 
         data.update_ingest_process_insdc_experiment_accession(assay["uuid"]["uuid"], experiment_accession)
 
-        archives_responses['ena']['experiments'].append({
+        archives_responses['ena_experiments'].append({
             "process_uuid": assay["uuid"]["uuid"],
             "experiment_accession": experiment_accession
         })
@@ -114,7 +115,7 @@ class DirectArchiver:
             files.append(file_uuid)
             data.update_ingest_file_insdc_run_accessions(file_uuid, run_accession)
 
-        archives_responses['ena']['runs'].append({
+        archives_responses['ena_runs'].append({
             "process_uuid": assay["uuid"]["uuid"],
             "run_accession": run_accession,
             "files": files
