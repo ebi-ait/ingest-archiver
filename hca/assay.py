@@ -155,7 +155,9 @@ class AssayData:
                 self.get_all_entities(url, entity_type, entities)
         return entities
 
-    def update_ingest_process_insdc_experiment_accession(self, process_uuid, experiment_accession):
+    def update_ingest_process_insdc_experiment_accession(self, process, experiment_accession):
+        _links_self = process["_links"]["self"]["href"]
+        entity_id = _links_self.split('/')[-1]
         process_content_patch = {
             "content": {
                 "insdc_experiment": {
@@ -163,12 +165,14 @@ class AssayData:
                 }
             }
         }
-        self.ingest_api.patch_entity_by_id('process', process_uuid, process_content_patch)
+        self.ingest_api.patch_entity_by_id('processes', entity_id, process_content_patch)
 
-    def update_ingest_file_insdc_run_accessions(self, file_uuid, run_accessions):
+    def update_ingest_file_insdc_run_accessions(self, file, run_accessions):
+        _links_self = file["_links"]["self"]["href"]
+        entity_id = _links_self.split('/')[-1]
         file_content_patch = {
             "content": {
                 "insdc_run_accessions": run_accessions
             }
         }
-        self.ingest_api.patch_entity_by_id('file', file_uuid, file_content_patch)
+        self.ingest_api.patch_entity_by_id('files', entity_id, file_content_patch)
