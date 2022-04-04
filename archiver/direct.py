@@ -97,7 +97,7 @@ class DirectArchiver:
         ena_experiment = EnaExperiment(study_ref)
         experiment_accession = ena_experiment.archive(assay)
 
-        data.update_ingest_process_insdc_experiment_accession(assay["uuid"]["uuid"], experiment_accession)
+        data.update_ingest_process_insdc_experiment_accession(assay, experiment_accession)
 
         archives_responses['ena_experiments'].append({
             "process_uuid": assay["uuid"]["uuid"],
@@ -113,7 +113,7 @@ class DirectArchiver:
         for file in assay["derived_files"]:
             file_uuid = file["uuid"]["uuid"]
             files.append(file_uuid)
-            data.update_ingest_file_insdc_run_accessions(file_uuid, run_accession)
+            data.update_ingest_file_insdc_run_accessions(file, run_accession)
 
         archives_responses['ena_runs'].append({
             "process_uuid": assay["uuid"]["uuid"],
