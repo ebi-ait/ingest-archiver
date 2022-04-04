@@ -10,8 +10,9 @@ class EnaRun(EnaModel):
     FILE_CHECKSUM_METHOD = 'MD5'
     SEQUENCE_FILE_TYPES = ['fq', 'fastq', 'fq.gz', 'fastq.gz']
 
-    def __init__(self, experiment_ref):
+    def __init__(self, experiment_ref, alias_prefix=None):
         self.experiment_ref = experiment_ref
+        self.alias_prefix = alias_prefix
 
     # Todo: extract function to parent class
     def archive(self, assay):
@@ -20,7 +21,7 @@ class EnaRun(EnaModel):
         receipt_xml = self.post(XMLType.RUN, input_xml, update=True if run.accession else False)
         accessions = EnaReceipt(XMLType.RUN, input_xml, receipt_xml).process_receipt()
         if accessions and len(accessions) == 1:
-            return accessions[0]
+            return accessions[0][1]
         raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):
@@ -83,14 +84,14 @@ class EnaRun(EnaModel):
         if self.experiment_ref:
             run.experiment_ref.accession = self.experiment_ref
         else:
-            run.experiment_ref.refname = assay["sequencing_protocol"]["content"]["protocol_core"]["protocol_id"] # used as experiment alias
+            run.experiment_ref.refname = self.alias_prefix + assay["content"]["process_core"]["process_id"]  # used as experiment alias
 
     def __add_run_accession_or_alias(self, run, assay):
         run_accession = self.__get_run_accession(assay)
         if run_accession:
             run.accession = run_accession
         else:
-            run.alias = assay["sequencing_protocol"]["content"]["protocol_core"]["protocol_id"] #assay["uuid"]["uuid"]
+            run.alias = self.alias_prefix + assay["content"]["process_core"]["process_id"]
 
     def __get_run_accession(self, assay):
         try:

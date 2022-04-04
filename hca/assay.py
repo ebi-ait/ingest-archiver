@@ -164,7 +164,7 @@ class AssayData:
                 "insdc_experiment_accession": experiment_accession
             }
             entity_id = _links_self.split('/')[-1]
-            self.ingest_api.patch_entity_by_id('processes', entity_id, content)
+            self.ingest_api.patch_entity_by_id('processes', entity_id, { 'content': content })
 
     def update_ingest_file_insdc_run_accession(self, file, run_accession):
         _links_self = file["_links"]["self"]["href"]
@@ -174,4 +174,4 @@ class AssayData:
             accessions.append(run_accession)
 
         entity_id = _links_self.split('/')[-1]
-        self.ingest_api.patch_entity_by_id('files', entity_id, content)
+        self.ingest_api.patch_entity_by_id('files', entity_id, { 'content': content })

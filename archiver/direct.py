@@ -1,5 +1,6 @@
 import logging
 from typing import List
+import datetime
 
 from biostudiesclient.exceptions import RestErrorException
 
@@ -82,6 +83,7 @@ class DirectArchiver:
         # archive ENA experiments and runs from HCA assays
         archives_responses['ena_experiments'] = []
         archives_responses['ena_runs'] = []
+        common_alias_prefix = f'SUBMISSION-{datetime.datetime.now().strftime("%d-%m-%Y-%T")}:'
 
         # get assay data
         data = AssayData(IngestAPI(), sub_uuid)
@@ -89,12 +91,12 @@ class DirectArchiver:
         study_ref = data.get_study_accession()
 
         for assay in data.assays:
-            experiment_accession = self.__archive_experiment(assay, study_ref, data, archives_responses)
-            self.__archive_run(assay, experiment_accession, data, archives_responses)
+            experiment_accession = self.__archive_experiment(assay, study_ref, common_alias_prefix, data, archives_responses)
+            self.__archive_run(assay, experiment_accession, common_alias_prefix, data, archives_responses)
 
 
-    def __archive_experiment(self, assay, study_ref, data, archives_responses):
-        ena_experiment = EnaExperiment(study_ref)
+    def __archive_experiment(self, assay, study_ref, alias_prefix, data, archives_responses):
+        ena_experiment = EnaExperiment(study_ref, alias_prefix)
         experiment_accession = ena_experiment.archive(assay)
 
         data.update_ingest_process_insdc_experiment_accession(assay, experiment_accession)
@@ -105,8 +107,8 @@ class DirectArchiver:
         })
         return experiment_accession
 
-    def __archive_run(self, assay, experiment_accession, data, archives_responses):
-        ena_run = EnaRun(experiment_accession)
+    def __archive_run(self, assay, experiment_accession, alias_prefix, data, archives_responses):
+        ena_run = EnaRun(experiment_accession, alias_prefix)
         run_accession = ena_run.archive(assay)
 
         files = []
