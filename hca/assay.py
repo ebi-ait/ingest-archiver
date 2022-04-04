@@ -157,22 +157,16 @@ class AssayData:
 
     def update_ingest_process_insdc_experiment_accession(self, process, experiment_accession):
         _links_self = process["_links"]["self"]["href"]
-        entity_id = _links_self.split('/')[-1]
-        process_content_patch = {
-            "content": {
-                "insdc_experiment": {
-                    "insdc_experiment_accession": experiment_accession
-                }
-            }
+        content = process["content"]
+        content["insdc_experiment"] = {
+            "insdc_experiment_accession": experiment_accession
         }
-        self.ingest_api.patch_entity_by_id('processes', entity_id, process_content_patch)
+        entity_id = _links_self.split('/')[-1]
+        self.ingest_api.patch_entity_by_id('processes', entity_id, content)
 
     def update_ingest_file_insdc_run_accessions(self, file, run_accessions):
         _links_self = file["_links"]["self"]["href"]
+        content = file["content"]
+        content["insdc_run_accessions"] = run_accessions
         entity_id = _links_self.split('/')[-1]
-        file_content_patch = {
-            "content": {
-                "insdc_run_accessions": run_accessions
-            }
-        }
-        self.ingest_api.patch_entity_by_id('files', entity_id, file_content_patch)
+        self.ingest_api.patch_entity_by_id('files', entity_id, content)
