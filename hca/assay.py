@@ -45,7 +45,7 @@ class AssayData:
 
     def get_study_accession(self):
         try:
-            accessions = self.project["content"]["insdc_project_accessions"]
+            accessions = self.project["content"]["insdc_study_accessions"]
             for accession in accessions:
                 if accession.startswith("ERP") or accession.startswith("PRJ"):
                     return accession
