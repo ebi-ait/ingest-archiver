@@ -35,11 +35,10 @@ class EnaExperiment(EnaModel):
 
         experiment = Experiment()
         experiment.experiment_attributes = Experiment.ExperimentAttributes()
-        try:
-            protocol_desc = sequencing_protocol["content"]["protocol_core"]["protocol_description"]
+        
+        protocol_desc = sequencing_protocol.get("content", {}).get("protocol_core", {}).get("protocol_description")
+        if protocol_desc:
             experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=protocol_desc))
-        except KeyError:
-            logging.warning('No protocol description')
 
         experiment_accession = self.get_experiment_accession(assay)
         if experiment_accession:
