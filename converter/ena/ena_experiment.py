@@ -35,7 +35,7 @@ class EnaExperiment(EnaModel):
 
         experiment = Experiment()
         experiment.experiment_attributes = Experiment.ExperimentAttributes()
-        
+
         protocol_desc = sequencing_protocol.get("content", {}).get("protocol_core", {}).get("protocol_description")
         if protocol_desc:
             experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=protocol_desc))

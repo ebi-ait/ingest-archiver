@@ -113,7 +113,7 @@ class DirectArchiver:
         for file in assay["derived_files"]:
             file_uuid = file["uuid"]["uuid"]
             files.append(file_uuid)
-            data.update_ingest_file_insdc_run_accessions(file, run_accession)
+            data.update_ingest_file_insdc_run_accession(file, run_accession)
 
         archives_responses['ena_runs'].append({
             "process_uuid": assay["uuid"]["uuid"],
