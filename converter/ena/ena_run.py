@@ -37,7 +37,11 @@ class EnaRun(EnaModel):
 
         run = Run()
         run.run_attributes = Run.RunAttributes()
-        run.run_attributes.run_attribute.append(AttributeType(tag="Description", value=sequencing_protocol["content"]["protocol_core"]["protocol_description"]))
+        try:
+            protocol_desc = sequencing_protocol["content"]["protocol_core"]["protocol_description"]
+            run.run_attributes.run_attribute.append(AttributeType(tag="Description", value=protocol_desc))
+        except KeyError:
+            logging.warning('No protocol description')
 
         run.title = assay["content"]["process_core"]["process_id"]
         self.__add_experiment_ref(run, assay)
