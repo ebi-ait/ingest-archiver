@@ -90,8 +90,10 @@ class EnaRun(EnaModel):
         run_accession = self.__get_run_accession(assay)
         if run_accession:
             run.accession = run_accession
+            logging.info(f"EXISTING insdc_run_accession {run.accession}")
         else:
             run.alias = self.alias_prefix + assay["content"]["process_core"]["process_id"]
+            logging.info(f"NEW run alias {run.alias}")
 
     def __get_run_accession(self, assay):
         try:
