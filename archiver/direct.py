@@ -80,49 +80,63 @@ class DirectArchiver:
         return archives_responses
 
     def __archive_ena_experiments_and_runs(self, sub_uuid, archives_responses):
-        # archive ENA experiments and runs from HCA assays
-        archives_responses['ena_experiments'] = []
-        archives_responses['ena_runs'] = []
+        logging.info("Archive ENA experiments and runs from HCA assays")
+        archives_responses['hca_assays'] = {}
+        archives_responses['hca_assays']['info'] = 'ENA experiments and runs from HCA assays'
         common_alias_prefix = f'SUBMISSION-{datetime.datetime.now().strftime("%d-%m-%Y-%T")}:'
 
-        # get assay data
-        data = AssayData(IngestAPI(), sub_uuid)
-        data.load()
-        study_ref = data.get_project_accession()
+        logging.info("Getting assay data...")
+        try:
+            data = AssayData(IngestAPI(), sub_uuid)
+            data.load()
+            study_ref = data.get_project_accession()
+        except Exception as e:
+            archives_responses['hca_assays']['error'] = str(e)
+            return
+
+        archives_responses['hca_assays']['experiments'] = []
 
         for assay in data.assays:
-            experiment_accession = self.__archive_experiment(assay, study_ref, common_alias_prefix, data, archives_responses)
-            self.__archive_run(assay, experiment_accession, common_alias_prefix, data, archives_responses)
+            # archive experiment
+            experiment_and_run_response = {"process_uuid": assay["uuid"]["uuid"]}
+            archives_responses['hca_assays']['experiments'].append(experiment_and_run_response)
 
+            try:
+                experiment_accession = self.__archive_experiment(assay, study_ref, common_alias_prefix)
+                experiment_and_run_response["ena_experiment_accession"] = experiment_accession
+                data.update_ingest_process_insdc_experiment_accession(assay, experiment_accession)
 
-    def __archive_experiment(self, assay, study_ref, alias_prefix, data, archives_responses):
+            except Exception as e:
+                experiment_and_run_response["ena_experiment_accession"] = None
+                experiment_and_run_response["error"] = str(e)
+                return
+
+            # archive run
+            try:
+                run_accession = self.__archive_run(assay, experiment_accession, common_alias_prefix)
+                experiment_and_run_response["ena_run_accession"] = run_accession
+
+                files = []
+                for file in assay["derived_files"]:
+                    file_uuid = file["uuid"]["uuid"]
+                    files.append(file_uuid)
+                    data.update_ingest_file_insdc_run_accession(file, run_accession)
+
+                experiment_and_run_response["files"] = files
+
+            except Exception as e:
+                experiment_and_run_response["ena_run_accession"] = None
+                experiment_and_run_response["error"] = str(e)
+                return
+
+    def __archive_experiment(self, assay, study_ref, alias_prefix):
         ena_experiment = EnaExperiment(study_ref, alias_prefix)
         experiment_accession = ena_experiment.archive(assay)
-
-        data.update_ingest_process_insdc_experiment_accession(assay, experiment_accession)
-
-        archives_responses['ena_experiments'].append({
-            "process_uuid": assay["uuid"]["uuid"],
-            "experiment_accession": experiment_accession
-        })
         return experiment_accession
 
-    def __archive_run(self, assay, experiment_accession, alias_prefix, data, archives_responses):
+    def __archive_run(self, assay, experiment_accession, alias_prefix):
         ena_run = EnaRun(experiment_accession, alias_prefix)
         run_accession = ena_run.archive(assay)
-
-        files = []
-        for file in assay["derived_files"]:
-            file_uuid = file["uuid"]["uuid"]
-            files.append(file_uuid)
-            data.update_ingest_file_insdc_run_accession(file, run_accession)
-
-        archives_responses['ena_runs'].append({
-            "process_uuid": assay["uuid"]["uuid"],
-            "run_accession": run_accession,
-            "files": files
-        })
-
         return run_accession
 
     @staticmethod
