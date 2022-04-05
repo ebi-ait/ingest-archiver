@@ -88,7 +88,7 @@ class DirectArchiver:
         # get assay data
         data = AssayData(IngestAPI(), sub_uuid)
         data.load()
-        study_ref = data.get_study_accession()
+        study_ref = data.get_project_accession()
 
         for assay in data.assays:
             experiment_accession = self.__archive_experiment(assay, study_ref, common_alias_prefix, data, archives_responses)

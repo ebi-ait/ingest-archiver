@@ -30,7 +30,6 @@ class AssayData:
     def load(self):
         self.submission = self.ingest_api.get_submission_by_uuid(self.uuid)
         self.project = self.get_submission_project()
-        self.study_accession = self.get_study_accession()
         self.assays = self.get_submission_assays()
 
     def get_submission_project(self):
@@ -43,15 +42,15 @@ class AssayData:
         else:
             raise Exception(f'No project linked to submission {self.uuid}.')
 
-    def get_study_accession(self):
+    def get_project_accession(self):
         try:
-            accessions = self.project["content"]["insdc_study_accessions"]
+            accessions = self.project["content"]["insdc_project_accessions"]
             for accession in accessions:
-                if accession.startswith("ERP") or accession.startswith("PRJ"):
+                if accession.startswith("ERP"):
                     return accession
             raise Exception
         except:
-            raise Exception('Sequencing Experiment requires a study accession.')
+            raise Exception('Sequencing Experiment requires a project accession.')
 
     def get_submission_assays(self):
         assays = []
