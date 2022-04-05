@@ -7,6 +7,8 @@ import requests
 from http import HTTPStatus
 from colorlog import ColoredFormatter
 
+ERROR_MESSAGE_WENT_WRONG = "Something went wrong while sending data/metadata to archives."
+
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev')
 PATH_TO_DIRECT_ARCHIVING = 'archiveSubmissions'
 
@@ -149,15 +151,20 @@ if __name__ == "__main__":
                                       json=payload,
                                       headers=header)
 
-    response_json = archiver_response.json()
+    if archiver_response.status_code != HTTPStatus.OK:
+        logger.info(ERROR_MESSAGE_WENT_WRONG)
+        logger.info(f'HTTP Status code: {archiver_response.status_code}')
+        logger.info(f'HTTP Response: {str(archiver_response.content)}')
+    else:
+        response_json = archiver_response.json()
 
-    logger.info(f'Response: {response_json}')
+        logger.info(f'Response: {response_json}')
 
-    if response_json.get('message', None) is not None:
-        logger.error("Something went wrong while sending data/metadata to archives.")
-        exit(1)
+        if response_json.get('message'):
+            logger.error(ERROR_MESSAGE_WENT_WRONG)
+            exit(1)
 
-    archiver_response_with_urls = process_archiver_response()
+        archiver_response_with_urls = process_archiver_response()
 
-    logger.info("You can check the result of archiving in the following webpages:")
-    logger.info(json.dumps(archiver_response_with_urls, indent=4))
+        logger.info("You can check the result of archiving in the following webpages:")
+        logger.info(json.dumps(archiver_response_with_urls, indent=4))
