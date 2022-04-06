@@ -8,18 +8,19 @@ import logging
 
 class EnaExperiment(EnaModel):
 
-    def __init__(self, study_ref, alias_prefix=None):
+    def __init__(self, study_ref, alias_prefix=""):
         self.study_ref = study_ref
         self.alias_prefix = alias_prefix
 
     def archive(self, assay):
         experiment = self.create(assay)
+        is_update = True if experiment.accession else False
         input_xml = self.xml_str(experiment)
-        receipt_xml = self.post(XMLType.EXPERIMENT, input_xml, update=True if experiment.accession else False)
+        receipt_xml = self.post(XMLType.EXPERIMENT, input_xml, update=is_update)
         accessions = EnaReceipt(XMLType.EXPERIMENT, input_xml, receipt_xml).process_receipt()
         if accessions and len(accessions) == 1:
             (alias, accession) = accessions[0]
-            return accession
+            return accession, is_update
         raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):
