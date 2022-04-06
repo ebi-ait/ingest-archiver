@@ -7,7 +7,6 @@ from mock.mock import MagicMock
 from archiver import ConvertedEntity
 from hca.submission import HcaSubmission
 from submitter.biosamples import BioSamplesSubmitter
-from tests.unit.submitter import create_archive_response
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
@@ -78,49 +77,8 @@ class TestBioSamplesSubmitter(unittest.TestCase):
 
         assert_that(len(archive_responses)).is_equal_to(len(converted_samples))
         for archive_response in archive_responses:
-            assert_that(archive_response.data).is_not_none()
-            assert_that(archive_response.entity_type).is_equal_to(self.entity_type)
-            assert_that(archive_response.updated).is_equal_to(is_update)
-
-    def test_processing_archive_response_from_sample_creation_results_same_number_of_result(self):
-        archive_response_1 = create_archive_response({'name': 'empty', 'taxId': 9606, 'uuid': ''}, self.entity_type)
-        archive_response_2 = create_archive_response({'name': 'test1', 'taxId': 9606, 'uuid': ''}, self.entity_type)
-        archive_response_3 = create_archive_response({'name': 'test2', 'taxId': 9606, 'uuid': ''}, self.entity_type)
-        archive_responses = [archive_response_1, archive_response_2, archive_response_3]
-        processed_responses_from_archive =\
-            self.biosamples_submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(3)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
-
-    def test_processing_archive_response_from_sample_update_results_same_number_of_result(self):
-        archive_response_1 = create_archive_response({'name': 'empty', 'taxId': 9606, 'uuid': ''}, self.entity_type, is_update=True)
-        archive_response_2 = create_archive_response({'name': 'test1', 'taxId': 9606, 'uuid': ''}, self.entity_type, is_update=True)
-        archive_response_3 = create_archive_response({'name': 'test2', 'taxId': 9606, 'uuid': ''}, self.entity_type, is_update=True)
-        archive_responses = [archive_response_1, archive_response_2, archive_response_3]
-        processed_responses_from_archive =\
-            self.biosamples_submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(3)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
-
-    def test_processing_archive_response_with_error_results_same_number_of_result(self):
-        archive_response_1 = \
-            create_archive_response({'uuid': '12345678'}, self.entity_type, is_update=True,
-                                    error_messages='Dummy error message')
-        archive_response_2 = \
-            create_archive_response({'uuid': '12345678'}, self.entity_type, is_update=True,
-                                    error_messages='Another dummy error message')
-        archive_response_3 = \
-            create_archive_response({'uuid': 'abcd1234'}, self.entity_type, is_update=True,
-                                    error_messages='Another dummy error message')
-
-        archive_responses = [archive_response_1, archive_response_2, archive_response_3]
-        processed_responses_from_archive =\
-            self.biosamples_submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(3)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
+            assert_that(archive_response.get('entity_type')).is_equal_to(self.entity_type)
+            assert_that(archive_response.get('is_update')).is_equal_to(is_update)
 
 
 if __name__ == '__main__':

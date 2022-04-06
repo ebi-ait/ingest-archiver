@@ -63,6 +63,7 @@ class BioStudiesSubmitter(Submitter):
 
     def _submit_to_archive(self, converted_entity: ConvertedEntity):
         accession = self.__archive_client.send_submission(converted_entity.data)
+        uuid = None
 
         for attribute in converted_entity.data.get('attributes', []):
             if attribute and attribute.get('name') == 'HCA Project UUID':

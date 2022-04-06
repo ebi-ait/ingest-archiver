@@ -45,14 +45,14 @@ class EnaSubmitter(Submitter):
 
         response_xml = ElementTree.fromstring(response.decode('utf-8'))
 
-        return self.__process_xml_response(response_xml)
+        return self.__process_xml_response(response_xml, converted_entity.updated)
 
     @staticmethod
-    def __process_xml_response(response: Element):
+    def __process_xml_response(response: Element, is_update: bool):
         success = response.attrib.get('success')
         processed_response = {}
         if success == 'true':
-            processed_response = EnaSubmitter.__gather_accession_and_uuid_from_response('STUDY', response)
+            processed_response = EnaSubmitter.__gather_accession_and_uuid_from_response('STUDY', response, is_update)
         else:
             ena_types = ['STUDY', 'SUBMISSION']
             for ena_type in ena_types:
@@ -62,7 +62,7 @@ class EnaSubmitter(Submitter):
         return processed_response
 
     @staticmethod
-    def __gather_accession_and_uuid_from_response(ena_type, response):
+    def __gather_accession_and_uuid_from_response(ena_type: str, response: Element, is_update: bool):
         accessions_by_uuid = []
         for entity in response.findall(ena_type):
             accessions_by_uuid.append(
@@ -73,9 +73,10 @@ class EnaSubmitter(Submitter):
             )
 
         return {
-                "entity_type": HCA_TYPE_BY_ENA_TYPE.get(ena_type),
-                "uuid": accessions_by_uuid[0].get("uuid"),
-                "ena_project_accession": accessions_by_uuid[0].get('accession')
+            "entity_type": HCA_TYPE_BY_ENA_TYPE.get(ena_type),
+            "uuid": accessions_by_uuid[0].get("uuid"),
+            "ena_project_accession": accessions_by_uuid[0].get('accession'),
+            "is_update": is_update
         }
 
     @staticmethod

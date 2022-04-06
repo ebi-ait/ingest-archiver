@@ -1,15 +1,13 @@
 import json
 import unittest
 from os.path import dirname
-from typing import List
 
 from assertpy import assert_that
 from mock import MagicMock
 
 from archiver import ConvertedEntity
-from hca.submission import HcaSubmission, Entity
+from hca.submission import HcaSubmission
 from submitter.biostudies import BioStudiesSubmitter
-from tests.unit.submitter import create_archive_response
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
@@ -18,8 +16,13 @@ class TestBioStudiesSubmitter(unittest.TestCase):
         self.archive_client = MagicMock()
         self.converter = MagicMock()
         self.updater = MagicMock()
-        self.empty_project = {}
-        self.converter.convert = MagicMock(return_value=self.empty_project)
+        self.project = {
+            'attributes': [
+                {'name': 'Project Core - Project Short Name', 'value': 'GSE132065_BloodTimeHuman'},
+                {'name': 'HCA Project UUID', 'value': '7988439a-2643-4ae9-8f84-74ea4fa62d90'}
+            ]
+        }
+        self.converter.convert = MagicMock(return_value=self.project)
         self.submitter_service = MagicMock()
         self.submitter = BioStudiesSubmitter(self.archive_client, self.converter, self.submitter_service, self.updater)
         self.submission = HcaSubmission()
@@ -60,7 +63,7 @@ class TestBioStudiesSubmitter(unittest.TestCase):
     def test_when_send_entities_to_archive_get_back_correct_archive_response(self):
         is_update = False
         converted_projects = [
-            ConvertedEntity(data=self.empty_project, hca_entity_type=self.entity_type, is_update=is_update)
+            ConvertedEntity(data=self.project, hca_entity_type=self.entity_type, is_update=is_update)
         ]
         self.archive_client.send_submission = MagicMock(side_effect=[
             'BSST-123'
@@ -69,29 +72,8 @@ class TestBioStudiesSubmitter(unittest.TestCase):
 
         assert_that(len(archive_responses)).is_equal_to(len(converted_projects))
         for archive_response in archive_responses:
-            assert_that(archive_response.data).is_not_none()
-            assert_that(archive_response.entity_type).is_equal_to(self.entity_type)
-            assert_that(archive_response.updated).is_equal_to(is_update)
-
-    def test_processing_archive_response_from_project_creation_results_same_number_of_result(self):
-        payload = self.__get_expected_payload('/../../resources/expected_biostudies_payload.json')
-        archive_response = create_archive_response(payload, self.entity_type)
-        archive_responses = [archive_response]
-        processed_responses_from_archive =\
-            self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
-
-    def test_processing_archive_response_from_sample_update_results_same_number_of_result(self):
-        payload = self.__get_expected_payload('/../../resources/expected_biostudies_payload.json')
-        archive_response = create_archive_response(payload, self.entity_type, is_update=True)
-        archive_responses = [archive_response]
-        processed_responses_from_archive =\
-            self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
+            assert_that(archive_response.get('entity_type')).is_equal_to(self.entity_type)
+            assert_that(archive_response.get('is_update')).is_equal_to(is_update)
 
     def test_when_accessions_are_empty_then_submission_wont_changed(self):
         biosample_accessions = []
