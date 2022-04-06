@@ -21,7 +21,8 @@ class EnaRun(EnaModel):
         receipt_xml = self.post(XMLType.RUN, input_xml, update=True if run.accession else False)
         accessions = EnaReceipt(XMLType.RUN, input_xml, receipt_xml).process_receipt()
         if accessions and len(accessions) == 1:
-            return accessions[0][1]
+            (alias, accession) = accessions[0]
+            return accession
         raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):

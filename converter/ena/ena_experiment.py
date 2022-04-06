@@ -18,7 +18,8 @@ class EnaExperiment(EnaModel):
         receipt_xml = self.post(XMLType.EXPERIMENT, input_xml, update=True if experiment.accession else False)
         accessions = EnaReceipt(XMLType.EXPERIMENT, input_xml, receipt_xml).process_receipt()
         if accessions and len(accessions) == 1:
-            return accessions[0][1]
+            (alias, accession) = accessions[0]
+            return accession
         raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):
