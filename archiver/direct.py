@@ -102,8 +102,9 @@ class DirectArchiver:
             archives_responses['hca_assays']['experiments'].append(experiment_and_run_response)
 
             try:
-                experiment_accession = self.__archive_experiment(assay, study_ref, common_alias_prefix)
+                experiment_accession, is_update = self.__archive_experiment(assay, study_ref, common_alias_prefix)
                 experiment_and_run_response["ena_experiment_accession"] = experiment_accession
+                experiment_and_run_response["ena_experiment_is_update"] = is_update
                 data.update_ingest_process_insdc_experiment_accession(assay, experiment_accession)
 
             except Exception as e:
@@ -113,8 +114,9 @@ class DirectArchiver:
 
             # archive run
             try:
-                run_accession = self.__archive_run(assay, experiment_accession, common_alias_prefix)
+                run_accession, is_update = self.__archive_run(assay, experiment_accession, common_alias_prefix)
                 experiment_and_run_response["ena_run_accession"] = run_accession
+                experiment_and_run_response["ena_run_is_update"] = is_update
 
                 files = []
                 for file in assay["derived_files"]:
@@ -131,13 +133,11 @@ class DirectArchiver:
 
     def __archive_experiment(self, assay, study_ref, alias_prefix):
         ena_experiment = EnaExperiment(study_ref, alias_prefix)
-        experiment_accession = ena_experiment.archive(assay)
-        return experiment_accession
+        return ena_experiment.archive(assay)
 
     def __archive_run(self, assay, experiment_accession, alias_prefix):
         ena_run = EnaRun(experiment_accession, alias_prefix)
-        run_accession = ena_run.archive(assay)
-        return run_accession
+        return ena_run.archive(assay)
 
     @staticmethod
     def __get_accessions_from_responses(responses: dict) -> List[str]:

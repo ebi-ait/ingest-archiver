@@ -10,19 +10,20 @@ class EnaRun(EnaModel):
     FILE_CHECKSUM_METHOD = 'MD5'
     SEQUENCE_FILE_TYPES = ['fq', 'fastq', 'fq.gz', 'fastq.gz']
 
-    def __init__(self, experiment_ref, alias_prefix=None):
+    def __init__(self, experiment_ref, alias_prefix=""):
         self.experiment_ref = experiment_ref
         self.alias_prefix = alias_prefix
 
     # Todo: extract function to parent class
     def archive(self, assay):
         run = self.create(assay)
+        is_update = True if run.accession else False
         input_xml = self.xml_str(run)
-        receipt_xml = self.post(XMLType.RUN, input_xml, update=True if run.accession else False)
+        receipt_xml = self.post(XMLType.RUN, input_xml, update=is_update)
         accessions = EnaReceipt(XMLType.RUN, input_xml, receipt_xml).process_receipt()
         if accessions and len(accessions) == 1:
             (alias, accession) = accessions[0]
-            return accession
+            return accession, is_update
         raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):

@@ -31,6 +31,7 @@ class TestEnaExperiment(unittest.TestCase):
 class EnaExperimentTestData:
 
     project_acc = "PRJ009"
+    process_id = "process_id"
     protocol_id = "seq_protocol_1"
     protocol_name = "seq_protocol_1 name"
     protocol_desc = "seq_protocol_1 desc"
@@ -48,6 +49,11 @@ class EnaExperimentTestData:
             }}
         assay_data.assays = [
             {
+                "content": {
+                  "process_core": {
+                    "process_id": EnaExperimentTestData.process_id
+                  }
+                },
                 "sequencing_protocol": {
                     "content":
                         {
@@ -84,7 +90,7 @@ class EnaExperimentTestData:
     @staticmethod
     def xml():
         return f"""<?xml version="1.0" encoding="UTF-8"?>
-<EXPERIMENT alias="{EnaExperimentTestData.protocol_id}">
+<EXPERIMENT alias="{EnaExperimentTestData.process_id}">
   <TITLE>{EnaExperimentTestData.protocol_name}</TITLE>
   <STUDY_REF accession="{EnaExperimentTestData.project_acc}"/>
   <DESIGN>

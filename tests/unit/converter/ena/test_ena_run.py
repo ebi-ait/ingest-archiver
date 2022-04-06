@@ -89,7 +89,7 @@ class EnaRunTestData:
     @staticmethod
     def xml():
         return f"""<?xml version="1.0" encoding="UTF-8"?>
-<RUN alias="{EnaRunTestData.protocol_id}">
+<RUN alias="{EnaRunTestData.process_id}">
   <TITLE>{EnaRunTestData.process_id}</TITLE>
   <EXPERIMENT_REF accession="{EnaRunTestData.protocol_id}"/>
   <DATA_BLOCK>
