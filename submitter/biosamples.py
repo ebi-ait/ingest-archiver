@@ -29,9 +29,12 @@ class BioSamplesSubmitter(Submitter):
         if update_only:
             return {}
 
-        processed_responses = self.process_responses(submission, responses, ERROR_KEY, ARCHIVE_TYPE)
+        self.process_responses(submission, responses, ERROR_KEY, ARCHIVE_TYPE)
 
-        return processed_responses
+        return {
+            'info': 'Biosamples from HCA biomaterials',
+            'entities': responses
+        }
 
     def update_samples_with_biostudies_accession(self, submission, biosample_accessions, biostudies_accession):
         for entity in submission.get_entities('biomaterials'):
@@ -47,9 +50,13 @@ class BioSamplesSubmitter(Submitter):
                 data['uuid'] = attribute.value
                 break
 
-        response = \
-            ArchiveResponse(
-                entity_type=converted_entity.hca_entity_type, data=data, is_update=converted_entity.updated)
+        response = {
+            "entity_type": converted_entity.hca_entity_type,
+            "uuid": data.get("uuid"),
+            "biosamples_accession": data.get("accession"),
+            "is_update": converted_entity.updated
+        }
+
         return response
 
     def __create_additional_attributes(self, submission):

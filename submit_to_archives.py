@@ -164,7 +164,5 @@ if __name__ == "__main__":
             logger.error(ERROR_MESSAGE_WENT_WRONG)
             exit(1)
 
-        archiver_response_with_urls = process_archiver_response()
-
         logger.info("You can check the result of archiving in the following webpages:")
-        logger.info(json.dumps(archiver_response_with_urls, indent=4))
+        logger.info(json.dumps(response_json, indent=4))

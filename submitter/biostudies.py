@@ -24,9 +24,12 @@ class BioStudiesSubmitter(Submitter):
     def send_all_projects(self, submission: HcaSubmission) -> dict:
         converted_entities = self.convert_all_entities(submission, ARCHIVE_TYPE)
         responses = self.send_all_entities(converted_entities, ARCHIVE_TYPE)
-        processed_responses = self.process_responses(submission, responses, ERROR_KEY, ARCHIVE_TYPE)
+        self.process_responses(submission, responses, ERROR_KEY, ARCHIVE_TYPE)
 
-        return processed_responses
+        project_response = responses[0]
+        project_response['info'] = 'BioStudies from HCA projects'
+
+        return project_response
 
     def update_submission_with_archive_accessions(self, biosample_accessions: List[str], biostudies_accession,
                                                   ena_accessions: List[str]):
@@ -59,15 +62,19 @@ class BioStudiesSubmitter(Submitter):
         return accessions is not None and len(accessions) > 0
 
     def _submit_to_archive(self, converted_entity: ConvertedEntity):
-        data = {'accession': self.__archive_client.send_submission(converted_entity.data)}
+        accession = self.__archive_client.send_submission(converted_entity.data)
+        uuid = None
 
         for attribute in converted_entity.data.get('attributes', []):
             if attribute and attribute.get('name') == 'HCA Project UUID':
-                data['uuid'] = attribute.get('value', '')
+                uuid = attribute.get('value')
                 break
 
-        response = \
-            ArchiveResponse(
-                entity_type=converted_entity.hca_entity_type, data=data, is_update=converted_entity.updated)
+        response = {
+            "entity_type": converted_entity.hca_entity_type,
+            "uuid": uuid,
+            "biostudies_accession": accession,
+            "is_update": converted_entity.updated
+        }
 
         return response

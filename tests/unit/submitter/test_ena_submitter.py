@@ -7,7 +7,6 @@ from mock import MagicMock
 from archiver import ConvertedEntity
 from hca.submission import HcaSubmission
 from submitter.ena import EnaSubmitter
-from tests.unit.submitter import create_archive_response
 from tests.unit.utils import make_ingest_entity, random_id, random_uuid
 
 
@@ -16,8 +15,8 @@ class TestEnaSubmitter(unittest.TestCase):
         self.archive_client = MagicMock()
         self.converter = MagicMock()
         self.updater = MagicMock()
-        self.empty_study = {}
-        self.converter.convert = MagicMock(return_value=self.empty_study)
+        self.study = {}
+        self.converter.convert = MagicMock(return_value=self.study)
         self.submitter_service = MagicMock()
         self.submitter = EnaSubmitter(self.archive_client, self.updater)
         self.submitter.converter = self.converter
@@ -61,7 +60,7 @@ class TestEnaSubmitter(unittest.TestCase):
     def test_when_send_entities_to_archive_get_back_correct_archive_response(self):
         is_update = False
         converted_ena_study = [
-            ConvertedEntity(data=self.empty_study, hca_entity_type=self.entity_type, is_update=is_update)
+            ConvertedEntity(data=self.study, hca_entity_type=self.entity_type, is_update=is_update)
         ]
         self.archive_client.send_submission = MagicMock(side_effect=[
             bytes(
@@ -73,41 +72,8 @@ class TestEnaSubmitter(unittest.TestCase):
 
         assert_that(len(archive_responses)).is_equal_to(len(converted_ena_study))
         for archive_response in archive_responses:
-            assert_that(archive_response.data).is_not_none()
-            assert_that(archive_response.entity_type).is_equal_to(self.entity_type)
-            assert_that(archive_response.updated).is_equal_to(is_update)
-
-    def test_processing_archive_response_from_project_creation_results_same_number_of_result(self):
-        payload = {'accession': 'ERP12345', 'uuid': self.project_uuid}
-        archive_response = create_archive_response(payload, self.entity_type)
-        archive_responses = [archive_response]
-        processed_responses_from_archive =\
-            self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
-
-    def test_processing_archive_response_from_project_update_results_same_number_of_result(self):
-        payload = {'accession': 'ERP12345', 'uuid': self.project_uuid}
-        archive_response = create_archive_response(payload, self.entity_type, is_update=True)
-        archive_responses = [archive_response]
-        processed_responses_from_archive =\
-            self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
-
-    def test_processing_archive_response_from_sample_update_results_same_number_of_result(self):
-        payload = {'accession': 'ERP12345', 'uuid': self.project_uuid}
-        archive_response = \
-            create_archive_response(payload, self.entity_type, is_update=True,
-                                    error_messages='Dummy error message')
-        archive_responses = [archive_response]
-        processed_responses_from_archive =\
-            self.submitter.process_responses(self.submission, archive_responses, '', self.ARCHIVE_TYPE)
-
-        assert_that(len(processed_responses_from_archive)).is_equal_to(1)
-        assert_that(processed_responses_from_archive).is_equal_to(archive_responses)
+            assert_that(archive_response.get('entity_type')).is_equal_to(self.entity_type)
+            assert_that(archive_response.get('is_update')).is_equal_to(is_update)
 
     @staticmethod
     def __get_expected_payload(filename: str):
