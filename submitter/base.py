@@ -27,6 +27,12 @@ CONVERTERS_BY_ARCHIVE_TYPES = {
     'ENA_projects': EnaStudyConverter()
 }
 
+ACCESSION_KEY_BY_ARCHIVE_TYPE = {
+    'BioSamples': 'biosamples_accession',
+    'BioStudies': 'biostudies_accession',
+    'ENA': 'ena_project_accession'
+}
+
 
 class Submitter(metaclass=ABCMeta):
     def __init__(self, archive_client, converter, updater):
@@ -90,30 +96,27 @@ class Submitter(metaclass=ABCMeta):
 
     def send_all_entities(self, converted_entities, archive_type: str):
         responses_from_archive = []
-        if archive_type == 'ENA':
-            responses_from_archive = self._submit_to_archive(converted_entities)
-        else:
-            for converted_entity in converted_entities:
-                archive_response: dict = self._submit_to_archive(converted_entity)
-                responses_from_archive.append(archive_response)
+        for converted_entity in converted_entities:
+            archive_response: dict = self._submit_to_archive(converted_entity)
+            responses_from_archive.append(archive_response)
 
         return responses_from_archive
 
     def process_responses(self, submission: HcaSubmission, responses, error_key, archive_type):
-        responses_from_archive = []
         response: ArchiveResponse
         for response in responses:
-            accession = response.data.get('accession')
-            if accession and not response.updated:
-                entity_type = response.entity_type
-                uuid = response.data.get('uuid')
+            accession = response.get(self.__get_accession_key(archive_type))
+            if accession and not response.get('is_update'):
+                entity_type = response.get('entity_type')
+                uuid = response.get('uuid')
                 entity = submission.get_entity_by_uuid(entity_type, uuid)
                 entity.add_accession(archive_type, accession)
                 submission.add_accessions_to_attributes(entity, archive_type, entity_type)
                 self.updater.update_entity(entity)
 
-            responses_from_archive.append(response)
-        return responses_from_archive
+    @staticmethod
+    def __get_accession_key(archive_type: str) -> str:
+        return ACCESSION_KEY_BY_ARCHIVE_TYPE.get(archive_type)
 
     def __set_release_date_from_project(self, entity):
         if entity.identifier.entity_type == 'projects':

@@ -55,23 +55,20 @@ class DirectArchiver:
         ena_responses = {}
         if self.__biosamples_submitter:
             biosamples_responses = self.__biosamples_submitter.send_all_samples(submission)
-            self.__jsonify_archive_response(biosamples_responses)
-            archives_responses['biosamples'] = biosamples_responses
+            archives_responses['samples'] = biosamples_responses
 
         if self.__biostudies_submitter:
             biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
-            self.__jsonify_archive_response(biostudies_responses)
-            archives_responses['biostudies'] = biostudies_responses
+            archives_responses['project'] = biostudies_responses
 
         if self.__ena_submitter:
             ena_responses = self.__ena_submitter.send_all_ena_entities(submission)
-            self.__jsonify_archive_response(ena_responses)
-            archives_responses['ena'] = ena_responses
+            archives_responses['project'].update(ena_responses)
 
         if self.__biosamples_submitter and self.__biostudies_submitter:
-            biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses)
-            biostudies_accessions = self.__get_accessions_from_responses(biostudies_responses)
-            ena_accessions = self.__get_accessions_from_responses(ena_responses)
+            biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses.get('entities'), 'biosamples_accession')
+            biostudies_accessions = self.__get_accessions_from_responses([biostudies_responses], 'biostudies_accession')
+            ena_accessions = self.__get_accessions_from_responses([ena_responses], 'ena_project_accession')
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
         if sub_uuid:
@@ -140,8 +137,8 @@ class DirectArchiver:
         return run_accession
 
     @staticmethod
-    def __get_accessions_from_responses(responses: dict) -> List[str]:
-        return [archive_data.get('data', {}).get('accession', '') for archive_data in responses]
+    def __get_accessions_from_responses(responses: list, accession_key: str) -> List[str]:
+        return [archive_data.get(accession_key) for archive_data in responses]
 
     @staticmethod
     def __jsonify_archive_response(archive_responses):

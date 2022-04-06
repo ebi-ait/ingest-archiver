@@ -26,8 +26,9 @@ class BioStudiesSubmitterService:
 
     def __update_links_section(self, links_section, accessions: List[str], link_type: str):
         for accession in accessions:
-            link_to_add = self.__create_link_element(link_type, accession)
-            links_section.append(link_to_add)
+            if accession:
+                link_to_add = self.__create_link_element(link_type, accession)
+                links_section.append(link_to_add)
 
     @staticmethod
     def __create_link_element(link_type, accession):
