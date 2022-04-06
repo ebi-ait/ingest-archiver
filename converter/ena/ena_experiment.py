@@ -1,14 +1,16 @@
 from converter.ena.classes import AttributeType
 from converter.ena.classes.sra_common import PlatformType, RefObjectType, TypeIlluminaModel
 from converter.ena.classes.sra_experiment import Experiment, ExperimentSet, LibraryDescriptorType, LibraryType, SampleDescriptorType, TypeLibrarySelection, TypeLibrarySource, TypeLibraryStrategy
-from converter.ena.base import EnaModel
+from converter.ena.base import EnaModel, XMLType
 from converter.ena.ena_receipt import EnaReceipt
+import logging
 
 
 class EnaExperiment(EnaModel):
 
-    def __init__(self, study_ref):
+    def __init__(self, study_ref, alias_prefix=None):
         self.study_ref = study_ref
+        self.alias_prefix = alias_prefix
 
     def archive(self, assay):
         experiment = self.create(assay)
@@ -16,7 +18,8 @@ class EnaExperiment(EnaModel):
         receipt_xml = self.post(XMLType.EXPERIMENT, input_xml, update=True if experiment.accession else False)
         accessions = EnaReceipt(XMLType.EXPERIMENT, input_xml, receipt_xml).process_receipt()
         if accessions and len(accessions) == 1:
-            return accessions[0]
+            (alias, accession) = accessions[0]
+            return accession
         raise EnaArchiveException('Ena archive no accession returned.')
 
     def create_set(self, assays):
@@ -34,14 +37,20 @@ class EnaExperiment(EnaModel):
 
         experiment = Experiment()
         experiment.experiment_attributes = Experiment.ExperimentAttributes()
-        experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=sequencing_protocol["content"]["protocol_core"]["protocol_description"]))
+
+        protocol_desc = sequencing_protocol.get("content", {}).get("protocol_core", {}).get("protocol_description")
+        if protocol_desc:
+            experiment.experiment_attributes.experiment_attribute.append(AttributeType(tag="Description", value=protocol_desc))
 
         experiment_accession = self.get_experiment_accession(assay)
         if experiment_accession:
             experiment.accession = experiment_accession
+            logging.info(f"EXISTING insdc_experiment accession {experiment.accession}")
         else:
-            experiment.alias = sequencing_protocol["content"]["protocol_core"]["protocol_id"]
-        experiment.title = sequencing_protocol["content"]["protocol_core"]["protocol_name"]
+            experiment.alias = self.alias_prefix + assay.get("content", {}).get("process_core", {}).get("process_id")
+            logging.info(f"NEW experiment alias {experiment.alias}")
+
+        experiment.title = sequencing_protocol.get("content", {}).get("protocol_core", {}).get("protocol_name", "Untitled")
 
         experiment.design = LibraryType()
         experiment.design.library_descriptor = LibraryDescriptorType()
@@ -64,13 +73,7 @@ class EnaExperiment(EnaModel):
         return experiment
 
     def get_experiment_accession(self, assay):
-        experiment_accession = None
-        try:
-            experiment_accession = assay["content"]["insdc_experiment"]["insdc_experiment_accession"]
-        except KeyError:
-            pass # not accessioned (i.e archived) yet.
-        return experiment_accession
-
+        return assay.get("content", {}).get("insdc_experiment", {}).get("insdc_experiment_accession")
 
     def ena_library_name_and_accession(self, input_biomaterials):
         # unlikely to have multiple biomaterial inputs it is still possible, ena takes one accession only, so
@@ -103,9 +106,15 @@ class EnaExperiment(EnaModel):
         platform_type = PlatformType()
         if sequencing_protocol["content"]["instrument_manufacturer_model"]:
             instrument_manufacturer_model = sequencing_protocol["content"]["instrument_manufacturer_model"]["text"]
+            instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
+            if not instrument_model:
+                instrument_manufacturer_model = sequencing_protocol["content"]["instrument_manufacturer_model"]["ontology_label"]
+                instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
+            if not instrument_model:
+                instrument_model = TypeIlluminaModel.UNSPECIFIED
 
             platform_type.illumina = PlatformType.Illumina()
-            platform_type.illumina.instrument_model = HcaEnaMapping.INSTRUMENT_MANUFACTURER_MODEL_MAPPING.get(instrument_manufacturer_model.lower(), None)
+            platform_type.illumina.instrument_model = instrument_model
 
         return platform_type
 

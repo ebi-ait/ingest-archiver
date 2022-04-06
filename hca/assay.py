@@ -28,32 +28,47 @@ class AssayData:
         self.uuid = uuid
 
     def load(self):
-        self.submission = self.ingest_api.get_submission_by_uuid(self.uuid)
+        self.submission = self.get_submission(self.uuid)
         self.project = self.get_submission_project()
-        self.study_accession = self.get_study_accession()
         self.assays = self.get_submission_assays()
 
-    def get_submission_project(self):
-        projects = self.get_submission_entities('projects')
-        if projects:
-            if len(projects) == 1:
-                return projects[0]
-            else:
-                raise Exception(f'Multiple projects linked to submission {self.uuid}.')
-        else:
-            raise Exception(f'No project linked to submission {self.uuid}.')
+    def get_submission(self, uuid):
+        try:
+            submission = self.ingest_api.get_submission_by_uuid(uuid)
+            return submission
+        except Exception as e:
+            raise Exception(f'Error retrieving submission {uuid}: {str(e)}')
 
-    def get_study_accession(self):
+    def get_submission_project(self):
+        try:
+            projects = self.get_all_entities(self.submission["_links"]["relatedProjects"]["href"], 'projects', [])
+            if projects:
+                if len(projects) == 1:
+                    return projects[0]
+                else:
+                    raise Exception(f'Multiple projects linked to submission {self.uuid}.')
+            else:
+                raise Exception(f'No project linked to submission {self.uuid}.')
+        except Exception as e:
+            raise Exception(f'Error retrieving project for submission {self.uuid}: {str(e)}')
+
+    def get_project_accession(self):
         try:
             accessions = self.project["content"]["insdc_project_accessions"]
             for accession in accessions:
-                if accession.startswith("ERP") or accession.startswith("PRJ"):
+                if accession.startswith("ERP"):
                     return accession
             raise Exception
         except:
-            raise Exception('Sequencing Experiment requires a study accession.')
+            raise Exception('ENA sequencing experiment requires a project accession.')
 
     def get_submission_assays(self):
+        try:
+            return self.__get_submission_assays()
+        except Exception as e:
+            raise Exception(f'Error getting submission assays: {str(e)}')
+
+    def __get_submission_assays(self):
         assays = []
         # get processes
         processes = self.get_submission_entities('processes')
@@ -155,20 +170,36 @@ class AssayData:
                 self.get_all_entities(url, entity_type, entities)
         return entities
 
-    def update_ingest_process_insdc_experiment_accession(self, process_uuid, experiment_accession):
-        process_content_patch = {
-            "content": {
-                "insdc_experiment": {
+    def update_ingest_process_insdc_experiment_accession(self, process, experiment_accession):
+        try:
+            _links_self = process["_links"]["self"]["href"]
+            entity_id = _links_self.split('/')[-1]
+            logging.info(f"Patching ingest process {entity_id} with experiment accession {experiment_accession}")
+
+            content = process["content"]
+            insdc_experiment_accession = content.get("insdc_experiment", {}).get("insdc_experiment_accession")
+            if not insdc_experiment_accession or (insdc_experiment_accession and insdc_experiment_accession != experiment_accession):
+                content["insdc_experiment"] = {
                     "insdc_experiment_accession": experiment_accession
                 }
-            }
-        }
-        self.ingest_api.patch_entity_by_id('process', process_uuid, process_content_patch)
+                self.ingest_api.patch_entity_by_id('processes', entity_id, { 'content': content })
+        except Exception as e:
+            raise Exception(f"Error updating ingest process insdc_experiment_accession: {str(e)}")
 
-    def update_ingest_file_insdc_run_accessions(self, file_uuid, run_accessions):
-        file_content_patch = {
-            "content": {
-                "insdc_run_accessions": run_accessions
-            }
-        }
-        self.ingest_api.patch_entity_by_id('file', file_uuid, file_content_patch)
+    def update_ingest_file_insdc_run_accession(self, file, run_accession):
+        try:
+            _links_self = file["_links"]["self"]["href"]
+            entity_id = _links_self.split('/')[-1]
+            logging.info(f"Patching ingest file {entity_id} with run accession {run_accession}")
+
+            content = file["content"]
+            accessions = content.get("insdc_run_accessions", [])
+            if run_accession not in accessions:
+                accessions.append(run_accession)
+
+            self.ingest_api.patch_entity_by_id('files', entity_id, { 'content': content })
+        except Exception as e:
+            raise Exception(f"Error updating ingest file insdc_run_accessions: {str(e)}")
+
+
+
