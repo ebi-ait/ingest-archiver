@@ -193,9 +193,14 @@ class AssayData:
             logging.info(f"Patching ingest file {entity_id} with run accession {run_accession}")
 
             content = file["content"]
-            accessions = content.get("insdc_run_accessions", [])
+            accessions = content.get("insdc_run_accessions")
+            if accessions:
+                if run_accession not in accessions:
+                    accessions.append(run_accession)
+            else:
+                file["content"]["insdc_run_accessions"] = [run_accession]
+
             if run_accession not in accessions:
-                accessions.append(run_accession)
 
             self.ingest_api.patch_entity_by_id('files', entity_id, { 'content': content })
         except Exception as e:
