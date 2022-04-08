@@ -1,4 +1,8 @@
-from archiver import ArchiveResponse, ConvertedEntity
+import logging
+
+from requests import HTTPError
+
+from archiver import ConvertedEntity
 from converter.biosamples import BioSamplesConverter
 from submission_broker.submission.submission import Submission
 from submission_broker.services.biosamples import BioSamples
@@ -43,19 +47,28 @@ class BioSamplesSubmitter(Submitter):
         self.send_all_samples(submission, update_only=True)
 
     def _submit_to_archive(self, converted_entity: ConvertedEntity):
-        data = self.__archive_client.send_sample(converted_entity.data)
+        response = {
+            "entity_type": converted_entity.hca_entity_type,
+            "is_update": converted_entity.updated
+        }
+
+        try:
+            rest_error_message = None
+            data = self.__archive_client.send_sample(converted_entity.data)
+            response['biosamples_accession'] = data.get("accession")
+        except HTTPError as rest_error:
+            logging.error('BioSamples service returned with an error.')
+            logging.error(f'Http return code: {rest_error.response.status_code}')
+            logging.error(f'Error message: {rest_error.response.text}')
+            rest_error_message = rest_error.response.text
 
         for attribute in converted_entity.data.attributes:
             if attribute and attribute.name == 'HCA Biomaterial UUID':
-                data['uuid'] = attribute.value
+                response['uuid'] = attribute.value
                 break
 
-        response = {
-            "entity_type": converted_entity.hca_entity_type,
-            "uuid": data.get("uuid"),
-            "biosamples_accession": data.get("accession"),
-            "is_update": converted_entity.updated
-        }
+        if rest_error_message:
+            response['error'] = rest_error_message
 
         return response
 
