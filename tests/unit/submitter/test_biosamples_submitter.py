@@ -2,7 +2,8 @@ import unittest
 
 from assertpy import assert_that
 from biosamples_v4.models import Sample
-from mock.mock import MagicMock
+from mock.mock import MagicMock, Mock
+from requests import HTTPError
 
 from archiver import ConvertedEntity
 from hca.submission import HcaSubmission
@@ -15,10 +16,11 @@ class TestBioSamplesSubmitter(unittest.TestCase):
     def setUp(self) -> None:
         self.client = MagicMock()
         self.converter = MagicMock()
-        self.empty_sample = Sample(ncbi_taxon_id=9606)
+        self.empty_sample1 = Sample(ncbi_taxon_id=9606)
+        self.empty_sample2 = Sample(ncbi_taxon_id=9606)
         self.sample1 = Sample(ncbi_taxon_id=9606, name='test1')
         self.sample2 = Sample(ncbi_taxon_id=9606, name='test2')
-        self.converter.convert = MagicMock(return_value=self.empty_sample)
+        self.converter.convert = MagicMock(return_value=self.empty_sample1)
         self.updater = MagicMock()
         self.submitter_service = MagicMock()
         self.biosamples_submitter = \
@@ -64,7 +66,7 @@ class TestBioSamplesSubmitter(unittest.TestCase):
     def test_when_send_entities_to_archive_get_back_correct_archive_response(self):
         is_update = False
         converted_samples = [
-            ConvertedEntity(data=self.empty_sample, hca_entity_type=self.entity_type, is_update=is_update),
+            ConvertedEntity(data=self.empty_sample1, hca_entity_type=self.entity_type, is_update=is_update),
             ConvertedEntity(data=self.sample1, hca_entity_type=self.entity_type, is_update=is_update),
             ConvertedEntity(data=self.sample2, hca_entity_type=self.entity_type, is_update=is_update)
         ]
@@ -79,6 +81,28 @@ class TestBioSamplesSubmitter(unittest.TestCase):
         for archive_response in archive_responses:
             assert_that(archive_response.get('entity_type')).is_equal_to(self.entity_type)
             assert_that(archive_response.get('is_update')).is_equal_to(is_update)
+
+    def test_when_send_entities_without_name_to_archive_get_back_error_in_archive_response(self):
+        is_update = False
+        error_message1 = 'Sample name must be provided'
+        error_message2 = 'Another error message'
+        converted_samples = [
+            ConvertedEntity(data=self.empty_sample1, hca_entity_type=self.entity_type, is_update=is_update),
+            ConvertedEntity(data=self.empty_sample2, hca_entity_type=self.entity_type, is_update=is_update)
+        ]
+        self.client.send_sample = MagicMock(side_effect=[
+                HTTPError(response=Mock(status=400, text=error_message1)),
+                HTTPError(response=Mock(status=400, text=error_message2)),
+            ]
+        )
+        archive_responses = self.biosamples_submitter.send_all_entities(converted_samples, self.ARCHIVE_TYPE)
+
+        assert_that(len(archive_responses)).is_equal_to(len(converted_samples))
+        for archive_response in archive_responses:
+            assert_that(archive_response.get('entity_type')).is_equal_to(self.entity_type)
+            assert_that(archive_response.get('is_update')).is_equal_to(is_update)
+            assert_that(archive_response.get('error')).is_not_none()
+            assert_that([error_message1, error_message2]).contains(archive_response.get('error'))
 
 
 if __name__ == '__main__':

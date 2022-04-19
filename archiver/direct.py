@@ -56,14 +56,20 @@ class DirectArchiver:
         if self.__biosamples_submitter:
             biosamples_responses = self.__biosamples_submitter.send_all_samples(submission)
             archives_responses['samples'] = biosamples_responses
+            if self.__has_response_errors(biosamples_responses.get('entities')):
+                return archives_responses
 
         if self.__biostudies_submitter:
             biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
             archives_responses['project'] = biostudies_responses
+            if self.__has_response_errors([biostudies_responses]):
+                return archives_responses
 
         if self.__ena_submitter:
             ena_responses = self.__ena_submitter.send_all_ena_entities(submission)
             archives_responses['project'].update(ena_responses)
+            if self.__has_response_errors([ena_responses]):
+                return archives_responses
 
         if self.__biosamples_submitter and self.__biostudies_submitter:
             biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses.get('entities'), 'biosamples_accession')
@@ -71,10 +77,19 @@ class DirectArchiver:
             ena_accessions = self.__get_accessions_from_responses([ena_responses], 'ena_project_accession')
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
+
         if sub_uuid:
             self.__archive_ena_experiments_and_runs(sub_uuid, archives_responses)
 
         return archives_responses
+
+    @staticmethod
+    def __has_response_errors(responses):
+        for response in responses:
+            if response.get('error'):
+                return True
+
+        return False
 
     def __archive_ena_experiments_and_runs(self, sub_uuid, archives_responses):
         logging.info("Archive ENA experiments and runs from HCA assays")
