@@ -10,7 +10,7 @@ from colorlog import ColoredFormatter
 ERROR_MESSAGE_WENT_WRONG = "Something went wrong while sending data/metadata to archives."
 
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev')
-PATH_TO_DIRECT_ARCHIVING = 'archiveSubmissions'
+DIRECT_ARCHIVING_ENDPOINT = 'archiveSubmissions'
 
 
 def setup_logger():
@@ -83,46 +83,6 @@ def get_header():
     }
 
 
-def process_archiver_response():
-    output = {}
-    for archive_name, archived_items in response_json.items():
-        output[f'{archive_name} archive'] = get_response_data_from_archive(archive_name, archived_items)
-
-    return output
-
-
-def get_response_data_from_archive(archive_name, results):
-    data = {}
-    for result_data in results:
-        base_url = ARCHIVE_URLS[archive_name]
-        entity_type = result_data.get('entity_type', 'unknown entity type')
-        error_messages = result_data.get('error_messages')
-        if archive_name == 'ena' and not error_messages:
-            if entity_type:
-                url_entities_part = ENA_URL_PART_BY_ENTITY_TYPE[entity_type]
-                base_url = base_url.format(entities=url_entities_part)
-        archive_response = result_data.get('data', {})
-        if not error_messages:
-            accession = archive_response.get('accession')
-            data.setdefault(entity_type, []).append(
-                {
-                    'uuid': archive_response.get('uuid'),
-                    'accession': accession,
-                    'updated': result_data.get('updated'),
-                    'url': f'{base_url}/{accession}'
-                }
-            )
-        else:
-            data.setdefault(entity_type, []).append(
-                {
-                    'uuid': archive_response.get('uuid'),
-                    'error_details': error_messages
-                }
-            )
-
-    return data
-
-
 if __name__ == "__main__":
     logger = setup_logger()
 
@@ -147,7 +107,7 @@ if __name__ == "__main__":
         f"Archiving has started in {ENVIRONMENT} environment for submission: {submission_uuid}."
         f" This could take some time. Please, be patience.")
 
-    archiver_response = requests.post(archiver_root + PATH_TO_DIRECT_ARCHIVING,
+    archiver_response = requests.post(archiver_root + DIRECT_ARCHIVING_ENDPOINT,
                                       json=payload,
                                       headers=header)
 
@@ -158,11 +118,4 @@ if __name__ == "__main__":
     else:
         response_json = archiver_response.json()
 
-        logger.info(f'Response: {response_json}')
-
-        if response_json.get('message'):
-            logger.error(ERROR_MESSAGE_WENT_WRONG)
-            exit(1)
-
-        logger.info("You can check the result of archiving in the following webpages:")
         logger.info(json.dumps(response_json, indent=4))

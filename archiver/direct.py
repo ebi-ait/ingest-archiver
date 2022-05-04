@@ -43,45 +43,80 @@ class DirectArchiver:
         self.__archive(hca_submission)
         return hca_submission
 
-    def archive_submission(self, submission_uuid: str) -> dict:
+    def archive_submission(self, submission_uuid: str, archive_job: dict, ingest_api):
         hca_submission = self.__loader.get_submission(submission_uuid=submission_uuid)
-        archives_response = self.__archive(hca_submission, submission_uuid)
-        return archives_response
+        self.__archive(hca_submission, ingest_api, archive_job, submission_uuid)
 
-    def __archive(self, submission: HcaSubmission, sub_uuid=None):
+    def __archive(self, submission: HcaSubmission, ingest_api, archive_job, sub_uuid=None):
         archives_responses = {}
         biosamples_responses = {}
         biostudies_responses = {}
-        ena_responses = {}
+        ena_study_response = {}
         if self.__biosamples_submitter:
             biosamples_responses = self.__biosamples_submitter.send_all_samples(submission)
-            archives_responses['samples'] = biosamples_responses
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "samples", biosamples_responses)
             if self.__has_response_errors(biosamples_responses.get('entities')):
                 return archives_responses
 
         if self.__biostudies_submitter:
             biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
-            archives_responses['project'] = biostudies_responses
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "project", biostudies_responses)
             if self.__has_response_errors([biostudies_responses]):
                 return archives_responses
 
         if self.__ena_submitter:
-            ena_responses = self.__ena_submitter.send_all_ena_entities(submission)
-            archives_responses['project'].update(ena_responses)
-            if self.__has_response_errors([ena_responses]):
+            ena_study_response = self.__ena_submitter.send_all_ena_entities(submission)
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "project", ena_study_response)
+            if self.__has_response_errors([ena_study_response]):
                 return archives_responses
 
         if self.__biosamples_submitter and self.__biostudies_submitter:
             biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses.get('entities'), 'biosamples_accession')
             biostudies_accessions = self.__get_accessions_from_responses([biostudies_responses], 'biostudies_accession')
-            ena_accessions = self.__get_accessions_from_responses([ena_responses], 'ena_project_accession')
+            ena_accessions = self.__get_accessions_from_responses([ena_study_response], 'ena_project_accession')
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
 
         if sub_uuid:
-            self.__archive_ena_experiments_and_runs(sub_uuid, archives_responses)
+            self.__archive_ena_experiments_and_runs(sub_uuid, ingest_api, archive_job)
 
-        return archives_responses
+        self.__patch_archive_job_with_finished_status(ingest_api, archive_job)
+
+    @staticmethod
+    def __patch_archive_job_with_archive_result(ingest_api: IngestAPI, archive_job: dict, archive_name: str, archives_response: dict):
+        entity_id = DirectArchiver.__get_archive_job_id(archive_job)
+
+        payload = {
+            "resultsFromArchives": {
+                archive_name: archives_response
+            },
+            "overallStatus": "Running"
+        }
+
+        response = ingest_api.patch_entity_by_id(
+            entity_type="archiveJobs",
+            entity_id=entity_id,
+            entity_patch=payload
+        )
+
+        return response
+
+    @staticmethod
+    def __get_archive_job_id(archive_job):
+        return archive_job.get("_links", {}).get("self", {}).get("href", "").rsplit("/")[-1]
+
+    @staticmethod
+    def __patch_archive_job_with_finished_status(ingest_api: IngestAPI, archive_job: dict):
+        payload = {
+            "responseDate": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "overallStatus": "Completed",
+        }
+        entity_id = DirectArchiver.__get_archive_job_id(archive_job)
+        ingest_api.patch_entity_by_id(
+            entity_type="archiveJobs",
+            entity_id=entity_id,
+            entity_patch=payload
+        )
 
     @staticmethod
     def __has_response_errors(responses):
@@ -91,10 +126,10 @@ class DirectArchiver:
 
         return False
 
-    def __archive_ena_experiments_and_runs(self, sub_uuid, archives_responses):
+    def __archive_ena_experiments_and_runs(self, sub_uuid, ingest_api, archive_job):
+        hca_assays_responses = {}
         logging.info("Archive ENA experiments and runs from HCA assays")
-        archives_responses['hca_assays'] = {}
-        archives_responses['hca_assays']['info'] = 'ENA experiments and runs from HCA assays'
+        hca_assays_responses['info'] = 'ENA experiments and runs from HCA assays'
         common_alias_prefix = f'SUBMISSION-{datetime.datetime.now().strftime("%d-%m-%Y-%T")}:'
 
         logging.info("Getting assay data...")
@@ -103,15 +138,17 @@ class DirectArchiver:
             data.load()
             study_ref = data.get_project_accession()
         except Exception as e:
-            archives_responses['hca_assays']['error'] = str(e)
+            logging.exception(f"Data load failed with submission (UUID: {sub_uuid})")
+            logging.error(f"Error message: {str(e)}")
+            hca_assays_responses['error'] = str(e)
             return
 
-        archives_responses['hca_assays']['experiments'] = []
+        hca_assays_responses['experiments'] = []
 
         for assay in data.assays:
             # archive experiment
             experiment_and_run_response = {"process_uuid": assay["uuid"]["uuid"]}
-            archives_responses['hca_assays']['experiments'].append(experiment_and_run_response)
+            hca_assays_responses['experiments'].append(experiment_and_run_response)
 
             try:
                 experiment_accession, is_update = self.__archive_experiment(assay, study_ref, common_alias_prefix)
@@ -122,6 +159,8 @@ class DirectArchiver:
             except Exception as e:
                 experiment_and_run_response["ena_experiment_accession"] = None
                 experiment_and_run_response["error"] = str(e)
+                logging.exception(f"Experiment processing failed (submission UUID: {sub_uuid})")
+                logging.error(f"Error message: {str(e)}")
                 return
 
             # archive run
@@ -138,16 +177,22 @@ class DirectArchiver:
 
                 experiment_and_run_response["files"] = files
 
+                self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "hca_assays", hca_assays_responses)
+
             except Exception as e:
                 experiment_and_run_response["ena_run_accession"] = None
                 experiment_and_run_response["error"] = str(e)
+                logging.exception(f"Run processing failed (submission UUID: {sub_uuid})")
+                logging.error(f"Error message: {str(e)}")
                 return
 
-    def __archive_experiment(self, assay, study_ref, alias_prefix):
+    @staticmethod
+    def __archive_experiment(assay, study_ref, alias_prefix):
         ena_experiment = EnaExperiment(study_ref, alias_prefix)
         return ena_experiment.archive(assay)
 
-    def __archive_run(self, assay, experiment_accession, alias_prefix):
+    @staticmethod
+    def __archive_run(assay, experiment_accession, alias_prefix):
         ena_run = EnaRun(experiment_accession, alias_prefix)
         return ena_run.archive(assay)
 
