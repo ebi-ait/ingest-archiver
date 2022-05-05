@@ -57,24 +57,24 @@ class DirectArchiver:
             if self.__has_response_errors(biosamples_responses.get('entities')):
                 self.__handle_error_response(ingest_api, archive_job, "samples", biosamples_responses)
                 return
-            else:
-                self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "samples", biosamples_responses)
+
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "samples", biosamples_responses)
 
         if self.__biostudies_submitter:
             biostudies_responses = self.__biostudies_submitter.send_all_projects(submission)
             if self.__has_response_errors([biostudies_responses]):
                 self.__handle_error_response(ingest_api, archive_job, "project", biostudies_responses)
                 return
-            else:
-                self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "project", biostudies_responses)
+
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "project", biostudies_responses)
 
         if self.__ena_submitter:
             ena_study_response = self.__ena_submitter.send_all_ena_entities(submission)
             if self.__has_response_errors([ena_study_response]):
                 self.__handle_error_response(ingest_api, archive_job, "project", ena_study_response)
                 return
-            else:
-                self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "project", ena_study_response)
+
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "project", ena_study_response)
 
         if self.__biosamples_submitter and self.__biostudies_submitter:
             biosamples_accessions = self.__get_accessions_from_responses(biosamples_responses.get('entities'), 'biosamples_accession')
@@ -88,8 +88,8 @@ class DirectArchiver:
             if self.__has_response_errors([hca_assays_responses]):
                 self.__handle_error_response(ingest_api, archive_job, "hca_assays", hca_assays_responses)
                 return
-            else:
-                self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "hca_assays", hca_assays_responses)
+
+            self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "hca_assays", hca_assays_responses)
 
         self.__patch_archive_job_with_finished_status(ingest_api, archive_job)
 
