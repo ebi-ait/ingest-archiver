@@ -1,6 +1,6 @@
 import unittest
 from http import HTTPStatus
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from assertpy import assert_that
 from biostudiesclient.exceptions import RestErrorException
 
@@ -27,6 +27,8 @@ class ArchiverAppTest(unittest.TestCase):
         archive_failed_message = 'Archiving failed.'
         mock_direct_archiver_from_config.side_effect = RestErrorException(error_message, request_timeout_status)
         archiver_app.direct_archiver_from_config = mock_direct_archiver_from_config
+        archiver_app.create_archive_job = Mock()
+        archiver_app.set_archive_job_to_fail = Mock()
         api_key = 'API-KEY'
         mock_config.ARCHIVER_API_KEY = api_key
 

@@ -89,8 +89,8 @@ def archive():
         archives_response = {}
         ingest_api = IngestAPI(config.INGEST_API_URL)
         try:
-            direct_archiver = direct_archiver_from_config()
             archive_job = create_archive_job(ingest_api, submission_uuid)
+            direct_archiver = direct_archiver_from_config()
 
             thread = threading.Thread(target=direct_archiver.archive_submission,
                                       args=(submission_uuid, archive_job, ingest_api))
@@ -102,17 +102,17 @@ def archive():
             }
             logger.info('Direct archiving started with UUID=%s', submission_uuid)
         except ArchiveException as rest_error:
-            __set_archive_job_to_fail(ingest_api, archive_job, archives_response)
+            set_archive_job_to_fail(ingest_api, archive_job, archives_response)
             archives_response.update(
                 __handle_error_archive_response(
                     rest_error.message, rest_error.status_code, submission_uuid, rest_error.archive_name))
         except RestErrorException as rest_error:
-            __set_archive_job_to_fail(ingest_api, archive_job, archives_response)
+            set_archive_job_to_fail(ingest_api, archive_job, archives_response)
             archives_response.update(
                 __handle_error_archive_response(
                     rest_error.message, rest_error.status_code, submission_uuid))
         except HTTPError as rest_error:
-            __set_archive_job_to_fail(ingest_api, archive_job, archives_response)
+            set_archive_job_to_fail(ingest_api, archive_job, archives_response)
             archives_response.update(
                 __handle_error_archive_response(
                     rest_error.response.text, rest_error.response.status_code, submission_uuid))
@@ -143,7 +143,7 @@ def create_archive_job(ingest_api: IngestAPI, submission_uuid: str):
     return response
 
 
-def __set_archive_job_to_fail(ingest_api: IngestAPI, archive_job: dict, archives_response: dict):
+def set_archive_job_to_fail(ingest_api: IngestAPI, archive_job: dict, archives_response: dict):
     payload = {
         "overallStatus": "Failed"
     }
