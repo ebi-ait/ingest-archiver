@@ -227,6 +227,10 @@ class IngestAPI:
         url = f'{self.url}/archiveEntities/search/findByArchiveSubmissionAndAlias'
         return self.get(url, params={'archiveSubmission': archive_submission_url, 'alias': alias})
 
+    def create_archive_job(self, payload):
+        url = f'{self.url}/archiveJobs'
+        return self.post(url, payload)
+
     def get(self, url, **kwargs):
         r = self.session.get(url, headers=self.headers, **kwargs)
         r.raise_for_status()

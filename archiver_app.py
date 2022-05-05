@@ -87,21 +87,34 @@ def archive():
 
     if is_direct_archiving:
         archives_response = {}
+        ingest_api = IngestAPI(config.INGEST_API_URL)
         try:
+            archive_job = create_archive_job(ingest_api, submission_uuid)
             direct_archiver = direct_archiver_from_config()
-            archives_response = direct_archiver.archive_submission(submission_uuid)
-            logger.info('Archiving finished with UUID=%s', submission_uuid)
+
+            thread = threading.Thread(target=direct_archiver.archive_submission,
+                                      args=(submission_uuid, archive_job, ingest_api))
+            thread.start()
+
+            archives_response = {
+                'message': 'Direct archiving successfully triggered!',
+                'archiveJob': archive_job
+            }
+            logger.info('Direct archiving started with UUID=%s', submission_uuid)
         except ArchiveException as rest_error:
+            set_archive_job_to_fail(ingest_api, archive_job, archives_response)
             archives_response.update(
-                __assemble_error_archive_response(
+                __handle_error_archive_response(
                     rest_error.message, rest_error.status_code, submission_uuid, rest_error.archive_name))
         except RestErrorException as rest_error:
+            set_archive_job_to_fail(ingest_api, archive_job, archives_response)
             archives_response.update(
-                __assemble_error_archive_response(
+                __handle_error_archive_response(
                     rest_error.message, rest_error.status_code, submission_uuid))
         except HTTPError as rest_error:
+            set_archive_job_to_fail(ingest_api, archive_job, archives_response)
             archives_response.update(
-                __assemble_error_archive_response(
+                __handle_error_archive_response(
                     rest_error.response.text, rest_error.response.status_code, submission_uuid))
     else:
         ingest_api = IngestAPI(config.INGEST_API_URL)
@@ -119,6 +132,31 @@ def archive():
         }
 
     return jsonify(archives_response)
+
+
+def create_archive_job(ingest_api: IngestAPI, submission_uuid: str):
+    payload = {
+        "submissionUuid": submission_uuid
+    }
+    response = ingest_api.create_archive_job(payload=payload)
+
+    return response
+
+
+def set_archive_job_to_fail(ingest_api: IngestAPI, archive_job: dict, archives_response: dict):
+    payload = {
+        "overallStatus": "Failed"
+    }
+    entity_id = archive_job.get("_links", {}).get("self", {}).get("href", "").rsplit("/")[-1]
+    response = ingest_api.patch_entity_by_id(
+        entity_type="archiveJobs",
+        entity_id=entity_id,
+        entity_patch=payload
+    )
+
+    archives_response.update({'archiveJob': response})
+
+    return response
 
 
 @app.route("/archiveSubmissions/data", methods=['POST'])
@@ -152,7 +190,8 @@ def file_archive_result(file):
                 'fileArchiveResult': file['fileArchiveResult']
             }
 
-def __assemble_error_archive_response(error_message, status_code, submission_uuid, archive_name: str = None):
+
+def __handle_error_archive_response(error_message, status_code, submission_uuid, archive_name: str = None):
     log_error_message(error_message, status_code, submission_uuid)
     response = {
         'message': 'Archiving failed.',
