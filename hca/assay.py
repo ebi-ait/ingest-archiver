@@ -80,14 +80,17 @@ class AssayData:
             self.logger.info(
                 f"{index + 1}/{num_processes} Checking {process['content']['process_core']['process_id']}")
             # assay process protocol checks
-            sequencing_protocol, library_preparation_protocol = self.get_sequencing_and_library_preparation_protocols(process)
-
-            if not sequencing_protocol and not library_preparation_protocol:
-                self.logger.info(f'No sequencing and library preparation protocols found.')
+            sequencing_protocols, library_preparation_protocols = self.get_sequencing_and_library_preparation_protocols(process)
+            num_sequencing_protocols = len(sequencing_protocols)
+            num_library_preparation_protocols = len(library_preparation_protocols)
+            if num_sequencing_protocols == 1 and num_library_preparation_protocols == 1:
+                self.logger.info(f'Assay process sequencing and lib prep protocols found')
+            else:
+                self.logger.info(f'{num_sequencing_protocols} sequencing and {num_library_preparation_protocols} library preparation protocols found.')
                 continue
 
-            process["sequencing_protocol"] = sequencing_protocol
-            process["library_preparation_protocol"] = library_preparation_protocol
+            process["sequencing_protocol"] = sequencing_protocols[0]
+            process["library_preparation_protocol"] = library_preparation_protocols[0]
 
             # assay process input and output checks
             process["input_biomaterials"] = self.get_input_biomaterials(process)
@@ -99,6 +102,14 @@ class AssayData:
             if not process["derived_files"]:
                 self.logger.info(f'No derived files found.')
                 continue
+            else:
+                all_sequence_files = True
+                for file in process["derived_files"]:
+                    described_by = file["content"]["describedBy"]
+                    all_sequence_files = all_sequence_files and described_by.endswith('sequence_file')
+                if not all_sequence_files:
+                    self.logger.info(f'Non sequence files found among derived files.')
+                    continue
 
             # rule out unexpected in/output
             if self.has_derived_biomaterials(process):
@@ -134,17 +145,18 @@ class AssayData:
         input_files = self.get_all_entities(process["_links"]["inputFiles"]["href"], 'files', [])
         return True if input_files else False
 
+    # Enriquw: seq file can only e created by these 2 protocols
     def get_sequencing_and_library_preparation_protocols(self, process):
         protocols = self.get_all_entities(process["_links"]["protocols"]["href"], 'protocols', [])
-        sequencing_protocol = None
-        library_preparation_protocol = None
+        sequencing_protocols = []
+        library_preparation_protocols = []
         for protocol in protocols:
             described_by = protocol["content"]["describedBy"]
             if described_by.endswith('sequencing_protocol'):
-                sequencing_protocol = protocol
+                sequencing_protocols.append(protocol)
             elif described_by.endswith('library_preparation_protocol'):
-                library_preparation_protocol = protocol
-        return sequencing_protocol, library_preparation_protocol
+                library_preparation_protocols.append(protocol)
+        return sequencing_protocols, library_preparation_protocols
 
     def get_submission_entities(self, entity_type):
         if self.submission:
