@@ -145,7 +145,7 @@ class AssayData:
         input_files = self.get_all_entities(process["_links"]["inputFiles"]["href"], 'files', [])
         return True if input_files else False
 
-    # Enriquw: seq file can only e created by these 2 protocols
+    # seq file can only be created by these 2 protocols
     def get_sequencing_and_library_preparation_protocols(self, process):
         protocols = self.get_all_entities(process["_links"]["protocols"]["href"], 'protocols', [])
         sequencing_protocols = []
