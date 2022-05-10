@@ -162,6 +162,12 @@ class IngestAPI:
         entity_url = f'{self.url}/bundleManifests/search/findByEnvelopeUuid?uuid={submission_uuid}'
         return self._get_all(entity_url, 'bundleManifests')
 
+    def set_submission_status_archived(self, submission_uuid):
+        submission_json = self.get_submission_by_uuid(submission_uuid)
+        if submission_json:
+            commit_archived_link = submission_json.get("_links", {}).get("archived", {}).get("href", "")
+            self.put(commit_archived_link)
+
     def get_entity_id(self, entity, entity_type):
         entity_base = f'{self.url}/{entity_type}/'
         entity_uri = self._get_link(entity, 'self')

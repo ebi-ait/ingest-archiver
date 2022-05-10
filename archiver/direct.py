@@ -47,7 +47,7 @@ class DirectArchiver:
         hca_submission = self.__loader.get_submission(submission_uuid=submission_uuid)
         self.__archive(hca_submission, ingest_api, archive_job, submission_uuid)
 
-    def __archive(self, submission: HcaSubmission, ingest_api, archive_job, sub_uuid=None):
+    def __archive(self, submission: HcaSubmission, ingest_api, archive_job, submission_uuid=None):
         biosamples_responses = {}
         biostudies_responses = {}
         ena_study_response = {}
@@ -83,19 +83,24 @@ class DirectArchiver:
             self.__exchange_archive_accessions(submission, biosamples_accessions,
                                                biostudies_accessions, ena_accessions)
 
-        if sub_uuid:
-            hca_assays_responses = self.__archive_ena_experiments_and_runs(sub_uuid, ingest_api, archive_job)
+        if submission_uuid:
+            hca_assays_responses = self.__archive_ena_experiments_and_runs(submission_uuid, ingest_api, archive_job)
             if self.__has_response_errors([hca_assays_responses]):
                 self.__handle_error_response(ingest_api, archive_job, "hca_assays", hca_assays_responses)
                 return
 
             self.__patch_archive_job_with_archive_result(ingest_api, archive_job, "hca_assays", hca_assays_responses)
 
-        self.__patch_archive_job_with_finished_status(ingest_api, archive_job)
+        self.__complete_archiving(ingest_api, archive_job, submission_uuid)
 
     def __handle_error_response(self, ingest_api: IngestAPI, archive_job: dict, archive_name: str,
                                 error_response: dict):
         self.__patch_archive_job_with_archive_result(ingest_api, archive_job, archive_name, error_response, "Failed")
+
+    @staticmethod
+    def __complete_archiving(ingest_api: IngestAPI, archive_job: dict, submission_uuid: str):
+        DirectArchiver.__patch_archive_job_with_finished_status(ingest_api, archive_job)
+        DirectArchiver.__set_submission_status_to_archived(ingest_api, submission_uuid)
 
     @staticmethod
     def __patch_archive_job_with_archive_result(ingest_api: IngestAPI, archive_job: dict, archive_name: str,
@@ -133,6 +138,11 @@ class DirectArchiver:
             entity_id=entity_id,
             entity_patch=payload
         )
+
+    @staticmethod
+    def __set_submission_status_to_archived(ingest_api: IngestAPI, submission_uuid: str):
+        ingest_api.set_submission_status_archived(submission_uuid)
+        logging.info(f"Submission (id: {submission_uuid}) status has been set to Archived state.")
 
     @staticmethod
     def __has_response_errors(responses):
