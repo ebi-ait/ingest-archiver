@@ -33,76 +33,143 @@ Only proceed to metadata archive if all data files are successful archived. This
 ## Metadata archive
 
 
-There is a script to trigger the direct archiver under the repository's root folder: `submit_to_archives.py`.
+1. There is a script to trigger the direct archiver under the repository's root folder: `submit_to_archives.py`.
 It needs the `submission_UUID` as the input parameter.
 
-There is a mandatory configuration parameter, too.
+   There is a mandatory configuration parameter, too.
 You need to setup an environment variable for `ARCHIVER_API_KEY`. You can get this value from AWS Secret Manager.
 It is under the `ingest/archiver/wrangler/secrets` secret storage.
 You can get the above value from AWS Secret Manager with this command line action for dev environment.
 
-`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .dev_archiver_api_key; echo -e`
+   `aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .dev_archiver_api_key; echo -e`
 
-You can use the above command for staging and production with the replacement of `.dev_archiver_api_key` in the command.
+   You can use the above command for staging and production with the replacement of `.dev_archiver_api_key` in the command.
 
-- For staging: `staging_archiver_api_key`
-- For production: `prod_archiver_api_key`
+   - For staging: `staging_archiver_api_key`
+   - For production: `prod_archiver_api_key`
 
-There is one optional configuration parameter.
-- ENVIRONMENT, possible values: `dev`, `staging`, `prod`, the default value is `dev`.
+   There is one optional configuration parameter.
+   - ENVIRONMENT, possible values: `dev`, `staging`, `prod`, the default value is `dev`.
 
-Here is an example how to execute the script from the command line:
+   Here is an example how to execute the script from the command line:
 
-`export ENVIRONMENT='dev'; export ARCHIVER_API_KEY='<VALUE FROM AWS SECRET MANAGER>'; python submit_to_archives.py 88888888-4444-4444-4444-121212121212`
+   `export ENVIRONMENT='dev'; export ARCHIVER_API_KEY='<VALUE FROM AWS SECRET MANAGER>'; python submit_to_archives.py <submission_uuid>`
 
-Possible successful output:
+   Possible successful output:
 
-```commandline
-2022-01-10 11:10:21,210 - __main__ - INFO - Archiving has started in dev environment for submission: 88888888-4444-4444-4444-121212121212. This could take some time. Please, be patience.
-...
-2022-01-10 11:10:39,883 - __main__ - INFO - You can check the result of archiving in the following webpages:
-2022-01-10 11:10:39,884 - __main__ - INFO - {
-    biosamples archive": {
-        "biomaterials": [
-            {
-                "uuid": "2bdbf12f-dcef-4455-a544-5484395134ef",
-                "accession": "SAMEA9168567",
-                "updated": false,
-                "url": "https://wwwdev.ebi.ac.uk/biosamples/samples/SAMEA9168567"
-            },
-            {
-                "uuid": "14fc15fd-ab72-429c-a3e2-62e1b6884c61",
-                "accession": "SAMEA9168568",
-                "updated": false,
-                "url": "https://wwwdev.ebi.ac.uk/biosamples/samples/SAMEA9168568"
-            },
-            {
-                "uuid": "e65fe906-9e31-4c40-accc-d9d62006e6e3",
-                "accession": "SAMEA9168569",
-                "updated": false,
-                "url": "https://wwwdev.ebi.ac.uk/biosamples/samples/SAMEA9168569"
-            }
-        ]
-    ],
-    "bioStudies archives": {
-        "projects" : [
-            {
-                "uuid": "83743747-da4e-47ce-afa4-5020c99342f9",
-                "accession": "S-BSST175",
-                "updated": false,
-                "url": "https://wwwdev.ebi.ac.uk/biostudies/studies/S-BSST175"
-            }
-        ]
-    },
-    "ena archives": {
-        "projects": [
-            {
-                "uuid": "e236309a-8488-4a0c-bc2a-40c8288acbdb",
-                "accession": "ERP136384",
-                "updated": false,
-                "url": "https://wwwdev.ebi.ac.uk/ena/submit/webin/report/studies/ERP136384"
-            }
-        ]
-    }
-}
-```
+   ```commandline
+   2022-05-11 11:33:21,777 - __main__ - INFO - Archiving has started in dev environment for submission: 83484149-f413-46ac-a530-e5e231c8a780. This could take some time. Please, be patience.
+   2022-05-11 11:33:22,770 - __main__ - INFO - {
+       "archiveJob": {
+           "_links": {
+               "archiveJob": {
+                   "href": "https://api.ingest.dev.archive.data.humancellatlas.org/archiveJobs/627b90f20916177e0ea32ed2"
+               },
+               "self": {
+                   "href": "https://api.ingest.dev.archive.data.humancellatlas.org/archiveJobs/627b90f20916177e0ea32ed2"
+               }
+           },
+           "createdDate": "2022-05-11T10:33:22.076749Z",
+           "overallStatus": "Pending",
+           "submissionUuid": "83484149-f413-46ac-a530-e5e231c8a780"
+       },
+       "message": "Direct archiving successfully triggered!"
+   }
+   ```
+
+2. You have to click on the URL of the created archive job resource to get its status and result.
+You might have to refresh it a couple of times while its status is still `Pending` or `Running`.
+
+3. When the created archive job resource status is `Completed` then you can check all the archive results under the `resultsFromArchives` key in the resulted JSON response.
+
+   Here is an example of a successful response:
+
+   ```commandline
+   {
+     "submissionUuid": "12345678-abcd-46ac-a530-e5e231c8a780",
+     "createdDate": "2022-05-11T10:33:22.076Z",
+     "responseDate": "2022-05-11T10:34:34.908Z",
+     "overallStatus": "Completed",
+     "resultsFromArchives": {
+       "samples": {
+         "info": "Biosamples from HCA biomaterials",
+         "entities": [
+           {
+             "entity_type": "biomaterials",
+             "is_update": false,
+             "biosamples_accession": "SAMEA15001419",
+             "uuid": "f029e6be-04dc-473a-8337-1440438fcc04"
+           },
+           {
+             "entity_type": "biomaterials",
+             "is_update": false,
+             "biosamples_accession": "SAMEA15001420",
+             "uuid": "bc5d2991-19de-4e85-8c03-5c8684cc250f"
+           },
+           {
+             "entity_type": "biomaterials",
+             "is_update": false,
+             "biosamples_accession": "SAMEA15001421",
+             "uuid": "f5c2b6db-3243-4a60-be23-a0a6178c15df"
+           }
+         ]
+       },
+       "project": {
+         "entity_type": "projects",
+         "uuid": "fa0df9c6-ff77-41f5-bc25-e04df2b88571",
+         "biostudies_accession": "S-BSST900",
+         "is_update": false,
+         "info": "BioStudies from HCA projects",
+         "ena_project_accession": "ERP137281"
+       },
+       "hca_assays": {
+         "info": "ENA experiments and runs from HCA assays",
+         "experiments": [
+           {
+             "process_uuid": "0433ba12-3156-4fe1-abda-90725ef19a60",
+             "ena_experiment_accession": "ERX9193747",
+             "ena_experiment_is_update": false,
+             "ena_run_accession": "ERR9640925",
+             "ena_run_is_update": false,
+             "files": [
+               "84f36c8b-355a-44d3-bd1b-4aed06550425",
+               "537baf03-82bd-4d37-a92a-f2e27c44f400"
+             ]
+           },
+           {
+             "process_uuid": "2b2f86bb-ae2e-40a9-8751-3baa47c25d3b",
+             "ena_experiment_accession": "ERX9193748",
+             "ena_experiment_is_update": false,
+             "ena_run_accession": "ERR9640926",
+             "ena_run_is_update": false,
+             "files": [
+               "417db418-9ca3-4c65-bff2-d72fe3d1627e",
+               "3d96ebf6-ce1d-490a-bab5-36cca417ce41"
+             ]
+           },
+           {
+             "process_uuid": "560865be-84ea-44c3-9bc0-96810598bbb9",
+             "ena_experiment_accession": "ERX9193749",
+             "ena_experiment_is_update": false,
+             "ena_run_accession": "ERR9640927",
+             "ena_run_is_update": false,
+             "files": [
+               "a2dbdad0-a07a-4e1b-a015-1a7c35c9e7d6",
+               "ed0c9df3-8c49-4c68-a21d-53e2dc9bb256"
+             ]
+           }
+         ]
+       }
+     },
+     "_links": {
+       "self": {
+         "href": "https://api.ingest.dev.archive.data.humancellatlas.org/archiveJobs/627b90f20916177e0ea32ed2"
+       },
+       "archiveJob": {
+         "href": "https://api.ingest.dev.archive.data.humancellatlas.org/archiveJobs/627b90f20916177e0ea32ed2"
+       }
+     }
+   }
+   ```
+4. The archiving process also updated all the relevant ingest resources (biomaterials, project, processes)
+with all the accessions came from the various archives. You can check it in the Ingest-UI application. 
