@@ -11,29 +11,47 @@ Follow the steps:
     - prod - https://archiver.ingest.archive.data.humancellatlas.org
     
 2. Get the Archiver API key (`archiver_api_key`).
-```
-aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .{env}_archiver_api_key
-```
-Replace `{env}` with `dev`, `staging` or `prod` in the command above.
+   ```
+   aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .{env}_archiver_api_key
+   ```
+   Replace `{env}` with `dev`, `staging` or `prod` in the command above.
 
 3. Trigger the data archive request
-```
-curl -X POST {ingest_archiver_url}/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:{archiver_api_key}" -d '{"sub_uuid": "{sub_uuid}"}'
-```
+   ```
+   curl -X POST {ingest_archiver_url}/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:{archiver_api_key}" -d '{"sub_uuid": "{sub_uuid}"}'
+   ```
 
-Where `sub_uuid` refers to the submission UUID for which sequence data files are to be archived.
+   Where `sub_uuid` refers to the submission UUID for which sequence data files are to be archived.
 
-4. Check the data archive result.
+4. Check the data archive result. You might have to wait 1-2 minutes to get a proper result.
 
-```
-curl -X GET {ingest_archiver_url}/archiveSubmissions/data/<sub_uuid>' -H "Api-Key:{archiver_api_key}" 
-```
+   ```
+   curl -X GET {ingest_archiver_url}/archiveSubmissions/data/<sub_uuid> -H "Api-Key:{archiver_api_key}" 
+   ```
+   If the `fileArchiveResult` key is `null` in any of the `files` in the response, then probably you have to wait a bit more
+and repeat the `GET` request. If that does not help, then please go back to step 3
+and trigger the data file archiving again.
+
 Only proceed to metadata archive if all data files are successful archived. This may take a while for large submission so please be patient and check regularly until all files are archived.
 
 ## Metadata archive
 
 
-1. There is a script to trigger the direct archiver under the repository's root folder: `submit_to_archives.py`.
+1. Clone this repository to your computer and cd to the repository's root folder.
+2. Create and active virtual environment in the repository's root folder.
+
+   ```
+   python -mvenv .venv
+   source .venv/bin/activate
+   ```
+
+3. Install all the requirements for the repository.
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. There is a script to trigger the direct archiver under the repository's root folder: `submit_to_archives.py`. 
 It needs the `submission_UUID` as the input parameter.
 
    There is a mandatory configuration parameter, too.
@@ -41,8 +59,13 @@ You need to setup an environment variable for `ARCHIVER_API_KEY`. You can get th
 It is under the `ingest/archiver/wrangler/secrets` secret storage.
 You can get the above value from AWS Secret Manager with this command line action for dev environment.
 
-   `aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .dev_archiver_api_key; echo -e`
+   **Note**: You probably have done this step already when you archived the data files.
+In that case you don't have to repeat it, as you already have that value. 
 
+   ```
+   aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .dev_archiver_api_key; echo -e
+   ```
+   
    You can use the above command for staging and production with the replacement of `.dev_archiver_api_key` in the command.
 
    - For staging: `staging_archiver_api_key`
@@ -50,10 +73,12 @@ You can get the above value from AWS Secret Manager with this command line actio
 
    There is one optional configuration parameter.
    - ENVIRONMENT, possible values: `dev`, `staging`, `prod`, the default value is `dev`.
-
+   
    Here is an example how to execute the script from the command line:
 
-   `export ENVIRONMENT='dev'; export ARCHIVER_API_KEY='<VALUE FROM AWS SECRET MANAGER>'; python submit_to_archives.py <submission_uuid>`
+   ```
+   export ENVIRONMENT='dev'; export ARCHIVER_API_KEY='<VALUE FROM AWS SECRET MANAGER>'; python submit_to_archives.py <submission_uuid>
+   ```
 
    Possible successful output:
 
@@ -77,10 +102,10 @@ You can get the above value from AWS Secret Manager with this command line actio
    }
    ```
 
-2. You have to click on the URL of the created archive job resource to get its status and result.
+6. You have to click on the URL of the created archive job resource to get its status and result.
 You might have to refresh it a couple of times while its status is still `Pending` or `Running`.
 
-3. When the created archive job resource status is `Completed` then you can check all the archive results under the `resultsFromArchives` key in the resulted JSON response.
+7. When the created archive job resource status is `Completed` then you can check all the archive results under the `resultsFromArchives` key in the resulted JSON response.
 
    Here is an example of a successful response:
 
@@ -171,5 +196,5 @@ You might have to refresh it a couple of times while its status is still `Pendin
      }
    }
    ```
-4. The archiving process also updated all the relevant ingest resources (biomaterials, project, processes)
+8. The archiving process also updated all the relevant ingest resources (biomaterials, project, processes)
 with all the accessions came from the various archives. You can check it in the Ingest-UI application. 
