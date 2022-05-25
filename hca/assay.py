@@ -15,7 +15,7 @@ class AssayData:
         {
             ... # process
             "sequencing_protocol": {...},
-            "library_preparation_protocol": {...},
+            "library_preparation_protocols": [...],
             "input_biomaterials": [...],
             "derived_files": [...]
         },
@@ -83,14 +83,14 @@ class AssayData:
             sequencing_protocols, library_preparation_protocols = self.get_sequencing_and_library_preparation_protocols(process)
             num_sequencing_protocols = len(sequencing_protocols)
             num_library_preparation_protocols = len(library_preparation_protocols)
-            if num_sequencing_protocols == 1 and num_library_preparation_protocols == 1:
+            if num_sequencing_protocols == 1 and num_library_preparation_protocols > 0:
                 self.logger.info(f'Assay process sequencing and lib prep protocols found')
             else:
                 self.logger.info(f'{num_sequencing_protocols} sequencing and {num_library_preparation_protocols} library preparation protocols found.')
                 continue
 
             process["sequencing_protocol"] = sequencing_protocols[0]
-            process["library_preparation_protocol"] = library_preparation_protocols[0]
+            process["library_preparation_protocols"] = library_preparation_protocols
 
             # assay process input and output checks
             process["input_biomaterials"] = self.get_input_biomaterials(process)
@@ -120,7 +120,7 @@ class AssayData:
                 self.logger.info('Not assay: has input files.')
                 continue
 
-            if process["sequencing_protocol"] and process["library_preparation_protocol"] and process[
+            if process["sequencing_protocol"] and process["library_preparation_protocols"] and process[
                 "input_biomaterials"] and process["derived_files"]:
                 assays.append(process)
 

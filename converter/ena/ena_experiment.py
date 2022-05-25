@@ -33,7 +33,7 @@ class EnaExperiment(EnaModel):
     def create(self, assay):
 
         sequencing_protocol = assay["sequencing_protocol"]
-        library_preparation_protocol = assay["library_preparation_protocol"]
+        library_preparation_protocols = assay["library_preparation_protocols"]
         input_biomaterials = assay["input_biomaterials"]
 
         experiment = Experiment()
@@ -57,7 +57,7 @@ class EnaExperiment(EnaModel):
         experiment.design.library_descriptor = LibraryDescriptorType()
         experiment.design.library_descriptor.library_strategy = TypeLibraryStrategy.OTHER
         experiment.design.library_descriptor.library_source = TypeLibrarySource.TRANSCRIPTOMIC_SINGLE_CELL
-        experiment.design.library_descriptor.library_selection = self.ena_library_selection(library_preparation_protocol)
+        experiment.design.library_descriptor.library_selection = self.ena_library_selection(library_preparation_protocols)
         experiment.design.library_descriptor.library_layout = self.ena_library_layout(sequencing_protocol)
         experiment.design.design_description = ''
 
@@ -89,9 +89,19 @@ class EnaExperiment(EnaModel):
                 break
         return library_name, sample_accession
 
-    def ena_library_selection(self, library_preparation_protocol):
-        if library_preparation_protocol["content"]["primer"]:
-            return HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(library_preparation_protocol["content"]["primer"], None)
+    def ena_library_selection(self, library_preparation_protocols):
+        primers = []
+        for library_preparation_protocol in library_preparation_protocols:
+            if library_preparation_protocol["content"]["primer"]:
+                primers.append(library_preparation_protocol["content"]["primer"])
+
+        if primers:
+            if all(p == primers[0] for p in primers):
+                return HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(primers[0], None)
+            else:
+                raise EnaArchiveException('Library preparation protocols have different primer.')
+        else:
+            return None
 
     def ena_library_layout(self, sequencing_protocol):
         library_layout = LibraryDescriptorType.LibraryLayout()
