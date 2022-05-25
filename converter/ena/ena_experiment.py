@@ -97,7 +97,7 @@ class EnaExperiment(EnaModel):
 
         if primers:
             if all(p == primers[0] for p in primers):
-                return HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(library_preparation_protocol["content"]["primer"], None)
+                return HcaEnaMapping.LIBRARY_SELECTION_MAPPING.get(primers[0], None)
             else:
                 raise EnaArchiveException('Library preparation protocols have different primer.')
         else:
