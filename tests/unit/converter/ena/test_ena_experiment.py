@@ -68,7 +68,7 @@ class EnaExperimentTestData:
                             }
                         }
                 },
-                "library_preparation_protocol": [{
+                "library_preparation_protocols": [{
                     "content":
                         {
                             "primer": EnaExperimentTestData.lib_prep_primer,
