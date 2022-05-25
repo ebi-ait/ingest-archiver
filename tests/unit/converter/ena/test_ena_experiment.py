@@ -68,12 +68,12 @@ class EnaExperimentTestData:
                             }
                         }
                 },
-                "library_preparation_protocol": {
+                "library_preparation_protocol": [{
                     "content":
                         {
                             "primer": EnaExperimentTestData.lib_prep_primer,
                         }
-                },
+                }],
                 "input_biomaterials": [{
                     "content":
                         {
