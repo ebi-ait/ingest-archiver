@@ -9,30 +9,35 @@ Follow the steps:
     - dev - https://archiver.ingest.dev.archive.data.humancellatlas.org
     - staging - https://archiver.ingest.staging.archive.data.humancellatlas.org
     - prod - https://archiver.ingest.archive.data.humancellatlas.org
+
+2. Set an environment variable for the URL of ingest archiver: `export INGEST_ARCHIVER_URL=<select one from the above list>`
     
-2. Get the Archiver API key (`archiver_api_key`).
-   ```
-   aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .{env}_archiver_api_key
-   ```
-   Replace `{env}` with `dev`, `staging` or `prod` in the command above.
+3. Get the Archiver API key (`ARCHIVER_API_KEY`).
+```
+export ARCHIVER_API_KEY=`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .{env}_archiver_api_key`
+```
+Replace `{env}` with `dev`, `staging` or `prod` in the command above.
 
-3. Trigger the data archive request
-   ```
-   curl -X POST {ingest_archiver_url}/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:{archiver_api_key}" -d '{"sub_uuid": "{sub_uuid}"}'
-   ```
+4. Trigger the data archive request
+```
+curl -X POST $INGEST_ARCHIVER_URL/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:$ARCHIVER_API_KEY" -d '{"sub_uuid": "<sub_uuid>"}'
+```
 
-   Where `sub_uuid` refers to the submission UUID for which sequence data files are to be archived.
+Where `sub_uuid` refers to the submission UUID for which sequence data files are to be archived.
 
-4. Check the data archive result. You might have to wait 1-2 minutes to get a proper result.
+5. Check the data archive result. You might have to wait 1-2 minutes to get a proper result.
 
-   ```
-   curl -X GET {ingest_archiver_url}/archiveSubmissions/data/<sub_uuid> -H "Api-Key:{archiver_api_key}" 
-   ```
-   If the `fileArchiveResult` key is `null` in any of the `files` in the response, then probably you have to wait a bit more
-and repeat the `GET` request. If that does not help, then please go back to step 3
+```
+curl -X GET $INGEST_ARCHIVER_URL/archiveSubmissions/data/<sub_uuid>' -H "Api-Key:$ARCHIVER_API_KEY" | jq
+```
+
+A data file archived successfully if its `fileArchiveResult` key in the response is not `null`.
+This may take a while for large submission so please be patient and check regularly (repeat the `GET` request) until all files are archived.
+You have to check all the `fileArchiveResult` keys in the response of the above curl request.
+If that does not help, then please go back to step 3
 and trigger the data file archiving again.
 
-Only proceed to metadata archive if all data files are successful archived. This may take a while for large submission so please be patient and check regularly until all files are archived.
+Only proceed to metadata archive if all data files are successfully archived.
 
 ## Metadata archive
 
@@ -102,10 +107,10 @@ In that case you don't have to repeat it, as you already have that value.
    }
    ```
 
-6. You have to click on the URL of the created archive job resource to get its status and result.
+5. You have to click on the URL of the created archive job resource to get its status and result.
 You might have to refresh it a couple of times while its status is still `Pending` or `Running`.
 
-7. When the created archive job resource status is `Completed` then you can check all the archive results under the `resultsFromArchives` key in the resulted JSON response.
+6. When the created archive job resource status is `Completed` then you can check all the archive results under the `resultsFromArchives` key in the resulted JSON response.
 
    Here is an example of a successful response:
 
@@ -196,5 +201,5 @@ You might have to refresh it a couple of times while its status is still `Pendin
      }
    }
    ```
-8. The archiving process also updated all the relevant ingest resources (biomaterials, project, processes)
+7. The archiving process also updated all the relevant ingest resources (biomaterials, project, processes)
 with all the accessions came from the various archives. You can check it in the Ingest-UI application. 
