@@ -1,5 +1,15 @@
 # How to test/trigger the direct archiver
 
+## Prerequisites
+
+1. The submission had to go through metadata/data and graph validation.
+2. After the validation steps it had to be submitted to the EBI archives.
+That should change the status of the submission to `Archiving`. 
+
+   This is the flow of this status change: `Submitted` -> `Processing` -> `Archiving`  
+   Please wait while the status become `Archiving`.
+
+
 ## Data files archive
 Before proceeding to the metadata archiving, the sequence files first need to be archived.
 This can be triggered by sending a HTTP POST request to the `/archiveSubmissions/data` endpoint of the ingest archiver.
@@ -108,7 +118,7 @@ In that case you don't have to repeat it, as you already have that value.
    ```
 
 5. You have to click on the URL of the created archive job resource to get its status and result.
-You might have to refresh it a couple of times while its status is still `Pending` or `Running`.
+You might have to refresh it a couple of times while its status (in the `overallStatus` field) is still `Pending` or `Running`.
 
 6. When the created archive job resource status is `Completed` then you can check all the archive results under the `resultsFromArchives` key in the resulted JSON response.
 
@@ -202,4 +212,14 @@ You might have to refresh it a couple of times while its status is still `Pendin
    }
    ```
 7. The archiving process also updated all the relevant ingest resources (biomaterials, project, processes)
-with all the accessions came from the various archives. You can check it in the Ingest-UI application. 
+with all the accessions came from the various archives. You can check it in the Ingest-UI application.
+8. If the archiving process went well the submission status has been updated to `Archived`.
+
+## Troubleshooting
+
+1. If you are using our `dev` or `staging` environment the metadata archiving
+(executing the `submit_to_archives.py` script) should be on the same day as the data files archiving.
+The reason: ENA recreating their test database every day from production data.
+If you submitted some files in the previous days those files has been deleted at the end of the day
+and that is going to create a problem if the metadata archiving happens on a later day.
+The referenced files in the metadata are going to be missing.
