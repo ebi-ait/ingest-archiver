@@ -21,24 +21,24 @@ Follow the steps:
     - prod - https://archiver.ingest.archive.data.humancellatlas.org
 
 2. Set an environment variable for the URL of ingest archiver: `export INGEST_ARCHIVER_URL=<select one from the above list>`
-    
-3. Get the Archiver API key (`ARCHIVER_API_KEY`).
-```
-export ARCHIVER_API_KEY=`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .{env}_archiver_api_key`
-```
-Replace `{env}` with `dev`, `staging` or `prod` in the command above.
+3. Set an environment variable for the used deployment environment: `export ENVIRONMENT='<env>'`
+Replace `<env>` with `dev`, `staging` or `prod` in the command above.
 
-4. Trigger the data archive request
+4. Get the Archiver API key (`ARCHIVER_API_KEY`).
 ```
-curl -X POST $INGEST_ARCHIVER_URL/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:$ARCHIVER_API_KEY" -d '{"sub_uuid": "<sub_uuid>"}'
+export ARCHIVER_API_KEY=`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .$ENVIRONMENT_archiver_api_key`
+```
+5. Set an environment variable for the UUID of the submission for which sequence data files are to be archived: `export SUBMISSION_UUID=<replace this with the submission UUID>`
+
+6. Trigger the data archive request
+```
+curl -X POST $INGEST_ARCHIVER_URL/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:$ARCHIVER_API_KEY" -d '{"sub_uuid": "$SUBMISSION_UUID"}'
 ```
 
-Where `sub_uuid` refers to the submission UUID for which sequence data files are to be archived.
-
-5. Check the data archive result. You might have to wait 1-2 minutes to get a proper result.
+7. Check the data archive result. You might have to wait 1-2 minutes to get a proper result.
 
 ```
-curl -X GET $INGEST_ARCHIVER_URL/archiveSubmissions/data/<sub_uuid>' -H "Api-Key:$ARCHIVER_API_KEY" | jq
+curl -X GET $INGEST_ARCHIVER_URL/archiveSubmissions/data/$SUBMISSION_UUID -H "Api-Key:$ARCHIVER_API_KEY" | jq
 ```
 
 A data file archived successfully if its `fileArchiveResult` key in the response is not `null`.
@@ -55,7 +55,7 @@ Only proceed to metadata archive if all data files are successfully archived.
 1. Clone this repository to your computer and cd to the repository's root folder.
 2. Create and active virtual environment in the repository's root folder.
 
-   ```
+   ```bash
    python -mvenv .venv
    source .venv/bin/activate
    ```
@@ -78,16 +78,12 @@ You can get the above value from AWS Secret Manager with this command line actio
 In that case you don't have to repeat it, as you already have that value. 
 
    ```
-   aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .dev_archiver_api_key; echo -e
+   aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .$ENVIRONMENT_archiver_api_key_archiver_api_key; echo -e
    ```
    
-   You can use the above command for staging and production with the replacement of `.dev_archiver_api_key` in the command.
-
-   - For staging: `staging_archiver_api_key`
-   - For production: `prod_archiver_api_key`
-
    There is one optional configuration parameter.
    - ENVIRONMENT, possible values: `dev`, `staging`, `prod`, the default value is `dev`.
+   We already defined this environment variable earlier.
    
    Here is an example how to execute the script from the command line:
 
