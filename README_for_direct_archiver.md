@@ -32,7 +32,7 @@ export ARCHIVER_API_KEY=`aws --region us-east-1 secretsmanager get-secret-value 
 
 6. Trigger the data archive request
 ```
-curl -X POST $INGEST_ARCHIVER_URL/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:$ARCHIVER_API_KEY" -d '{"sub_uuid": "$SUBMISSION_UUID"}'
+curl -X POST $INGEST_ARCHIVER_URL/archiveSubmissions/data -H 'Content-Type: application/json' -H "Api-Key:$ARCHIVER_API_KEY" -d "{\"sub_uuid\": \"$SUBMISSION_UUID\"}"
 ```
 
 7. Check the data archive result. You might have to wait 1-2 minutes to get a proper result.
