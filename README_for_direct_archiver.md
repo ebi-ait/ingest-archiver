@@ -26,7 +26,7 @@ Replace `<env>` with `dev`, `staging` or `prod` in the command above.
 
 4. Get the Archiver API key (`ARCHIVER_API_KEY`).
 ```
-export ARCHIVER_API_KEY=`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .$ENVIRONMENT_archiver_api_key`
+export ARCHIVER_API_KEY=`aws --region us-east-1 secretsmanager get-secret-value --secret-id ingest/archiver/wrangler/secrets --query SecretString --output text | jq -jr .$(echo $ENVIRONMENT)_archiver_api_key`
 ```
 5. Set an environment variable for the UUID of the submission for which sequence data files are to be archived: `export SUBMISSION_UUID=<replace this with the submission UUID>`
 
