@@ -143,6 +143,33 @@ class TestBioStudiesConverter(unittest.TestCase):
             }
         )
 
+    def test_when_no_publications_then_creates_empty_publication_array(self):
+        specification = {
+            'type': 'Publication',
+            'on': 'publications',
+            'attributes_to_include': {
+                'authors': "Authors",
+                'title': "Title",
+                'doi': 'doi',
+                'url': 'URL'
+            }
+        }
+        project_content = {
+            "contributors": [
+                {
+                    "first_name": "Joe",
+                    "middle_initials": "Doe",
+                    "last_name": "Smith"
+                }
+            ]
+        }
+
+        subsection_payload_elements = self.biostudies_converter.add_attributes_by_spec(
+            specification, project_content)
+
+        assert_that(subsection_payload_elements).is_not_none()
+        assert_that(subsection_payload_elements).is_length(0)
+
     def test_given_ingest_project_with_empty_values_converts_correct_biostudies_payload(self):
         self.maxDiff = None
         expected_payload = self.__get_expected_payload('/../../resources/expected_biostudies_payload_without_empty_values.json')
