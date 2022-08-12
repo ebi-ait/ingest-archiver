@@ -189,7 +189,7 @@ class BioStudiesConverter:
         subsection_type_list = []
         iterate_on = specification.get('on')
         attributes_to_include: dict = specification.get('attributes_to_include')
-        for entity in project_content.get(iterate_on):
+        for entity in project_content.get(iterate_on, []):
             subsection_payload_element = {}
             attribute_list = []
             for attribute_key in attributes_to_include:
