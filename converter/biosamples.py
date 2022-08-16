@@ -26,7 +26,6 @@ class BioSamplesConverter:
         domain = attributes.get('domain', self.default_domain)
         if not domain:
             raise MissingBioSamplesDomain()
-        release_date = attributes.get('release_date')
         content = biomaterial.get('content', {})
         core = content.get('biomaterial_core', {})
         name = core.get('biomaterial_name', core.get('biomaterial_id'))
@@ -40,7 +39,7 @@ class BioSamplesConverter:
                 'genus_species') else None,
             ncbi_taxon_id=core.get('ncbi_taxon_id')[0] if core.get('ncbi_taxon_id') else None,
             update=self.__datetime(biomaterial.get('updateDate')),
-            release=self.__datetime(release_date if release_date else biomaterial.get('submissionDate'))
+            release=self.__datetime(attributes.get('release_date', biomaterial.get('submissionDate')))
         )
         sample._append_organism_attribute()
         self.__add_attributes(sample, biomaterial)
