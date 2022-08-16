@@ -28,7 +28,9 @@ class BioSamplesConverterTests(unittest.TestCase):
             'domain': self.domain
         }
 
-        biosample = self.__create_a_sample(release_date)
+        sample_name = 'Bone Marrow CD34+ stem/progenitor cells'
+        biomaterial_id = 'HS_BM_2_cell_line'
+        biosample = self.__create_a_sample(release_date, biomaterial_id, sample_name)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes)
 
@@ -43,16 +45,34 @@ class BioSamplesConverterTests(unittest.TestCase):
             'domain': self.domain
         }
 
-        biosample = self.__create_a_sample(submission_date)
+        sample_name = 'Bone Marrow CD34+ stem/progenitor cells'
+        biomaterial_id = 'HS_BM_2_cell_line'
+        biosample = self.__create_a_sample(submission_date, biomaterial_id, sample_name)
 
         converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes )
 
         self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
 
-    def __create_a_sample(self, release_date):
+    def test_when_biomaterial_has_no_name_converted_biosample_has_biomaterial_id_as_name(self):
+        biomaterial = self.__get_biomaterial_by_index(1)
+
+        submission_date = '2019-07-18T21:12:39.770Z'
+        sample_name = 'BP37d'
+        biomaterial_id = 'BP37d'
+        biosample = self.__create_a_sample(submission_date, biomaterial_id, sample_name)
+
+        additional_attributes = {
+            'domain': self.domain
+        }
+
+        converted_bio_sample = self.biosamples_converter.convert(biomaterial, additional_attributes)
+
+        self.assertEqual(SampleMatcher(biosample), converted_bio_sample)
+
+    def __create_a_sample(self, release_date, biomaterial_id, sample_name):
         biosample = Sample(
             accession='SAMEA6877932',
-            name='Bone Marrow CD34+ stem/progenitor cells',
+            name=sample_name,
             release=datetime.strptime(release_date, '%Y-%m-%dT%H:%M:%S.%fZ'),
             update=datetime(2020, 6, 12, 14, 26, 37, 998000),
             domain=self.domain,
@@ -62,7 +82,7 @@ class BioSamplesConverterTests(unittest.TestCase):
         biosample._append_organism_attribute()
         self.__create_attributes(biosample,
                                  {
-                                     'Biomaterial Core - Biomaterial Id': 'HS_BM_2_cell_line',
+                                     'Biomaterial Core - Biomaterial Id': biomaterial_id,
                                      'HCA Biomaterial Type': 'cell_line',
                                      'HCA Biomaterial UUID': '501ba65c-0b04-430d-9aad-917935ee3c3c',
                                      'Is Living': 'yes',
