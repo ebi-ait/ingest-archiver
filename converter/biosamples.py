@@ -27,15 +27,13 @@ class BioSamplesConverter:
         if not domain:
             raise MissingBioSamplesDomain()
         release_date = attributes.get('release_date')
-        existing_accession = attributes.get('accession')
         content = biomaterial.get('content', {})
         core = content.get('biomaterial_core', {})
-        accession = self.__define_accession(existing_accession, core)
         name = core.get('biomaterial_name', core.get('biomaterial_id'))
         if not name:
             raise MissingBioSamplesSampleName()
         sample = Sample(
-            accession=accession,
+            accession=attributes.get('accession', core.get('biosamples_accession')),
             name=name,
             domain=domain,
             species=content['genus_species'][0].get('ontology_label') if content.get(
@@ -47,16 +45,6 @@ class BioSamplesConverter:
         sample._append_organism_attribute()
         self.__add_attributes(sample, biomaterial)
         return sample
-
-    @staticmethod
-    def __define_accession(existing_accession: str, biomaterial_core):
-        accession = existing_accession if existing_accession and len(existing_accession) > 0 \
-            else biomaterial_core.get('biosamples_accession')
-
-        if accession and len(accession) > 0:
-            return accession
-        else:
-            return None
 
     @staticmethod
     def __add_attributes(sample: Sample, biomaterial: dict):
