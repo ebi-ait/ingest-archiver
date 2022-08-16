@@ -4,7 +4,7 @@ from biosamples_v4.models import Sample, Attribute
 from json_converter.json_mapper import JsonMapper
 
 from . import get_concrete_type
-from .errors import MissingBioSamplesDomain
+from .errors import MissingBioSamplesDomain, MissingBioSamplesSampleName
 
 ATTRIBUTE_SPEC = {
     'Biomaterial Core - Biomaterial Id': ['content.biomaterial_core.biomaterial_id'],
@@ -31,11 +31,12 @@ class BioSamplesConverter:
         biomaterial_content = biomaterial.get('content', {})
         biomaterial_core = biomaterial_content.get('biomaterial_core', {})
         sample_accession = self.__define_accession(existing_accession, biomaterial_core)
-        biomaterial_name = biomaterial_core.get('biomaterial_name') if biomaterial_core.get('biomaterial_name') \
-            else biomaterial_core.get('biomaterial_id', '')
+        name = biomaterial_core.get('biomaterial_name', biomaterial_core.get('biomaterial_id'))
+        if not name:
+            raise MissingBioSamplesSampleName()
         sample = Sample(
             accession=sample_accession,
-            name=biomaterial_name,
+            name=name,
             domain=domain,
             species=biomaterial_content['genus_species'][0].get('ontology_label') if biomaterial_content.get(
                 'genus_species') else None,
