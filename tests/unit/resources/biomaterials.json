@@ -103,6 +103,108 @@
         ]
       }
     },
+    "5ee74a8d5e315a423810edfc2": {
+      "attributes": {
+        "content": {
+          "describedBy": "https://schema.humancellatlas.org/type/biomaterial/14.5.0/cell_line",
+          "schema_type": "biomaterial",
+          "biomaterial_core": {
+            "biomaterial_id": "BP37d",
+            "ncbi_taxon_id": [
+              9606
+            ],
+            "biosamples_accession": "SAMEA6877932"
+          },
+          "supplier": "AllCells, LLC",
+          "catalog_number": "ABM022F",
+          "catalog_url": "https://www.allcells.com/products/bone-marrow-cd34-stem-progenitor-cells",
+          "type": "stem cell",
+          "sex": "male",
+          "is_living": "yes",
+          "cell_type": {
+            "ontology_label": "CD34-positive, CD38-negative hematopoietic stem cell",
+            "text": "CD34-positive, CD38-negative hematopoietic stem cell",
+            "ontology": "CL:0001024"
+          },
+          "date_established": "2016-08-17",
+          "genus_species": [
+            {
+              "text": "Homo sapiens",
+              "ontology": "NCBITaxon:9606",
+              "ontology_label": "Homo sapiens"
+            }
+          ],
+          "model_organ": {
+            "text": "bone marrow",
+            "ontology": "UBERON:0002371",
+            "ontology_label": "bone marrow"
+          },
+          "medical_history": {
+            "smoking_history": "20 cigarettes/day for 25 years, stopped 2000"
+          }
+        },
+        "submissionDate": "2019-07-18T21:12:39.770Z",
+        "updateDate": "2020-06-12T14:26:37.998Z",
+        "user": null,
+        "lastModifiedUser": "anonymousUser",
+        "type": "Biomaterial",
+        "uuid": {
+          "uuid": "501ba65c-0b04-430d-9aad-917935ee3c3c"
+        },
+        "events": [
+        ],
+        "firstDcpVersion": null,
+        "dcpVersion": "2020-03-05T14:39:16.763Z",
+        "contentLastModified": "2021-04-27T11:00:38.888707Z",
+        "accession": null,
+        "validationState": "Valid",
+        "validationErrors": [
+        ],
+        "isUpdate": false,
+        "linked": true,
+        "_links": {
+          "self": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240"
+          },
+          "biomaterial": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240"
+          },
+          "processing": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/processingEvent"
+          },
+          "draft": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/draftEvent"
+          },
+          "project": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/project",
+            "title": "A single project"
+          },
+          "projects": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/projects",
+            "title": "Access or create projects. Creation can only be done inside a submission envelope"
+          },
+          "inputToProcesses": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/inputToProcesses"
+          },
+          "derivedByProcesses": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/derivedByProcesses"
+          },
+          "submissionEnvelope": {
+            "href": "https://api.ingest.archive.data.humancellatlas.org/biomaterials/5d30e0c79be88c0008a9b240/submissionEnvelope",
+            "title": "A single submission envelope"
+          }
+        }
+      },
+      "links": {
+        "processes": [
+          "5ee74a8e5e315a423810ee3f",
+          "5ee74a8e5e315a423810ee3b"
+        ],
+        "bundleManifests": [
+          "5ee750265e315a423810ee41"
+        ]
+      }
+    },
     "5ee74a8d5e315a423810edf4": {
       "attributes": {
         "content": {
@@ -110,7 +212,6 @@
           "schema_type": "biomaterial",
           "biomaterial_core": {
             "biomaterial_id": "BP37d",
-            "biomaterial_name": "donor5",
             "biomaterial_description": "healthy regular platelet donor, who donated platelet apheresis cone containing peripheral blood mononuclear cells",
             "ncbi_taxon_id": [
               9606
