@@ -20,29 +20,29 @@ class BioSamplesConverter:
     def __init__(self, default_domain=None):
         self.default_domain = default_domain
 
-    def convert(self, biomaterial: dict, additional_attributes: dict = None) -> Sample:
-        if not additional_attributes:
-            additional_attributes = {}
-        domain = additional_attributes.get('domain', self.default_domain)
+    def convert(self, biomaterial: dict, attributes: dict = None) -> Sample:
+        if not attributes:
+            attributes = {}
+        domain = attributes.get('domain', self.default_domain)
         if not domain:
             raise MissingBioSamplesDomain()
-        release_date = additional_attributes.get('release_date')
-        existing_accession = additional_attributes.get('accession')
-        biomaterial_content = biomaterial.get('content', {})
-        biomaterial_core = biomaterial_content.get('biomaterial_core', {})
-        sample_accession = self.__define_accession(existing_accession, biomaterial_core)
-        name = biomaterial_core.get('biomaterial_name', biomaterial_core.get('biomaterial_id'))
+        release_date = attributes.get('release_date')
+        existing_accession = attributes.get('accession')
+        content = biomaterial.get('content', {})
+        core = content.get('biomaterial_core', {})
+        accession = self.__define_accession(existing_accession, core)
+        name = core.get('biomaterial_name', core.get('biomaterial_id'))
         if not name:
             raise MissingBioSamplesSampleName()
         sample = Sample(
-            accession=sample_accession,
+            accession=accession,
             name=name,
             domain=domain,
-            species=biomaterial_content['genus_species'][0].get('ontology_label') if biomaterial_content.get(
+            species=content['genus_species'][0].get('ontology_label') if content.get(
                 'genus_species') else None,
-            ncbi_taxon_id=biomaterial_core.get('ncbi_taxon_id')[0] if biomaterial_core.get('ncbi_taxon_id') else None,
-            update=self.__convert_datetime(biomaterial.get('updateDate')),
-            release=self.__convert_datetime(release_date if release_date else biomaterial.get('submissionDate'))
+            ncbi_taxon_id=core.get('ncbi_taxon_id')[0] if core.get('ncbi_taxon_id') else None,
+            update=self.__datetime(biomaterial.get('updateDate')),
+            release=self.__datetime(release_date if release_date else biomaterial.get('submissionDate'))
         )
         sample._append_organism_attribute()
         self.__add_attributes(sample, biomaterial)
@@ -81,7 +81,7 @@ class BioSamplesConverter:
             sample.external_references.extend(biomaterial.get('externalReferences'))
 
     @staticmethod
-    def __convert_datetime(datetime_str: str) -> datetime:
+    def __datetime(datetime_str: str) -> datetime:
         if datetime_str:
             if '.' in datetime_str:
                 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
