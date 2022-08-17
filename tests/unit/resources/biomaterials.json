@@ -1030,6 +1030,8 @@
           "date_established": "2016-08-17",
           "genus_species": [
             {
+              "text": "Homo sapiens",
+              "ontology": "NCBITaxon:9606"
             }
           ],
           "model_organ": {
