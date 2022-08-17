@@ -400,7 +400,7 @@
         ]
       }
     },
-    "accession-attribute-no-content-test": {
+    "accession-from-attribute-without-core-accession": {
       "attributes": {
         "content": {
           "describedBy": "https://schema.humancellatlas.org/type/biomaterial/14.5.0/cell_line",
@@ -502,7 +502,7 @@
         ]
       }
     },
-    "accession-attribute-override-test": {
+    "accession-from-attribute-with-core-accession": {
       "attributes": {
         "content": {
           "describedBy": "https://schema.humancellatlas.org/type/biomaterial/14.5.0/cell_line",
@@ -605,7 +605,7 @@
         ]
       }
     },
-    "accession-content-test": {
+    "accession-from-core-without-attribute": {
       "attributes": {
         "content": {
           "describedBy": "https://schema.humancellatlas.org/type/biomaterial/14.5.0/cell_line",

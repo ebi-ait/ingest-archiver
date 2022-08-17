@@ -77,9 +77,9 @@ class BioSamplesConverterTests(unittest.TestCase):
             # when
             self.biosamples_converter.convert(biomaterial)
 
-    def test_sample_uses_attribute_accession(self):
+    def test_sample_uses_attribute_accession_with_no_core_accession(self):
         # given
-        biomaterial = self.__get_biomaterial_by_id('accession-attribute-no-content-test')
+        biomaterial = self.__get_biomaterial_by_id('accession-from-attribute-without-core-accession')
         target_biosample = self.__create_a_sample()
         # when
         additional_attributes = {
@@ -89,9 +89,9 @@ class BioSamplesConverterTests(unittest.TestCase):
         # then
         self.assertEqual(SampleMatcher(target_biosample), converted_biosample)
 
-    def test_sample_uses_attribute_accession_over_core_accession(self):
+    def test_sample_uses_attribute_accession_instead_of_core_accession(self):
         # given
-        biomaterial = self.__get_biomaterial_by_id('accession-attribute-override-test')
+        biomaterial = self.__get_biomaterial_by_id('accession-from-attribute-with-core-accession')
         target_biosample = self.__create_a_sample()
         # when
         additional_attributes = {
@@ -103,7 +103,7 @@ class BioSamplesConverterTests(unittest.TestCase):
 
     def test_sample_uses_core_accession_if_no_attribute_accession(self):
         # given
-        biomaterial = self.__get_biomaterial_by_id('accession-content-test')
+        biomaterial = self.__get_biomaterial_by_id('accession-from-core-without-attribute')
         target_biosample = self.__create_a_sample()
         # when
         converted_biosample = self.biosamples_converter.convert(biomaterial)
