@@ -35,8 +35,8 @@ class BioSamplesConverter:
             accession=attributes.get('accession', core.get('biosamples_accession')),
             name=name,
             domain=domain,
-            species=content['genus_species'][0].get('ontology_label') if len(content.get('genus_species', [])) else None,
-            ncbi_taxon_id=core.get('ncbi_taxon_id')[0] if len(core.get('ncbi_taxon_id', [])) else None,
+            species=content['genus_species'][0].get('ontology_label') if content.get('genus_species', []) else None,
+            ncbi_taxon_id=core.get('ncbi_taxon_id')[0] if core.get('ncbi_taxon_id', []) else None,
             update=self.__datetime(biomaterial.get('updateDate')),
             release=self.__datetime(attributes.get('release_date', biomaterial.get('submissionDate')))
         )
