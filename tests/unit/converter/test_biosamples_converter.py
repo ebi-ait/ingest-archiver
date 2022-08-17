@@ -138,7 +138,7 @@ class BioSamplesConverterTests(unittest.TestCase):
 
     def test_sample_species_from_biomaterial_when_genus_species_no_ontology(self):
         # given
-        biomaterial = self.__get_biomaterial_by_id('genus-no-ontology')
+        biomaterial = self.__get_biomaterial_by_id('genus-no-ontology-label')
         target_biosample = self.__create_a_sample(species=None)
         # when
         converted_biosample = self.biosamples_converter.convert(biomaterial)

@@ -1003,7 +1003,7 @@
         ]
       }
     },
-    "genus-no-ontology": {
+    "genus-no-ontology-label": {
       "attributes": {
         "content": {
           "describedBy": "https://schema.humancellatlas.org/type/biomaterial/14.5.0/cell_line",
