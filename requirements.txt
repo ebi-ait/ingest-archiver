@@ -9,7 +9,6 @@ json_converter~=0.5.0
 Flask~=1.1.2
 requests~=2.25.1
 urllib3~=1.25.11
-mock~=4.0.3
 -e git+https://github.com/ebi-ait/ingest-client.git@7fd3c25#egg=hca_ingest
 lxml~=4.6.3
 colorlog~=6.6.0
