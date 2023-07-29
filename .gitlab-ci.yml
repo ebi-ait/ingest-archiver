@@ -2,7 +2,7 @@ include:
   remote: 'https://raw.githubusercontent.com/ebi-ait/gitlab-ci-templates/master/build-release-deploy.yml'
 
 Unit Test:
-  image: quay.io/ebi-ait/ingest-base-images:python_3.6-slim
+  image: quay.io/ebi-ait/ingest-base-images:python_3.8.5-alpine
   stage: test
   script:
     - apt-get update
