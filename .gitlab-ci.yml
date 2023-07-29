@@ -5,8 +5,8 @@ Unit Test:
   image: quay.io/ebi-ait/ingest-base-images:python_3.10-slim
   stage: test
   before_script:
-    - apk update
-    - apk add git
+    - apt-get update
+    - apt-get install -y git
     - python -m venv ./venv
     - source venv/bin/activate
     - pip install --upgrade pip
